@@ -1,36 +1,39 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    mkSpagoDerivation.url = "github:jeslie0/mkSpagoDerivation";
-    ps-overlay.url = "github:thomashoneyman/purescript-overlay";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    ps-tools.follows = "purs-nix/ps-tools";
+    purs-nix.url = "github:purs-nix/purs-nix/ps-0.15";
+    utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils, mkSpagoDerivation, ps-overlay }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
+  outputs =
+    { nixpkgs, utils, ... }@inputs:
+    utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ]
+      (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ mkSpagoDerivation.overlays.default
-                       ps-overlay.overlays.default ];
+        pkgs = nixpkgs.legacyPackages.${system};
+        ps-tools = inputs.ps-tools.legacyPackages.${system};
+        purs-nix = inputs.purs-nix { inherit system; };
+        package = import ./package.nix purs-nix;
+
+        ps = purs-nix.purs {
+          inherit (package) dependencies;
+          dir = ./.;
         };
       in
-        {
-          packages.default =
-            pkgs.mkSpagoDerivation {
-              spagoYaml = ./spago.yaml;
-              spagoLock = ./spago.lock;
-              src = ./.;
-              nativeBuildInputs = [ pkgs.purs-unstable pkgs.spago-unstable pkgs.esbuild ];
-              version = "0.1.0";
-              buildPhase = "spago bundle";
-              installPhase = "mkdir $out; cp index.js $out";
-              buildNodeModulesArgs = {
-                npmRoot = ./.;
-                nodejs = pkgs.nodejs;
-              };
-            };
-        }
-    );
+      {
+        packages.default = ps.bundle { };
+
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            nodejs
+            nodePackages.bower
+            (ps.command { })
+            ps-tools.for-0_15.pulp
+            ps-tools.for-0_15.purescript-language-server
+            purs-nix.esbuild
+            purs-nix.purescript
+          ];
+        };
+      });
 }
