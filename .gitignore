@@ -8,6 +8,6 @@
 /.psa*
 /.spago
 .DS_Store
-web/app.js
 /dist
 /.parcel-cache
+web/app.js
