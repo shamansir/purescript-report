@@ -20,7 +20,10 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Foreign (Foreign, F, fail, ForeignError(..), renderForeignError)
 
 -- import Input.CV.Key (w)
-import Report.Progress (DateRec, GroupPath(..), LevelsI, LevelsN, LevelsS, LevelsP, PathSegment(..), Progress(..), Stats(..), TimeRec, TaskP(..), PValueTag(..), _readProgress)
+import Report.Group (GroupPath(..), PathSegment(..))
+import Report.Stats (Stats(..))
+import Report.Task (TaskP(..))
+import Report.Progress (DateRec, LevelsI, LevelsN, LevelsS, LevelsP, Progress(..), TimeRec, PValueTag(..), _readProgress)
 import Report.Core as CT
 
 import GameLog.Types as GLT
@@ -116,7 +119,7 @@ processGame { properties, game } =
                 { gameId : DHL game.id
                 , name : game.name
                 , mbPlatform : platformFromDhall game.platform
-                , mbSource : Just S_Manual
+                , mbSource : Just S_Dhall
                 , stats : collectStats $ GameAchievements gameAchievements
                 }
         , groups : gameAchievements

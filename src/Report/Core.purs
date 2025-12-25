@@ -249,6 +249,7 @@ monthToInt = case _ of
 
 
 type SDateRec = { day :: Int, mon :: Int, year :: Int }
+type STimeRec = { hrs :: Int, min :: Int, sec :: Int }
 
 
 --| NB: Month is starting from 01 and ends at 12

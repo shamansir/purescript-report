@@ -12,7 +12,7 @@ import Data.List (toUnfoldable) as List
 import GameLog.Types.Group (Group)
 import GameLog.Types.Achievement (Achievement, collectStatsRaw)
 
-import Report.Progress (Stats)
+import Report.Stats (Stats)
 
 
 {- Game Achievements -}

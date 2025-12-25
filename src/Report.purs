@@ -31,8 +31,8 @@ import Yoga.Tree.Extended (break, build) as Tree
 import Yoga.Tree.Extended.Path (Path) as Tree
 import Yoga.Tree.Extended.Path as TPath
 
-import Report.Progress (GroupPath)
-import Report.Progress (howDeep, startsWithNotEq, pathFromArray) as GPath
+import Report.Group (GroupPath)
+import Report.Group (howDeep, startsWithNotEq, pathFromArray) as GPath
 import Report.Class (class IsGroup, g_path)
 
 

@@ -26,7 +26,9 @@ import Halogen.HTML.Properties as HP
 -- import Input.GameLog.Types as GLT
 
 import Report.Core as CT
-import Report.Progress (GotTotal(..), TaskP(..), gotTotalFromStats, howDeep, pathToArray, weightOf) as S
+import Report.Group (howDeep, pathToArray) as S
+import Report.Task (TaskP(..)) as S
+import Report.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
 import Report.Progress (Progress(..)) as Stats
 import Report.Class as S
 import Report (Report, unwrap) as S

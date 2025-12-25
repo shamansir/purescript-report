@@ -10,11 +10,14 @@ import Data.Array (length, filter, all) as Array
 
 import Report.Core as CT
 import Report.Class (class IsItem, class IsTag, TagColors)
-import Report.Progress (Stats(..), TaskP(..), Progress(..), NProgress(..), GroupPath)
+import Report.Group (GroupPath)
+import Report.Stats (Stats(..))
+import Report.Task (TaskP(..))
+import Report.Progress (Progress(..), NProgress(..))
 
 import GameLog.Types as GLT
 
-import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign)
+import Yoga.JSON (class ReadForeign, class WriteForeign)
 
 type AchievementRec =
     { name :: String

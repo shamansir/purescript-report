@@ -4,7 +4,8 @@ import Prelude
 
 import Data.Newtype (class Newtype, unwrap)
 
-import Report.Progress (Stats(..), GroupPath(..), PathSegment(..))
+import Report.Stats (Stats(..))
+import Report.Group (GroupPath(..), PathSegment(..))
 import Report.Class (class IsGroup)
 
 import GameLog.Types.Achievement (Achievement)

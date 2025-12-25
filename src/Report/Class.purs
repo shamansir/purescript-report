@@ -5,7 +5,9 @@ import Prelude
 import Data.Maybe (Maybe)
 
 import Report.Core as CT
-import Report.Progress as S
+import Report.Progress (Progress) as S
+import Report.Stats (Stats) as S
+import Report.Group (GroupPath) as S
 
 
 class IsItem t a where

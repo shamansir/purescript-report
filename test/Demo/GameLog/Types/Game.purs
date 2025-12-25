@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
 
-import Report.Progress (Stats)
+import Report.Stats (Stats)
 import Report.Class (class IsSubject, class IsTag, TagColors)
 
 import GameLog.Types as GLT
@@ -50,8 +50,8 @@ newtype Game =
 
 
 derive instance Newtype Game _
-derive instance Eq Game -- TODO: compare by GameId?
-derive instance Ord Game -- TODO: compare by GameId?
+derive instance Eq Game -- TODO: compare by GameId+Platform?
+derive instance Ord Game -- TODO: compare by GameId+Platform?
 
 
 gameName :: Game -> String
