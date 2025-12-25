@@ -3,7 +3,14 @@ package:
   dependencies:
     - console
     - effect
+    - either
+    - maybe
+    - newtype
     - prelude
+    - record-extra
+    - strings
+    - tuples
+    - yoga-json
   test:
     main: Test.Main
     dependencies: []
