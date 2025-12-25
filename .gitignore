@@ -11,3 +11,4 @@
 /dist
 /.parcel-cache
 web/app.js
+test/games-samples/games-collection.json

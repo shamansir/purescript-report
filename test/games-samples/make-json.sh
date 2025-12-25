@@ -1,0 +1,1 @@
+dhall-to-json --file ./GamesCollection.dhall --output ./games-collection.json
