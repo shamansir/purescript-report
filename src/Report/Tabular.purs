@@ -1,4 +1,4 @@
-module Data.Text.Tabular where
+module Report.Tabular where
 
 import Prelude
 

@@ -1,4 +1,4 @@
-module Input.CoreTypes where
+module Report.Core where
 
 import Prelude
 

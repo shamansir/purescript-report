@@ -1,11 +1,11 @@
-module Data.Stats.Class where
+module Report.Class where
 
 import Prelude
 
-import Input.CoreTypes as CT
 import Data.Maybe (Maybe)
 
-import Data.Stats.Types as S
+import Report.Core as CT
+import Report.Progress as S
 
 
 class IsItem t a where

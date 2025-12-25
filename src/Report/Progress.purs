@@ -1,8 +1,7 @@
-module Data.Stats.Types where
+module Report.Progress where
 
 import Prelude
 
-import Input.CoreTypes as CT
 
 import Foreign (F, Foreign)
 
@@ -15,6 +14,7 @@ import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Foldable (foldl, foldr)
 import Data.Array (length, index) as Array
 
+import Report.Core as CT
 -- import Input.GameLog.Types as GLT
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
