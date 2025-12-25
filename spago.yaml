@@ -17,7 +17,12 @@ package:
     # - play
   test:
     main: Test.Main
-    dependencies: []
+    dependencies:
+      - affjax
+      - affjax-node
+      - affjax-web
+      - fetch
+      - fetch-yoga-json
 workspace:
   packageSet:
     registry: 68.10.1
