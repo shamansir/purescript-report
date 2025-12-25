@@ -4,6 +4,7 @@ package:
     - console
     - effect
     - either
+    - halogen
     - maybe
     - newtype
     - prelude
@@ -11,10 +12,23 @@ package:
     - strings
     - tuples
     - yoga-json
+    - yoga-tree-utils
+    # - yoga-tree-svg
+    # - play
   test:
     main: Test.Main
     dependencies: []
 workspace:
   packageSet:
     registry: 68.10.1
-  extraPackages: {}
+  extraPackages:
+    yoga-tree-utils:
+      git: https://github.com/shamansir/purescript-yoga-tree-utils.git
+      # ref: cea4241d75d643a4d05509ef40a36d948abf1e64
+      ref: ac70a549a0f8cd611be7d494a534f517967f2634
+    play:
+      git: https://github.com/shamansir/purescript-play.git
+      ref: 7a0610f165ccbd4f06a9923a4d49a00520a92da3
+    yoga-tree-svg:
+      git: https://github.com/shamansir/purescript-yoga-tree-svg.git
+      ref: e8d398426367b47af624097b6b60c8dadde5bda6
