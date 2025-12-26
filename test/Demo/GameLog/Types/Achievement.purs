@@ -12,9 +12,9 @@ import Report.Core as CT
 import Report.Class (class IsItem, class IsTag, TagColors)
 import Report.Group (Group(..))
 import Report.GroupPath (GroupPath)
-import Report.Prefix.Task (TaskP(..))
-import Report.Suffix.Stats (Stats(..))
-import Report.Suffix.Progress (Progress(..), NProgress(..))
+import Report.Modifiers.Task (TaskP(..))
+import Report.Modifiers.Stats (Stats(..))
+import Report.Modifiers.Progress (Progress(..), NProgress(..))
 import Report.Suffix (Suffixes)
 import Report.Suffix as Suffixes
 import Report.Prefix (Prefixes)

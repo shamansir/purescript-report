@@ -2,15 +2,12 @@ module Report.Suffix where
 
 import Prelude
 
-import Data.Map (Map)
-import Data.Map (lookup, insert) as Map
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, unwrap, wrap)
 
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as S
-import Report.Suffix.Progress (Progress) as S
--- import Report.Suffix.Stats (Stats) as S
+import Report.Modifiers.Progress (Progress) as S
+-- import Report.Modifiers.Stats (Stats) as S
 import Report.Modifiers (Modifiers, class IsModifier)
 import Report.Modifiers (empty, get, put, keys) as Mod
 

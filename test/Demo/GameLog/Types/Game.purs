@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
 
 import Report.Class (class IsSubject, class IsTag, TagColors)
-import Report.Suffix.Stats (Stats)
+import Report.Modifiers.Stats (Stats)
 
 import GameLog.Types as GLT
 

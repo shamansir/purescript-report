@@ -1,8 +1,8 @@
-module Report.Prefix.Task where
+module Report.Modifiers.Task where
 
 import Prelude
 
-import Foreign (F, Foreign)
+import Foreign (F)
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 

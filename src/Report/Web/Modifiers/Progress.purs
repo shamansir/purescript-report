@@ -1,4 +1,4 @@
-module Report.Web.Suffix.Progress where
+module Report.Web.Modifiers.Progress where
 
 import Prelude
 
@@ -10,16 +10,17 @@ import Data.Array ((:))
 import Data.Array as Array
 
 import Report.Core as CT
-import Report.Prefix.Task (TaskP(..)) as S
-import Report.Suffix.Progress (Progress(..)) as Prog
+import Report.Modifiers.Task (TaskP(..)) as S
+import Report.Modifiers.Progress (Progress(..)) as Prog
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 
 import Report.Web.Helpers
-import Report.Web.Prefix.Task
+import Report.Web.Modifiers.Task (qtaskCheckbox, taskTextColor)
 
 
+renderProgress :: forall w i. String -> Prog.Progress -> H w i
 renderProgress gitemName = case _ of
     Prog.None ->
         HH.span []
@@ -349,7 +350,9 @@ renderProgress gitemName = case _ of
                 : -} (renderLevelO reached <$> levels)
 
 
+percentage :: forall w i. Number -> Number -> H w i
 percentage = percentage' progressBarCompleteColor progressBarIncompleteColor
+percentage' :: forall w i. String -> String -> Number -> Number -> H w i
 percentage' completeColor incompleteColor total amount =
     let
         factor = pctWidth / total

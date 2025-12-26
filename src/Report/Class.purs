@@ -3,13 +3,10 @@ module Report.Class where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Data.Newtype (unwrap)
 
-import Report.Core as CT
 import Report.Suffix (Suffixes)
 import Report.Prefix (Prefixes)
-import Report.Suffix.Progress (Progress) as S
-import Report.Suffix.Stats (Stats) as S
+import Report.Modifiers.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 
 
@@ -18,10 +15,7 @@ class IsItem t a where
     i_suffixes :: a -> Suffixes
     i_prefixes :: a -> Prefixes
     i_mbTitle :: a -> Maybe String
-    -- i_mbDescription :: a -> Maybe String
-    -- i_mbEarnedAt :: a -> Maybe CT.SDate
     i_locked :: a -> Boolean
-    -- i_mbReference :: a -> Maybe S.GroupPath
     i_tags :: a -> Array t
 
 

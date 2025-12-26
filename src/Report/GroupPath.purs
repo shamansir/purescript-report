@@ -2,21 +2,13 @@ module Report.GroupPath where
 
 import Prelude
 
-import Foreign (F, Foreign)
-
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
-import Data.Int as Int
-import Data.String (joinWith, take, length) as String
-import Data.FunctorWithIndex (mapWithIndex)
+import Data.String (joinWith) as String
 import Data.FoldableWithIndex (foldlWithIndex)
-import Data.Foldable (foldl, foldr)
 import Data.Array (length, index) as Array
 
-import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-
-import Report.Core as CT
-import Report.Suffix.Stats (Stats(..))
+import Yoga.JSON (class ReadForeign, class WriteForeign)
 
 
 {- GroupPath -}

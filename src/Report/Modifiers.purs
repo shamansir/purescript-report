@@ -2,9 +2,9 @@ module Report.Modifiers where
 
 import Prelude
 
-import Data.Map (Map, lookup)
+import Data.Map (Map)
 import Data.Map (empty, lookup, insert, keys) as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Newtype (class Newtype, unwrap, wrap)
 

@@ -1,21 +1,19 @@
-module Report.Web.Suffix.Stats where
+module Report.Web.Modifiers.Stats where
 
 import Prelude
 
-import Data.Int (toNumber, floor) as Int
+import Data.Int (toNumber) as Int
 
-import Report.Prefix.Task (TaskP(..)) as S
-import Report.Suffix.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
+import Report.Modifiers.Stats (Stats, GotTotal(..), gotTotalFromStats) as S
 
-import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
 import Report.Web.Helpers
-import Report.Web.Suffix.Progress
+import Report.Web.Modifiers.Progress (percentage')
 
 
+renderGroupStats :: forall w i. S.Stats -> H w i
 renderGroupStats = S.gotTotalFromStats >>> case _ of
     S.Defined { got, total } ->
         let

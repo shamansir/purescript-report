@@ -2,12 +2,9 @@ module Report.Prefix where
 
 import Prelude
 
-import Data.Map (Map)
-import Data.Map (lookup, insert) as Map
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, unwrap, wrap)
 
-import Report.Prefix.Task (TaskP)
+import Report.Modifiers.Task (TaskP)
 import Report.Modifiers (Modifiers, class IsModifier)
 import Report.Modifiers (empty, get, put, keys) as Mod
 

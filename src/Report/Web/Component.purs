@@ -3,15 +3,13 @@ module Report.Web.Component where
 import Prelude
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, intersperse, filter, sortWith, reverse, any) as Array
-import Data.Foldable (foldl)
-import Data.FunctorWithIndex (mapWithIndex)
+import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any) as Array
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..))
 import Data.Set as Set
-import Data.String (length, contains, toLower, joinWith, Pattern(..)) as String
+import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry) as Tuple
 import Data.Tuple.Nested ((/\))
 
@@ -26,19 +24,17 @@ import Halogen.HTML.Properties as HP
 -- import Input.GameLog.Types as GLT
 
 import Report.Core as CT
-import Report.GroupPath (howDeep, pathToArray) as S
-import Report.Prefix.Task (TaskP(..)) as S
-import Report.Suffix.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
-import Report.Suffix.Progress (Progress(..)) as Stats
-import Report.Suffix (Suffixes)
+import Report.GroupPath (howDeep) as S
+import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
 import Report.Suffix as Suffixes
 import Report.Class as S
 import Report (Report, unwrap) as S
 
-import Report.Web.Helpers
-import Report.Web.Suffix.Progress
-import Report.Web.Suffix.Stats
-import Report.Web.GroupPath
+import Report.Web.Helpers (qcolorSpan, qspacerSpan, timeColor)
+import Report.Web.Modifiers.Progress (renderProgress)
+import Report.Web.Modifiers.Stats (renderGroupStats)
+import Report.Web.GroupPath (groupPathId, renderGroupRef, renderPath)
+
 
 type State subj_id subj_tag report =
     { selected :: Array subj_id
