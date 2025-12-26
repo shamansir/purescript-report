@@ -6,19 +6,22 @@ import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 
 import Report.Core as CT
-import Report.Progress (Progress) as S
-import Report.Stats (Stats) as S
+import Report.Suffix (Suffixes)
+import Report.Prefix (Prefixes)
+import Report.Suffix.Progress (Progress) as S
+import Report.Suffix.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 
 
 class IsItem t a where
     i_name :: a -> String
-    i_progress :: a -> S.Progress
-    i_mbTitle :: a -> Maybe String -- FIXME: get rid of
-    i_mbDescription :: a -> Maybe String
-    i_mbEarnedAt :: a -> Maybe CT.SDate
+    i_suffixes :: a -> Suffixes
+    i_prefixes :: a -> Prefixes
+    i_mbTitle :: a -> Maybe String
+    -- i_mbDescription :: a -> Maybe String
+    -- i_mbEarnedAt :: a -> Maybe CT.SDate
     i_locked :: a -> Boolean
-    i_mbReference :: a -> Maybe S.GroupPath
+    -- i_mbReference :: a -> Maybe S.GroupPath
     i_tags :: a -> Array t
 
 

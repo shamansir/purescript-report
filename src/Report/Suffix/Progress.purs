@@ -1,4 +1,4 @@
-module Report.Progress where
+module Report.Suffix.Progress where
 
 import Prelude
 
@@ -11,7 +11,7 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
-import Report.Task (TaskP)
+import Report.Prefix.Task (TaskP)
 
 type DateRec = CT.SDateRec
 type TimeRec = CT.STimeRec

@@ -12,9 +12,13 @@ import Report.Core as CT
 import Report.Class (class IsItem, class IsTag, TagColors)
 import Report.Group (Group(..))
 import Report.GroupPath (GroupPath)
-import Report.Stats (Stats(..))
-import Report.Task (TaskP(..))
-import Report.Progress (Progress(..), NProgress(..))
+import Report.Prefix.Task (TaskP(..))
+import Report.Suffix.Stats (Stats(..))
+import Report.Suffix.Progress (Progress(..), NProgress(..))
+import Report.Suffix (Suffixes)
+import Report.Suffix as Suffixes
+import Report.Prefix (Prefixes)
+import Report.Prefix as Prefixes
 
 import GameLog.Types as GLT
 
@@ -246,15 +250,35 @@ instance IsTag Tag where
     allTags = []
 
 
+loadSuffixes :: Achievement -> Suffixes
+loadSuffixes = unwrap >>> \achRec ->
+    Suffixes.empty
+    # (Suffixes.put $ Suffixes.SProgress achRec.progress)
+    # (case achRec.mbReference of
+        Just groupPath -> Suffixes.put $ Suffixes.SReference groupPath
+        Nothing -> identity
+       )
+    # (case achRec.mbEarnedAt of
+        Just dateEarned -> Suffixes.put $ Suffixes.SEarnedAt dateEarned
+        Nothing -> identity
+       )
+    # (case achRec.mbDescription of
+        Just descr -> Suffixes.put $ Suffixes.SDescription descr
+        Nothing -> identity
+       )
+
+
+loadPrefixes :: Achievement -> Prefixes
+loadPrefixes = const Prefixes.empty
+
+
 instance IsItem Tag Achievement where
     i_name = unwrap >>> _.name
-    i_progress = unwrap >>> _.progress
     i_mbTitle = unwrap >>> _.mbTitle
-    i_mbDescription = unwrap >>> _.mbDescription
-    i_mbEarnedAt = unwrap >>> _.mbEarnedAt
     i_locked =  unwrap >>> _.locked
-    i_mbReference =  unwrap >>> _.mbReference
     i_tags = unwrap >>> _.tags >>> map Tag
+    i_suffixes = loadSuffixes
+    i_prefixes = loadPrefixes
 
 
 bindToAchievement :: Achievement -> Group -> Group

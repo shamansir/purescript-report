@@ -16,7 +16,7 @@ import Data.Array (length, index) as Array
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
-import Report.Stats (Stats(..))
+import Report.Suffix.Stats (Stats(..))
 
 
 {- GroupPath -}

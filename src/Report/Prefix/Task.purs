@@ -1,4 +1,4 @@
-module Report.Task where
+module Report.Prefix.Task where
 
 import Prelude
 

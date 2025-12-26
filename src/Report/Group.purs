@@ -5,7 +5,7 @@ import Prelude
 import Data.Newtype (class Newtype, unwrap)
 
 import Report.Class (class IsGroup)
-import Report.Stats (Stats(..))
+import Report.Suffix.Stats (Stats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 
 {- Achievement Group -}

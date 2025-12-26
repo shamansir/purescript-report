@@ -1,4 +1,4 @@
-module Report.Stats where
+module Report.Suffix.Stats where
 
 import Prelude
 
@@ -7,8 +7,8 @@ import Data.Foldable (foldl)
 import Data.Maybe (fromMaybe)
 import Data.Array (length) as Array
 
-import Report.Progress (Progress(..))
-import Report.Task (TaskP(..))
+import Report.Prefix.Task (TaskP(..))
+import Report.Suffix.Progress (Progress(..))
 
 {- Stats -}
 

@@ -20,9 +20,9 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Foreign (Foreign, F, fail, ForeignError(..), renderForeignError)
 
 -- import Input.CV.Key (w)
-import Report.Stats (Stats(..))
-import Report.Task (TaskP(..))
-import Report.Progress (DateRec, LevelsI, LevelsN, LevelsS, LevelsP, Progress(..), TimeRec, PValueTag(..), _readProgress)
+import Report.Prefix.Task (TaskP(..))
+import Report.Suffix.Stats (Stats(..))
+import Report.Suffix.Progress (DateRec, LevelsI, LevelsN, LevelsS, LevelsP, Progress(..), TimeRec, PValueTag(..), _readProgress)
 import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Core as CT

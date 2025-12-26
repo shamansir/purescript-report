@@ -27,9 +27,11 @@ import Halogen.HTML.Properties as HP
 
 import Report.Core as CT
 import Report.GroupPath (howDeep, pathToArray) as S
-import Report.Task (TaskP(..)) as S
-import Report.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
-import Report.Progress (Progress(..)) as Stats
+import Report.Prefix.Task (TaskP(..)) as S
+import Report.Suffix.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
+import Report.Suffix.Progress (Progress(..)) as Stats
+import Report.Suffix (Suffixes)
+import Report.Suffix as Suffixes
 import Report.Class as S
 import Report (Report, unwrap) as S
 
@@ -117,12 +119,17 @@ component preSelected =
             allSubjects = Set.toUnfoldable $ Map.keys report
             selKeys = selectionKeyToSubject allSubjects
         in HH.div
-            [ HP.style "font-family: \"JetBrains Mono\", sans-serif; height: 100vh; overflow-y: scroll;" ]
-            $ subjectsList state allSubjects
-            : (Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag)
-                <$> Array.catMaybes ((\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> state.selected))
+            [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
+            [ HH.div
+                [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;" ]
+                 $  Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag)
+                <$> Array.catMaybes ((\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> state.selected)
+            , HH.div
+                [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
+                [ subjectsToc state allSubjects ]
+            ]
 
-    subjectsList state allSubjects =
+    subjectsToc state allSubjects =
         let
             tagsFitHorz = 10
             rowHeightVert = 17
@@ -133,11 +140,11 @@ component preSelected =
             listShift  = show (if state.optionsPaneExpanded then 40 + expandedOPHeight else 40 + collapsedOPHeight) <> "px"
             listHeight = show (if state.optionsPaneExpanded then 92 else 95) <> "vh"
         in HH.div
-            [ HP.style "position: absolute; right: 0; padding: 9px 9px 0 0; height: 100vh; width: 400px;" ]
+            [ HP.style "padding: 9px 9px 0 0; width: 400px;" ]
             $ filterInput state
             : optionsPane state
             : (HH.div
-                    [ HP.style $ "position: fixed; top: " <> listShift <> "; height: " <> listHeight <> "; overflow: scroll;" ]
+                    [ HP.style $ "overflow-y: scroll;" ]
                     $ subjTocRow state.selected <$> (applyFilter state.tagFilter state.sortBy state.filter) allSubjects)
             : []
 
@@ -155,7 +162,7 @@ component preSelected =
 
     filterInput state =
         HH.div
-            [ HP.style "position : fixed;" ]
+            [ HP.style "" ]
             [ HH.input
                 [ HE.onValueInput ChangeListFilter
                 , HP.style "border: 1px solid lightgray; border-radius: 5px; padding: 5px 6px; margin-bottom: 15px; min-width: 250px;"
@@ -163,11 +170,15 @@ component preSelected =
             , HH.span
                 [ HE.onClick $ const ToggleOptionsPane
                 , HP.style "padding: 1px 3px 0 5px; cursor: pointer;"
+                , HP.title $ if state.optionsPaneExpanded then "Expand tags list" else "Collapse tags list"
                 ]
                 [ HH.text $ if state.optionsPaneExpanded then "○" else "●" ]
             , HH.span
                 [ HE.onClick $ const NextSort
                 , HP.style "padding: 1px 3px; cursor: pointer;"
+                , HP.title $ "Sort " <> (case state.sortBy of
+                    ByWeight -> "alphabetically"
+                    Alpha -> "by weight")
                 ]
                 [ HH.text $ case state.sortBy of
                     ByWeight -> "W"
@@ -177,7 +188,7 @@ component preSelected =
 
     optionsPane state =
         HH.div
-            [ HP.style "position: fixed; top: 33px;"
+            [ HP.style ""
             ] $
         if not state.optionsPaneExpanded then
             case state.tagFilter of
@@ -824,12 +835,16 @@ renderSubject subj itemsMap  =
             groupPathId = String.joinWith "--" <<< S.pathToArray
 
             renderGroupItem item =
-                HH.div
+                let
+                    i_suffixes = S.i_suffixes @item_tag item
+                in HH.div
                     []
                     [ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title
-                        Nothing -> renderProgress (S.i_name @item_tag item) (S.i_progress @item_tag item)
-                    , case (S.i_mbEarnedAt @item_tag item) of
+                        Nothing -> case i_suffixes # Suffixes.getProgress of
+                            Just progress -> renderProgress (S.i_name @item_tag item) progress
+                            Nothing -> HH.text ""
+                    , case i_suffixes # Suffixes.getEarnedAt of
                         Just (CT.SDate { day, month, year }) -> HH.span []
                             [ qspacerSpan
                             , HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
@@ -841,13 +856,13 @@ renderSubject subj itemsMap  =
                                 ]
                             ]
                         Nothing -> HH.text ""
-                    , case (S.i_mbDescription @item_tag item) of
+                    , case i_suffixes # Suffixes.getDescription of
                         Just description -> HH.span []
                             [ qspacerSpan
                             , HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
                             ]
                         Nothing -> HH.text ""
-                    , case (S.i_mbReference @item_tag item) of
+                    , case i_suffixes # Suffixes.getReference of
                         Just groupRef ->
                             HH.span []
                                 [ qspacerSpan

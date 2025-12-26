@@ -169,7 +169,7 @@ in
         , T.kv_ "Katosa Aug :: Akkala" (T.p_done) // T.inj/det "BOTW-120"
         ]
 
-    # T.group "Shrines" [ "03-towers" ]
+    # T.group "Towers" [ "03-towers" ]
         [ T.kv_ "Great Plateau Tower" (T.p_done) // T.inj/det "TWR-001"
         , T.kv_ "Dueling Peaks Tower" (T.p_done) // T.inj/det "TWR-002"
         , T.kv_ "Hateno Tower" (T.p_done) // T.inj/det "TWR-003"
