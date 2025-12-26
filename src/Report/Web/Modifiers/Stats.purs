@@ -31,3 +31,10 @@ renderGroupStats = S.gotTotalFromStats >>> case _ of
         --     [ HH.text $ " (" <> show got <> "/" <> show total <> ")" ]
     S.GTStatsValue -> HH.text ""
     S.Undefined -> HH.text ""
+
+
+gotTotalBadge :: forall r w i. { got :: Int, total :: Int | r } -> H w i
+gotTotalBadge { got, total } =
+    HH.span
+        [ HP.style "font-size: 0.8em; opacity: 0.8; margin: 5px 0;" ]
+        [ HH.text $ " (" <> show got <> "/" <> show total <> ")" ]

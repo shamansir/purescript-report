@@ -23,17 +23,16 @@ import Halogen.HTML.Properties as HP
 -- import Input.GameLog.Backloggery.Game (Rec) as BLGame
 -- import Input.GameLog.Types as GLT
 
-import Report.Core as CT
 import Report.GroupPath (howDeep) as S
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
-import Report.Suffix as Suffixes
 import Report.Class as S
 import Report (Report, unwrap) as S
 
-import Report.Web.Helpers (qcolorSpan, qspacerSpan, timeColor)
-import Report.Web.Modifiers.Progress (renderProgress)
-import Report.Web.Modifiers.Stats (renderGroupStats)
-import Report.Web.GroupPath (groupPathId, renderGroupRef, renderPath)
+import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
+import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
+import Report.Web.Modifiers.Tag (subjTagBadge, subjTagWrap)
+import Report.Web.GroupPath (groupPathId, renderPath)
+import Report.Web.Suffix (renderSuffixes)
 
 
 type State subj_id subj_tag report =
@@ -200,9 +199,6 @@ component preSelected =
     subjTagIsOn tagFilter tag =
         tag /\ Array.elem tag tagFilter
 
-    subjTagWrap tag =
-        HH.span [ HP.style $ "display: inline-block; cursor: pointer; padding: 3px 0;" ] [ subjTagBadge tag ]
-
     subjTagButton (tag /\ tagEnabled) =
         HH.span
             [ HE.onClick $ const $ if tagEnabled then ExcludeTag tag else IncludeTag tag
@@ -252,19 +248,6 @@ component preSelected =
 
             ]
 
-    gotTotalBadge { got, total } =
-        HH.span
-            [ HP.style "font-size: 0.8em; opacity: 0.8; margin: 5px 0;" ]
-            [ HH.text $ " (" <> show got <> "/" <> show total <> ")" ]
-
-
-    subjTagBadge :: subj_tag -> _
-    subjTagBadge tag =
-        let tagStyle = S.tagColors tag
-        in HH.span
-            [ HP.style $ "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; padding: 1px 3px; border-radius: 4px; border: 1px solid " <> tagStyle.border <> "; opacity: 0.8; background-color: " <> tagStyle.background <> "; color: " <> tagStyle.text <> ";" ]
-            [ HH.text $ S.tagContent tag ]
-
     nextSort = case _ of
         ByWeight -> Alpha
         Alpha -> ByWeight
@@ -306,8 +289,6 @@ renderSubject subj itemsMap  =
             [ HH.text $ S.s_name @subj_id @subj_tag subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
-            lineHeight = 1.9
-            nestMargin = 30.0
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ S.howDeep groupPath) - 1.0) * nestMargin
             renderTree (group /\ groupItems) =
                 HH.div
@@ -326,49 +307,12 @@ renderSubject subj itemsMap  =
                     ]
 
             renderGroupItem item =
-                let
-                    i_suffixes = S.i_suffixes @item_tag item
-                in HH.div
+                HH.div
                     []
-                    [ case S.i_mbTitle @item_tag item of
+                    $ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title
-                        Nothing -> case i_suffixes # Suffixes.getProgress of
-                            Just progress -> renderProgress (S.i_name @item_tag item) progress
-                            Nothing -> HH.text ""
-                    , case i_suffixes # Suffixes.getEarnedAt of
-                        Just (CT.SDate { day, month, year }) -> HH.span []
-                            [ qspacerSpan
-                            , HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
-                                [ qcolorSpan timeColor $ CT.toLeadingZero day
-                                , qspacerSpan
-                                , qcolorSpan timeColor $ show month
-                                , qspacerSpan
-                                , qcolorSpan timeColor $ show year
-                                ]
-                            ]
                         Nothing -> HH.text ""
-                    , case i_suffixes # Suffixes.getDescription of
-                        Just description -> HH.span []
-                            [ qspacerSpan
-                            , HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
-                            ]
-                        Nothing -> HH.text ""
-                    , case i_suffixes # Suffixes.getReference of
-                        Just groupRef ->
-                            renderGroupRef groupRef
-                        Nothing -> HH.text ""
-                    , case S.i_tags @item_tag item of
-                        [] -> HH.text ""
-                        tags -> HH.span [] $ itemTagBadge <$> tags
-                    ]
-
-            itemTagBadge :: item_tag -> _
-            itemTagBadge tag =
-              let tagStyle = S.tagColors tag
-              in HH.span
-                [ HP.style $ "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; padding: 1px 3px; border-radius: 4px; border: 1px solid " <> tagStyle.border <> "; opacity: 0.8; background-color: " <> tagStyle.background <> "; color: " <> tagStyle.text <> ";" ]
-                [ HH.text $ S.tagContent tag ]
-
+                    : renderSuffixes @item_tag item
 
 
 {-

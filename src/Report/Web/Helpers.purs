@@ -15,6 +15,8 @@ type Color = String
 
 pctWidth = 250.0 :: Number
 levelsMargin = 30.0 :: Number
+lineHeight = 1.9 :: Number
+nestMargin = 30.0 :: Number
 
 
 completeColor = "#333" :: Color
