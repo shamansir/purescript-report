@@ -20,6 +20,7 @@ import GameLog.Types as GLT
 
 import Yoga.JSON (class ReadForeign, class WriteForeign)
 
+
 type AchievementRec =
     { name :: String
     , progress :: Progress
