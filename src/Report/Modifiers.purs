@@ -3,8 +3,9 @@ module Report.Modifiers where
 import Prelude
 
 import Data.Map (Map, lookup)
-import Data.Map (empty, lookup, insert) as Map
+import Data.Map (empty, lookup, insert, keys) as Map
 import Data.Maybe (Maybe(..))
+import Data.Set (toUnfoldable) as Set
 import Data.Newtype (class Newtype, unwrap, wrap)
 
 
@@ -22,6 +23,10 @@ empty = wrap Map.empty
 
 get :: forall k v. Ord k => k -> Modifiers k v -> Maybe v
 get key = unwrap >>> Map.lookup key
+
+
+keys :: forall k v. Ord k => Modifiers k v -> Array k
+keys = unwrap >>> Map.keys >>> Set.toUnfoldable
 
 
 put :: forall k v. Ord k => IsModifier k v => v -> Modifiers k v -> Modifiers k v

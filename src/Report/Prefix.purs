@@ -9,7 +9,7 @@ import Data.Newtype (class Newtype, unwrap, wrap)
 
 import Report.Prefix.Task (TaskP)
 import Report.Modifiers (Modifiers, class IsModifier)
-import Report.Modifiers (empty, get, put) as Mod
+import Report.Modifiers (empty, get, put, keys) as Mod
 
 
 newtype Rating = Rating Int
@@ -44,6 +44,10 @@ instance IsModifier Key Prefix where
 
 empty :: Prefixes
 empty = Mod.empty
+
+
+keys :: Prefixes -> Array Key
+keys = Mod.keys
 
 
 get :: Key -> Prefixes -> Maybe Prefix

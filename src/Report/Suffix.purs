@@ -12,7 +12,7 @@ import Report.GroupPath (GroupPath) as S
 import Report.Suffix.Progress (Progress) as S
 -- import Report.Suffix.Stats (Stats) as S
 import Report.Modifiers (Modifiers, class IsModifier)
-import Report.Modifiers (empty, get, put) as Mod
+import Report.Modifiers (empty, get, put, keys) as Mod
 
 
 data Key
@@ -46,6 +46,10 @@ instance IsModifier Key Suffix where
 
 empty :: Suffixes
 empty = Mod.empty
+
+
+keys :: Suffixes -> Array Key
+keys = Mod.keys
 
 
 get :: Key -> Suffixes -> Maybe Suffix
