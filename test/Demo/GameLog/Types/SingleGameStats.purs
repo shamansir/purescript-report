@@ -9,7 +9,8 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.Foldable (foldl)
 import Data.List (toUnfoldable) as List
 
-import GameLog.Types.Group (Group)
+import Report.Group (Group)
+
 import GameLog.Types.Achievement (Achievement, collectStatsRaw)
 
 import Report.Stats (Stats)

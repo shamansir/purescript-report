@@ -10,7 +10,8 @@ import Data.Array (length, filter, all) as Array
 
 import Report.Core as CT
 import Report.Class (class IsItem, class IsTag, TagColors)
-import Report.Group (GroupPath)
+import Report.Group (Group(..))
+import Report.GroupPath (GroupPath)
 import Report.Stats (Stats(..))
 import Report.Task (TaskP(..))
 import Report.Progress (Progress(..), NProgress(..))
@@ -254,3 +255,6 @@ instance IsItem Tag Achievement where
     i_mbReference =  unwrap >>> _.mbReference
     i_tags = unwrap >>> _.tags >>> map Tag
 
+
+bindToAchievement :: Achievement -> Group -> Group
+bindToAchievement ach (Group group) = Group $ group { stats = SFromProgress $ getProgress ach }

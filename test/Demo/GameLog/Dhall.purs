@@ -20,16 +20,17 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Foreign (Foreign, F, fail, ForeignError(..), renderForeignError)
 
 -- import Input.CV.Key (w)
-import Report.Group (GroupPath(..), PathSegment(..))
 import Report.Stats (Stats(..))
 import Report.Task (TaskP(..))
 import Report.Progress (DateRec, LevelsI, LevelsN, LevelsS, LevelsP, Progress(..), TimeRec, PValueTag(..), _readProgress)
+import Report.Group (Group(..), isGroupAt, setStats)
+import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Core as CT
 
 import GameLog.Types as GLT
 import GameLog.Types.Achievement (Achievement(..), collectStatsRaw, getProgress)
 import GameLog.Types.Game (Game(..), GameId(..), Source(..))
-import GameLog.Types.Group (Group(..), isGroupAt, setStats)
+
 import GameLog.Types.SingleGameStats (GameAchievements(..), collectStats)
 
 import Yoga.JSON (class ReadForeign, readImpl)

@@ -2,70 +2,64 @@ module Report.Group where
 
 import Prelude
 
-import Foreign (F, Foreign)
+import Data.Newtype (class Newtype, unwrap)
 
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (class Newtype, wrap, unwrap)
-import Data.Int as Int
-import Data.String (joinWith, take, length) as String
-import Data.FunctorWithIndex (mapWithIndex)
-import Data.FoldableWithIndex (foldlWithIndex)
-import Data.Foldable (foldl, foldr)
-import Data.Array (length, index) as Array
+import Report.Class (class IsGroup)
+import Report.Stats (Stats(..))
+import Report.GroupPath (GroupPath(..), PathSegment(..))
 
-import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-
-import Report.Core as CT
+{- Achievement Group -}
 
 
-{- GroupPath -}
+newtype Group =
+    Group
+        { title :: String
+        , path :: GroupPath
+        , stats :: Stats
+        }
+
+derive instance Newtype Group _
+
+instance Eq Group where
+    eq (Group groupA) (Group groupB) = groupA.path == groupB.path
+instance Ord Group where
+    compare (Group groupA) (Group groupB) = compare groupA.path groupB.path
 
 
-newtype PathSegment = PathSegment String
-derive newtype instance ReadForeign PathSegment
-derive newtype instance WriteForeign PathSegment
-
-newtype GroupPath = GroupPath (Array PathSegment)
+instance Show Group where
+    show (Group { title, path }) =
+        title <> " (" <> show path <> ")"
 
 
-derive instance Newtype PathSegment _
-derive instance Newtype GroupPath _
-instance Show GroupPath where show = unwrap >>> map unwrap >>> String.joinWith "::"
-derive newtype instance ReadForeign GroupPath
-derive newtype instance WriteForeign GroupPath
+rootGroup :: Stats -> Group
+rootGroup stats =
+    Group
+        { title : "All"
+        , stats
+        , path : GroupPath [ PathSegment "root" ]
+        }
 
 
-instance Eq GroupPath where
-    eq pathA pathB = (unwrap <$> unwrap pathA) == (unwrap <$> unwrap pathB)
-instance Ord GroupPath where
-    compare pathA pathB = compare (unwrap <$> unwrap pathA) (unwrap <$> unwrap pathB)
+isGroupAt :: GroupPath -> Group -> Boolean
+isGroupAt path (Group group) = group.path == path
 
 
-howDeep :: GroupPath -> Int
-howDeep = unwrap >>> Array.length
+pathOf :: Group -> GroupPath
+pathOf (Group group) = group.path
 
 
-pathToArray :: GroupPath -> Array String
-pathToArray = unwrap >>> map unwrap
+setStats :: Stats -> Group -> Group
+setStats stats (Group group) = Group $ group { stats = stats }
 
 
-pathFromArray :: Array String -> GroupPath
-pathFromArray = map wrap >>> wrap
+{-
+group :: String -> Array Achievement -> Group
+group name children =
+    ach_ name None # with (_ { items = children })
+-}
 
 
-startsWithNotEq :: GroupPath -> GroupPath -> Boolean
-startsWithNotEq possibleStart sample =
-    (howDeep possibleStart > 0) &&
-    (howDeep sample > 0) &&
-    (howDeep possibleStart < howDeep sample) &&
-    ( let
-        sampleArr = pathToArray sample
-        possibleStartArr = pathToArray possibleStart
-    in
-        foldlWithIndex
-            (\idx prev val -> prev && (Array.index sampleArr idx == Just val))
-            true
-            possibleStartArr
-    )
-
-
+instance IsGroup Group where
+    g_title = unwrap >>> _.title
+    g_path = unwrap >>> _.path
+    g_stats = unwrap >>> _.stats

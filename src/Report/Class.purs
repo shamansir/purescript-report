@@ -3,11 +3,12 @@ module Report.Class where
 import Prelude
 
 import Data.Maybe (Maybe)
+import Data.Newtype (unwrap)
 
 import Report.Core as CT
 import Report.Progress (Progress) as S
 import Report.Stats (Stats) as S
-import Report.Group (GroupPath) as S
+import Report.GroupPath (GroupPath) as S
 
 
 class IsItem t a where
