@@ -369,6 +369,8 @@ percentage' completeColor incompleteColor total amount =
             ]
             [ ]
         ]
+
+renderLevelI :: forall w i r. Int -> { maximum :: Int, name :: String | r } -> H w i
 renderLevelI reached { maximum, name } =
     let
         isDone = reached >= maximum
@@ -383,6 +385,8 @@ renderLevelI reached { maximum, name } =
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
             ]
         ]
+
+renderLevelN :: forall w i r. Number -> { maximum :: Number, name :: String | r } -> H w i
 renderLevelN reached { maximum, name } =
     let
         isDone = reached >= maximum
@@ -397,6 +401,8 @@ renderLevelN reached { maximum, name } =
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum reached <> "/" <> formatNum maximum
             ]
         ]
+
+renderLevelS :: forall w i r x. Ord x => x -> x -> { gives :: String | r } -> H w i
 renderLevelS reached levenN { gives } =
     let
         isDone = reached > levenN
@@ -410,6 +416,8 @@ renderLevelS reached levenN { gives } =
             , qcompleteCheckbox isDone
             ]
         ]
+
+renderLevelO :: forall w i r. Int -> { mbMaximum :: Maybe Int, name :: String | r } -> H w i
 renderLevelO reached { mbMaximum, name } =
     let
         isDone = case mbMaximum of
@@ -428,6 +436,8 @@ renderLevelO reached { mbMaximum, name } =
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> maybe "??" formatInt mbMaximum
             ]
         ]
+
+renderLevelP :: forall w i r x. x -> { proc :: S.TaskP, name :: String | r } -> H w i
 renderLevelP levelN { proc, name } =
     let
         isDone = proc == S.TDone

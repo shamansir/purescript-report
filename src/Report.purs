@@ -1,8 +1,8 @@
 module Report
     ( Report
     , empty
+    , toMap
     , unwrap
-    , unwrap'
     , build
     , fromMap
     , toTree
@@ -10,17 +10,17 @@ module Report
     , nodeToString
     , TreeNode(..)
     , class ToReport, toReport
+    , withGroup, withItem
     )
     where
 
 import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Either (Either(..))
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
-import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, mapMaybeWithKey, insert, alter) as Map
-import Data.Array (catMaybes, snoc) as Array
+import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter) as Map
+import Data.Array (index, catMaybes, snoc, updateAt) as Array
 import Data.Tuple (fst) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Bifunctor (lmap, rmap)
@@ -28,8 +28,6 @@ import Data.Foldable (foldl)
 
 import Yoga.Tree (Tree)
 import Yoga.Tree.Extended (break, build) as Tree
-import Yoga.Tree.Extended.Path (Path) as Tree
-import Yoga.Tree.Extended.Path as TPath
 
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
@@ -53,26 +51,9 @@ empty = Report Map.empty
 
 unwrap
     :: forall subj group item
-     . Ord group
-    => Report subj group item
-    -> Map subj (Map group (Array item))
-unwrap (Report subjsMap) =
-    subjGroups <$> subjsMap
-    where
-        findGroup :: Map GroupPath group -> GroupPath -> Maybe group
-        findGroup pathToGroup groupPath =
-            Map.lookup groupPath pathToGroup
-        wrapGroup :: Map GroupPath group -> GroupPath /\ Array item -> Maybe (group /\ Array item)
-        wrapGroup pathToGroup (groupPath /\ items) = findGroup pathToGroup groupPath <#> flip (/\) items
-        subjGroups (pathToGroup /\ pathToGroupItems) =
-            Map.fromFoldable $ Array.catMaybes $ wrapGroup pathToGroup <$> Map.toUnfoldable pathToGroupItems
-
-
-unwrap'
-    :: forall subj group item
      . Report subj group item
     -> Map subj (GroupsMap group item)
-unwrap' (Report subjsMap) = subjsMap
+unwrap (Report subjsMap) = subjsMap
 
 
 data TreeNode subj group item
@@ -98,6 +79,23 @@ build subjects =
             (Map.fromFoldable $ (\grp -> g_path grp /\ grp) <$> Tuple.fst <$> groupsArr)
             /\
             (Map.fromFoldable $ lmap g_path <$> groupsArr)
+
+
+toMap
+    :: forall subj group item
+     . Ord group
+    => Report subj group item
+    -> Map subj (Map group (Array item))
+toMap (Report subjsMap) =
+    subjGroups <$> subjsMap
+    where
+        findGroup :: Map GroupPath group -> GroupPath -> Maybe group
+        findGroup pathToGroup groupPath =
+            Map.lookup groupPath pathToGroup
+        wrapGroup :: Map GroupPath group -> GroupPath /\ Array item -> Maybe (group /\ Array item)
+        wrapGroup pathToGroup (groupPath /\ items) = findGroup pathToGroup groupPath <#> flip (/\) items
+        subjGroups (pathToGroup /\ pathToGroupItems) =
+            Map.fromFoldable $ Array.catMaybes $ wrapGroup pathToGroup <$> Map.toUnfoldable pathToGroupItems
 
 
 fromMap :: forall subj group item. Ord subj => IsGroup group => Map subj (Map group (Array item)) -> Report subj group item
@@ -171,3 +169,23 @@ fromTree toNode =
                 _ -> groupsMap /\ itemsMap
         addItem item (Just arr) = Just $ Array.snoc arr item
         addItem item Nothing = Just $ pure item
+
+
+withGroup :: forall subj group item. Ord subj =>subj -> GroupPath -> (group -> group) -> Report subj group item -> Maybe (Report subj group item)
+withGroup subj groupPath f (Report subjMap) = do
+    (pathToGroup /\ pathToItems) <- Map.lookup subj subjMap
+    curGroup <- Map.lookup groupPath pathToGroup
+    let nextPathToGroup = Map.insert groupPath (f curGroup) pathToGroup
+    let nextSubjMap = Map.insert subj (nextPathToGroup /\ pathToItems) subjMap
+    pure $ Report nextSubjMap
+
+
+withItem :: forall subj group item. Ord subj =>subj -> GroupPath -> Int -> (item -> item) -> Report subj group item -> Maybe (Report subj group item)
+withItem subj groupPath itemIdx f (Report subjMap) = do
+    (pathToGroup /\ pathToItems) <- Map.lookup subj subjMap
+    itemsArr <- Map.lookup groupPath pathToItems
+    curItem <- Array.index itemsArr itemIdx
+    nextItemsArr <- Array.updateAt itemIdx (f curItem) itemsArr
+    let nextPathToItems = Map.insert groupPath nextItemsArr pathToItems
+    let nextSubjMap = Map.insert subj (pathToGroup /\ nextPathToItems) subjMap
+    pure $ Report nextSubjMap

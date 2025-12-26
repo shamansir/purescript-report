@@ -26,7 +26,7 @@ import Halogen.HTML.Properties as HP
 import Report.GroupPath (howDeep) as S
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
 import Report.Class as S
-import Report (Report, unwrap) as S
+import Report (Report, toMap) as S
 
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
@@ -113,7 +113,7 @@ component preSelected =
     render :: State subj_id subj_tag (S.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
     render state =
         let
-            report = S.unwrap state.report
+            report = S.toMap state.report
             allSubjects = Set.toUnfoldable $ Map.keys report
             selKeys = selectionKeyToSubject allSubjects
         in HH.div
