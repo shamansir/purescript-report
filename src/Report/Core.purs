@@ -342,3 +342,6 @@ parseMonth = case _ of
     "Nov" -> Just Nov
     "Dec" -> Just Dec
     _ -> Nothing
+
+
+newtype EncodedValue = EncodedValue String

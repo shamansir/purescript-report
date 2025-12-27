@@ -4,9 +4,9 @@ import Prelude
 
 import Foreign (F, Foreign)
 
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith) as String
-import Data.FunctorWithIndex (mapWithIndex)
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
@@ -294,8 +294,8 @@ _readProgress (PValueTag atag) frgn =
         "T" -> PText <$> (readImpl frgn :: F String)
         "D" -> (\b -> ToComplete { done : b }) <$> (readImpl frgn :: F Boolean)
         "PCTI" -> PercentI <$> (readImpl frgn :: F Int)
-        "PCT" -> PercentN <$> (readImpl frgn :: F Number)
-        "PCTX" -> (\{ sign, pct } -> PercentSign { sign, pct }) <$> (readImpl frgn :: F { sign :: Int, pct :: Number })
+        "PCT"  -> PercentN <$> (readImpl frgn :: F Number)
+        "PCTX" -> (\{ sign, pct } -> PercentSign { sign, pct })    <$> (readImpl frgn :: F { sign :: Int, pct :: Number })
         "PI" -> (\{ done, total } -> ToGetI { got : done, total }) <$> (readImpl frgn :: F { done :: Int, total :: Int })
         "PD" -> (\{ done, total } -> ToGetN { got : done, total }) <$> (readImpl frgn :: F { done :: Number, total :: Number })
         "TIME" -> OnTime <$> (readImpl frgn :: F TimeRec)
@@ -326,13 +326,39 @@ _readProgress (PValueTag atag) frgn =
           , date
           }
 
-{-
-data Completion
-    = NotSet
-    | NotStarted
-    | Beaten
-    | Completed
-    | Unfinished
-    | Continuous
-    | Dropped
-    | Status String -}
+
+valueTagOf :: Progress -> PValueTag
+valueTagOf = case _ of
+    None -> PValueTag "E"
+    Unknown -> PValueTag "UNK"
+    PInt _ -> PValueTag "I"
+    PNumber _ -> PValueTag "N"
+    PText _ -> PValueTag "T"
+    ToComplete _ -> PValueTag "D"
+    PercentI _ -> PValueTag "PCTI"
+    PercentN _ -> PValueTag "PCT"
+    PercentSign _ -> PValueTag "PCTX"
+    ToGetI _ -> PValueTag "PI"
+    ToGetN _ -> PValueTag "PD"
+    OnTime _ -> PValueTag "TIME"
+    OnDate _ -> PValueTag "DATE"
+    PerI _ -> PValueTag "PERI"
+    PerN _ -> PValueTag "PERD"
+    MeasuredI _ -> PValueTag "MESI"
+    MeasuredN _ -> PValueTag "MESD"
+    MeasuredSign _ -> PValueTag "MESX"
+    RangeI _ -> PValueTag "RNGI"
+    RangeN _ -> PValueTag "RNGD"
+    Task _ -> PValueTag "PROC"
+    LevelsI _ -> PValueTag "LVLI"
+    LevelsN _ -> PValueTag "LVLD"
+    LevelsO _ -> PValueTag "LVLO"
+    LevelsS _ -> PValueTag "LVLS"
+    LevelsP _ -> PValueTag "LVLP"
+    LevelsC _ -> PValueTag "LVLC"
+    LevelsE _ -> PValueTag "LVLE"
+    Error _ -> PValueTag "X"
+
+
+unwrapValueTag :: PValueTag -> String
+unwrapValueTag (PValueTag t) = t

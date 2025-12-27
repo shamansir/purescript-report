@@ -38,6 +38,7 @@ type TagColors =
     , border :: String
     }
 
+
 class Eq t <= IsTag t where
     tagColors :: t -> TagColors
     tagContent   :: t -> String
