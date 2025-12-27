@@ -17,6 +17,7 @@ data Key
     | KEarnedAt
     | KDescription
     | KReference
+    -- TODO: make tags suffixes too
 
 
 derive instance Eq Key

@@ -57,7 +57,7 @@ type State subj_id subj_tag report =
     }
 
 
-type NavigatedTo = -- TODO: add subject
+type NavigatedTo = -- TODO: add subject, add tabular key
     { mbGroup :: Maybe GP.GroupPath
     , mbItem :: Maybe Int
     , mbSuffix :: Maybe Suffix.Key
@@ -348,8 +348,10 @@ renderSubject navigatedTo subj itemsMap  =
             renderGroupItem groupPath itemIdx item =
                 let
                     isNavigatedTo = navigatedTo # navigatedToItem groupPath itemIdx
-                    itemSelectedStyle = "background-color: #f0f8ff;"
+                    mbCurrentSuffix = if isNavigatedTo then navigatedTo.mbSuffix else Nothing
+                    itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
+                    makeSuffixClickEvt key mevt = NavigateToSuffix mevt groupPath itemIdx key
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
@@ -360,7 +362,7 @@ renderSubject navigatedTo subj itemsMap  =
                     $ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title
                         Nothing -> HH.text ""
-                    : renderSuffixes @item_tag item
+                    : renderSuffixes @item_tag makeSuffixClickEvt mbCurrentSuffix item
 
 
 initNavigation :: NavigatedTo
