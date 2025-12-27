@@ -3,13 +3,18 @@ module Report.Modifiers.Class.ValueModify where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Data.Tuple.Nested ((/\), type (/\))
+import Data.Tuple.Nested (type (/\))
 
+import Report.Core (EncodedValue)
 
-import Report.Core (EncodedValue(..))
-import Report.Modifiers.Progress
-import Report.Modifiers.Encoding.Progress as PEnc
 import Report.Modifiers (modifierKey)
+import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
+import Report.Modifiers.Stats (Stats)
+import Report.Modifiers.Task (TaskP)
+import Report.Modifiers.Encoding.Progress as PEnc
+import Report.Modifiers.Encoding.Task as TEnc
+import Report.Modifiers.Encoding.Stats as SEnc
+
 import Report.Prefix as Px
 import Report.Suffix as Sx
 
@@ -24,7 +29,7 @@ class Keyed k a where -- different from `IsModifier`/`modifierKey` key, that key
     keyOf :: a -> k
 
 
-class Keyed k a <= ValueModify k a where
+class {- Keyed k a <= -} ValueModify k a where
     toEditable :: a -> k /\ EncodedValue
     fromEditable :: k -> EncodedValue -> Maybe a
 
@@ -42,3 +47,11 @@ instance Keyed Sx.Key Sx.Suffix where
 instance ValueModify PValueTag Progress where
     toEditable = PEnc.encodeProgress
     fromEditable = PEnc.decodeProgress
+
+instance ValueModify Unit TaskP where
+    toEditable = TEnc.encodeTask >>> pure
+    fromEditable = const $ TEnc.decodeTask
+
+instance ValueModify (Maybe PValueTag) Stats where
+    toEditable = SEnc.encodeStats
+    fromEditable = SEnc.decodeStats

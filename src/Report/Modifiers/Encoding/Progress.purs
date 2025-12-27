@@ -2,20 +2,15 @@ module Report.Modifiers.Encoding.Progress where
 
 import Prelude
 
-import Data.FunctorWithIndex (mapWithIndex)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.Int (fromString) as Int
 import Data.Number (fromString) as Number
-import Data.String (joinWith, split, Pattern(..)) as String
+import Data.String (split, Pattern(..)) as String
 import Data.Tuple.Nested ((/\), type (/\))
 
-import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-
 import Report.Core as CT
-import Report.Modifiers.Task (TaskP, taskPFromString, taskPToString)
-
-import Report.Core as CT
-import Report.Modifiers.Progress
+import Report.Modifiers.Task (taskPFromString, taskPToString)
+import Report.Modifiers.Progress (PValueTag(..), Progress(..), unwrapValueTag, valueTagOf)
 
 
 encodeValueTag :: PValueTag -> String
