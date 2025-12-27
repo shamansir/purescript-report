@@ -7,7 +7,7 @@ import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry) as Tuple
@@ -23,10 +23,12 @@ import Halogen.HTML.Properties as HP
 -- import Input.GameLog.Backloggery.Game (Rec) as BLGame
 -- import Input.GameLog.Types as GLT
 
-import Report.GroupPath (howDeep) as S
+import Report.Core (EncodedValue(..))
+import Report.GroupPath (GroupPath, howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
 import Report.Class as S
 import Report (Report, toMap) as S
+import Report.Suffix (Key) as Suffix
 
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
@@ -36,28 +38,42 @@ import Report.Web.Suffix (renderSuffixes)
 
 
 type State subj_id subj_tag report =
-    { selected :: Array subj_id
+    { subjects :: Array subj_id
     , report :: report
     , filter :: Maybe String
     , tagFilter :: Array subj_tag
     , optionsPaneExpanded :: Boolean
     , sortBy :: SubjectSort
+    , readOnlyMode :: Boolean
+    , navigatedTo :: NavigatedTo
+    , editing :: Maybe EncodedValue
+    }
+
+
+type NavigatedTo =
+    { mbGroup :: Maybe GP.GroupPath
+    , mbItem :: Maybe Int
+    , mbSuffix :: Maybe Suffix.Key
     }
 
 
 type Input subj group item = S.Report subj group item
 
 
-data Action subj_id subj_tag input
-    = SelectItem subj_id
-    | AddToSelection subj_id
-    | DeselectItem subj_id
-    | DeselectAll
-    | Receive input
+data Action subj_id subj_tag report
+    = Receive report
+    | SelectSubject subj_id
+    | AddSubjectToSelection subj_id
+    | DeselectSubject subj_id
+    | DeselectAllSubjects
     | ChangeListFilter String
     | IncludeTag subj_tag
     | ExcludeTag subj_tag
     | ToggleOptionsPane
+    | ClearNavigation
+    | NavigateToGroup GP.GroupPath
+    | NavigateToItem GP.GroupPath Int
+    | NavigateToSuffix GP.GroupPath Int Suffix.Key
     | NextSort
 
 
@@ -99,12 +115,15 @@ component preSelected =
     where
     initialState :: Input subj group item -> State subj_id subj_tag (S.Report subj group item)
     initialState report =
-        { selected : preSelected
+        { subjects : preSelected
         , report
         , filter : Nothing
         , tagFilter : []
         , optionsPaneExpanded : true
         , sortBy : ByWeight
+        , readOnlyMode : true
+        , navigatedTo : initNavigation
+        , editing : Nothing
         }
 
     selectionKeyToSubject :: Array subj -> Map subj_id subj
@@ -119,31 +138,24 @@ component preSelected =
         in HH.div
             [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
             [ HH.div
-                [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;" ]
-                 $  Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag)
-                <$> Array.catMaybes ((\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> state.selected)
+                [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;"
+                -- , HE.onClick $ const ClearNavigation
+                ]
+                 $  Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
+                <$> Array.catMaybes ((\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> state.subjects)
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
             ]
 
     subjectsToc state allSubjects =
-        let
-            tagsFitHorz = 10
-            rowHeightVert = 17
-            selTagsRows = Int.ceil (Int.toNumber (Array.length state.tagFilter) / Int.toNumber tagsFitHorz)
-            collapsedOPHeight = selTagsRows * rowHeightVert
-            allTagsRows = Int.ceil (Int.toNumber (Array.length (S.allTags :: Array subj_tag)) / Int.toNumber tagsFitHorz)
-            expandedOPHeight = allTagsRows * rowHeightVert
-            listShift  = show (if state.optionsPaneExpanded then 40 + expandedOPHeight else 40 + collapsedOPHeight) <> "px"
-            listHeight = show (if state.optionsPaneExpanded then 92 else 95) <> "vh"
-        in HH.div
+        HH.div
             [ HP.style "padding: 9px 9px 0 0; width: 400px;" ]
             $ filterInput state
             : optionsPane state
             : (HH.div
                     [ HP.style $ "overflow-y: scroll;" ]
-                    $ subjTocRow state.selected <$> (applyFilter state.tagFilter state.sortBy state.filter) allSubjects)
+                    $ subjTocRow state.subjects <$> (applyFilter state.tagFilter state.sortBy state.filter) allSubjects)
             : []
 
     makeTagFilter [] _ = true
@@ -206,35 +218,25 @@ component preSelected =
             ]
             [ subjTagBadge tag ]
 
-    -- topInTheList = 500.0
-
-    -- getGameId = case _ of
-    --     FromDhall dhallKey _ -> Left dhallKey
-    --     Other (Ach.Game game) -> Right game.gameId
-
-    -- sortByAchieved = case _ of
-    --     FromDhall _ _ -> topInTheList
-    --     Other (Ach.Game game) -> game.stats # S.weightOf
-
     sortSubjects :: SubjectSort -> subj -> SortKey
     sortSubjects = case _ of
         ByWeight -> S.s_stats @subj_id @subj_tag >>> S.weightOf >>> SN
         Alpha -> S.s_name @subj_id @subj_tag >>> SS
 
-    subjTocRow selected subj =
+    subjTocRow selectedSubjects subj =
         let
             subjId = S.s_id @subj_id @subj_tag subj
-            isSelected = Array.elem subjId selected
+            isSelected = Array.elem subjId selectedSubjects
         in HH.div
             [ HP.style "margin: 5px 0;" ]
             [ HH.span
-                [ HE.onClick $ const $ if isSelected then DeselectItem subjId else AddToSelection subjId
+                [ HE.onClick $ const $ if isSelected then DeselectSubject subjId else AddSubjectToSelection subjId
                 , HP.style "cursor: pointer;"
                 ]
                 [ HH.text $ if isSelected then "(-)" else "(+)"
                 ]
             , HH.span
-                [ HE.onClick $ const $ SelectItem subjId
+                [ HE.onClick $ const $ SelectSubject subjId
                 , HP.style $ "background-color: " <> (if isSelected then "bisque" else "transparent") <> "; cursor: pointer; padding: 5px; margin-left: 5px;"
                 ]
                 (
@@ -262,45 +264,67 @@ component preSelected =
             m
             Unit
     handleAction = case _ of
-        SelectItem subjId -> H.modify_ _ { selected = [ subjId ] }
-        AddToSelection subjId -> H.modify_ \state -> state { selected = Array.snoc state.selected subjId }
-        DeselectItem subjId -> H.modify_ \state -> state { selected = Array.filter (_ /= subjId) state.selected }
-        DeselectAll -> H.modify_ _ { selected = [ ] }
+        SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] }
+        AddSubjectToSelection subjId -> H.modify_ \state -> state { subjects = Array.snoc state.subjects subjId }
+        DeselectSubject subjId -> H.modify_ \state -> state { subjects = Array.filter (_ /= subjId) state.subjects }
+        DeselectAllSubjects -> H.modify_ _ { subjects = [ ] }
         Receive nextReport -> H.modify_ _ { report = nextReport }
         ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then Just filter else Nothing }
         IncludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.snoc state.tagFilter subjTag }
         ExcludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
+        ClearNavigation -> H.modify_ _ { navigatedTo = clearNavigation }
+        NavigateToGroup groupPath -> H.modify_ _ { navigatedTo = navigateToGroup groupPath }
+        NavigateToItem groupPath itemIdx -> H.modify_ _ { navigatedTo = navigateToItem groupPath itemIdx }
+        NavigateToSuffix groupPath itemIdx suffixKey -> H.modify_ _ { navigatedTo = navigateToSuffix groupPath itemIdx suffixKey }
 
 
 renderSubject
-    :: forall @subj_id @subj_tag @item_tag subj group item slots action m
+    :: forall @subj_id @subj_tag @item_tag subj group item slots m
      . S.IsTag item_tag
     => S.IsItem item_tag item
     => S.IsGroup group
     => S.IsSubject subj_id subj_tag subj
-    => subj -> Map group (Array item) -> HH.ComponentHTML slots action m
-renderSubject subj itemsMap  =
+    => NavigatedTo
+    -> subj
+    -> Map group (Array item)
+    -> HH.ComponentHTML (Action subj_id subj_tag (S.Report subj group item)) slots m
+renderSubject navigatedTo subj itemsMap  =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;" ]
         $ HH.div
-            [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em; " ]
+            [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em; cursor-events: all;"
+            , HE.onClick $ const ClearNavigation
+            ]
             [ HH.text $ S.s_name @subj_id @subj_tag subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
-            marginFor groupPath = (max 0.0 $ (Int.toNumber $ S.howDeep groupPath) - 1.0) * nestMargin
+            marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             renderTree (group /\ groupItems) =
-                HH.div
-                    [ HP.style $ "padding-bottom: 10px; line-height: " <> show lineHeight <> "em; margin-left: " <> (show $ marginFor $ S.g_path group) <> "px;"
-                    , HP.id $ groupPathId $ S.g_path group
+                let
+                    groupPath = S.g_path group
+                    groupStats = S.g_stats group
+                    isNavigatedTo = navigatedTo # navigatedToGroup groupPath
+                in HH.div
+                    [ HP.style $ "padding-bottom: 10px; line-height: "
+                        <> show lineHeight <> "em; margin-left: "
+                        <> (show $ marginFor groupPath) <> "px;"
+                        -- <> (if isNavigatedTo then " background-color: #f0f8ff;" else "")
+                        <> "cursor-events: all;"
+                    , HP.id $ groupPathId groupPath
+                    , HE.onClick $ const $ NavigateToGroup groupPath
                     ]
-                    [ HH.span [ HP.style "font-weight: bold;" ] [ HH.text $ S.g_title group ]
+                    [ HH.span
+                        [ HP.style $ "font-weight: bold;"
+                            <> if isNavigatedTo then "border: 1px dashed #95bad8ff; background-color: #f0f8ff" else "border: 1px dashed transparent;"
+                        ]
+                        [ HH.text $ S.g_title group ]
                     , qspacerSpan
-                    , renderPath $ S.g_path group
+                    , renderPath groupPath
                     -- , HH.text (show group.mbIndexPath)
                     , qspacerSpan
-                    , renderGroupStats $ S.g_stats group
+                    , renderGroupStats groupStats
                     , HH.div
                         [ HP.style "border-left: 4px solid #eee; padding-left: 5px; margin-top: 10px; margin-bottom: 15px;" ]
                         $ renderGroupItem <$> groupItems
@@ -315,19 +339,51 @@ renderSubject subj itemsMap  =
                     : renderSuffixes @item_tag item
 
 
-{-
-gameName :: Game -> String
-gameName = case _ of
-    FromDhall dhallKey _ -> dhallKeyToGameName dhallKey
-    Other (Ach.Game game) -> game.name
+initNavigation :: NavigatedTo
+initNavigation =
+    { mbGroup : Nothing
+    , mbItem : Nothing
+    , mbSuffix : Nothing
+    }
 
 
-dhallKeyToGameName :: DhallKey -> String
-dhallKeyToGameName = case _ of
-    AstralChain -> "Astral Chain"
-    NonogramsKatana -> "Nonograms Katana"
-    Torchlight2 -> "Torchlight II"
-    ForzaHorizon5 -> "Forza Horizon 5"
-    StarlinkBattleOfAtlas -> "Starlink: Battle of Atlas"
-    MarioOdissey -> "Super Mario: Odissey"
--}
+clearNavigation :: NavigatedTo
+clearNavigation = initNavigation
+
+
+navigateToGroup :: GP.GroupPath -> NavigatedTo
+navigateToGroup groupPath =
+    { mbGroup : Just groupPath
+    , mbItem : Nothing
+    , mbSuffix : Nothing
+    }
+
+
+navigateToItem :: GP.GroupPath -> Int -> NavigatedTo
+navigateToItem groupPath itemIdx =
+    { mbGroup : Just groupPath
+    , mbItem : Just itemIdx
+    , mbSuffix : Nothing
+    }
+
+
+navigateToSuffix :: GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo
+navigateToSuffix groupPath itemIdx suffixKey =
+    { mbGroup : Just groupPath
+    , mbItem : Just itemIdx
+    , mbSuffix : Just suffixKey
+    }
+
+
+navigatedToGroup :: GP.GroupPath -> NavigatedTo -> Boolean
+navigatedToGroup groupPath navigatedTo
+    =  navigatedTo.mbGroup == Just groupPath
+navigatedToItem :: GP.GroupPath -> Int -> NavigatedTo -> Boolean
+navigatedToItem groupPath itemIdx navigatedTo
+    =  navigatedTo.mbGroup == Just groupPath
+    && navigatedTo.mbItem == Just itemIdx
+navigatedToSuffix :: GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo -> Boolean
+navigatedToSuffix groupPath itemIdx suffixKey navigatedTo
+    =  navigatedTo.mbGroup == Just groupPath
+    && navigatedTo.mbItem == Just itemIdx
+    && navigatedTo.mbSuffix == Just suffixKey
