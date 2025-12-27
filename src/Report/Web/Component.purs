@@ -2,6 +2,8 @@ module Report.Web.Component where
 
 import Prelude
 
+import Effect.Class (class MonadEffect)
+
 import Data.Array ((:))
 import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any) as Array
 import Data.Int as Int
@@ -12,6 +14,11 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry) as Tuple
 import Data.Tuple.Nested ((/\))
+import Data.FunctorWithIndex (mapWithIndex)
+
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent (toEvent) as ME
+import Web.Event.Event (stopPropagation) as Event
 
 import Halogen as H
 import Halogen.HTML as HH
@@ -50,7 +57,7 @@ type State subj_id subj_tag report =
     }
 
 
-type NavigatedTo =
+type NavigatedTo = -- TODO: add subject
     { mbGroup :: Maybe GP.GroupPath
     , mbItem :: Maybe Int
     , mbSuffix :: Maybe Suffix.Key
@@ -71,9 +78,9 @@ data Action subj_id subj_tag report
     | ExcludeTag subj_tag
     | ToggleOptionsPane
     | ClearNavigation
-    | NavigateToGroup GP.GroupPath
-    | NavigateToItem GP.GroupPath Int
-    | NavigateToSuffix GP.GroupPath Int Suffix.Key
+    | NavigateToGroup MouseEvent GP.GroupPath
+    | NavigateToItem MouseEvent GP.GroupPath Int
+    | NavigateToSuffix MouseEvent GP.GroupPath Int Suffix.Key
     | NextSort
 
 
@@ -96,7 +103,8 @@ derive instance Ord SortKey
 
 component
     :: forall @subj_id @subj_tag @item_tag subj group item query output m
-     . Ord subj_id
+     . MonadEffect m
+    => Ord subj_id
     => Ord subj
     => Ord group
     => S.IsTag subj_tag
@@ -254,6 +262,9 @@ component preSelected =
         ByWeight -> Alpha
         Alpha -> ByWeight
 
+    stopPropagation :: forall s a sl o. MouseEvent -> H.HalogenM s a o sl m Unit
+    stopPropagation mEvent = H.liftEffect $ Event.stopPropagation $ ME.toEvent mEvent
+
     handleAction
         :: Action subj_id subj_tag (Input subj group item)
         -> H.HalogenM
@@ -275,9 +286,12 @@ component preSelected =
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ _ { navigatedTo = clearNavigation }
-        NavigateToGroup groupPath -> H.modify_ _ { navigatedTo = navigateToGroup groupPath }
-        NavigateToItem groupPath itemIdx -> H.modify_ _ { navigatedTo = navigateToItem groupPath itemIdx }
-        NavigateToSuffix groupPath itemIdx suffixKey -> H.modify_ _ { navigatedTo = navigateToSuffix groupPath itemIdx suffixKey }
+        NavigateToGroup mevt groupPath ->
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = navigateToGroup groupPath }
+        NavigateToItem mevt groupPath itemIdx ->
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = navigateToItem groupPath itemIdx }
+        NavigateToSuffix mevt groupPath itemIdx suffixKey ->
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = navigateToSuffix groupPath itemIdx suffixKey }
 
 
 renderSubject
@@ -294,13 +308,15 @@ renderSubject navigatedTo subj itemsMap  =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;" ]
         $ HH.div
-            [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em; cursor-events: all;"
+            [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
             , HE.onClick $ const ClearNavigation
             ]
             [ HH.text $ S.s_name @subj_id @subj_tag subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
+            groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
+            groupUsualStyle = "border: 1px dashed transparent;"
             renderTree (group /\ groupItems) =
                 let
                     groupPath = S.g_path group
@@ -311,13 +327,12 @@ renderSubject navigatedTo subj itemsMap  =
                         <> show lineHeight <> "em; margin-left: "
                         <> (show $ marginFor groupPath) <> "px;"
                         -- <> (if isNavigatedTo then " background-color: #f0f8ff;" else "")
-                        <> "cursor-events: all;"
                     , HP.id $ groupPathId groupPath
-                    , HE.onClick $ const $ NavigateToGroup groupPath
+                    , HE.onClick $ \mevt -> NavigateToGroup mevt groupPath
                     ]
                     [ HH.span
                         [ HP.style $ "font-weight: bold;"
-                            <> if isNavigatedTo then "border: 1px dashed #95bad8ff; background-color: #f0f8ff" else "border: 1px dashed transparent;"
+                            <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
                         ]
                         [ HH.text $ S.g_title group ]
                     , qspacerSpan
@@ -327,12 +342,21 @@ renderSubject navigatedTo subj itemsMap  =
                     , renderGroupStats groupStats
                     , HH.div
                         [ HP.style "border-left: 4px solid #eee; padding-left: 5px; margin-top: 10px; margin-bottom: 15px;" ]
-                        $ renderGroupItem <$> groupItems
+                        $ mapWithIndex (renderGroupItem groupPath) groupItems
                     ]
 
-            renderGroupItem item =
-                HH.div
-                    []
+            renderGroupItem groupPath itemIdx item =
+                let
+                    isNavigatedTo = navigatedTo # navigatedToItem groupPath itemIdx
+                    itemSelectedStyle = "background-color: #f0f8ff;"
+                    itemUsualStyle = "background-color: transparent;"
+                    -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
+                    -- itemUsualStyle = "border: 1px dashed transparent;"
+                in HH.div
+                    [ HP.style
+                        $ if isNavigatedTo then itemSelectedStyle else itemUsualStyle
+                    , HE.onClick $ \mevt -> NavigateToItem mevt groupPath itemIdx
+                    ]
                     $ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title
                         Nothing -> HH.text ""

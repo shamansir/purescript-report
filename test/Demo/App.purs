@@ -5,7 +5,7 @@ import Prelude
 import Type.Proxy (Proxy(..))
 
 import Effect (Effect)
-import Effect.Class (liftEffect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log) as Console
 import Effect.Aff.Class (class MonadAff)
 
@@ -64,7 +64,7 @@ data Action
     | Initialize
 
 
-component :: forall query input output m. MonadAff m => H.Component query input output m
+component :: forall query input output m. MonadAff m => MonadEffect m => H.Component query input output m
 component = H.mkComponent
     { initialState: \_ -> { report: Nothing }
     , render
@@ -110,6 +110,6 @@ component = H.mkComponent
                 H.modify_ \s -> s { report = Just $ toReport $ GL.fromArray gameCollection}
 
 
-reportComponent :: forall query output m. H.Component query GL.GamesReport output m
+reportComponent :: forall query output m. MonadEffect m => H.Component query GL.GamesReport output m
 reportComponent =
     StatsReport.component @GL.GameId @GL.GameTag @GL.Tag [ GL.DHL "astral-chain" ]
