@@ -44,8 +44,15 @@ renderSuffixes onClick mbSelected item =
                 Nothing -> false
 
     in
-        suffixesKeys
-        <#> \key -> renderSuffix onClick i_suffixes (isSelected key) i_name key
+        ( suffixesKeys
+            <#> \key -> renderSuffix onClick i_suffixes (isSelected key) i_name key
+        )
+        <>
+        pure
+        ( case S.i_tags @item_tag item of
+            [] -> HH.text ""
+            tags -> HH.span [] $ itemTagBadge <$> tags
+        )
 
 
 renderSuffix
