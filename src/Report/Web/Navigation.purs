@@ -3,6 +3,7 @@ module Report.Web.Navigation where
 import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple.Nested ((/\))
 
 import Report.Core (EncodedValue)
 import Report.GroupPath as GP
@@ -18,6 +19,13 @@ type NavigatedTo subj_id = -- TODO: add subj_idect, add tabular key
     , mbSuffix :: Maybe Suffix.Key
     , mbEditing :: Maybe { what :: Modify.WhatKey, value :: EncodedValue }
     }
+
+
+data Location subj_id
+    = Nowhere
+    | AtGroup  subj_id GP.GroupPath
+    | AtItem   subj_id GP.GroupPath Int
+    | AtSuffix subj_id GP.GroupPath Int Suffix.Key
 
 
 init :: forall subj_id. NavigatedTo subj_id
@@ -109,6 +117,7 @@ editingAtSuffix subj groupPath itemIdx suffixKey navigatedTo
     =  atSuffix subj groupPath itemIdx suffixKey navigatedTo
     && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKItemSuffix) # fromMaybe false)
 
+
 toModification :: forall subj_id. NavigatedTo subj_id -> Maybe (Modification subj_id)
 toModification navigatedTo =
     navigatedTo.mbEditing >>=
@@ -145,3 +154,16 @@ toModification navigatedTo =
                         , newValue : value
                         }
                 Modify.WKItemPrefix -> Nothing -- TODO
+
+
+toLocation :: forall subj_id. NavigatedTo subj_id -> Location subj_id
+toLocation navigatedTo = case (  navigatedTo.mbSubjectId
+                              /\ navigatedTo.mbGroup
+                              /\ navigatedTo.mbItem
+                              /\ navigatedTo.mbSuffix
+                              ) of
+    ( Nothing /\  _ /\ _ /\ _ ) -> Nowhere
+    ( Just subj /\ Just groupPath /\ Nothing /\ _ ) -> AtGroup subj groupPath
+    ( Just subj /\ Just groupPath /\ Just itemIdx /\ Nothing ) -> AtItem subj groupPath itemIdx
+    ( Just subj /\ Just groupPath /\ Just itemIdx /\ Just suffixKey ) -> AtSuffix subj groupPath itemIdx suffixKey
+    _ -> Nowhere

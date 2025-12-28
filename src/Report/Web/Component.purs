@@ -43,7 +43,7 @@ import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Modifiers.Tag (subjTagBadge, subjTagWrap)
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Suffix (renderSuffixes)
-import Report.Web.Navigation (NavigatedTo)
+import Report.Web.Navigation (NavigatedTo, Location(..))
 import Report.Web.Navigation as Navigation
 
 
@@ -74,9 +74,7 @@ data Action subj_id subj_tag report
     | ExcludeTag subj_tag
     | ToggleOptionsPane
     | ClearNavigation
-    | NavigateToGroup MouseEvent subj_id GP.GroupPath
-    | NavigateToItem MouseEvent subj_id GP.GroupPath Int
-    | NavigateToSuffix MouseEvent subj_id GP.GroupPath Int Suffix.Key
+    | NavigateTo MouseEvent (Location subj_id)
     | NextSort
 
 
@@ -285,43 +283,37 @@ component preSelected =
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ _ { navigatedTo = Navigation.clear }
-        NavigateToGroup mevt subjId groupPath ->
+        NavigateTo mevt location ->
             let
-                nextNavigation   = Navigation.toGroup       subjId groupPath
-                editNavigation s = Navigation.editGroupName subjId groupPath
-                                        $ maybe (EncodedValue "") (S.g_title >>> EncodedValue)
-                                        $ S.findGroup subjId groupPath s.report
+                nextNavigation   = case location of
+                    AtGroup subjId groupPath ->
+                                                Navigation.toGroup subjId groupPath
+                    AtItem subjId groupPath itemIdx ->
+                                                Navigation.toItem subjId groupPath itemIdx
+                    AtSuffix subjId groupPath itemIdx suffixKey ->
+                                                Navigation.toSuffix subjId groupPath itemIdx suffixKey
+                    Nowhere ->
+                                                Navigation.clear
+                editNavigation s = case location of
+                    AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
+                                                $ maybe (EncodedValue "") (S.g_title >>> EncodedValue)
+                                                $ S.findGroup subjId groupPath s.report
+                    AtItem subjId groupPath itemIdx ->
+                                                Navigation.editItemName subjId groupPath itemIdx
+                                                $ maybe (EncodedValue "") (S.i_name @item_tag >>> EncodedValue)
+                                                $ S.findItem subjId groupPath itemIdx s.report
+                    AtSuffix subjId groupPath itemIdx suffixKey ->
+                                                Navigation.editSuffix subjId groupPath itemIdx suffixKey
+                                                $ maybe (EncodedValue "") (Suffix.encodeSuffix >>> Tuple.snd)
+                                                $ Suffix.get suffixKey
+                                                =<< S.i_suffixes @item_tag
+                                                <$> S.findItem subjId groupPath itemIdx s.report
+                    Nowhere -> s.navigatedTo
                 navigateOrEdit s =
                     if s.navigatedTo /= nextNavigation || s.readOnlyMode
                         then s { navigatedTo = nextNavigation }
                         else s { navigatedTo = editNavigation s }
             in stopPropagation mevt <> H.modify_ navigateOrEdit
-        NavigateToItem mevt subjId groupPath itemIdx ->
-            let
-                nextNavigation   = Navigation.toItem       subjId groupPath itemIdx
-                editNavigation s = Navigation.editItemName subjId groupPath itemIdx
-                                        $ maybe (EncodedValue "") (S.i_name @item_tag >>> EncodedValue)
-                                        $ S.findItem subjId groupPath itemIdx s.report
-                navigateOrEdit s =
-                    if s.navigatedTo /= nextNavigation || s.readOnlyMode
-                        then s { navigatedTo = nextNavigation }
-                        else s { navigatedTo = editNavigation s }
-            in stopPropagation mevt <> H.modify_ navigateOrEdit
-        NavigateToSuffix mevt subjId groupPath itemIdx suffixKey ->
-            let
-                nextNavigation   = Navigation.toSuffix   subjId groupPath itemIdx suffixKey
-                editNavigation s = Navigation.editSuffix subjId groupPath itemIdx suffixKey
-                                        $ maybe (EncodedValue "") (Suffix.encodeSuffix >>> Tuple.snd)
-                                        $ Suffix.get suffixKey
-                                       =<< S.i_suffixes @item_tag
-                                       <$> S.findItem subjId groupPath itemIdx s.report
-                navigateOrEdit s =
-                    if s.navigatedTo /= nextNavigation || s.readOnlyMode
-                        then s { navigatedTo = nextNavigation }
-                        else s { navigatedTo = editNavigation s }
-            in stopPropagation mevt <> H.modify_ navigateOrEdit
-
-            -- stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toSuffix subjId groupPath itemIdx suffixKey }
 
 
 renderSubject
@@ -360,7 +352,7 @@ renderSubject navigatedTo subj itemsMap  =
                         <> (show $ marginFor groupPath) <> "px;"
                         -- <> (if isNavigatedTo then " background-color: #f0f8ff;" else "")
                     , HP.id $ groupPathId groupPath
-                    , HE.onClick $ \mevt -> NavigateToGroup mevt subjId groupPath
+                    , HE.onClick $ \mevt -> NavigateTo mevt $ AtGroup subjId groupPath
                     ]
                     [ HH.span
                         [ HP.style $ "font-weight: bold;"
@@ -383,13 +375,13 @@ renderSubject navigatedTo subj itemsMap  =
                     mbCurrentSuffix = if isNavigatedTo then navigatedTo.mbSuffix else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
-                    makeSuffixClickEvt key mevt = NavigateToSuffix mevt subjId groupPath itemIdx key
+                    makeSuffixClickEvt key mevt = NavigateTo mevt $ AtSuffix subjId groupPath itemIdx key
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
                     [ HP.style
                         $ if isNavigatedTo then itemSelectedStyle else itemUsualStyle
-                    , HE.onClick $ \mevt -> NavigateToItem mevt subjId groupPath itemIdx
+                    , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
                     $ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title
