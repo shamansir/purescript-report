@@ -100,6 +100,8 @@ instance IsTag GameTag where
             , text : "white"
             , border : "gray"
             }
+    decodeTag :: String -> Maybe GameTag
+    decodeTag = decodeGameTag
     allTags :: Array GameTag
     allTags = allTags
 
@@ -109,9 +111,9 @@ instance IsSubjectId GameId Game where
 
 
 instance IsSubject GameId GameTag Game where
-    s_name = unwrap >>> _.name
+    s_name  = unwrap >>> _.name
     s_stats = unwrap >>> _.stats
-    s_tags = unwrap >>> case _ of
+    s_tags  = unwrap >>> case _ of
         { mbSource, mbPlatform } ->
                (maybe [] pure $ SourceTag   <$> mbSource)
             <> (maybe [] pure $ PlatformTag <$> mbPlatform)
@@ -128,3 +130,13 @@ instance Show GameId where
             "IBL:" <> show id <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
         EPC code ->
             "EPC:" <> code
+
+
+decodeGameTag :: String -> Maybe GameTag
+decodeGameTag str =
+    case str of
+        "Dhall" -> Just $ SourceTag S_Dhall
+        "LSeq"  -> Just $ SourceTag S_Logseq
+        "IBL"   -> Just $ SourceTag S_IBL
+        "BLG"   -> Just $ SourceTag S_Backloggery
+        _       -> Just $ PlatformTag $ GLT.parsePlatform str

@@ -14,7 +14,8 @@ import Report.Group (Group(..))
 import Report.GroupPath (GroupPath)
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Stats (Stats(..))
-import Report.Modifiers.Progress (Progress(..), NProgress(..))
+import Report.Modifiers.Tags (Tags(..))
+import Report.Modifiers.Progress (Progress(..), NProgress(..), loadNProgress)
 import Report.Suffix (Suffixes)
 import Report.Suffix as Suffixes
 import Report.Prefix (Prefixes)
@@ -133,78 +134,6 @@ getProgress :: Achievement -> Progress
 getProgress = unwrap >>> _.progress
 
 
-loadNProgress :: Progress -> NProgress
-loadNProgress =
-    case _ of
-        None -> NotAchieved
-        Unknown -> NotAchieved
-        PText _ -> StatsValue
-        PNumber _ -> StatsValue
-        PInt _ -> StatsValue
-        MeasuredI _ -> StatsValue
-        MeasuredN _ -> StatsValue
-        MeasuredSign _ -> StatsValue
-        PerI _ -> StatsValue
-        PerN _ -> StatsValue
-        OnDate _ -> StatsValue
-        OnTime _ -> StatsValue
-        RangeI _ -> StatsValue
-        RangeN _ -> StatsValue
-        ToComplete { done } -> if done then Achieved else NotAchieved
-        ToGetI { got, total } -> if got >= total && total /=   0 then Achieved else if got == 0   || total == 0   then NotAchieved else OnTheWay $ Int.toNumber $ got / total
-        ToGetN { got, total } -> if got >= total && total /= 0.0 then Achieved else if got == 0.0 || total == 0.0 then NotAchieved else OnTheWay $ got / total
-        PercentI i -> if i >= 100 then Achieved else if i == 0   then NotAchieved else OnTheWay $ Int.toNumber i / 100.0
-        PercentN n -> if n >= 1.0 then Achieved else if n == 0.0 then NotAchieved else OnTheWay n
-        PercentSign { pct, sign } ->
-            if (sign > 0) && (pct >= 1.0) then Achieved
-            else if (sign < 0) || (pct <= 0.0) then NotAchieved
-            else OnTheWay $ if sign >= 0 then pct else 0.0
-        Task task -> if task == TDone then Achieved else if task == TDoing then OnTheWay 0.5 else NotAchieved
-        LevelsN { reached, levels } ->
-            let
-                maximumTotal = foldl max 0.0 $ _.maximum <$> levels
-            in
-                if reached >= maximumTotal then Achieved
-                else if reached == 0.0 then NotAchieved
-                else OnTheWay $ reached / maximumTotal
-        LevelsI { reached, levels } ->
-            let
-                maximumTotal = foldl max 0 $ _.maximum <$> levels
-            in
-                if reached >= maximumTotal then Achieved
-                else if reached == 0 then NotAchieved
-                else OnTheWay $ Int.toNumber reached / Int.toNumber maximumTotal
-        LevelsO { reached, levels } ->
-            Skip -- Some values for levels are Maybe so we don't know for sure if user achieved something
-        LevelsS { reached, levels } -> -- FIXME: reached `0` is both reached first level and reached nothing?
-            if reached + 1 >= Array.length levels then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
-        LevelsE { reached, total } -> -- FIXME: reached `0` is both reached first level and reached nothing?
-            if reached >= total then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber total
-        LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } -> -- FIXME: can be unfair
-            if (levelReached == totalLevels) && (reachedAtCurrent == maximumAtCurrent) then Achieved
-            else if (levelReached == 0) && (totalLevels /= 0) && (reachedAtCurrent == 0) then NotAchieved
-            else OnTheWay $ Int.toNumber levelReached / Int.toNumber totalLevels -- FIXME: we don't add `reachedAtCurrent`
-        LevelsP { levels } ->
-            if Array.all (_ == TDone) $ _.proc <$> levels
-              then Achieved
-              else
-                let reached = foldl (+) 0 $ (\lvl -> if lvl == TDone then 1 else 0) <$> _.proc <$> levels
-                in if reached > 0 && Array.length levels > 0 then
-                      OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
-                   else NotAchieved
-        Error _ -> Skip
-
-
-nProgressToNumber :: NProgress -> Number
-nProgressToNumber = case _ of
-    Achieved -> 1.0
-    OnTheWay n -> min 1.0 n
-    NotAchieved -> 0.0
-    StatsValue -> -1.0
-    Skip -> -2.0
-
-
-
 collectStatsRaw :: Array Achievement -> Stats
 collectStatsRaw flattened =
     let
@@ -246,11 +175,13 @@ instance IsTag Tag where
             , text : "black"
             , border : "blue"
             }
+    decodeTag :: String -> Maybe Tag
+    decodeTag = Just <<< Tag
     allTags :: Array Tag
     allTags = []
 
 
-loadSuffixes :: Achievement -> Suffixes
+loadSuffixes :: Achievement -> Suffixes Tag
 loadSuffixes = unwrap >>> \achRec ->
     Suffixes.empty
     # (Suffixes.put $ Suffixes.SProgress achRec.progress)
@@ -266,6 +197,10 @@ loadSuffixes = unwrap >>> \achRec ->
         Just descr -> Suffixes.put $ Suffixes.SDescription descr
         Nothing -> identity
        )
+    # (case achRec.tags of
+        []  -> identity
+        arr ->  Suffixes.put $ Suffixes.STags $ Tags $ Tag <$> arr
+       )
 
 
 loadPrefixes :: Achievement -> Prefixes
@@ -276,7 +211,7 @@ instance IsItem Tag Achievement where
     i_name = unwrap >>> _.name
     i_mbTitle = unwrap >>> _.mbTitle
     i_locked =  unwrap >>> _.locked
-    i_tags = unwrap >>> _.tags >>> map Tag
+    -- i_tags = unwrap >>> _.tags >>> map Tag
     i_suffixes = loadSuffixes
     i_prefixes = loadPrefixes
 
