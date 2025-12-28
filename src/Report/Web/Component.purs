@@ -9,10 +9,10 @@ import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
-import Data.Tuple (uncurry) as Tuple
+import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\))
 import Data.FunctorWithIndex (mapWithIndex)
 
@@ -34,8 +34,9 @@ import Report.Core (EncodedValue(..))
 import Report.GroupPath (GroupPath, howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
 import Report.Class as S
-import Report (Report, toMap) as S
-import Report.Suffix (Key) as Suffix
+import Report (Report, toMap, findGroup, findItem) as S
+import Report.Suffix (Key, get) as Suffix
+import Report.Encoding.Suffix as Suffix
 
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
@@ -284,12 +285,43 @@ component preSelected =
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ _ { navigatedTo = Navigation.clear }
-        NavigateToGroup mevt subjId  groupPath ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toGroup subjId groupPath }
+        NavigateToGroup mevt subjId groupPath ->
+            let
+                nextNavigation   = Navigation.toGroup       subjId groupPath
+                editNavigation s = Navigation.editGroupName subjId groupPath
+                                        $ maybe (EncodedValue "") (S.g_title >>> EncodedValue)
+                                        $ S.findGroup subjId groupPath s.report
+                navigateOrEdit s =
+                    if s.navigatedTo /= nextNavigation || s.readOnlyMode
+                        then s { navigatedTo = nextNavigation }
+                        else s { navigatedTo = editNavigation s }
+            in stopPropagation mevt <> H.modify_ navigateOrEdit
         NavigateToItem mevt subjId groupPath itemIdx ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toItem subjId groupPath itemIdx }
+            let
+                nextNavigation   = Navigation.toItem       subjId groupPath itemIdx
+                editNavigation s = Navigation.editItemName subjId groupPath itemIdx
+                                        $ maybe (EncodedValue "") (S.i_name @item_tag >>> EncodedValue)
+                                        $ S.findItem subjId groupPath itemIdx s.report
+                navigateOrEdit s =
+                    if s.navigatedTo /= nextNavigation || s.readOnlyMode
+                        then s { navigatedTo = nextNavigation }
+                        else s { navigatedTo = editNavigation s }
+            in stopPropagation mevt <> H.modify_ navigateOrEdit
         NavigateToSuffix mevt subjId groupPath itemIdx suffixKey ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toSuffix subjId groupPath itemIdx suffixKey }
+            let
+                nextNavigation   = Navigation.toSuffix   subjId groupPath itemIdx suffixKey
+                editNavigation s = Navigation.editSuffix subjId groupPath itemIdx suffixKey
+                                        $ maybe (EncodedValue "") (Suffix.encodeSuffix >>> Tuple.snd)
+                                        $ Suffix.get suffixKey
+                                       =<< S.i_suffixes @item_tag
+                                       <$> S.findItem subjId groupPath itemIdx s.report
+                navigateOrEdit s =
+                    if s.navigatedTo /= nextNavigation || s.readOnlyMode
+                        then s { navigatedTo = nextNavigation }
+                        else s { navigatedTo = editNavigation s }
+            in stopPropagation mevt <> H.modify_ navigateOrEdit
+
+            -- stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toSuffix subjId groupPath itemIdx suffixKey }
 
 
 renderSubject

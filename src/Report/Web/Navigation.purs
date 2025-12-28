@@ -6,7 +6,8 @@ import Data.Maybe (Maybe(..), fromMaybe)
 
 import Report.Core (EncodedValue)
 import Report.GroupPath as GP
-import Report.Modify (WhereKey(..), Where(..), Modification)
+import Report.Modify (Modification)
+import Report.Modify (What(..), WhatKey(..)) as Modify
 import Report.Suffix (Key) as Suffix
 
 
@@ -15,7 +16,7 @@ type NavigatedTo subj_id = -- TODO: add subj_idect, add tabular key
     , mbGroup :: Maybe GP.GroupPath
     , mbItem :: Maybe Int
     , mbSuffix :: Maybe Suffix.Key
-    , mbEditing :: Maybe { where_ :: WhereKey, value :: EncodedValue }
+    , mbEditing :: Maybe { what :: Modify.WhatKey, value :: EncodedValue }
     }
 
 
@@ -66,19 +67,19 @@ toSuffix subj groupPath itemIdx suffixKey =
 editGroupName :: forall subj_id. subj_id -> GP.GroupPath -> EncodedValue -> NavigatedTo subj_id
 editGroupName subj groupPath encValue =
     toGroup subj groupPath
-    # _ { mbEditing = Just { where_ : WKGroupName, value : encValue } }
+    # _ { mbEditing = Just { what : Modify.WKGroupName, value : encValue } }
 
 
 editItemName :: forall subj_id. subj_id -> GP.GroupPath -> Int -> EncodedValue -> NavigatedTo subj_id
 editItemName subj groupPath itemIdx encValue =
     toItem subj groupPath itemIdx
-    # _ { mbEditing = Just { where_ : WKItemName, value : encValue } }
+    # _ { mbEditing = Just { what : Modify.WKItemName, value : encValue } }
 
 
 editSuffix :: forall subj_id. subj_id -> GP.GroupPath -> Int -> Suffix.Key -> EncodedValue -> NavigatedTo subj_id
 editSuffix subj groupPath itemIdx suffixKey encValue =
     toSuffix subj groupPath itemIdx suffixKey
-    # _ { mbEditing = Just { where_ : WKItemSuffix, value : encValue } }
+    # _ { mbEditing = Just { what : Modify.WKItemSuffix, value : encValue } }
 
 
 atGroup :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Boolean
@@ -98,42 +99,41 @@ atSuffix subj groupPath itemIdx suffixKey navigatedTo
 editingGroupName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Boolean
 editingGroupName subj groupPath navigatedTo
     =  atGroup subj groupPath navigatedTo
-    && (navigatedTo.mbEditing <#> _.where_ <#> (_ == WKGroupName) # fromMaybe false)
+    && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKGroupName) # fromMaybe false)
 editingItemName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean
 editingItemName subj groupPath itemIdx navigatedTo
     =  atItem subj groupPath itemIdx navigatedTo
-    && (navigatedTo.mbEditing <#> _.where_ <#> (_ == WKItemName) # fromMaybe false)
+    && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKItemName) # fromMaybe false)
 editingAtSuffix :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo subj_id -> Boolean
 editingAtSuffix subj groupPath itemIdx suffixKey navigatedTo
     =  atSuffix subj groupPath itemIdx suffixKey navigatedTo
-    && (navigatedTo.mbEditing <#> _.where_ <#> (_ == WKItemSuffix) # fromMaybe false)
-
+    && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKItemSuffix) # fromMaybe false)
 
 toModification :: forall subj_id. NavigatedTo subj_id -> Maybe (Modification subj_id)
 toModification navigatedTo =
     navigatedTo.mbEditing >>=
-        \({ where_, value }) ->
-            case where_ of
-                WKGroupName -> do
+        \({ what, value }) ->
+            case what of
+                Modify.WKGroupName -> do
                     subjId <- navigatedTo.mbSubjectId
                     groupPath <- navigatedTo.mbGroup
                     pure
                         { subjId : subjId
                         , path : groupPath
-                        , where_ : GroupName
+                        , what : Modify.GroupName
                         , newValue : value
                         }
-                WKItemName -> do
+                Modify.WKItemName -> do
                     subjId <- navigatedTo.mbSubjectId
                     groupPath <- navigatedTo.mbGroup
                     itemIdx <- navigatedTo.mbItem
                     pure
                         { subjId : subjId
                         , path : groupPath
-                        , where_ : ItemName itemIdx
+                        , what : Modify.ItemName itemIdx
                         , newValue : value
                         }
-                WKItemSuffix -> do
+                Modify.WKItemSuffix -> do
                     subjId <- navigatedTo.mbSubjectId
                     groupPath <- navigatedTo.mbGroup
                     suffixKey <- navigatedTo.mbSuffix
@@ -141,7 +141,7 @@ toModification navigatedTo =
                     pure
                         { subjId : subjId
                         , path : groupPath
-                        , where_ : ItemSuffix itemIdx suffixKey
+                        , what : Modify.ItemSuffix itemIdx suffixKey
                         , newValue : value
                         }
-                WKItemPrefix -> Nothing -- TODO
+                Modify.WKItemPrefix -> Nothing -- TODO

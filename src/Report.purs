@@ -11,6 +11,7 @@ module Report
     , TreeNode(..)
     , class ToReport, toReport
     , withGroup, withItem
+    , findGroup, findItem
     )
     where
 
@@ -20,8 +21,9 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
 import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter) as Map
+import Data.Map.Extra (lookupByEq, lookupByEq') as Map
 import Data.Array (index, catMaybes, snoc, updateAt) as Array
-import Data.Tuple (fst) as Tuple
+import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Bifunctor (lmap, rmap)
 import Data.Foldable (foldl)
@@ -31,7 +33,7 @@ import Yoga.Tree.Extended (break, build) as Tree
 
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
-import Report.Class (class IsGroup, g_path)
+import Report.Class (class IsGroup, g_path, class IsSubjectId, s_id)
 
 
 type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)
@@ -171,21 +173,72 @@ fromTree toNode =
         addItem item Nothing = Just $ pure item
 
 
-withGroup :: forall subj group item. Ord subj => subj -> GroupPath -> (group -> group) -> Report subj group item -> Maybe (Report subj group item)
-withGroup subj groupPath f (Report subjMap) = do
-    (pathToGroup /\ pathToItems) <- Map.lookup subj subjMap
+withGroup
+    :: forall subj_id subj group item
+     . IsSubjectId subj_id subj
+    => Ord subj_id
+    => Ord subj
+    => subj_id
+    -> GroupPath
+    -> (group -> group)
+    -> Report subj group item
+    -> Maybe (Report subj group item)
+withGroup subjId groupPath f (Report subjMap) = do
+    subj /\ pathToGroup /\ pathToItems <- Map.lookupByEq' s_id subjId subjMap
     curGroup <- Map.lookup groupPath pathToGroup
     let nextPathToGroup = Map.insert groupPath (f curGroup) pathToGroup
     let nextSubjMap = Map.insert subj (nextPathToGroup /\ pathToItems) subjMap
     pure $ Report nextSubjMap
 
 
-withItem :: forall subj group item. Ord subj =>subj -> GroupPath -> Int -> (item -> item) -> Report subj group item -> Maybe (Report subj group item)
-withItem subj groupPath itemIdx f (Report subjMap) = do
-    (pathToGroup /\ pathToItems) <- Map.lookup subj subjMap
+withItem
+    :: forall subj_id subj group item
+     . IsSubjectId subj_id subj
+    => Ord subj_id
+    => Ord subj
+    => subj_id
+    -> GroupPath
+    -> Int
+    -> (item -> item)
+    -> Report subj group item
+    -> Maybe (Report subj group item)
+withItem subjId groupPath itemIdx f (Report subjMap) = do
+    subj /\ pathToGroup /\ pathToItems <- Map.lookupByEq' s_id subjId subjMap
     itemsArr <- Map.lookup groupPath pathToItems
     curItem <- Array.index itemsArr itemIdx
     nextItemsArr <- Array.updateAt itemIdx (f curItem) itemsArr
     let nextPathToItems = Map.insert groupPath nextItemsArr pathToItems
     let nextSubjMap = Map.insert subj (pathToGroup /\ nextPathToItems) subjMap
     pure $ Report nextSubjMap
+
+
+findGroup
+    :: forall subj_id subj group item
+     . IsSubjectId subj_id subj
+    => Ord subj_id
+    => Ord subj
+    => subj_id
+    -> GroupPath
+    -> Report subj group item
+    -> Maybe group
+findGroup subjId groupPath (Report subjMap) = do
+    Map.lookupByEq s_id subjId subjMap
+        <#> Tuple.fst
+        >>= Map.lookup groupPath
+
+
+findItem
+    :: forall subj_id subj group item
+     . IsSubjectId subj_id subj
+    => Ord subj_id
+    => Ord subj
+    => subj_id
+    -> GroupPath
+    -> Int
+    -> Report subj group item
+    -> Maybe item
+findItem subjId groupPath itemIdx (Report subjMap) =
+    Map.lookupByEq s_id subjId subjMap
+        <#> Tuple.snd
+        >>= Map.lookup groupPath
+        >>= flip Array.index itemIdx

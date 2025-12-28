@@ -14,7 +14,7 @@ import Report (Report)
 import Report (withGroup, withItem) as Report
 
 
-data Where
+data What
     = GroupName
     -- | GroupStat -- TODO
     | ItemName Int
@@ -26,7 +26,7 @@ data Where
     -- | AddGroup -- TODO
 
 
-data WhereKey
+data WhatKey
     = WKGroupName
     -- | WKGroupStat -- TODO
     | WKItemName
@@ -38,13 +38,13 @@ data WhereKey
     -- | WKAddGroup -- TODO
 
 
-derive instance Eq WhereKey
+derive instance Eq WhatKey
 
 
 type Modification subj_id =
     { subjId :: subj_id
     , path :: GroupPath
-    , where_ :: Where
+    , what :: What
     , newValue :: EncodedValue
     }
 
@@ -54,20 +54,28 @@ class GroupModify group where
     setGroupStats :: Stats -> group -> group
 
 
-modifyAt :: forall subj group item. Ord subj => IsGroup group => GroupModify group => Modification subj -> Report subj group item -> Maybe (Report subj group item)
-modifyAt { subjId, where_, newValue, path } report = case where_ of
+modifyAt
+    :: forall subj_id subj group item
+     . Ord subj
+    => Ord subj_id
+    => IsSubjectId subj_id subj
+    => IsGroup group
+    => GroupModify group
+    => Modification subj_id
+    -> Report subj group item
+    -> Maybe (Report subj group item)
+modifyAt { subjId, what, newValue, path } report = case what of
     GroupName -> do
-        Report.withGroup subj path (setGroupName $ unwrapEditable newValue) report
+        Report.withGroup subjId path (setGroupName $ unwrapEditable newValue) report
     -- GroupStat -> do
     --     Report.withGroup subj path (\group -> setGroupStats (groupStatsFromEditable newValue group) group) report
     ItemName itemIdx -> do
-        Report.withItem subj path itemIdx (identity {- TODO -}) report
+        Report.withItem subjId path itemIdx (identity {- TODO -}) report
     ItemPrefix itemIdx pkey -> do
-        Report.withItem subj path itemIdx (identity {- TODO -}) report
+        Report.withItem subjId path itemIdx (identity {- TODO -}) report
     ItemSuffix itemIdx skey -> do
-        Report.withItem subj path itemIdx (identity {- TODO -}) report
+        Report.withItem subjId path itemIdx (identity {- TODO -}) report
     where
-        subj = subjId
         unwrapEditable (EncodedValue string) = string
         -- groupStatsFromEditable :: Editable -> group -> Stats
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable
