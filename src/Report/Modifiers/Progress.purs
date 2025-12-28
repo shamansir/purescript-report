@@ -193,6 +193,7 @@ type ProgressJsonRec = { t :: PValueTag, v :: Foreign }
 newtype ProgressJson = ProgressJson ProgressJsonRec
 derive newtype instance Eq PValueTag
 derive newtype instance Ord PValueTag
+derive newtype instance Show PValueTag
 derive newtype instance ReadForeign PValueTag
 derive newtype instance WriteForeign PValueTag
 

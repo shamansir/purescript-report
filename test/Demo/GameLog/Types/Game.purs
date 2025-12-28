@@ -115,3 +115,16 @@ instance IsSubject GameId GameTag Game where
         { mbSource, mbPlatform } ->
                (maybe [] pure $ SourceTag   <$> mbSource)
             <> (maybe [] pure $ PlatformTag <$> mbPlatform)
+
+
+instance Show GameId where
+    show = case _ of
+        DHL code -> "DHL:" <> code
+        LGS code mbPlatform ->
+            "LGS:" <> code <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
+        BLG code platform ->
+            "BLG:" <> code <> "(" <> show platform <> ")"
+        IBL id mbPlatform ->
+            "IBL:" <> show id <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
+        EPC code ->
+            "EPC:" <> code

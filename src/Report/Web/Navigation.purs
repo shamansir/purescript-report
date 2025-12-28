@@ -104,18 +104,27 @@ atSuffix subj groupPath itemIdx suffixKey navigatedTo
     && navigatedTo.mbSuffix == Just suffixKey
 
 
-editingGroupName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Boolean
+editingGroupName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Maybe EncodedValue
 editingGroupName subj groupPath navigatedTo
-    =  atGroup subj groupPath navigatedTo
-    && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKGroupName) # fromMaybe false)
-editingItemName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean
+    =  if atGroup subj groupPath navigatedTo
+    then case navigatedTo.mbEditing of
+        Just { what : Modify.WKGroupName, value } -> Just value
+        _ -> Nothing
+    else Nothing
+editingItemName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Maybe EncodedValue
 editingItemName subj groupPath itemIdx navigatedTo
-    =  atItem subj groupPath itemIdx navigatedTo
-    && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKItemName) # fromMaybe false)
-editingAtSuffix :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo subj_id -> Boolean
+    =  if atItem subj groupPath itemIdx navigatedTo
+    then case navigatedTo.mbEditing of
+        Just { what : Modify.WKItemName, value } -> Just value
+        _ -> Nothing
+    else Nothing
+editingAtSuffix :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo subj_id -> Maybe EncodedValue
 editingAtSuffix subj groupPath itemIdx suffixKey navigatedTo
-    =  atSuffix subj groupPath itemIdx suffixKey navigatedTo
-    && (navigatedTo.mbEditing <#> _.what <#> (_ == Modify.WKItemSuffix) # fromMaybe false)
+    =  if atSuffix subj groupPath itemIdx suffixKey navigatedTo
+    then case navigatedTo.mbEditing of
+        Just { what : Modify.WKItemSuffix, value } -> Just value
+        _ -> Nothing
+    else Nothing
 
 
 toModification :: forall subj_id. NavigatedTo subj_id -> Maybe (Modification subj_id)

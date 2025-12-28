@@ -31,12 +31,12 @@ import Halogen.HTML.Properties as HP
 -- import Input.GameLog.Types as GLT
 
 import Report.Core (EncodedValue(..))
-import Report.GroupPath (GroupPath, howDeep) as GP
+import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
 import Report.Class as S
 import Report (Report, toMap, findGroup, findItem) as S
-import Report.Suffix (Key, get) as Suffix
-import Report.Encoding.Suffix as Suffix
+import Report.Suffix (get, debugNavLabel) as Suffix
+import Report.Encoding.Suffix (encodeSuffix) as Suffix
 
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
@@ -45,6 +45,9 @@ import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Suffix (renderSuffixes)
 import Report.Web.Navigation (NavigatedTo, Location(..))
 import Report.Web.Navigation as Navigation
+
+
+showNavigationDebugHint = true :: Boolean
 
 
 type State subj_id subj_tag report =
@@ -56,7 +59,6 @@ type State subj_id subj_tag report =
     , sortBy :: SubjectSort
     , readOnlyMode :: Boolean
     , navigatedTo :: NavigatedTo subj_id
-    , editing :: Maybe EncodedValue
     }
 
 
@@ -98,6 +100,7 @@ derive instance Ord SortKey
 component
     :: forall @subj_id @subj_tag @item_tag subj group item query output m
      . MonadEffect m
+    => Show subj_id
     => Ord subj_id
     => Ord subj
     => Ord group
@@ -125,7 +128,6 @@ component preSelected =
         , sortBy : ByWeight
         , readOnlyMode : true
         , navigatedTo : Navigation.init
-        , editing : Nothing
         }
 
     s_id :: subj -> subj_id
@@ -151,6 +153,7 @@ component preSelected =
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
+            , if showNavigationDebugHint then navigationHint state.navigatedTo else HH.text ""
             ]
 
     subjectsToc state allSubjects =
@@ -254,6 +257,34 @@ component preSelected =
                 )
 
             ]
+
+    navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
+    hintIfEditing Nothing = HH.text ""
+    hintIfEditing (Just { value : EncodedValue val }) = HH.text $ "E:" <> show val
+    navigationHint navigation =
+        case Navigation.toLocation navigation of
+            Nowhere -> HH.text ""
+            AtGroup subjId groupPath ->
+                HH.div
+                    [ HP.style navigationHintStyle ]
+                    [ HH.text $ "G: " <> show subjId <> " / " <> show groupPath
+                    , qspacerSpan
+                    , hintIfEditing navigation.mbEditing
+                    ]
+            AtItem subjId groupPath itemIdx ->
+                HH.div
+                    [ HP.style navigationHintStyle ]
+                    [ HH.text $ "I: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
+                    , qspacerSpan
+                    , hintIfEditing navigation.mbEditing
+                    ]
+            AtSuffix subjId groupPath itemIdx suffixKey ->
+                HH.div
+                    [ HP.style navigationHintStyle ]
+                    [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Suffix.debugNavLabel suffixKey
+                    , qspacerSpan
+                    , hintIfEditing navigation.mbEditing
+                    ]
 
     nextSort = case _ of
         ByWeight -> Alpha
@@ -372,6 +403,8 @@ renderSubject navigatedTo subj itemsMap  =
             renderGroupItem groupPath itemIdx item =
                 let
                     isNavigatedTo = navigatedTo # Navigation.atItem subjId groupPath itemIdx
+                    isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
+                    isEditingSuffix suffix = navigatedTo # Navigation.editingAtSuffix subjId groupPath itemIdx suffix
                     mbCurrentSuffix = if isNavigatedTo then navigatedTo.mbSuffix else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
@@ -386,4 +419,4 @@ renderSubject navigatedTo subj itemsMap  =
                     $ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title
                         Nothing -> HH.text ""
-                    : renderSuffixes @item_tag makeSuffixClickEvt mbCurrentSuffix item
+                    : renderSuffixes @item_tag makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item

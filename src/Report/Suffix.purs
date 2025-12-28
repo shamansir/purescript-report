@@ -89,3 +89,11 @@ orderIndex = case _ of
     KEarnedAt -> 1
     KDescription -> 2
     KReference -> 3
+
+
+debugNavLabel :: Key -> String
+debugNavLabel = case _ of
+    KProgress pvtag -> "PROG(" <> show pvtag <> ")"
+    KEarnedAt -> "EARN"
+    KDescription -> "DESC"
+    KReference -> "REF"

@@ -30,10 +30,12 @@ renderSuffixes
      . S.IsTag item_tag
     => S.IsItem item_tag item
     => (Suffix.Key -> MouseEvent -> i)
+    -> (Suffix.Key -> Maybe CT.EncodedValue)
     -> Maybe Suffix.Key
+    -> Maybe CT.EncodedValue
     -> item
     -> Array (H w i)
-renderSuffixes onClick mbSelected item =
+renderSuffixes onClick isEditingSuffix mbSelected mbEditItemName item =
     let
         i_suffixes = S.i_suffixes @item_tag item
         i_name = S.i_name @item_tag item
