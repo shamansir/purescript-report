@@ -25,8 +25,11 @@ class IsGroup a where
     g_stats :: a -> S.Stats
 
 
-class IsSubject i t a where
+class IsSubjectId i a where
     s_id :: a -> i
+
+
+class IsSubjectId i a <= IsSubject i t a where
     s_name :: a -> String
     s_tags :: a -> Array t
     s_stats :: a -> S.Stats

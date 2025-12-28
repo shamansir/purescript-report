@@ -19,7 +19,8 @@ import Report.Encoding.Suffix as SxEnc
 import Report.Prefix as Px
 import Report.Suffix as Sx
 
-class IsKey k where
+
+class EncodableKey k where
     encodeKey :: k -> String
     decodeKey :: String -> Maybe k
 
@@ -45,17 +46,17 @@ instance Keyed Sx.Key Sx.Suffix where
 
 
 instance ValueModify PValueTag Progress where
-    toEditable = PEnc.encodeProgress
+    toEditable   = PEnc.encodeProgress
     fromEditable = PEnc.decodeProgress
 
 instance ValueModify Unit TaskP where
-    toEditable = TEnc.encodeTask >>> pure
+    toEditable   = TEnc.encodeTask >>> pure
     fromEditable = const $ TEnc.decodeTask
 
 instance ValueModify (Maybe PValueTag) Stats where
-    toEditable = SEnc.encodeStats
+    toEditable   = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
 
 instance ValueModify Sx.Key Sx.Suffix where
-    toEditable = SxEnc.encodeSuffix
+    toEditable   = SxEnc.encodeSuffix
     fromEditable = SxEnc.decodeSuffix

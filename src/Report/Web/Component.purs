@@ -130,7 +130,7 @@ component preSelected =
         }
 
     s_id :: subj -> subj_id
-    s_id subj = S.s_id @subj_id @subj_tag subj
+    s_id subj = S.s_id subj
 
     selectionKeyToSubject :: Array subj -> Map subj_id subj
     selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
@@ -313,7 +313,7 @@ renderSubject navigatedTo subj itemsMap  =
             [ HH.text $ S.s_name @subj_id @subj_tag subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
-            subjId = S.s_id @subj_id @subj_tag subj
+            subjId = S.s_id subj
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"

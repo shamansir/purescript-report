@@ -171,7 +171,7 @@ fromTree toNode =
         addItem item Nothing = Just $ pure item
 
 
-withGroup :: forall subj group item. Ord subj =>subj -> GroupPath -> (group -> group) -> Report subj group item -> Maybe (Report subj group item)
+withGroup :: forall subj group item. Ord subj => subj -> GroupPath -> (group -> group) -> Report subj group item -> Maybe (Report subj group item)
 withGroup subj groupPath f (Report subjMap) = do
     (pathToGroup /\ pathToItems) <- Map.lookup subj subjMap
     curGroup <- Map.lookup groupPath pathToGroup

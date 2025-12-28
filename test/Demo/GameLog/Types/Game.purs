@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
 
-import Report.Class (class IsSubject, class IsTag, TagColors)
+import Report.Class (class IsSubjectId, class IsSubject, class IsTag, TagColors)
 import Report.Modifiers.Stats (Stats)
 
 import GameLog.Types as GLT
@@ -104,8 +104,11 @@ instance IsTag GameTag where
     allTags = allTags
 
 
-instance IsSubject GameId GameTag Game where
+instance IsSubjectId GameId Game where
     s_id = unwrap >>> _.gameId
+
+
+instance IsSubject GameId GameTag Game where
     s_name = unwrap >>> _.name
     s_stats = unwrap >>> _.stats
     s_tags = unwrap >>> case _ of
