@@ -6,6 +6,7 @@ import Data.Maybe (Maybe)
 import Data.Tuple.Nested (type (/\))
 
 import Report.Core (EncodedValue)
+import Report.Class (class IsTag)
 
 import Report.Modifiers (modifierKey)
 import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
@@ -41,7 +42,7 @@ instance Keyed PValueTag Progress where
 instance Keyed Px.Key Px.Prefix where
     keyOf = modifierKey -- ...but can be used for editing anyway
 
-instance Keyed Sx.Key Sx.Suffix where
+instance Keyed Sx.Key (Sx.Suffix t) where
     keyOf = modifierKey -- ...but can be used for editing anyway
 
 
@@ -57,6 +58,6 @@ instance ValueModify (Maybe PValueTag) Stats where
     toEditable   = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
 
-instance ValueModify Sx.Key Sx.Suffix where
+instance (IsTag t) => ValueModify Sx.Key (Sx.Suffix t) where
     toEditable   = SxEnc.encodeSuffix
     fromEditable = SxEnc.decodeSuffix

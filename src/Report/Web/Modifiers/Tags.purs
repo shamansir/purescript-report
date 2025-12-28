@@ -1,4 +1,4 @@
-module Report.Web.Modifiers.Tag where
+module Report.Web.Modifiers.Tags where
 
 import Prelude
 

@@ -18,9 +18,10 @@ import Report.Suffix (Suffixes)
 import Report.Suffix as Suffixes
 import Report.Suffix (Key(..), Suffix(..)) as Suffix
 import Report.GroupPath (GroupPath)
+import Report.Modifiers.Tags (Tags(..))
 
 import Report.Web.Modifiers.Progress (renderProgress)
-import Report.Web.Modifiers.Tag (itemTagBadge)
+import Report.Web.Modifiers.Tags (itemTagBadge)
 import Report.Web.GroupPath (renderGroupRef)
 import Report.Web.Helpers (H, qcolorSpan, qspacerSpan, timeColor)
 
@@ -46,21 +47,15 @@ renderSuffixes onClick isEditingSuffix mbSelected mbEditItemName item =
                 Nothing -> false
 
     in
-        ( suffixesKeys
+        suffixesKeys
             <#> \key -> renderSuffix onClick i_suffixes (isSelected key) i_name key
-        )
-        <>
-        pure
-        ( case S.i_tags @item_tag item of
-            [] -> HH.text ""
-            tags -> HH.span [] $ itemTagBadge <$> tags
-        )
 
 
 renderSuffix
-    :: forall w i
-     . (Suffix.Key -> MouseEvent -> i)
-    -> Suffixes
+    :: forall t w i
+     . S.IsTag t
+    => (Suffix.Key -> MouseEvent -> i)
+    -> Suffixes t
     -> Boolean
     -> String
     -> Suffix.Key
@@ -106,6 +101,12 @@ renderSuffix onClick suffixes isSelected itemName key =
                 renderGroupRef groupRef
             Just _ -> HH.text ""
             Nothing -> HH.text ""
+        Suffix.KTags -> case Suffixes.get key suffixes of
+            Just (Suffix.STags (Tags tags)) ->
+                HH.span [] $ itemTagBadge <$> tags
+            Just _ -> HH.text ""
+            Nothing -> HH.text ""
+
 
     {-
         [ wrapSuffix Suffix.KProgress $ case i_suffixes # Suffixes.getProgress of

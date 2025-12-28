@@ -12,11 +12,10 @@ import Report.GroupPath (GroupPath) as S
 
 class IsItem t a where
     i_name :: a -> String
-    i_suffixes :: a -> Suffixes
+    i_suffixes :: a -> Suffixes t
     i_prefixes :: a -> Prefixes
     i_mbTitle :: a -> Maybe String
     i_locked :: a -> Boolean
-    i_tags :: a -> Array t
 
 
 class IsGroup a where
@@ -44,5 +43,6 @@ type TagColors =
 
 class Eq t <= IsTag t where
     tagColors :: t -> TagColors
-    tagContent   :: t -> String
+    tagContent :: t -> String
+    decodeTag :: String -> Maybe t
     allTags :: Array t

@@ -7,12 +7,15 @@ import Foreign (F, Foreign)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith) as String
+import Data.Int (toNumber) as Int
+import Data.Foldable (foldl)
+import Data.Array (length, all) as Array
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
 import Report.Modifiers (class IsModifier)
-import Report.Modifiers.Task (TaskP)
+import Report.Modifiers.Task (TaskP(..))
 
 type DateRec = CT.SDateRec
 type TimeRec = CT.STimeRec
@@ -370,3 +373,77 @@ unwrapValueTag (PValueTag t) = t
 
 instance IsModifier PValueTag Progress where
     modifierKey = valueTagOf
+
+
+loadNProgress :: Progress -> NProgress
+loadNProgress =
+    case _ of
+        None -> NotAchieved
+        Unknown -> NotAchieved
+        PText _ -> StatsValue
+        PNumber _ -> StatsValue
+        PInt _ -> StatsValue
+        MeasuredI _ -> StatsValue
+        MeasuredN _ -> StatsValue
+        MeasuredSign _ -> StatsValue
+        PerI _ -> StatsValue
+        PerN _ -> StatsValue
+        OnDate _ -> StatsValue
+        OnTime _ -> StatsValue
+        RangeI _ -> StatsValue
+        RangeN _ -> StatsValue
+        ToComplete { done } -> if done then Achieved else NotAchieved
+        ToGetI { got, total } -> if got >= total && total /=   0 then Achieved else if got == 0   || total == 0   then NotAchieved else OnTheWay $ Int.toNumber $ got / total
+        ToGetN { got, total } -> if got >= total && total /= 0.0 then Achieved else if got == 0.0 || total == 0.0 then NotAchieved else OnTheWay $ got / total
+        PercentI i -> if i >= 100 then Achieved else if i == 0   then NotAchieved else OnTheWay $ Int.toNumber i / 100.0
+        PercentN n -> if n >= 1.0 then Achieved else if n == 0.0 then NotAchieved else OnTheWay n
+        PercentSign { pct, sign } ->
+            if (sign > 0) && (pct >= 1.0) then Achieved
+            else if (sign < 0) || (pct <= 0.0) then NotAchieved
+            else OnTheWay $ if sign >= 0 then pct else 0.0
+        Task task -> if task == TDone then Achieved else if task == TDoing then OnTheWay 0.5 else NotAchieved
+        LevelsN { reached, levels } ->
+            let
+                maximumTotal = foldl max 0.0 $ _.maximum <$> levels
+            in
+                if reached >= maximumTotal then Achieved
+                else if reached == 0.0 then NotAchieved
+                else OnTheWay $ reached / maximumTotal
+        LevelsI { reached, levels } ->
+            let
+                maximumTotal = foldl max 0 $ _.maximum <$> levels
+            in
+                if reached >= maximumTotal then Achieved
+                else if reached == 0 then NotAchieved
+                else OnTheWay $ Int.toNumber reached / Int.toNumber maximumTotal
+        LevelsO { reached, levels } ->
+            Skip -- Some values for levels are Maybe so we don't know for sure if user achieved something
+        LevelsS { reached, levels } -> -- FIXME: reached `0` is both reached first level and reached nothing?
+            if reached + 1 >= Array.length levels then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
+        LevelsE { reached, total } -> -- FIXME: reached `0` is both reached first level and reached nothing?
+            if reached >= total then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber total
+        LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } -> -- FIXME: can be unfair
+            if (levelReached == totalLevels) && (reachedAtCurrent == maximumAtCurrent) then Achieved
+            else if (levelReached == 0) && (totalLevels /= 0) && (reachedAtCurrent == 0) then NotAchieved
+            else OnTheWay $ Int.toNumber levelReached / Int.toNumber totalLevels -- FIXME: we don't add `reachedAtCurrent`
+        LevelsP { levels } ->
+            if Array.all (_ == TDone) $ _.proc <$> levels
+              then Achieved
+              else
+                let reached = foldl (+) 0 $ (\lvl -> if lvl == TDone then 1 else 0) <$> _.proc <$> levels
+                in if reached > 0 && Array.length levels > 0 then
+                      OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
+                   else NotAchieved
+        Error _ -> Skip
+
+
+nProgressToNumber :: NProgress -> Number
+nProgressToNumber = case _ of
+    Achieved -> 1.0
+    OnTheWay n -> min 1.0 n
+    NotAchieved -> 0.0
+    StatsValue -> -1.0
+    Skip -> -2.0
+
+
+

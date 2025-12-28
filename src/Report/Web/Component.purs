@@ -40,7 +40,7 @@ import Report.Encoding.Suffix (encodeSuffix) as Suffix
 
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
-import Report.Web.Modifiers.Tag (subjTagBadge, subjTagWrap)
+import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap)
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Suffix (renderSuffixes)
 import Report.Web.Navigation (NavigatedTo, Location(..))
@@ -126,7 +126,7 @@ component preSelected =
         , tagFilter : []
         , optionsPaneExpanded : true
         , sortBy : ByWeight
-        , readOnlyMode : true
+        , readOnlyMode : false
         , navigatedTo : Navigation.init
         }
 
@@ -257,34 +257,6 @@ component preSelected =
                 )
 
             ]
-
-    navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
-    hintIfEditing Nothing = HH.text ""
-    hintIfEditing (Just { value : EncodedValue val }) = HH.text $ "E:" <> show val
-    navigationHint navigation =
-        case Navigation.toLocation navigation of
-            Nowhere -> HH.text ""
-            AtGroup subjId groupPath ->
-                HH.div
-                    [ HP.style navigationHintStyle ]
-                    [ HH.text $ "G: " <> show subjId <> " / " <> show groupPath
-                    , qspacerSpan
-                    , hintIfEditing navigation.mbEditing
-                    ]
-            AtItem subjId groupPath itemIdx ->
-                HH.div
-                    [ HP.style navigationHintStyle ]
-                    [ HH.text $ "I: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
-                    , qspacerSpan
-                    , hintIfEditing navigation.mbEditing
-                    ]
-            AtSuffix subjId groupPath itemIdx suffixKey ->
-                HH.div
-                    [ HP.style navigationHintStyle ]
-                    [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Suffix.debugNavLabel suffixKey
-                    , qspacerSpan
-                    , hintIfEditing navigation.mbEditing
-                    ]
 
     nextSort = case _ of
         ByWeight -> Alpha
@@ -420,3 +392,35 @@ renderSubject navigatedTo subj itemsMap  =
                         Just title -> HH.text title
                         Nothing -> HH.text ""
                     : renderSuffixes @item_tag makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item
+
+
+-- TODO: remove
+navigationHint :: forall subj_id w i. Show subj_id => NavigatedTo subj_id -> HH.HTML w i
+navigationHint navigation =
+    let
+        navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
+        hintIfEditing Nothing = HH.text ""
+        hintIfEditing (Just { value : EncodedValue val }) = HH.text $ "E:" <> show val
+    in case Navigation.toLocation navigation of
+        Nowhere -> HH.text ""
+        AtGroup subjId groupPath ->
+            HH.div
+                [ HP.style navigationHintStyle ]
+                [ HH.text $ "G: " <> show subjId <> " / " <> show groupPath
+                , qspacerSpan
+                , hintIfEditing navigation.mbEditing
+                ]
+        AtItem subjId groupPath itemIdx ->
+            HH.div
+                [ HP.style navigationHintStyle ]
+                [ HH.text $ "I: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
+                , qspacerSpan
+                , hintIfEditing navigation.mbEditing
+                ]
+        AtSuffix subjId groupPath itemIdx suffixKey ->
+            HH.div
+                [ HP.style navigationHintStyle ]
+                [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Suffix.debugNavLabel suffixKey
+                , qspacerSpan
+                , hintIfEditing navigation.mbEditing
+                ]
