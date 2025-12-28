@@ -42,6 +42,8 @@ import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Modifiers.Tag (subjTagBadge, subjTagWrap)
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Suffix (renderSuffixes)
+import Report.Web.Navigation (NavigatedTo)
+import Report.Web.Navigation as Navigation
 
 
 type State subj_id subj_tag report =
@@ -54,13 +56,6 @@ type State subj_id subj_tag report =
     , readOnlyMode :: Boolean
     , navigatedTo :: NavigatedTo
     , editing :: Maybe EncodedValue
-    }
-
-
-type NavigatedTo = -- TODO: add subject, add tabular key
-    { mbGroup :: Maybe GP.GroupPath
-    , mbItem :: Maybe Int
-    , mbSuffix :: Maybe Suffix.Key
     }
 
 
@@ -130,7 +125,7 @@ component preSelected =
         , optionsPaneExpanded : true
         , sortBy : ByWeight
         , readOnlyMode : true
-        , navigatedTo : initNavigation
+        , navigatedTo : Navigation.init
         , editing : Nothing
         }
 
@@ -285,13 +280,13 @@ component preSelected =
         ExcludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
-        ClearNavigation -> H.modify_ _ { navigatedTo = clearNavigation }
+        ClearNavigation -> H.modify_ _ { navigatedTo = Navigation.clear }
         NavigateToGroup mevt groupPath ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = navigateToGroup groupPath }
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toGroup groupPath }
         NavigateToItem mevt groupPath itemIdx ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = navigateToItem groupPath itemIdx }
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toItem groupPath itemIdx }
         NavigateToSuffix mevt groupPath itemIdx suffixKey ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = navigateToSuffix groupPath itemIdx suffixKey }
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toSuffix groupPath itemIdx suffixKey }
 
 
 renderSubject
@@ -321,7 +316,7 @@ renderSubject navigatedTo subj itemsMap  =
                 let
                     groupPath = S.g_path group
                     groupStats = S.g_stats group
-                    isNavigatedTo = navigatedTo # navigatedToGroup groupPath
+                    isNavigatedTo = navigatedTo # Navigation.atGroup groupPath
                 in HH.div
                     [ HP.style $ "padding-bottom: 10px; line-height: "
                         <> show lineHeight <> "em; margin-left: "
@@ -347,7 +342,7 @@ renderSubject navigatedTo subj itemsMap  =
 
             renderGroupItem groupPath itemIdx item =
                 let
-                    isNavigatedTo = navigatedTo # navigatedToItem groupPath itemIdx
+                    isNavigatedTo = navigatedTo # Navigation.atItem groupPath itemIdx
                     mbCurrentSuffix = if isNavigatedTo then navigatedTo.mbSuffix else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
@@ -363,53 +358,3 @@ renderSubject navigatedTo subj itemsMap  =
                         Just title -> HH.text title
                         Nothing -> HH.text ""
                     : renderSuffixes @item_tag makeSuffixClickEvt mbCurrentSuffix item
-
-
-initNavigation :: NavigatedTo
-initNavigation =
-    { mbGroup : Nothing
-    , mbItem : Nothing
-    , mbSuffix : Nothing
-    }
-
-
-clearNavigation :: NavigatedTo
-clearNavigation = initNavigation
-
-
-navigateToGroup :: GP.GroupPath -> NavigatedTo
-navigateToGroup groupPath =
-    { mbGroup : Just groupPath
-    , mbItem : Nothing
-    , mbSuffix : Nothing
-    }
-
-
-navigateToItem :: GP.GroupPath -> Int -> NavigatedTo
-navigateToItem groupPath itemIdx =
-    { mbGroup : Just groupPath
-    , mbItem : Just itemIdx
-    , mbSuffix : Nothing
-    }
-
-
-navigateToSuffix :: GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo
-navigateToSuffix groupPath itemIdx suffixKey =
-    { mbGroup : Just groupPath
-    , mbItem : Just itemIdx
-    , mbSuffix : Just suffixKey
-    }
-
-
-navigatedToGroup :: GP.GroupPath -> NavigatedTo -> Boolean
-navigatedToGroup groupPath navigatedTo
-    =  navigatedTo.mbGroup == Just groupPath
-navigatedToItem :: GP.GroupPath -> Int -> NavigatedTo -> Boolean
-navigatedToItem groupPath itemIdx navigatedTo
-    =  navigatedTo.mbGroup == Just groupPath
-    && navigatedTo.mbItem == Just itemIdx
-navigatedToSuffix :: GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo -> Boolean
-navigatedToSuffix groupPath itemIdx suffixKey navigatedTo
-    =  navigatedTo.mbGroup == Just groupPath
-    && navigatedTo.mbItem == Just itemIdx
-    && navigatedTo.mbSuffix == Just suffixKey

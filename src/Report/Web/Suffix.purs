@@ -75,7 +75,7 @@ renderSuffix onClick suffixes isSelected itemName key =
                 [ content ]
     in
     wrapSuffix $ case key of
-        Suffix.KProgress ptag -> case Suffixes.get key suffixes of
+        Suffix.KProgress _ -> case Suffixes.get key suffixes of
             Just (Suffix.SProgress progress) -> renderProgress itemName progress
             Just _ -> HH.text ""
             Nothing -> HH.text ""
