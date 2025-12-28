@@ -1,4 +1,4 @@
-module Report.Modifiers.Encoding.Task where
+module Report.Encoding.Modifiers.Task where
 
 import Prelude
 

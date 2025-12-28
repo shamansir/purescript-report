@@ -11,20 +11,20 @@ import Report.Modifiers (modifierKey)
 import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Task (TaskP)
-import Report.Modifiers.Encoding.Progress as PEnc
-import Report.Modifiers.Encoding.Task as TEnc
-import Report.Modifiers.Encoding.Stats as SEnc
+import Report.Encoding.Modifiers.Progress as PEnc
+import Report.Encoding.Modifiers.Task as TEnc
+import Report.Encoding.Modifiers.Stats as SEnc
+import Report.Encoding.Suffix as SxEnc
 
 import Report.Prefix as Px
 import Report.Suffix as Sx
-
-
 
 class IsKey k where
     encodeKey :: k -> String
     decodeKey :: String -> Maybe k
 
 
+-- FIXME: not used
 class Keyed k a where -- different from `IsModifier`/`modifierKey` key, that key is used to store in the `Map` and this one is for editing
     keyOf :: a -> k
 
@@ -55,3 +55,7 @@ instance ValueModify Unit TaskP where
 instance ValueModify (Maybe PValueTag) Stats where
     toEditable = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
+
+instance ValueModify Sx.Key Sx.Suffix where
+    toEditable = SxEnc.encodeSuffix
+    fromEditable = SxEnc.decodeSuffix

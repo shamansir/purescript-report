@@ -1,16 +1,15 @@
-module Report.Modifiers.Encoding.Progress where
+module Report.Encoding.Modifiers.Progress where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Data.Int (fromString) as Int
+import Data.Maybe (Maybe(..))
 import Data.Number (fromString) as Number
 import Data.String (split, Pattern(..)) as String
 import Data.Tuple.Nested ((/\), type (/\))
-
 import Report.Core as CT
-import Report.Modifiers.Task (taskPFromString, taskPToString)
 import Report.Modifiers.Progress (PValueTag(..), Progress(..), unwrapValueTag, valueTagOf)
+import Report.Modifiers.Task (taskPFromString, taskPToString)
 
 
 encodeValueTag :: PValueTag -> String
@@ -51,6 +50,39 @@ decodeValueTag = case _ of
     _ -> Nothing
 
 
+encodeDate :: CT.SDate -> String
+encodeDate (CT.SDate { day, month, year }) =
+    show day <> "-" <> show (CT.monthToInt month) <> "-" <> show year
+
+
+decodeDate :: String -> Maybe CT.SDate
+decodeDate evStr = case qsplit "-" evStr of
+    [ dayStr, monStr, yearStr ] ->
+        (\day mon year -> CT.SDate { day, month : CT.monthFromInt mon, year })
+        <$> Int.fromString dayStr
+        <*> Int.fromString monStr
+        <*> Int.fromString yearStr
+    _ -> Nothing
+
+
+encodeTime :: CT.STimeRec -> String
+encodeTime { hrs, min, sec } = show hrs <> ":" <> show min <> ":" <> show sec
+
+
+decodeTime :: String -> Maybe CT.STimeRec
+decodeTime evStr = case qsplit ":" evStr of
+    [ hrsStr, minStr, secStr ] ->
+        (\hrs min sec -> { hrs, min, sec })
+        <$> Int.fromString hrsStr
+        <*> Int.fromString minStr
+        <*> Int.fromString secStr
+    [ hrsStr, minStr ] ->
+        (\hrs min -> { hrs, min, sec : 0 })
+        <$> Int.fromString hrsStr
+        <*> Int.fromString minStr
+    _ -> Nothing
+
+
 encodeProgress :: Progress -> PValueTag /\ CT.EncodedValue
 encodeProgress p = valueTagOf p /\ (CT.EncodedValue $ case p of
     None -> ""
@@ -64,8 +96,8 @@ encodeProgress p = valueTagOf p /\ (CT.EncodedValue $ case p of
     PercentSign { sign, pct } -> show sign <> ";" <> show pct
     ToGetI { got, total } -> show got <> "/" <> show total
     ToGetN { got, total } -> show got <> "/" <> show total
-    OnTime { hrs, min, sec } -> show hrs <> ":" <> show min <> ":" <> show sec
-    OnDate (CT.SDate { day, month, year }) -> show day <> "-" <> show (CT.monthToInt month) <> "-" <> show year
+    OnTime { hrs, min, sec } -> encodeTime { hrs, min, sec }
+    OnDate stDate -> encodeDate stDate
     PerI { amount, per } -> show amount <> ";" <> per
     PerN { amount, per } -> show amount <> ";" <> per
     MeasuredI { amount, measure } -> show amount <> ";" <> measure
@@ -117,20 +149,8 @@ decodeProgress pvt (CT.EncodedValue evStr) = case unwrapValueTag pvt of
             <$> Number.fromString gotStr
             <*> Number.fromString totalStr
         _ -> Nothing
-    "TIME" -> case qsplit ":" evStr of
-        [ hrsStr, minStr, secStr ] ->
-            (\hrs min sec -> OnTime { hrs, min, sec })
-            <$> Int.fromString hrsStr
-            <*> Int.fromString minStr
-            <*> Int.fromString secStr
-        _ -> Nothing
-    "DATE" -> case qsplit "-" evStr of
-        [ dayStr, monStr, yearStr ] ->
-            (\day mon year -> OnDate (CT.SDate { day, month : CT.monthFromInt mon, year }))
-            <$> Int.fromString dayStr
-            <*> Int.fromString monStr
-            <*> Int.fromString yearStr
-        _ -> Nothing
+    "TIME" -> decodeTime evStr <#> OnTime
+    "DATE" -> decodeDate evStr <#> OnDate
     "PERI" -> case qsplit ";" evStr of
         [ amountStr, per ] ->
             (\amount per -> PerI { amount, per })
@@ -185,7 +205,9 @@ decodeProgress pvt (CT.EncodedValue evStr) = case unwrapValueTag pvt of
     "X" -> Just $ Error evStr
     _ -> Nothing
     where
-        qsplit sep = String.split (String.Pattern sep)
         signFrom "+" = Just $  1
         signFrom "-" = Just $ -1
         signFrom _   = Nothing
+
+
+qsplit sep = String.split (String.Pattern sep)

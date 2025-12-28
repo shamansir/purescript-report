@@ -11,6 +11,7 @@ import Data.String (joinWith) as String
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
+import Report.Modifiers (class IsModifier)
 import Report.Modifiers.Task (TaskP)
 
 type DateRec = CT.SDateRec
@@ -190,6 +191,8 @@ progressToString = case _ of
 newtype PValueTag = PValueTag String
 type ProgressJsonRec = { t :: PValueTag, v :: Foreign }
 newtype ProgressJson = ProgressJson ProgressJsonRec
+derive newtype instance Eq PValueTag
+derive newtype instance Ord PValueTag
 derive newtype instance ReadForeign PValueTag
 derive newtype instance WriteForeign PValueTag
 
@@ -362,3 +365,7 @@ valueTagOf = case _ of
 
 unwrapValueTag :: PValueTag -> String
 unwrapValueTag (PValueTag t) = t
+
+
+instance IsModifier PValueTag Progress where
+    modifierKey = valueTagOf

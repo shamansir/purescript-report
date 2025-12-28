@@ -4,10 +4,9 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
-import Data.String (joinWith) as String
-import Data.FoldableWithIndex (foldlWithIndex)
+import Data.String (split, joinWith, Pattern(..)) as String
 import Data.Array (length, index) as Array
-
+import Data.FoldableWithIndex (foldlWithIndex)
 import Yoga.JSON (class ReadForeign, class WriteForeign)
 
 
@@ -60,6 +59,16 @@ startsWithNotEq possibleStart sample =
             true
             possibleStartArr
     )
+
+
+encode :: GroupPath -> String
+encode gp = String.joinWith "::" (pathToArray gp)
+
+
+decode :: String -> Maybe GroupPath
+decode str = case String.split (String.Pattern "::") str of
+    [] -> Nothing
+    arr -> Just $ pathFromArray arr
 
 
 {-

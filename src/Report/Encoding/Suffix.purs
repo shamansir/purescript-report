@@ -1,0 +1,37 @@
+module Report.Encoding.Suffix where
+
+import Prelude
+
+import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\), type (/\))
+
+import Report.Core as CT
+import Report.GroupPath as GP
+import Report.Suffix (Suffix(..), Key(..))
+import Report.Encoding.Modifiers.Progress as PEnc
+
+
+encodeSuffix :: Suffix -> Key /\ CT.EncodedValue
+encodeSuffix s = case s of
+    SProgress progress -> case PEnc.encodeProgress progress of
+        pkey /\ ev -> KProgress pkey /\ ev
+    SEarnedAt sdate ->
+        KEarnedAt /\ (CT.EncodedValue $ PEnc.encodeDate sdate)
+    SDescription desc ->
+        KDescription /\ CT.EncodedValue desc
+    SReference gpath ->
+        KReference /\ (CT.EncodedValue $ GP.encode gpath)
+
+
+decodeSuffix :: Key -> CT.EncodedValue -> Maybe Suffix
+decodeSuffix key (CT.EncodedValue evStr) = case key of
+    KProgress pTag ->
+        PEnc.decodeProgress pTag (CT.EncodedValue evStr)
+            <#> SProgress
+    KEarnedAt ->
+        PEnc.decodeDate evStr
+            <#> SEarnedAt
+    KDescription ->
+        Just $ SDescription evStr
+    KReference ->
+        GP.decode evStr <#> SReference

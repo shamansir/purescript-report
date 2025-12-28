@@ -10,6 +10,7 @@ import Data.Array ((:))
 import Data.Array as Array
 
 import Report.Core as CT
+import Report.Modifiers (class IsModifier)
 import Report.Modifiers.Task (TaskP(..)) as S
 import Report.Modifiers.Progress (Progress(..)) as Prog
 
@@ -451,6 +452,3 @@ renderLevelP levelN { proc, name } =
             , qtaskCheckbox proc
             ]
         ]
-
-
-

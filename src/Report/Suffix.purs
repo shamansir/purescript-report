@@ -5,15 +5,15 @@ import Prelude
 import Data.Maybe (Maybe(..))
 
 import Report.Core as CT
-import Report.GroupPath (GroupPath) as S
-import Report.Modifiers.Progress (Progress) as S
+import Report.GroupPath (GroupPath) as GP
+import Report.Modifiers.Progress (Progress, PValueTag) as P
 -- import Report.Modifiers.Stats (Stats) as S
-import Report.Modifiers (Modifiers, class IsModifier)
+import Report.Modifiers (Modifiers, class IsModifier, modifierKey)
 import Report.Modifiers (empty, get, put, keys) as Mod
 
 
 data Key
-    = KProgress
+    = KProgress P.PValueTag
     | KEarnedAt
     | KDescription
     | KReference
@@ -21,14 +21,15 @@ data Key
 
 
 derive instance Eq Key
-derive instance Ord Key
+instance Ord Key where
+    compare a b = orderIndex a `compare` orderIndex b
 
 
 data Suffix
-    = SProgress S.Progress
+    = SProgress P.Progress
     | SEarnedAt CT.SDate
     | SDescription String
-    | SReference S.GroupPath
+    | SReference GP.GroupPath
 
 
 type Suffixes = Modifiers Key Suffix
@@ -36,7 +37,7 @@ type Suffixes = Modifiers Key Suffix
 
 instance IsModifier Key Suffix where
     modifierKey = case _ of
-        SProgress _ -> KProgress
+        SProgress prog -> KProgress $ modifierKey prog
         SEarnedAt _ -> KEarnedAt
         SDescription _ -> KDescription
         SReference _ -> KReference
@@ -58,8 +59,8 @@ put :: Suffix -> Suffixes -> Suffixes
 put = Mod.put
 
 
-getProgress :: Suffixes -> Maybe S.Progress
-getProgress sfx = get KProgress sfx >>= case _ of
+getProgress :: P.PValueTag -> Suffixes -> Maybe P.Progress
+getProgress pvtag sfx = get (KProgress pvtag) sfx >>= case _ of
     SProgress p -> Just p
     _ -> Nothing
 
@@ -76,7 +77,15 @@ getDescription sfx = get KDescription sfx >>= case _ of
     _ -> Nothing
 
 
-getReference :: Suffixes -> Maybe S.GroupPath
+getReference :: Suffixes -> Maybe GP.GroupPath
 getReference sfx = get KReference sfx >>= case _ of
     SReference path -> Just path
     _ -> Nothing
+
+
+orderIndex :: Key -> Int
+orderIndex = case _ of
+    KProgress _ -> 0
+    KEarnedAt -> 1
+    KDescription -> 2
+    KReference -> 3
