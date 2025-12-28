@@ -54,7 +54,7 @@ type State subj_id subj_tag report =
     , optionsPaneExpanded :: Boolean
     , sortBy :: SubjectSort
     , readOnlyMode :: Boolean
-    , navigatedTo :: NavigatedTo
+    , navigatedTo :: NavigatedTo subj_id
     , editing :: Maybe EncodedValue
     }
 
@@ -73,9 +73,9 @@ data Action subj_id subj_tag report
     | ExcludeTag subj_tag
     | ToggleOptionsPane
     | ClearNavigation
-    | NavigateToGroup MouseEvent GP.GroupPath
-    | NavigateToItem MouseEvent GP.GroupPath Int
-    | NavigateToSuffix MouseEvent GP.GroupPath Int Suffix.Key
+    | NavigateToGroup MouseEvent subj_id GP.GroupPath
+    | NavigateToItem MouseEvent subj_id GP.GroupPath Int
+    | NavigateToSuffix MouseEvent subj_id GP.GroupPath Int Suffix.Key
     | NextSort
 
 
@@ -129,8 +129,11 @@ component preSelected =
         , editing : Nothing
         }
 
+    s_id :: subj -> subj_id
+    s_id subj = S.s_id @subj_id @subj_tag subj
+
     selectionKeyToSubject :: Array subj -> Map subj_id subj
-    selectionKeyToSubject = map (\subj -> S.s_id @subj_id @subj_tag subj /\ subj) >>> Map.fromFoldable
+    selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
 
     render :: State subj_id subj_tag (S.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
     render state =
@@ -228,7 +231,7 @@ component preSelected =
 
     subjTocRow selectedSubjects subj =
         let
-            subjId = S.s_id @subj_id @subj_tag subj
+            subjId = s_id subj
             isSelected = Array.elem subjId selectedSubjects
         in HH.div
             [ HP.style "margin: 5px 0;" ]
@@ -281,21 +284,22 @@ component preSelected =
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ _ { navigatedTo = Navigation.clear }
-        NavigateToGroup mevt groupPath ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toGroup groupPath }
-        NavigateToItem mevt groupPath itemIdx ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toItem groupPath itemIdx }
-        NavigateToSuffix mevt groupPath itemIdx suffixKey ->
-            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toSuffix groupPath itemIdx suffixKey }
+        NavigateToGroup mevt subjId  groupPath ->
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toGroup subjId groupPath }
+        NavigateToItem mevt subjId groupPath itemIdx ->
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toItem subjId groupPath itemIdx }
+        NavigateToSuffix mevt subjId groupPath itemIdx suffixKey ->
+            stopPropagation mevt <> H.modify_ _ { navigatedTo = Navigation.toSuffix subjId groupPath itemIdx suffixKey }
 
 
 renderSubject
     :: forall @subj_id @subj_tag @item_tag subj group item slots m
-     . S.IsTag item_tag
+     . Eq subj_id
+    => S.IsTag item_tag
     => S.IsItem item_tag item
     => S.IsGroup group
     => S.IsSubject subj_id subj_tag subj
-    => NavigatedTo
+    => NavigatedTo subj_id
     -> subj
     -> Map group (Array item)
     -> HH.ComponentHTML (Action subj_id subj_tag (S.Report subj group item)) slots m
@@ -309,6 +313,7 @@ renderSubject navigatedTo subj itemsMap  =
             [ HH.text $ S.s_name @subj_id @subj_tag subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
+            subjId = S.s_id @subj_id @subj_tag subj
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"
@@ -316,14 +321,14 @@ renderSubject navigatedTo subj itemsMap  =
                 let
                     groupPath = S.g_path group
                     groupStats = S.g_stats group
-                    isNavigatedTo = navigatedTo # Navigation.atGroup groupPath
+                    isNavigatedTo = navigatedTo # Navigation.atGroup subjId groupPath
                 in HH.div
                     [ HP.style $ "padding-bottom: 10px; line-height: "
                         <> show lineHeight <> "em; margin-left: "
                         <> (show $ marginFor groupPath) <> "px;"
                         -- <> (if isNavigatedTo then " background-color: #f0f8ff;" else "")
                     , HP.id $ groupPathId groupPath
-                    , HE.onClick $ \mevt -> NavigateToGroup mevt groupPath
+                    , HE.onClick $ \mevt -> NavigateToGroup mevt subjId groupPath
                     ]
                     [ HH.span
                         [ HP.style $ "font-weight: bold;"
@@ -342,17 +347,17 @@ renderSubject navigatedTo subj itemsMap  =
 
             renderGroupItem groupPath itemIdx item =
                 let
-                    isNavigatedTo = navigatedTo # Navigation.atItem groupPath itemIdx
+                    isNavigatedTo = navigatedTo # Navigation.atItem subjId groupPath itemIdx
                     mbCurrentSuffix = if isNavigatedTo then navigatedTo.mbSuffix else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
-                    makeSuffixClickEvt key mevt = NavigateToSuffix mevt groupPath itemIdx key
+                    makeSuffixClickEvt key mevt = NavigateToSuffix mevt subjId groupPath itemIdx key
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
                     [ HP.style
                         $ if isNavigatedTo then itemSelectedStyle else itemUsualStyle
-                    , HE.onClick $ \mevt -> NavigateToItem mevt groupPath itemIdx
+                    , HE.onClick $ \mevt -> NavigateToItem mevt subjId groupPath itemIdx
                     ]
                     $ case S.i_mbTitle @item_tag item of
                         Just title -> HH.text title

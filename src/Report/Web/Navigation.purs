@@ -8,58 +8,66 @@ import Report.GroupPath as GP
 import Report.Suffix (Key) as Suffix
 
 
-type NavigatedTo = -- TODO: add subject, add tabular key
-    { mbGroup :: Maybe GP.GroupPath
+type NavigatedTo subj_id = -- TODO: add subj_idect, add tabular key
+    { mbSubjectId :: Maybe subj_id
+    , mbGroup :: Maybe GP.GroupPath
     , mbItem :: Maybe Int
     , mbSuffix :: Maybe Suffix.Key
     }
 
 
-init :: NavigatedTo
+init :: forall subj_id. NavigatedTo subj_id
 init =
-    { mbGroup : Nothing
+    { mbSubjectId : Nothing
+    , mbGroup : Nothing
     , mbItem : Nothing
     , mbSuffix : Nothing
     }
 
 
-clear :: NavigatedTo
+clear :: forall subj_id. NavigatedTo subj_id
 clear = init
 
 
-toGroup :: GP.GroupPath -> NavigatedTo
-toGroup groupPath =
-    { mbGroup : Just groupPath
+toGroup :: forall subj_id. subj_id -> GP.GroupPath -> NavigatedTo subj_id
+toGroup subj groupPath =
+    { mbSubjectId : Just subj
+    , mbGroup : Just groupPath
     , mbItem : Nothing
     , mbSuffix : Nothing
     }
 
 
-toItem :: GP.GroupPath -> Int -> NavigatedTo
-toItem groupPath itemIdx =
-    { mbGroup : Just groupPath
+toItem :: forall subj_id. subj_id ->GP.GroupPath -> Int -> NavigatedTo subj_id
+toItem subj groupPath itemIdx =
+    { mbSubjectId : Just subj
+    , mbGroup : Just groupPath
     , mbItem : Just itemIdx
     , mbSuffix : Nothing
     }
 
 
-toSuffix :: GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo
-toSuffix groupPath itemIdx suffixKey =
-    { mbGroup : Just groupPath
+toSuffix :: forall subj_id. subj_id -> GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo subj_id
+toSuffix subj groupPath itemIdx suffixKey =
+    { mbSubjectId : Just subj
+    , mbGroup : Just groupPath
     , mbItem : Just itemIdx
     , mbSuffix : Just suffixKey
     }
 
 
-atGroup :: GP.GroupPath -> NavigatedTo -> Boolean
-atGroup groupPath navigatedTo
-    =  navigatedTo.mbGroup == Just groupPath
-atItem :: GP.GroupPath -> Int -> NavigatedTo -> Boolean
-atItem groupPath itemIdx navigatedTo
-    =  navigatedTo.mbGroup == Just groupPath
+atGroup :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Boolean
+atGroup subj groupPath navigatedTo
+    =  navigatedTo.mbSubjectId == Just subj
+    && navigatedTo.mbGroup == Just groupPath
+atItem :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean
+atItem subj groupPath itemIdx navigatedTo
+    =  navigatedTo.mbSubjectId == Just subj
+    && navigatedTo.mbGroup == Just groupPath
     && navigatedTo.mbItem == Just itemIdx
-atSuffix :: GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo -> Boolean
-atSuffix groupPath itemIdx suffixKey navigatedTo
-    =  navigatedTo.mbGroup == Just groupPath
+atSuffix :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Suffix.Key -> NavigatedTo subj_id -> Boolean
+atSuffix subj groupPath itemIdx suffixKey navigatedTo
+    =  navigatedTo.mbSubjectId == Just subj
+    && navigatedTo.mbGroup == Just groupPath
     && navigatedTo.mbItem == Just itemIdx
     && navigatedTo.mbSuffix == Just suffixKey
