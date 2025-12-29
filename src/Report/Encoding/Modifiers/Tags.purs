@@ -7,7 +7,7 @@ import Data.String (split, joinWith, Pattern(..)) as String
 import Data.Newtype (unwrap)
 
 
-import Report.Core as CT
+import Report.Core.Logic as CT
 import Report.Class (class IsTag, tagContent, decodeTag)
 import Report.Modifiers.Tags (Tags(..))
 

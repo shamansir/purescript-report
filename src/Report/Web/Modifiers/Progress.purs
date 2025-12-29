@@ -10,6 +10,7 @@ import Data.Array ((:))
 import Data.Array as Array
 
 import Report.Core as CT
+import Report.Core.Logic as CT
 import Report.Modifiers (class IsModifier)
 import Report.Modifiers.Task (TaskP(..)) as S
 import Report.Modifiers.Progress (Progress(..)) as Prog
@@ -21,13 +22,15 @@ import Report.Web.Helpers
 import Report.Web.Modifiers.Task (qtaskCheckbox, taskTextColor)
 
 
+-- TODO: CT.ViewOrEdit { itemName :: String }
+-- TODO: CT.ViewOrEdit Prog.Progress
 renderProgress :: forall w i. String -> Prog.Progress -> H w i
 renderProgress gitemName = case _ of
     Prog.None ->
         HH.span []
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
-            , qcolorSpan incompleteColor gitemName
+            , qitemnameSpan incompleteColor gitemName
             , qspacerSpan
             , qcolorSpan incompleteColor "<None>"
             ]
@@ -35,7 +38,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
-            , qcolorSpan incompleteColor gitemName
+            , qitemnameSpan incompleteColor gitemName
             , qspacerSpan
             , qcolorSpan incompleteColor "???"
             ]
@@ -43,7 +46,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan genericColor
             , qspacerSpan
-            , qcolorSpan genericColor gitemName
+            , qitemnameSpan genericColor gitemName
             , qspacerSpan
             , qcolorSpan errorColor errorStr
             ]
@@ -51,7 +54,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan textColor text
             ]
@@ -59,7 +62,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatNum num
             ]
@@ -67,7 +70,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatInt num
             ]
@@ -75,7 +78,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan timeColor $ CT.toLeadingZero day
             , qspacerSpan
@@ -87,7 +90,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan timeColor $ CT.toLeadingZero hrs
             , qtimesplitSpan
@@ -99,7 +102,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if done then completeColor else incompleteColor
             , qspacerSpan
-            , qcolorSpan (if done then completeColor else incompleteColor) gitemName
+            , qitemnameSpan (if done then completeColor else incompleteColor) gitemName
             , qspacerSpan
             , qcompleteCheckbox done
             ]
@@ -110,7 +113,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qcolorSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
             , qspacerSpan
             , percentage 100.0 $ Int.toNumber pctInt
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt pctInt <> "%"
@@ -122,7 +125,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qcolorSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
             , qspacerSpan
             , percentage 1.0 pctN
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum (pctN * 100.0) <> "%"
@@ -135,7 +138,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qcolorSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
             , qspacerSpan
             , percentage 1.0 pct
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ signStr <> formatNum (pct * 100.0) <> "%"
@@ -147,7 +150,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qcolorSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
             , qspacerSpan
             , percentage (Int.toNumber total) (Int.toNumber got)
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt got <> "/" <> formatInt total
@@ -159,7 +162,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qcolorSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
             , qspacerSpan
             , percentage total got
             , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum got <> "/" <> formatNum total
@@ -168,7 +171,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatInt amount
             , qthinspacerSpan
@@ -178,7 +181,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatNum amount
             , qthinspacerSpan
@@ -191,7 +194,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ signStr <> formatNum amount
             , qthinspacerSpan
@@ -201,7 +204,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatInt amount
             , qpersplitSpan
@@ -211,7 +214,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatNum amount
             , qpersplitSpan
@@ -221,7 +224,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatInt from
             , qrangesplitSpan
@@ -231,7 +234,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qcolorSpan completeColor gitemName
+            , qitemnameSpan completeColor gitemName
             , qspacerSpan
             , qcolorSpan numColor $ formatNum from
             , qrangesplitSpan
@@ -241,7 +244,7 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ taskTextColor task
             , qspacerSpan
-            , qcolorSpan (taskTextColor task) gitemName
+            , qitemnameSpan (taskTextColor task) gitemName
             , qspacerSpan
             , qtaskCheckbox task
             ]
@@ -254,7 +257,7 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage (Int.toNumber maximum) (Int.toNumber reached)
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
@@ -269,7 +272,7 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage maximum reached
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum reached <> "/" <> formatNum maximum
@@ -284,7 +287,7 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage (Int.toNumber maximum) (Int.toNumber reached)
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
@@ -296,7 +299,7 @@ renderProgress gitemName = case _ of
         in HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage (Int.toNumber total) (Int.toNumber reached)
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt total <> "L"
@@ -307,7 +310,7 @@ renderProgress gitemName = case _ of
         in HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage (Int.toNumber totalLevels) (Int.toNumber levelReached)
                 , qcolorSpan (if isDone then completeColor else incompleteColor)
@@ -325,7 +328,7 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage (Int.toNumber maximum) (Int.toNumber reached)
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
@@ -343,12 +346,14 @@ renderProgress gitemName = case _ of
             $ {- HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
                 , qspacerSpan
                 , percentage (Int.toNumber maximum) (Int.toNumber reached)
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
                 ]
                 : -} (renderLevelO reached <$> levels)
+    where
+        qitemnameSpan = qcolorSpan
 
 
 percentage :: forall w i. Number -> Number -> H w i

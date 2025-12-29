@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested (type (/\))
 
-import Report.Core (EncodedValue(..))
+import Report.Core.Logic (EncodedValue)
 import Report.Class (class IsTag)
 
 import Report.Modifiers (modifierKey)

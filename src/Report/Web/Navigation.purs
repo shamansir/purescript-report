@@ -2,10 +2,10 @@ module Report.Web.Navigation where
 
 import Prelude
 
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 
-import Report.Core (EncodedValue)
+import Report.Core.Logic (EncodedValue)
 import Report.GroupPath as GP
 import Report.Modify (Modification, Location(..))
 import Report.Modify (What(..), WhatKey(..)) as Modify

@@ -46,9 +46,9 @@ main = HA.runHalogenAff do
 
 
 type Slots =
-  ( {- tree :: YST.Slot WS.SourceKey
-  , -} report :: forall q o. H.Slot q o Unit
-  )
+    ( {- tree :: YST.Slot WS.SourceKey
+    , -} report :: forall q o. H.Slot q o Unit
+    )
 
 
 type State =

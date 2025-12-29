@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 
-import Report.Core as CT
+import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Modifiers.Task (TaskP, taskPFromString, taskPToString)
 
 

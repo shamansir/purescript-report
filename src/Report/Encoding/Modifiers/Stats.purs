@@ -8,7 +8,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Data.Bifunctor (lmap)
 import Data.String (split, Pattern(..)) as String
 
-import Report.Core as CT
+import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Progress (PValueTag)
 import Report.Encoding.Modifiers.Progress (decodeProgress, encodeProgress)

@@ -2,10 +2,10 @@ module Report.Modify where
 
 import Prelude
 
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe)
 
-import Report.Core (EncodedValue(..))
-import Report.Class (class IsGroup, g_stats, class IsSubjectId, s_id)
+import Report.Core.Logic (EncodedValue(..))
+import Report.Class (class IsGroup, class IsSubjectId)
 import Report.Prefix (Key) as Prefix
 import Report.Suffix (Key) as Suffix
 import Report.Prefix (Prefixes)

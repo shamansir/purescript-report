@@ -20,7 +20,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Report (Report, toMap, findGroup, findItem, withItem, withGroup) as R
 import Report.Class as R
-import Report.Core (EncodedValue(..))
+import Report.Core.Logic (EncodedValue(..))
 import Report.Encoding.Suffix (encodeSuffix) as Suffix
 import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R

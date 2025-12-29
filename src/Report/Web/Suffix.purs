@@ -12,7 +12,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
-import Report.Core as CT
+import Report.Core (SDate(..), toLeadingZero) as CT
+import Report.Core.Logic (EncodedValue) as CT
 import Report.Class as S
 import Report.Suffix (Suffixes)
 import Report.Suffix as Suffixes

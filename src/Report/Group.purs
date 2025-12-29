@@ -2,11 +2,12 @@ module Report.Group where
 
 import Prelude
 
-import Data.Newtype (class Newtype, unwrap)
+import Data.Newtype (class Newtype, unwrap, wrap)
 
 import Report.Class (class IsGroup)
 import Report.Modifiers.Stats (Stats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
+import Report.Modify (class GroupModify)
 
 {- Achievement Group -}
 
@@ -63,3 +64,8 @@ instance IsGroup Group where
     g_title = unwrap >>> _.title
     g_path = unwrap >>> _.path
     g_stats = unwrap >>> _.stats
+
+
+instance GroupModify Group where
+    setGroupName name   = unwrap >>> _ { title = name  } >>> wrap
+    setGroupStats stats = unwrap >>> _ { stats = stats } >>> wrap

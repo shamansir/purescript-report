@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 
-import Report.Core as CT
+import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Class (class IsTag)
 import Report.GroupPath as GP
 import Report.Suffix (Suffix(..), Key(..))
