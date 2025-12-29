@@ -26,57 +26,76 @@ import Report.Web.GroupPath (renderGroupRef)
 import Report.Web.Helpers (H, qcolorSpan, qspacerSpan, timeColor)
 
 
+type SuffixesRenderConfig i item =
+    { item :: item
+    , mbSelectedSuffix :: Maybe Suffix.Key
+    , isEditingSuffix :: Suffix.Key -> Maybe CT.EncodedValue
+    , isEditingItemName :: Maybe CT.EncodedValue
+    , onClick :: Suffix.Key -> MouseEvent -> i
+    , onEdit :: Suffix.Key -> MouseEvent -> CT.EncodedValue -> i
+    }
+
+
+type SuffixRenderConfig i t =
+    { key :: Suffix.Key
+    , isSelected :: Boolean
+    , onClick :: Suffix.Key -> MouseEvent -> i
+    , onEdit :: Suffix.Key -> MouseEvent -> CT.EncodedValue -> i
+    , parentSuffixes :: Suffixes t
+    , parentItemName :: String
+    }
+
+
 renderSuffixes
     :: forall @item_tag item w i
      . S.IsTag item_tag
     => S.IsItem item_tag item
-    => (Suffix.Key -> MouseEvent -> i)
-    -> (Suffix.Key -> Maybe CT.EncodedValue)
-    -> Maybe Suffix.Key
-    -> Maybe CT.EncodedValue
-    -> item
+    => SuffixesRenderConfig i item
     -> Array (H w i)
-renderSuffixes onClick isEditingSuffix mbSelected mbEditItemName item =
+renderSuffixes conf =
     let
-        i_suffixes = S.i_suffixes @item_tag item
-        i_name = S.i_name @item_tag item
+        i_suffixes = S.i_suffixes @item_tag conf.item
+        i_name = S.i_name @item_tag conf.item
         suffixesKeys = Suffixes.keys i_suffixes
         isSelected suffixKey =
-            case mbSelected of
+            case conf.mbSelectedSuffix of
                 Just selectedKey -> selectedKey == suffixKey
                 Nothing -> false
-
     in
         suffixesKeys
-            <#> \key -> renderSuffix onClick i_suffixes (isSelected key) i_name key
+            <#> \key -> renderSuffix
+                            { key
+                            , isSelected : isSelected key
+                            , onClick : conf.onClick
+                            , onEdit : conf.onEdit
+                            , parentSuffixes : i_suffixes
+                            , parentItemName : i_name
+                            }
 
 
 renderSuffix
     :: forall t w i
      . S.IsTag t
-    => (Suffix.Key -> MouseEvent -> i)
-    -> Suffixes t
-    -> Boolean
-    -> String
-    -> Suffix.Key
+    => SuffixRenderConfig i t
     -> H w i
-renderSuffix onClick suffixes isSelected itemName key =
+renderSuffix conf =
     let
+        currentSuffix = Suffixes.get conf.key conf.parentSuffixes
         selectedStyle = "background-color: #fffdd0ff; border-radius: 5px;"
         usualStyle = "background-color: transparent;"
         wrapSuffix content =
             HH.span
-                [ HP.style $ if isSelected then selectedStyle else usualStyle
-                , HE.onClick $ onClick key
+                [ HP.style $ if conf.isSelected then selectedStyle else usualStyle
+                , HE.onClick $ conf.onClick conf.key
                 ]
                 [ content ]
     in
-    wrapSuffix $ case key of
-        Suffix.KProgress _ -> case Suffixes.get key suffixes of
-            Just (Suffix.SProgress progress) -> renderProgress itemName progress
+    wrapSuffix $ case conf.key of
+        Suffix.KProgress _ -> case currentSuffix of
+            Just (Suffix.SProgress progress) -> renderProgress conf.parentItemName progress
             Just _ -> HH.text ""
             Nothing -> HH.text ""
-        Suffix.KEarnedAt -> case Suffixes.get key suffixes of
+        Suffix.KEarnedAt -> case currentSuffix of
             Just (Suffix.SEarnedAt (CT.SDate { day, month, year })) -> HH.span []
                 [ qspacerSpan
                 , HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
@@ -89,19 +108,19 @@ renderSuffix onClick suffixes isSelected itemName key =
                 ]
             Just _ -> HH.text ""
             Nothing -> HH.text ""
-        Suffix.KDescription -> case Suffixes.get key suffixes of
+        Suffix.KDescription -> case currentSuffix of
             Just (Suffix.SDescription description) -> HH.span []
                 [ qspacerSpan
                 , HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
                 ]
             Just _ -> HH.text ""
             Nothing -> HH.text ""
-        Suffix.KReference -> case Suffixes.get key suffixes of
+        Suffix.KReference -> case currentSuffix of
             Just (Suffix.SReference groupRef) ->
                 renderGroupRef groupRef
             Just _ -> HH.text ""
             Nothing -> HH.text ""
-        Suffix.KTags -> case Suffixes.get key suffixes of
+        Suffix.KTags -> case currentSuffix of
             Just (Suffix.STags (Tags tags)) ->
                 HH.span [] $ itemTagBadge <$> tags
             Just _ -> HH.text ""

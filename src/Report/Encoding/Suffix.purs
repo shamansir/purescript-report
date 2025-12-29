@@ -6,10 +6,9 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
-import Report.Class (class IsTag, tagContent)
+import Report.Class (class IsTag)
 import Report.GroupPath as GP
 import Report.Suffix (Suffix(..), Key(..))
-import Report.Modifiers.Tags (Tags)
 import Report.Encoding.Modifiers.Progress as PEnc
 import Report.Encoding.Modifiers.Tags as TEnc
 
@@ -25,7 +24,7 @@ encodeSuffix s = case s of
     SReference gpath ->
         KReference /\ (CT.EncodedValue $ GP.encode gpath)
     STags tags ->
-        KTags /\ (CT.EncodedValue $ TEnc.encodeTags tags)
+        KTags /\ TEnc.encodeTags tags
 
 
 decodeSuffix :: forall t. IsTag t =>Key -> CT.EncodedValue -> Maybe (Suffix t)
@@ -41,4 +40,4 @@ decodeSuffix key (CT.EncodedValue evStr) = case key of
     KReference ->
         GP.decode evStr <#> SReference
     KTags ->
-        Just $ STags $ TEnc.decodeTags evStr
+        Just $ STags $ TEnc.decodeTags (CT.EncodedValue evStr)

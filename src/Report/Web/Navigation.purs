@@ -7,7 +7,7 @@ import Data.Tuple.Nested ((/\))
 
 import Report.Core (EncodedValue)
 import Report.GroupPath as GP
-import Report.Modify (Modification)
+import Report.Modify (Modification, Location(..))
 import Report.Modify (What(..), WhatKey(..)) as Modify
 import Report.Suffix (Key) as Suffix
 
@@ -19,13 +19,6 @@ type NavigatedTo subj_id = -- TODO: add subj_idect, add tabular key
     , mbSuffix :: Maybe Suffix.Key
     , mbEditing :: Maybe { what :: Modify.WhatKey, value :: EncodedValue }
     }
-
-
-data Location subj_id
-    = Nowhere
-    | AtGroup  subj_id GP.GroupPath
-    | AtItem   subj_id GP.GroupPath Int
-    | AtSuffix subj_id GP.GroupPath Int Suffix.Key
 
 
 init :: forall subj_id. NavigatedTo subj_id

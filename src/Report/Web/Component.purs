@@ -2,10 +2,9 @@ module Report.Web.Component where
 
 import Prelude
 
-import Effect.Class (class MonadEffect)
-
 import Data.Array ((:))
 import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any) as Array
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
@@ -14,37 +13,30 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\))
-import Data.FunctorWithIndex (mapWithIndex)
-
-import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent (toEvent) as ME
-import Web.Event.Event (stopPropagation) as Event
-
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-
--- import Input.GameLog.Achievement as Ach
--- import Input.GameLog.InfiniteBacklog.API.Data.Games (GameCollection') as IBL
--- import Input.GameLog.Backloggery.Game (Rec) as BLGame
--- import Input.GameLog.Types as GLT
-
+import Report (Report, toMap, findGroup, findItem, withItem, withGroup) as R
+import Report.Class as R
 import Report.Core (EncodedValue(..))
-import Report.GroupPath (howDeep) as GP
-import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as S
-import Report.Class as S
-import Report (Report, toMap, findGroup, findItem) as S
-import Report.Suffix (get, debugNavLabel) as Suffix
 import Report.Encoding.Suffix (encodeSuffix) as Suffix
-
+import Report.GroupPath (howDeep) as GP
+import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
+import Report.Modify (Location(..))
+import Report.Modify (class GroupModify, What(..), WhatKey(..), modifyAt) as Modify
+import Report.Suffix (get, put, debugNavLabel) as Suffix
+import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap)
-import Report.Web.GroupPath (groupPathId, renderPath)
-import Report.Web.Suffix (renderSuffixes)
-import Report.Web.Navigation (NavigatedTo, Location(..))
+import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
+import Report.Web.Suffix (renderSuffixes)
+import Web.Event.Event (stopPropagation) as Event
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent (toEvent) as ME
 
 
 showNavigationDebugHint = true :: Boolean
@@ -62,7 +54,7 @@ type State subj_id subj_tag report =
     }
 
 
-type Input subj group item = S.Report subj group item
+type Input subj group item = R.Report subj group item
 
 
 data Action subj_id subj_tag report
@@ -77,6 +69,7 @@ data Action subj_id subj_tag report
     | ToggleOptionsPane
     | ClearNavigation
     | NavigateTo MouseEvent (Location subj_id)
+    | EditAt MouseEvent (Location subj_id) EncodedValue
     | NextSort
 
 
@@ -100,15 +93,16 @@ derive instance Ord SortKey
 component
     :: forall @subj_id @subj_tag @item_tag subj group item query output m
      . MonadEffect m
-    => Show subj_id
-    => Ord subj_id
     => Ord subj
+    => Ord subj_id
+    => Show subj_id
     => Ord group
-    => S.IsTag subj_tag
-    => S.IsTag item_tag
-    => S.IsItem item_tag item
-    => S.IsGroup group
-    => S.IsSubject subj_id subj_tag subj
+    => Modify.GroupModify group
+    => R.IsTag subj_tag
+    => R.IsTag item_tag
+    => R.IsItem item_tag item
+    => R.IsGroup group
+    => R.IsSubject subj_id subj_tag subj
     => Array subj_id
     -> H.Component query (Input subj group item) output m
 component preSelected =
@@ -118,7 +112,7 @@ component preSelected =
         , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, receive = Just <<< Receive }
         }
     where
-    initialState :: Input subj group item -> State subj_id subj_tag (S.Report subj group item)
+    initialState :: Input subj group item -> State subj_id subj_tag (R.Report subj group item)
     initialState report =
         { subjects : preSelected
         , report
@@ -131,15 +125,15 @@ component preSelected =
         }
 
     s_id :: subj -> subj_id
-    s_id subj = S.s_id subj
+    s_id subj = R.s_id subj
 
     selectionKeyToSubject :: Array subj -> Map subj_id subj
     selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
 
-    render :: State subj_id subj_tag (S.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
+    render :: State subj_id subj_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
     render state =
         let
-            report = S.toMap state.report
+            report = R.toMap state.report
             allSubjects = Set.toUnfoldable $ Map.keys report
             selKeys = selectionKeyToSubject allSubjects
         in HH.div
@@ -167,13 +161,13 @@ component preSelected =
             : []
 
     makeTagFilter [] _ = true
-    makeTagFilter tags subj = Array.any (flip Array.elem tags) (S.s_tags @subj_id @subj_tag subj :: Array subj_tag)
+    makeTagFilter tags subj = Array.any (flip Array.elem tags) (R.s_tags @subj_id @subj_tag subj :: Array subj_tag)
 
     applyFilter tagFilter sortBy mbFilter subjects
         = subjects
             # Array.filter (makeTagFilter tagFilter)
             # Array.filter (case mbFilter of
-                Just filterStr -> \subj -> String.contains (String.Pattern $ String.toLower filterStr) $ String.toLower $ S.s_name @subj_id @subj_tag subj
+                Just filterStr -> \subj -> String.contains (String.Pattern $ String.toLower filterStr) $ String.toLower $ R.s_name @subj_id @subj_tag subj
                 Nothing -> const true)
             # Array.sortWith (sortSubjects sortBy)
             # (if sortBy == ByWeight then Array.reverse else identity)
@@ -214,7 +208,7 @@ component preSelected =
                 tags ->
                     subjTagWrap <$> tags
         else
-            subjTagButton <$> subjTagIsOn state.tagFilter <$> (S.allTags :: Array subj_tag)
+            subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.allTags :: Array subj_tag)
 
     subjTagIsOn tagFilter tag =
         tag /\ Array.elem tag tagFilter
@@ -228,8 +222,8 @@ component preSelected =
 
     sortSubjects :: SubjectSort -> subj -> SortKey
     sortSubjects = case _ of
-        ByWeight -> S.s_stats @subj_id @subj_tag >>> S.weightOf >>> SN
-        Alpha -> S.s_name @subj_id @subj_tag >>> SS
+        ByWeight -> R.s_stats @subj_id @subj_tag >>> R.weightOf >>> SN
+        Alpha -> R.s_name @subj_id @subj_tag >>> SS
 
     subjTocRow selectedSubjects subj =
         let
@@ -248,12 +242,12 @@ component preSelected =
                 , HP.style $ "background-color: " <> (if isSelected then "bisque" else "transparent") <> "; cursor: pointer; padding: 5px; margin-left: 5px;"
                 ]
                 (
-                    [ HH.text $ S.s_name @subj_id @subj_tag subj
-                    , case S.gotTotalFromStats $ S.s_stats @subj_id @subj_tag subj of
-                        S.Defined gotTotal -> gotTotalBadge gotTotal
+                    [ HH.text $ R.s_name @subj_id @subj_tag subj
+                    , case R.gotTotalFromStats $ R.s_stats @subj_id @subj_tag subj of
+                        R.Defined gotTotal -> gotTotalBadge gotTotal
                         _ -> HH.text ""
                     ] <>
-                    (subjTagBadge <$> S.s_tags @subj_id @subj_tag subj)
+                    (subjTagBadge <$> R.s_tags @subj_id @subj_tag subj)
                 )
 
             ]
@@ -268,7 +262,7 @@ component preSelected =
     handleAction
         :: Action subj_id subj_tag (Input subj group item)
         -> H.HalogenM
-            (State subj_id subj_tag (S.Report subj group item))
+            (State subj_id subj_tag (R.Report subj group item))
             (Action subj_id subj_tag (Input subj group item))
             ()
             output
@@ -286,6 +280,7 @@ component preSelected =
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ _ { navigatedTo = Navigation.clear }
+
         NavigateTo mevt location ->
             let
                 nextNavigation   = case location of
@@ -299,18 +294,18 @@ component preSelected =
                                                 Navigation.clear
                 editNavigation s = case location of
                     AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
-                                                $ maybe (EncodedValue "") (S.g_title >>> EncodedValue)
-                                                $ S.findGroup subjId groupPath s.report
+                                                $ maybe (EncodedValue "") (R.g_title >>> EncodedValue)
+                                                $ R.findGroup subjId groupPath s.report
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.editItemName subjId groupPath itemIdx
-                                                $ maybe (EncodedValue "") (S.i_name @item_tag >>> EncodedValue)
-                                                $ S.findItem subjId groupPath itemIdx s.report
+                                                $ maybe (EncodedValue "") (R.i_name @item_tag >>> EncodedValue)
+                                                $ R.findItem subjId groupPath itemIdx s.report
                     AtSuffix subjId groupPath itemIdx suffixKey ->
                                                 Navigation.editSuffix subjId groupPath itemIdx suffixKey
                                                 $ maybe (EncodedValue "") (Suffix.encodeSuffix >>> Tuple.snd)
                                                 $ Suffix.get suffixKey
-                                                =<< S.i_suffixes @item_tag
-                                                <$> S.findItem subjId groupPath itemIdx s.report
+                                                =<< R.i_suffixes @item_tag
+                                                <$> R.findItem subjId groupPath itemIdx s.report
                     Nowhere -> s.navigatedTo
                 navigateOrEdit s =
                     if s.navigatedTo /= nextNavigation || s.readOnlyMode
@@ -318,18 +313,54 @@ component preSelected =
                         else s { navigatedTo = editNavigation s }
             in stopPropagation mevt <> H.modify_ navigateOrEdit
 
+        EditAt mevt location encval ->
+            let
+                nextReport :: R.Report subj group item -> R.Report subj group item
+                nextReport curReport
+                    = case location of
+                        Nowhere -> curReport
+                        AtGroup subjId groupPath ->
+                            curReport
+                                # Modify.modifyAt
+                                    { subjId
+                                    , path : groupPath
+                                    , what : Modify.GroupName
+                                    , newValue : encval
+                                    }
+                                # fromMaybe curReport
+                        AtItem subjId groupPath itemIdx ->
+                            curReport
+                                # Modify.modifyAt
+                                    { subjId
+                                    , path : groupPath
+                                    , what : Modify.ItemName itemIdx
+                                    , newValue : encval
+                                    }
+                                # fromMaybe curReport
+                        AtSuffix subjId groupPath itemIdx suffixKey ->
+                            curReport
+                                # Modify.modifyAt
+                                    { subjId
+                                    , path : groupPath
+                                    , what : Modify.ItemSuffix itemIdx suffixKey
+                                    , newValue : encval
+                                    }
+                                # fromMaybe curReport
+            in
+                stopPropagation mevt <> H.modify_ \s -> s { report = nextReport s.report }
+
 
 renderSubject
     :: forall @subj_id @subj_tag @item_tag subj group item slots m
      . Eq subj_id
-    => S.IsTag item_tag
-    => S.IsItem item_tag item
-    => S.IsGroup group
-    => S.IsSubject subj_id subj_tag subj
+    => R.IsTag item_tag
+    => R.IsItem item_tag item
+    => R.IsGroup group
+    => R.IsSubject subj_id subj_tag subj
     => NavigatedTo subj_id
     -> subj
     -> Map group (Array item)
-    -> HH.ComponentHTML (Action subj_id subj_tag (S.Report subj group item)) slots m
+    -> HH.ComponentHTML (Action subj_id subj_tag (R.Report subj group item)) slots m
 renderSubject navigatedTo subj itemsMap  =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;" ]
@@ -337,17 +368,17 @@ renderSubject navigatedTo subj itemsMap  =
             [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
             , HE.onClick $ const ClearNavigation
             ]
-            [ HH.text $ S.s_name @subj_id @subj_tag subj ]
+            [ HH.text $ R.s_name @subj_id @subj_tag subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
-            subjId = S.s_id subj
+            subjId = R.s_id subj
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"
             renderTree (group /\ groupItems) =
                 let
-                    groupPath = S.g_path group
-                    groupStats = S.g_stats group
+                    groupPath = R.g_path group
+                    groupStats = R.g_stats group
                     isNavigatedTo = navigatedTo # Navigation.atGroup subjId groupPath
                 in HH.div
                     [ HP.style $ "padding-bottom: 10px; line-height: "
@@ -361,7 +392,7 @@ renderSubject navigatedTo subj itemsMap  =
                         [ HP.style $ "font-weight: bold;"
                             <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
                         ]
-                        [ HH.text $ S.g_title group ]
+                        [ HH.text $ R.g_title group ]
                     , qspacerSpan
                     , renderPath groupPath
                     -- , HH.text (show group.mbIndexPath)
@@ -381,6 +412,7 @@ renderSubject navigatedTo subj itemsMap  =
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
                     makeSuffixClickEvt key mevt = NavigateTo mevt $ AtSuffix subjId groupPath itemIdx key
+                    makeSuffixEditEvt key mevt = EditAt mevt $ AtSuffix subjId groupPath itemIdx key
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
@@ -388,10 +420,19 @@ renderSubject navigatedTo subj itemsMap  =
                         $ if isNavigatedTo then itemSelectedStyle else itemUsualStyle
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
-                    $ case S.i_mbTitle @item_tag item of
+                    $ case R.i_mbTitle @item_tag item of
                         Just title -> HH.text title
                         Nothing -> HH.text ""
-                    : renderSuffixes @item_tag makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item
+                    -- : renderSuffixes @item_tag makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item
+                    : renderSuffixes @item_tag
+                            { onClick : makeSuffixClickEvt
+                            , onEdit : makeSuffixEditEvt
+                            , mbSelectedSuffix : mbCurrentSuffix
+                            , isEditingSuffix
+                            , isEditingItemName
+                            , item
+                            }
+                            -- makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item
 
 
 -- TODO: remove

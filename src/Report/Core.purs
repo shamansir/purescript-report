@@ -345,4 +345,5 @@ parseMonth = case _ of
 
 
 newtype EncodedValue = EncodedValue String
+derive instance Newtype EncodedValue _
 derive newtype instance Eq EncodedValue

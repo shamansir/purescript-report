@@ -2,19 +2,21 @@ module Report.Modifiers.Class.ValueModify where
 
 import Prelude
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested (type (/\))
 
-import Report.Core (EncodedValue)
+import Report.Core (EncodedValue(..))
 import Report.Class (class IsTag)
 
 import Report.Modifiers (modifierKey)
 import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Task (TaskP)
+import Report.Modifiers.Tags (Tags)
 import Report.Encoding.Modifiers.Progress as PEnc
 import Report.Encoding.Modifiers.Task as TEnc
 import Report.Encoding.Modifiers.Stats as SEnc
+import Report.Encoding.Modifiers.Tags as Tags
 import Report.Encoding.Suffix as SxEnc
 
 import Report.Prefix as Px
@@ -26,24 +28,9 @@ class EncodableKey k where
     decodeKey :: String -> Maybe k
 
 
--- FIXME: not used
-class Keyed k a where -- different from `IsModifier`/`modifierKey` key, that key is used to store in the `Map` and this one is for editing
-    keyOf :: a -> k
-
-
 class {- Keyed k a <= -} ValueModify k a where
     toEditable :: a -> k /\ EncodedValue
     fromEditable :: k -> EncodedValue -> Maybe a
-
-
-instance Keyed PValueTag Progress where
-    keyOf = valueTagOf
-
-instance Keyed Px.Key Px.Prefix where
-    keyOf = modifierKey -- ...but can be used for editing anyway
-
-instance Keyed Sx.Key (Sx.Suffix t) where
-    keyOf = modifierKey -- ...but can be used for editing anyway
 
 
 instance ValueModify PValueTag Progress where
@@ -57,6 +44,11 @@ instance ValueModify Unit TaskP where
 instance ValueModify (Maybe PValueTag) Stats where
     toEditable   = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
+
+
+instance (IsTag t) => ValueModify Unit (Tags t) where
+    toEditable   = Tags.encodeTags >>> pure
+    fromEditable = const $ Just <<< Tags.decodeTags
 
 instance (IsTag t) => ValueModify Sx.Key (Sx.Suffix t) where
     toEditable   = SxEnc.encodeSuffix

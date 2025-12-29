@@ -8,6 +8,8 @@ import Report.Core (EncodedValue(..))
 import Report.Class (class IsGroup, g_stats, class IsSubjectId, s_id)
 import Report.Prefix (Key) as Prefix
 import Report.Suffix (Key) as Suffix
+import Report.Prefix (Prefixes)
+import Report.Suffix (Suffixes)
 import Report.GroupPath (GroupPath)
 import Report.Modifiers.Stats (Stats)
 import Report (Report)
@@ -41,6 +43,13 @@ data WhatKey
 derive instance Eq WhatKey
 
 
+data Location subj_id
+    = Nowhere
+    | AtGroup  subj_id GroupPath
+    | AtItem   subj_id GroupPath Int
+    | AtSuffix subj_id GroupPath Int Suffix.Key
+
+
 type Modification subj_id =
     { subjId :: subj_id
     , path :: GroupPath
@@ -52,6 +61,12 @@ type Modification subj_id =
 class GroupModify group where
     setGroupName :: String -> group -> group
     setGroupStats :: Stats -> group -> group
+
+
+class ItemModify t a where
+    setName :: String -> a -> a
+    updateSuffixes :: Suffixes t -> a -> a
+    updatePrefixes :: Prefixes -> a -> a
 
 
 modifyAt
