@@ -24,87 +24,91 @@ import Report.Web.Modifiers.Task (qtaskCheckbox, taskTextColor)
 
 -- TODO: CT.ViewOrEdit { itemName :: String }
 -- TODO: CT.ViewOrEdit Prog.Progress
-renderProgress :: forall w i. String -> Prog.Progress -> H w i
-renderProgress gitemName = case _ of
+renderProgress :: forall w i. CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> H w i
+renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
     Prog.None ->
         HH.span []
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
-            , qitemnameSpan incompleteColor gitemName
+            , qitemnameSpan incompleteColor
             , qspacerSpan
-            , qcolorSpan incompleteColor "<None>"
+            , qprogress $ qcolorSpan incompleteColor "<None>"
             ]
     Prog.Unknown ->
         HH.span []
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
-            , qitemnameSpan incompleteColor gitemName
+            , qitemnameSpan incompleteColor
             , qspacerSpan
-            , qcolorSpan incompleteColor "???"
+            , qprogress $ qcolorSpan incompleteColor "???"
             ]
     Prog.Error errorStr ->
         HH.span []
             [ qitemmarkerSpan genericColor
             , qspacerSpan
-            , qitemnameSpan genericColor gitemName
+            , qitemnameSpan genericColor
             , qspacerSpan
-            , qcolorSpan errorColor errorStr
+            , qprogress $ qcolorSpan errorColor errorStr
             ]
     Prog.PText text ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan textColor text
+            , qprogress $ qcolorSpan textColor text
             ]
     Prog.PNumber num ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatNum num
+            , qprogress $ qcolorSpan numColor $ formatNum num
             ]
     Prog.PInt num ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatInt num
+            , qprogress $ qcolorSpan numColor $ formatInt num
             ]
     Prog.OnDate (CT.SDate { day, month, year }) ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan timeColor $ CT.toLeadingZero day
-            , qspacerSpan
-            , qcolorSpan timeColor $ show month
-            , qspacerSpan
-            , qcolorSpan timeColor $ show year
+            , qprogress $ HH.span_
+                [ qcolorSpan timeColor $ CT.toLeadingZero day
+                , qspacerSpan
+                , qcolorSpan timeColor $ show month
+                , qspacerSpan
+                , qcolorSpan timeColor $ show year
+                ]
             ]
     Prog.OnTime { hrs, min, sec } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan timeColor $ CT.toLeadingZero hrs
-            , qtimesplitSpan
-            , qcolorSpan timeColor $ CT.toLeadingZero min
-            , qtimesplitSpan
-            , qcolorSpan timeColor $ CT.toLeadingZero sec
+            , qprogress $ HH.span_
+                [ qcolorSpan timeColor $ CT.toLeadingZero hrs
+                , qtimesplitSpan
+                , qcolorSpan timeColor $ CT.toLeadingZero min
+                , qtimesplitSpan
+                , qcolorSpan timeColor $ CT.toLeadingZero sec
+                ]
             ]
     Prog.ToComplete { done } ->
         HH.span []
             [ qitemmarkerSpan $ if done then completeColor else incompleteColor
             , qspacerSpan
-            , qitemnameSpan (if done then completeColor else incompleteColor) gitemName
+            , qitemnameSpan $ if done then completeColor else incompleteColor
             , qspacerSpan
-            , qcompleteCheckbox done
+            , qprogress $ qcompleteCheckbox done
             ]
     Prog.PercentI pctInt ->
         let
@@ -113,10 +117,12 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , percentage 100.0 $ Int.toNumber pctInt
-            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt pctInt <> "%"
+            , qprogress $ HH.span_
+                [ percentage 100.0 $ Int.toNumber pctInt
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt pctInt <> "%"
+                ]
             ]
     Prog.PercentN pctN ->
         let
@@ -125,10 +131,12 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , percentage 1.0 pctN
-            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum (pctN * 100.0) <> "%"
+            , qprogress $ HH.span_
+                [ percentage 1.0 pctN
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum (pctN * 100.0) <> "%"
+                ]
             ]
     Prog.PercentSign { pct, sign } ->
         let
@@ -138,10 +146,12 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , percentage 1.0 pct
-            , qcolorSpan (if isDone then completeColor else incompleteColor) $ signStr <> formatNum (pct * 100.0) <> "%"
+            , qprogress $ HH.span_
+                [ percentage 1.0 pct
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ signStr <> formatNum (pct * 100.0) <> "%"
+                ]
             ]
     Prog.ToGetI { got, total } ->
         let
@@ -150,10 +160,12 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , percentage (Int.toNumber total) (Int.toNumber got)
-            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt got <> "/" <> formatInt total
+            , qprogress $ HH.span_
+                [ percentage (Int.toNumber total) (Int.toNumber got)
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt got <> "/" <> formatInt total
+                ]
             ]
     Prog.ToGetN { got, total } ->
         let
@@ -162,30 +174,36 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , qitemnameSpan (if isDone then completeColor else incompleteColor) gitemName
+            , qitemnameSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
-            , percentage total got
-            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum got <> "/" <> formatNum total
+            , qprogress $ HH.span_
+                [ percentage total got
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum got <> "/" <> formatNum total
+                ]
             ]
     Prog.MeasuredI { amount, measure } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatInt amount
-            , qthinspacerSpan
-            , qcolorSpan measureColor $ measure
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ formatInt amount
+                , qthinspacerSpan
+                , qcolorSpan measureColor $ measure
+                ]
             ]
     Prog.MeasuredN { amount, measure } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatNum amount
-            , qthinspacerSpan
-            , qcolorSpan measureColor $ measure
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ formatNum amount
+                , qthinspacerSpan
+                , qcolorSpan measureColor $ measure
+                ]
             ]
     Prog.MeasuredSign { amount, measure, sign } ->
         let
@@ -194,59 +212,69 @@ renderProgress gitemName = case _ of
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ signStr <> formatNum amount
-            , qthinspacerSpan
-            , qcolorSpan measureColor $ measure
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ signStr <> formatNum amount
+                , qthinspacerSpan
+                , qcolorSpan measureColor $ measure
+                ]
             ]
     Prog.PerI { amount, per } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatInt amount
-            , qpersplitSpan
-            , qcolorSpan measureColor per
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ formatInt amount
+                , qpersplitSpan
+                , qcolorSpan measureColor per
+                ]
             ]
     Prog.PerN { amount, per } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatNum amount
-            , qpersplitSpan
-            , qcolorSpan measureColor per
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ formatNum amount
+                , qpersplitSpan
+                , qcolorSpan measureColor per
+                ]
             ]
     Prog.RangeI { from, to } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatInt from
-            , qrangesplitSpan
-            , qcolorSpan numColor $ formatInt to
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ formatInt from
+                , qrangesplitSpan
+                , qcolorSpan numColor $ formatInt to
+                ]
             ]
     Prog.RangeN { from, to } ->
         HH.span []
             [ qitemmarkerSpan completeColor
             , qspacerSpan
-            , qitemnameSpan completeColor gitemName
+            , qitemnameSpan completeColor
             , qspacerSpan
-            , qcolorSpan numColor $ formatNum from
-            , qrangesplitSpan
-            , qcolorSpan numColor $ formatNum to
+            , qprogress $ HH.span_
+                [ qcolorSpan numColor $ formatNum from
+                , qrangesplitSpan
+                , qcolorSpan numColor $ formatNum to
+                ]
             ]
     Prog.Task task ->
         HH.span []
             [ qitemmarkerSpan $ taskTextColor task
             , qspacerSpan
-            , qitemnameSpan (taskTextColor task) gitemName
+            , qitemnameSpan $ taskTextColor task
             , qspacerSpan
-            , qtaskCheckbox task
+            , qprogress $ qtaskCheckbox task
             ]
     Prog.LevelsI { reached, levels } ->
         let
@@ -257,10 +285,12 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , percentage (Int.toNumber maximum) (Int.toNumber reached)
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                , qprogress $ HH.span_
+                    [ percentage (Int.toNumber maximum) (Int.toNumber reached)
+                    , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                    ]
                 ]
             : (renderLevelI reached <$> levels)
     Prog.LevelsN { reached, levels } ->
@@ -272,10 +302,12 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , percentage maximum reached
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum reached <> "/" <> formatNum maximum
+                , qprogress $ HH.span_
+                    [ percentage maximum reached
+                    , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum reached <> "/" <> formatNum maximum
+                    ]
                 ]
             : (renderLevelN reached <$> levels)
     Prog.LevelsS { reached, levels } ->
@@ -287,10 +319,12 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , percentage (Int.toNumber maximum) (Int.toNumber reached)
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                , qprogress $ HH.span_
+                    [ percentage (Int.toNumber maximum) (Int.toNumber reached)
+                    , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                    ]
                 ]
             : (mapWithIndex (renderLevelS reached) levels)
     Prog.LevelsE { reached, total } ->
@@ -299,10 +333,12 @@ renderProgress gitemName = case _ of
         in HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , percentage (Int.toNumber total) (Int.toNumber reached)
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt total <> "L"
+                , qprogress $ HH.span_
+                    [ percentage (Int.toNumber total) (Int.toNumber reached)
+                    , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt total <> "L"
+                    ]
                 ]
     Prog.LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } ->
         let
@@ -310,13 +346,15 @@ renderProgress gitemName = case _ of
         in HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , percentage (Int.toNumber totalLevels) (Int.toNumber levelReached)
-                , qcolorSpan (if isDone then completeColor else incompleteColor)
-                        $ formatInt levelReached <> "/" <> formatInt totalLevels <> "L"
-                        <> " : "
-                        <> formatInt reachedAtCurrent <> "/" <> formatInt maximumAtCurrent
+                , qprogress $ HH.span_
+                    [ percentage (Int.toNumber totalLevels) (Int.toNumber levelReached)
+                    , qcolorSpan (if isDone then completeColor else incompleteColor)
+                            $ formatInt levelReached <> "/" <> formatInt totalLevels <> "L"
+                            <> " : "
+                            <> formatInt reachedAtCurrent <> "/" <> formatInt maximumAtCurrent
+                    ]
                 ]
     Prog.LevelsP { levels } ->
         let
@@ -328,10 +366,12 @@ renderProgress gitemName = case _ of
             $ HH.div []
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , qitemnameSpan (if isDone then completeColor else incompleteColor) $ gitemName
+                , qitemnameSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
-                , percentage (Int.toNumber maximum) (Int.toNumber reached)
-                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                , qprogress $ HH.span_
+                    [ percentage (Int.toNumber maximum) (Int.toNumber reached)
+                    , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                    ]
                 ]
             : (mapWithIndex renderLevelP levels)
     Prog.LevelsO { reached, levels } ->
@@ -353,7 +393,11 @@ renderProgress gitemName = case _ of
                 ]
                 : -} (renderLevelO reached <$> levels)
     where
-        qitemnameSpan = qcolorSpan
+        { itemName } = CT.loadViewOrEdit voeItemName
+        qitemnameSpan color = if not editingName then qcolorSpan color itemName else qcolorSpan color "<EDIT>"
+        qprogress htmlWhenVieiwing = htmlWhenVieiwing
+        editingName = CT.isEditing voeItemName
+        editingProgress = CT.isEditing voeProgress
 
 
 percentage :: forall w i. Number -> Number -> H w i

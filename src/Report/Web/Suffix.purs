@@ -2,7 +2,7 @@ module Report.Web.Suffix where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Map (keys, lookup) as Map
 import Data.Set (toUnfoldable) as Set
 
@@ -13,7 +13,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
 import Report.Core (SDate(..), toLeadingZero) as CT
-import Report.Core.Logic (EncodedValue) as CT
+import Report.Core.Logic (EncodedValue, view, edit) as CT
 import Report.Class as S
 import Report.Suffix (Suffixes)
 import Report.Suffix as Suffixes
@@ -40,6 +40,8 @@ type SuffixesRenderConfig i item =
 type SuffixRenderConfig i t =
     { key :: Suffix.Key
     , isSelected :: Boolean
+    , isEditingSuffix   :: Maybe CT.EncodedValue
+    , isEditingItemName :: Maybe CT.EncodedValue
     , onClick :: Suffix.Key -> MouseEvent -> i
     , onEdit :: Suffix.Key -> MouseEvent -> CT.EncodedValue -> i
     , parentSuffixes :: Suffixes t
@@ -67,6 +69,8 @@ renderSuffixes conf =
             <#> \key -> renderSuffix
                             { key
                             , isSelected : isSelected key
+                            , isEditingSuffix : conf.isEditingSuffix key
+                            , isEditingItemName : conf.isEditingItemName
                             , onClick : conf.onClick
                             , onEdit : conf.onEdit
                             , parentSuffixes : i_suffixes
@@ -93,7 +97,23 @@ renderSuffix conf =
     in
     wrapSuffix $ case conf.key of
         Suffix.KProgress _ -> case currentSuffix of
-            Just (Suffix.SProgress progress) -> renderProgress conf.parentItemName progress
+            Just (Suffix.SProgress progress) ->
+                renderProgress
+                    -- conf.parentItemName
+                    -- progress
+                    ( maybe
+                        CT.view
+                        CT.edit
+                        conf.isEditingItemName
+                        conf.parentItemName
+                            <#> \name -> { itemName : name }
+                    )
+                    ( maybe
+                        CT.view
+                        CT.edit
+                        conf.isEditingSuffix
+                        progress
+                    )
             Just _ -> HH.text ""
             Nothing -> HH.text ""
         Suffix.KEarnedAt -> case currentSuffix of
