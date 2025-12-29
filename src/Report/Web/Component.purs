@@ -2,6 +2,8 @@ module Report.Web.Component where
 
 import Prelude
 
+import Effect.Class (class MonadEffect)
+
 import Data.Array ((:))
 import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any) as Array
 import Data.FunctorWithIndex (mapWithIndex)
@@ -13,11 +15,16 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\))
-import Effect.Class (class MonadEffect)
+
+import Web.Event.Event (stopPropagation) as Event
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent (toEvent) as ME
+
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+
 import Report (Report, toMap, findGroup, findItem, withItem, withGroup) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
@@ -27,6 +34,7 @@ import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Modify (Location(..))
 import Report.Modify (class GroupModify, What(..), WhatKey(..), modifyAt) as Modify
 import Report.Suffix (get, put, debugNavLabel) as Suffix
+
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
@@ -34,9 +42,6 @@ import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Suffix (renderSuffixes)
-import Web.Event.Event (stopPropagation) as Event
-import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent (toEvent) as ME
 
 
 showNavigationDebugHint = true :: Boolean
@@ -67,10 +72,13 @@ data Action subj_id subj_tag report
     | IncludeTag subj_tag
     | ExcludeTag subj_tag
     | ToggleOptionsPane
+    | NextSort
     | ClearNavigation
     | NavigateTo MouseEvent (Location subj_id)
-    | EditAt MouseEvent (Location subj_id) EncodedValue
-    | NextSort
+    | EditAt (Location subj_id) EncodedValue
+    | StartEditing MouseEvent
+    | CancelEditing
+    | NoOp
 
 
 data SubjectSort
@@ -259,6 +267,9 @@ component preSelected =
     stopPropagation :: forall s a sl o. MouseEvent -> H.HalogenM s a o sl m Unit
     stopPropagation mEvent = H.liftEffect $ Event.stopPropagation $ ME.toEvent mEvent
 
+    clearCurrentActions = _ { navigatedTo = Navigation.clear }
+    clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
+
     handleAction
         :: Action subj_id subj_tag (Input subj group item)
         -> H.HalogenM
@@ -279,7 +290,7 @@ component preSelected =
         ExcludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
-        ClearNavigation -> H.modify_ _ { navigatedTo = Navigation.clear }
+        ClearNavigation -> H.modify_ clearCurrentActions
 
         NavigateTo mevt location ->
             let
@@ -308,12 +319,13 @@ component preSelected =
                                                 <$> R.findItem subjId groupPath itemIdx s.report
                     Nowhere -> s.navigatedTo
                 navigateOrEdit s =
-                    if s.navigatedTo /= nextNavigation || s.readOnlyMode
+                    if Navigation.isEditing s.navigatedTo then s else
+                    if s.readOnlyMode || s.navigatedTo /= nextNavigation
                         then s { navigatedTo = nextNavigation }
                         else s { navigatedTo = editNavigation s }
             in stopPropagation mevt <> H.modify_ navigateOrEdit
 
-        EditAt mevt location encval ->
+        EditAt location encval ->
             let
                 nextReport :: R.Report subj group item -> R.Report subj group item
                 nextReport curReport
@@ -322,6 +334,7 @@ component preSelected =
                         AtGroup subjId groupPath ->
                             curReport
                                 # Modify.modifyAt
+                                    -- ( Debug.spy "edit at group"
                                     { subjId
                                     , path : groupPath
                                     , what : Modify.GroupName
@@ -331,6 +344,7 @@ component preSelected =
                         AtItem subjId groupPath itemIdx ->
                             curReport
                                 # Modify.modifyAt
+                                    -- ( Debug.spy "edit at item"
                                     { subjId
                                     , path : groupPath
                                     , what : Modify.ItemName itemIdx
@@ -340,6 +354,7 @@ component preSelected =
                         AtSuffix subjId groupPath itemIdx suffixKey ->
                             curReport
                                 # Modify.modifyAt
+                                    -- ( Debug.spy "edit at suffix"
                                     { subjId
                                     , path : groupPath
                                     , what : Modify.ItemSuffix itemIdx suffixKey
@@ -347,7 +362,12 @@ component preSelected =
                                     }
                                 # fromMaybe curReport
             in
-                stopPropagation mevt <> H.modify_ \s -> s { report = nextReport s.report }
+                H.modify_
+                    \s -> s { report = nextReport s.report }
+
+        StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
+        CancelEditing -> H.modify_ clearEditing
+        NoOp -> pure unit
 
 
 renderSubject
@@ -412,7 +432,8 @@ renderSubject navigatedTo subj itemsMap  =
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
                     makeSuffixClickEvt key mevt = NavigateTo mevt $ AtSuffix subjId groupPath itemIdx key
-                    makeSuffixEditEvt key mevt = EditAt mevt $ AtSuffix subjId groupPath itemIdx key
+                    makeSuffixEditEvt key = EditAt $ AtSuffix subjId groupPath itemIdx key
+                    makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
@@ -427,9 +448,13 @@ renderSubject navigatedTo subj itemsMap  =
                     : renderSuffixes @item_tag
                             { onClick : makeSuffixClickEvt
                             , onEdit : makeSuffixEditEvt
+                            , onEditItemName : makeItemNameEditEvt
                             , mbSelectedSuffix : mbCurrentSuffix
                             , isEditingSuffix
                             , isEditingItemName
+                            , onStartEditing  : StartEditing
+                            , onCancelEditing : CancelEditing
+                            , noop : NoOp
                             , item
                             }
                             -- makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item

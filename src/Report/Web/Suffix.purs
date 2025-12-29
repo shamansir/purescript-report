@@ -13,7 +13,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
 import Report.Core (SDate(..), toLeadingZero) as CT
-import Report.Core.Logic (EncodedValue, view, edit) as CT
+import Report.Core.Logic (EncodedValue(..), view, edit) as CT
 import Report.Class as S
 import Report.Suffix (Suffixes)
 import Report.Suffix as Suffixes
@@ -33,7 +33,11 @@ type SuffixesRenderConfig i item =
     , isEditingSuffix :: Suffix.Key -> Maybe CT.EncodedValue
     , isEditingItemName :: Maybe CT.EncodedValue
     , onClick :: Suffix.Key -> MouseEvent -> i
-    , onEdit :: Suffix.Key -> MouseEvent -> CT.EncodedValue -> i
+    , onEdit :: Suffix.Key -> CT.EncodedValue -> i
+    , onEditItemName :: CT.EncodedValue -> i
+    , onStartEditing :: MouseEvent -> i
+    , onCancelEditing :: i
+    , noop :: i
     }
 
 
@@ -43,9 +47,13 @@ type SuffixRenderConfig i t =
     , isEditingSuffix   :: Maybe CT.EncodedValue
     , isEditingItemName :: Maybe CT.EncodedValue
     , onClick :: Suffix.Key -> MouseEvent -> i
-    , onEdit :: Suffix.Key -> MouseEvent -> CT.EncodedValue -> i
+    , onEdit :: Suffix.Key -> CT.EncodedValue -> i
+    , onEditItemName :: CT.EncodedValue -> i
     , parentSuffixes :: Suffixes t
     , parentItemName :: String
+    , onStartEditing :: MouseEvent -> i
+    , onCancelEditing :: i
+    , noop :: i
     }
 
 
@@ -73,8 +81,12 @@ renderSuffixes conf =
                             , isEditingItemName : conf.isEditingItemName
                             , onClick : conf.onClick
                             , onEdit : conf.onEdit
+                            , onEditItemName : conf.onEditItemName
                             , parentSuffixes : i_suffixes
                             , parentItemName : i_name
+                            , onStartEditing : conf.onStartEditing
+                            , onCancelEditing : conf.onCancelEditing
+                            , noop : conf.noop
                             }
 
 
@@ -99,8 +111,7 @@ renderSuffix conf =
         Suffix.KProgress _ -> case currentSuffix of
             Just (Suffix.SProgress progress) ->
                 renderProgress
-                    -- conf.parentItemName
-                    -- progress
+                    progressConfig
                     ( maybe
                         CT.view
                         CT.edit
@@ -117,43 +128,57 @@ renderSuffix conf =
             Just _ -> HH.text ""
             Nothing -> HH.text ""
         Suffix.KEarnedAt -> case currentSuffix of
-            Just (Suffix.SEarnedAt (CT.SDate { day, month, year })) -> HH.span []
+            Just (Suffix.SEarnedAt (CT.SDate { day, month, year })) -> HH.span_
                 [ qspacerSpan
-                , HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
-                    [ qcolorSpan timeColor $ CT.toLeadingZero day
-                    , qspacerSpan
-                    , qcolorSpan timeColor $ show month
-                    , qspacerSpan
-                    , qcolorSpan timeColor $ show year
-                    ]
+                , whenNotEditing $
+                    HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
+                        [ qcolorSpan timeColor $ CT.toLeadingZero day
+                        , qspacerSpan
+                        , qcolorSpan timeColor $ show month
+                        , qspacerSpan
+                        , qcolorSpan timeColor $ show year
+                        ]
                 ]
             Just _ -> HH.text ""
             Nothing -> HH.text ""
         Suffix.KDescription -> case currentSuffix of
-            Just (Suffix.SDescription description) -> HH.span []
+            Just (Suffix.SDescription description) -> HH.span_
                 [ qspacerSpan
-                , HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
+                , whenNotEditing $
+                    HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
                 ]
             Just _ -> HH.text ""
             Nothing -> HH.text ""
         Suffix.KReference -> case currentSuffix of
             Just (Suffix.SReference groupRef) ->
-                renderGroupRef groupRef
+                whenNotEditing $ renderGroupRef groupRef
             Just _ -> HH.text ""
             Nothing -> HH.text ""
         Suffix.KTags -> case currentSuffix of
             Just (Suffix.STags (Tags tags)) ->
-                HH.span [] $ itemTagBadge <$> tags
+                whenNotEditing $ HH.span_ $ itemTagBadge <$> tags
             Just _ -> HH.text ""
             Nothing -> HH.text ""
-
+    where
+        progressConfig =
+            { onEdit : conf.onEdit conf.key
+            , onEditItemName : conf.onEditItemName
+            , onStartEditing : conf.onStartEditing
+            , onCancelEditing : conf.onCancelEditing
+            , noop : conf.noop
+            }
+        whenNotEditing :: H w i -> H w i
+        whenNotEditing nonEditing = case conf.isEditingSuffix of
+            Just (CT.EncodedValue value) ->
+                HH.span [ HP.style "color: gray;" ] [ HH.text value ]
+            Nothing -> nonEditing
 
     {-
         [ wrapSuffix Suffix.KProgress $ case i_suffixes # Suffixes.getProgress of
             Just progress -> renderProgress (S.i_name @item_tag item) progress
             Nothing -> HH.text ""
         , wrapSuffix Suffix.KEarnedAt $ case i_suffixes # Suffixes.getEarnedAt of
-            Just (CT.SDate { day, month, year }) -> HH.span []
+            Just (CT.SDate { day, month, year }) -> HH.span_
                 [ qspacerSpan
                 , HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
                     [ qcolorSpan timeColor $ CT.toLeadingZero day
@@ -165,7 +190,7 @@ renderSuffix conf =
                 ]
             Nothing -> HH.text ""
         , wrapSuffix Suffix.KDescription $ case i_suffixes # Suffixes.getDescription of
-            Just description -> HH.span []
+            Just description -> HH.span_
                 [ qspacerSpan
                 , HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
                 ]
@@ -176,6 +201,6 @@ renderSuffix conf =
             Nothing -> HH.text ""
         , case S.i_tags @item_tag item of -- TODO: make tags suffixes too
             [] -> HH.text ""
-            tags -> HH.span [] $ itemTagBadge <$> tags
+            tags -> HH.span_ $ itemTagBadge <$> tags
         ]
     -}

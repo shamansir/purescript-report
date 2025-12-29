@@ -9,25 +9,39 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Array ((:))
 import Data.Array as Array
 
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.KeyboardEvent as KE
+
 import Report.Core as CT
 import Report.Core.Logic as CT
+import Report.Suffix (Key) as Suffix
 import Report.Modifiers (class IsModifier)
 import Report.Modifiers.Task (TaskP(..)) as S
 import Report.Modifiers.Progress (Progress(..)) as Prog
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import Halogen.HTML.Events as HE
 
 import Report.Web.Helpers
 import Report.Web.Modifiers.Task (qtaskCheckbox, taskTextColor)
 
 
+type Events i =
+    { onEdit :: CT.EncodedValue -> i
+    , onEditItemName :: CT.EncodedValue -> i
+    , onStartEditing :: MouseEvent -> i
+    , onCancelEditing :: i
+    , noop :: i
+    }
+
+
 -- TODO: CT.ViewOrEdit { itemName :: String }
 -- TODO: CT.ViewOrEdit Prog.Progress
-renderProgress :: forall w i. CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> H w i
-renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
+renderProgress :: forall w i. Events i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> H w i
+renderProgress events voeItemName voeProgress = case progress of
     Prog.None ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
             , qitemnameSpan incompleteColor
@@ -35,7 +49,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             , qprogress $ qcolorSpan incompleteColor "<None>"
             ]
     Prog.Unknown ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
             , qitemnameSpan incompleteColor
@@ -43,7 +57,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             , qprogress $ qcolorSpan incompleteColor "???"
             ]
     Prog.Error errorStr ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan genericColor
             , qspacerSpan
             , qitemnameSpan genericColor
@@ -51,7 +65,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             , qprogress $ qcolorSpan errorColor errorStr
             ]
     Prog.PText text ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -59,7 +73,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             , qprogress $ qcolorSpan textColor text
             ]
     Prog.PNumber num ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -67,7 +81,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             , qprogress $ qcolorSpan numColor $ formatNum num
             ]
     Prog.PInt num ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -75,7 +89,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             , qprogress $ qcolorSpan numColor $ formatInt num
             ]
     Prog.OnDate (CT.SDate { day, month, year }) ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -89,7 +103,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.OnTime { hrs, min, sec } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -103,7 +117,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.ToComplete { done } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ if done then completeColor else incompleteColor
             , qspacerSpan
             , qitemnameSpan $ if done then completeColor else incompleteColor
@@ -114,7 +128,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
         let
             isDone = pctInt >= 100
         in
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qitemnameSpan $ if isDone then completeColor else incompleteColor
@@ -128,7 +142,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
         let
             isDone = pctN >= 1.0
         in
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qitemnameSpan $ if isDone then completeColor else incompleteColor
@@ -143,7 +157,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
             isDone = pct >= 1.0
             signStr = if sign >= 0 then "+" else "-"
         in
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qitemnameSpan $ if isDone then completeColor else incompleteColor
@@ -157,7 +171,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
         let
             isDone = (total > 0) && (got >= total)
         in
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qitemnameSpan $ if isDone then completeColor else incompleteColor
@@ -171,7 +185,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
         let
             isDone = (total > 0.0) && (got >= total)
         in
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qitemnameSpan $ if isDone then completeColor else incompleteColor
@@ -182,7 +196,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.MeasuredI { amount, measure } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -194,7 +208,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.MeasuredN { amount, measure } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -209,7 +223,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
         let
             signStr = if sign >= 0 then "+" else "-"
         in
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -221,7 +235,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.PerI { amount, per } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -233,7 +247,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.PerN { amount, per } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -245,7 +259,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.RangeI { from, to } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -257,7 +271,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.RangeN { from, to } ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
             , qitemnameSpan completeColor
@@ -269,7 +283,7 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
             ]
     Prog.Task task ->
-        HH.span []
+        HH.span_
             [ qitemmarkerSpan $ taskTextColor task
             , qspacerSpan
             , qitemnameSpan $ taskTextColor task
@@ -393,11 +407,36 @@ renderProgress voeItemName voeProgress = case CT.loadViewOrEdit voeProgress of
                 ]
                 : -} (renderLevelO reached <$> levels)
     where
+        progress = CT.loadViewOrEdit voeProgress
         { itemName } = CT.loadViewOrEdit voeItemName
-        qitemnameSpan color = if not editingName then qcolorSpan color itemName else qcolorSpan color "<EDIT>"
-        qprogress htmlWhenVieiwing = htmlWhenVieiwing
+        qitemnameSpan color =
+            if not editingName
+                then qcolorSpan color itemName
+                else mkValueEditInput events.onEditItemName $ _.itemName <$> voeItemName
+        qprogress htmlWhenViewing =
+            if not editingProgress
+                then htmlWhenViewing
+                else mkValueEditInput events.onEdit voeProgress
         editingName = CT.isEditing voeItemName
         editingProgress = CT.isEditing voeProgress
+        mkValueEditInput :: forall a. (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
+        mkValueEditInput onEdit =
+                maybe (HH.text "<EDIT>")
+                    (\(CT.EncodedValue encVal) ->
+                         HH.input
+                            [ HP.type_ HP.InputText
+                            , HP.value encVal
+                            , HE.onClick events.onStartEditing
+                            , HE.onValueChange (CT.EncodedValue >>> onEdit)
+                            , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
+                                \code -> if code == "Escape"
+                                    then events.onCancelEditing
+                                    else events.noop)
+                            , HE.onBlur $ const events.onCancelEditing
+                            , HE.onAbort $ const events.onCancelEditing
+                            ]
+                    )
+                    <<< CT.loadEncoded
 
 
 percentage :: forall w i. Number -> Number -> H w i
@@ -426,7 +465,7 @@ renderLevelI reached { maximum, name } =
         isDone = reached >= maximum
     in HH.div
         [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
-        [ HH.span []
+        [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qcolorSpan (if isDone then completeColor else incompleteColor) name
@@ -442,7 +481,7 @@ renderLevelN reached { maximum, name } =
         isDone = reached >= maximum
     in HH.div
         [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
-        [ HH.span []
+        [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qcolorSpan (if isDone then completeColor else incompleteColor) name
@@ -458,7 +497,7 @@ renderLevelS reached levenN { gives } =
         isDone = reached > levenN
     in HH.div
         [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
-        [ HH.span []
+        [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qcolorSpan (if isDone then completeColor else incompleteColor) gives
@@ -475,7 +514,7 @@ renderLevelO reached { mbMaximum, name } =
             Nothing -> false
     in HH.div
         [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
-        [ HH.span []
+        [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
             , qcolorSpan (if isDone then completeColor else incompleteColor) name
@@ -493,7 +532,7 @@ renderLevelP levelN { proc, name } =
         isDone = proc == S.TDone
     in HH.div
         [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
-        [ HH.span []
+        [ HH.span_
             [ qlevelmarkerSpan $ taskTextColor proc
             , qspacerSpan
             , qcolorSpan (taskTextColor proc) name

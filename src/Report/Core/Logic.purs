@@ -2,7 +2,7 @@ module Report.Core.Logic where
 
 import Prelude
 
-import Data.Maybe (Maybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 
 
@@ -18,6 +18,12 @@ loadViewOrEdit :: forall a. ViewOrEdit a -> a
 loadViewOrEdit = case _ of
     View a -> a
     Edit _ a -> a
+
+
+loadEncoded :: forall a. ViewOrEdit a -> Maybe EncodedValue
+loadEncoded = case _ of
+    View _ -> Nothing
+    Edit ev _ -> Just ev
 
 
 isViewing :: forall a. ViewOrEdit a -> Boolean

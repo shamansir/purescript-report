@@ -26,7 +26,7 @@ renderPathSegment segment =
 
 renderGroupRef :: forall w i. S.GroupPath -> H w i
 renderGroupRef groupRef =
-    HH.span []
+    HH.span_
         [ qspacerSpan
         , HH.a [ HP.href $ "#" <> groupPathId groupRef, HP.style "color: cadetblue; text-decoration: none;" ] [ HH.text "#" ]
         ]

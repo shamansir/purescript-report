@@ -42,8 +42,8 @@ formatNum = CT.formatNumWithCommas { fixedTo : Just 2 }
 qcolor :: Color -> _
 qcolor color = HP.style $ "color: " <> color <> ";"
 
-qspacerSpan = HH.span [] [ HH.text " " ] :: forall w i. H w i
-qthinspacerSpan = HH.span [] [ HH.text " " ] :: forall w i. H w i
+qspacerSpan = HH.span_ [ HH.text " " ] :: forall w i. H w i
+qthinspacerSpan = HH.span_ [ HH.text " " ] :: forall w i. H w i
 qtimesplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "::" ] :: forall w i. H w i
 qpathsplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "::" ] :: forall w i. H w i
 qpersplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "/" ] :: forall w i. H w i

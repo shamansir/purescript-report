@@ -2,7 +2,7 @@ module Report.Web.Navigation where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Tuple.Nested ((/\))
 
 import Report.Core.Logic (EncodedValue)
@@ -33,6 +33,14 @@ init =
 
 clear :: forall subj_id. NavigatedTo subj_id
 clear = init
+
+
+isEditing :: forall subj_id. NavigatedTo subj_id -> Boolean
+isEditing = _.mbEditing >>> isJust
+
+
+clearEditing :: forall subj_id. NavigatedTo subj_id -> NavigatedTo subj_id
+clearEditing = _ { mbEditing = Nothing }
 
 
 toGroup :: forall subj_id. subj_id -> GP.GroupPath -> NavigatedTo subj_id
