@@ -2,7 +2,9 @@ module Report.Modifiers.Priority where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
+import Data.Int (fromString, toNumber) as Int
 
 
 newtype Priority = Priority (Either String Int)
@@ -20,3 +22,29 @@ priorityC = Priority (Left "C") :: Priority
 
 priorityNum :: Int -> Priority
 priorityNum = Priority <<< Right
+
+
+maxLPriority = 3 :: Int
+maxRPriority = 20 :: Int
+
+
+fromString :: String -> Maybe Priority
+fromString str =
+    case str of
+        "A" -> Just priorityA
+        "B" -> Just priorityB
+        "C" -> Just priorityC
+        _   ->
+            case Int.fromString str :: Maybe Int of
+                Just n  -> Just $ priorityNum n
+                Nothing -> Nothing
+
+
+toValue :: Priority -> Number
+toValue (Priority (Left str)) =
+    case str of
+        "A" -> 1.0 / Int.toNumber maxLPriority
+        "B" -> 2.0 / Int.toNumber maxLPriority
+        "C" -> 3.0 / Int.toNumber maxLPriority
+        _   -> 1.1
+toValue (Priority (Right n)) = Int.toNumber n / Int.toNumber maxRPriority

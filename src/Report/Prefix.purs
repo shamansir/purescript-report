@@ -74,3 +74,10 @@ getTask :: Prefixes -> Maybe TaskP
 getTask pfx = Mod.get KTask pfx >>= case _ of
     PTask t -> Just t
     _ -> Nothing
+
+
+debugNavLabel :: Key -> String
+debugNavLabel = case _ of
+    KRating -> "RATING"
+    KPriority -> "PRIORITY"
+    KTask -> "TASK"

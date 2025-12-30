@@ -24,21 +24,11 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
 import Report.Web.Helpers
+import Report.Web.Modifiers (ProgressRenderConfig)
 import Report.Web.Modifiers.Task (qtaskCheckbox, taskTextColor)
 
 
-type Events i =
-    { onEdit :: CT.EncodedValue -> i
-    , onEditItemName :: CT.EncodedValue -> i
-    , onStartEditing :: MouseEvent -> i
-    , onCancelEditing :: i
-    , noop :: i
-    }
-
-
--- TODO: CT.ViewOrEdit { itemName :: String }
--- TODO: CT.ViewOrEdit Prog.Progress
-renderProgress :: forall w i. Events i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> H w i
+renderProgress :: forall w i. ProgressRenderConfig i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> H w i
 renderProgress events voeItemName voeProgress = case progress of
     Prog.None ->
         HH.span_

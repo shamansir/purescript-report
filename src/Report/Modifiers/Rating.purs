@@ -20,3 +20,15 @@ toStars (Rating n) =
         <> Array.replicate halfStar "⯨"
         <> Array.replicate emptyStars "✩"
         ) # String.joinWith ""
+
+
+maxValue :: Number
+maxValue = 5.0
+
+
+toNumber :: Rating -> Number
+toNumber (Rating n) = n
+
+
+fromNumber :: Number -> Rating
+fromNumber = Rating

@@ -17,6 +17,7 @@ import Report.Encoding.Modifiers.Progress as PEnc
 import Report.Encoding.Modifiers.Task as TEnc
 import Report.Encoding.Modifiers.Stats as SEnc
 import Report.Encoding.Modifiers.Tags as Tags
+import Report.Encoding.Prefix as PxEnc
 import Report.Encoding.Suffix as SxEnc
 
 import Report.Prefix as Px
@@ -45,7 +46,6 @@ instance ValueModify (Maybe PValueTag) Stats where
     toEditable   = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
 
-
 instance (IsTag t) => ValueModify Unit (Tags t) where
     toEditable   = Tags.encodeTags >>> pure
     fromEditable = const $ Just <<< Tags.decodeTags
@@ -53,3 +53,7 @@ instance (IsTag t) => ValueModify Unit (Tags t) where
 instance (IsTag t) => ValueModify Sx.Key (Sx.Suffix t) where
     toEditable   = SxEnc.encodeSuffix
     fromEditable = SxEnc.decodeSuffix
+
+instance ValueModify Px.Key Px.Prefix where
+    toEditable   = PxEnc.encodePrefix
+    fromEditable = PxEnc.decodePrefix

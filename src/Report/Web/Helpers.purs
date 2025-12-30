@@ -33,6 +33,9 @@ timeColor = "darkolivegreen" :: Color
 splitcolor = "lightgray" :: Color
 errorColor = "red" :: Color
 
+ratingColor :: Number -> Color
+ratingColor n = if n >= 0.75 then "forestgreen" else if n >= 0.5 then "goldenrod" else "crimson"
+
 
 formatInt :: Int -> String
 formatInt = CT.formatWithCommas
@@ -48,6 +51,9 @@ qtimesplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "::" ] :: forall w i. H
 qpathsplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "::" ] :: forall w i. H w i
 qpersplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "/" ] :: forall w i. H w i
 qrangesplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "-" ] :: forall w i. H w i
+
+qbracketspan :: forall w i. String -> H w i
+qbracketspan br = HH.span [ qcolor splitcolor ] [ HH.text br ]
 
 qitemmarkerSpan :: forall w i. String -> H w i
 qitemmarkerSpan color = HH.span [ qcolor color ] [ HH.text "🞄" {- "●" -}  ]

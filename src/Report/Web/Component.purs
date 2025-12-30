@@ -28,11 +28,13 @@ import Halogen.HTML.Properties as HP
 import Report (Report, toMap, findGroup, findItem, withItem, withGroup) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
+import Report.Encoding.Prefix (encodePrefix) as Prefix
 import Report.Encoding.Suffix (encodeSuffix) as Suffix
 import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Modify (Location(..))
-import Report.Modify (class GroupModify, class ItemModify, What(..), WhatKey(..), modifyAt) as Modify
+import Report.Modify as Modify
+import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 
 import Report.Web.GroupPath (groupPathId, renderPath)
@@ -41,6 +43,7 @@ import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
+import Report.Web.Prefix (renderPrefixes)
 import Report.Web.Suffix (renderSuffixes)
 
 
@@ -300,7 +303,9 @@ component preSelected =
                                                 Navigation.toGroup subjId groupPath
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.toItem subjId groupPath itemIdx
-                    AtSuffix subjId groupPath itemIdx suffixKey ->
+                    AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
+                                                Navigation.toPrefix subjId groupPath itemIdx prefixKey
+                    AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
                                                 Navigation.toSuffix subjId groupPath itemIdx suffixKey
                     Nowhere ->
                                                 Navigation.clear
@@ -312,7 +317,13 @@ component preSelected =
                                                 Navigation.editItemName subjId groupPath itemIdx
                                                 $ maybe (EncodedValue "") (R.i_name @item_tag >>> EncodedValue)
                                                 $ R.findItem subjId groupPath itemIdx s.report
-                    AtSuffix subjId groupPath itemIdx suffixKey ->
+                    AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
+                                                Navigation.editPrefix subjId groupPath itemIdx prefixKey
+                                                $ maybe (EncodedValue "") (Prefix.encodePrefix >>> Tuple.snd)
+                                                $ Prefix.get prefixKey
+                                                =<< R.i_prefixes @item_tag
+                                                <$> R.findItem subjId groupPath itemIdx s.report
+                    AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
                                                 Navigation.editSuffix subjId groupPath itemIdx suffixKey
                                                 $ maybe (EncodedValue "") (Suffix.encodeSuffix >>> Tuple.snd)
                                                 $ Suffix.get suffixKey
@@ -352,13 +363,13 @@ component preSelected =
                                     , newValue : encval
                                     }
                                 # fromMaybe curReport
-                        AtSuffix subjId groupPath itemIdx suffixKey ->
+                        AtModifier subjId groupPath itemIdx modKey ->
                             curReport
                                 # Modify.modifyAt @item_tag
-                                    -- ( Debug.spy "edit at suffix"
+                                    -- ( Debug.spy "edit at prefix"
                                     { subjId
                                     , path : groupPath
-                                    , what : Modify.ItemSuffix itemIdx suffixKey
+                                    , what : Modify.ItemModifier itemIdx modKey
                                     , newValue : encval
                                     }
                                 # fromMaybe curReport
@@ -426,39 +437,55 @@ renderSubject navigatedTo subj itemsMap  =
 
             renderGroupItem groupPath itemIdx item =
                 let
-                    isNavigatedTo = navigatedTo # Navigation.atItem subjId groupPath itemIdx
+                    isNavigatedToItem = navigatedTo # Navigation.atItem subjId groupPath itemIdx
                     isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
+                    isEditingPrefix prefix = navigatedTo # Navigation.editingAtPrefix subjId groupPath itemIdx prefix
                     isEditingSuffix suffix = navigatedTo # Navigation.editingAtSuffix subjId groupPath itemIdx suffix
-                    mbCurrentSuffix = if isNavigatedTo then navigatedTo.mbSuffix else Nothing
+                    mbCurrentPrefix = if isNavigatedToItem then navigatedTo.mbModifier >>= Modify.loadPrefixKey else Nothing
+                    mbCurrentSuffix = if isNavigatedToItem then navigatedTo.mbModifier >>= Modify.loadSuffixKey else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
-                    makeSuffixClickEvt key mevt = NavigateTo mevt $ AtSuffix subjId groupPath itemIdx key
-                    makeSuffixEditEvt key = EditAt $ AtSuffix subjId groupPath itemIdx key
                     makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
+                    makePrefixClickEvt prefixKey mevt = NavigateTo mevt $ AtModifier subjId groupPath itemIdx $ Modify.PrefixMod prefixKey
+                    makePrefixEditEvt prefixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.PrefixMod prefixKey
+                    makeSuffixClickEvt suffixKey mevt = NavigateTo mevt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
+                    makeSuffixEditEvt suffixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
                     [ HP.style
-                        $ if isNavigatedTo then itemSelectedStyle else itemUsualStyle
+                        $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
-                    $ case R.i_mbTitle @item_tag item of
-                        Just title -> HH.text title
-                        Nothing -> HH.text ""
-                    -- : renderSuffixes @item_tag makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item
-                    : renderSuffixes @item_tag
-                            { onClick : makeSuffixClickEvt
-                            , onEdit : makeSuffixEditEvt
-                            , onEditItemName : makeItemNameEditEvt
-                            , mbSelectedSuffix : mbCurrentSuffix
-                            , isEditingSuffix
-                            , isEditingItemName
+                    $ HH.span_
+                        (renderPrefixes
+                            @item_tag
+                            { mbSelectedPrefix : mbCurrentPrefix
+                            , isEditingPrefix
+                            , onClick : makePrefixClickEvt
+                            , onEdit : makePrefixEditEvt
                             , onStartEditing  : StartEditing
                             , onCancelEditing : CancelEditing
                             , noop : NoOp
-                            , item
                             }
-                            -- makeSuffixClickEvt isEditingSuffix mbCurrentSuffix isEditingItemName item
+                            item
+                        )
+                    : case R.i_mbTitle @item_tag item of
+                        Just title -> HH.text title
+                        Nothing -> HH.text ""
+                    : renderSuffixes
+                            @item_tag
+                            { mbSelectedSuffix : mbCurrentSuffix
+                            , isEditingSuffix
+                            , isEditingItemName
+                            , onClick : makeSuffixClickEvt
+                            , onEdit : makeSuffixEditEvt
+                            , onEditItemName : makeItemNameEditEvt
+                            , onStartEditing  : StartEditing
+                            , onCancelEditing : CancelEditing
+                            , noop : NoOp
+                            }
+                            item
 
 
 -- TODO: remove
@@ -484,7 +511,14 @@ navigationHint navigation =
                 , qspacerSpan
                 , hintIfEditing navigation.mbEditing
                 ]
-        AtSuffix subjId groupPath itemIdx suffixKey ->
+        AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
+            HH.div
+                [ HP.style navigationHintStyle ]
+                [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Prefix.debugNavLabel prefixKey
+                , qspacerSpan
+                , hintIfEditing navigation.mbEditing
+                ]
+        AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
             HH.div
                 [ HP.style navigationHintStyle ]
                 [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Suffix.debugNavLabel suffixKey
