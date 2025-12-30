@@ -2,18 +2,19 @@ module Report.Modify where
 
 import Prelude
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, fromMaybe)
 
-import Report.Core.Logic (EncodedValue(..))
-import Report.Class (class IsGroup, class IsSubjectId)
-import Report.Prefix (Key) as Prefix
-import Report.Suffix (Key) as Suffix
-import Report.Prefix (Prefixes)
-import Report.Suffix (Suffixes)
-import Report.GroupPath (GroupPath)
-import Report.Modifiers.Stats (Stats)
 import Report (Report)
 import Report (withGroup, withItem) as Report
+import Report.Class (class IsGroup, class IsSubjectId, class IsItem, class IsTag, i_suffixes)
+import Report.Core.Logic (EncodedValue(..))
+import Report.GroupPath (GroupPath)
+import Report.Modifiers.Stats (Stats)
+import Report.Modifiers.Class.ValueModify (fromEditable)
+import Report.Prefix (Key) as Prefix
+import Report.Prefix (Prefixes)
+import Report.Suffix (Key, put) as Suffix
+import Report.Suffix (Suffix, Suffixes)
 
 
 data What
@@ -70,12 +71,15 @@ class ItemModify t a where
 
 
 modifyAt
-    :: forall subj_id subj group item
+    :: forall @tag subj_id subj group item
      . Ord subj
     => Ord subj_id
     => IsSubjectId subj_id subj
+    => IsTag tag
     => IsGroup group
+    => IsItem tag item
     => GroupModify group
+    => ItemModify tag item
     => Modification subj_id
     -> Report subj group item
     -> Maybe (Report subj group item)
@@ -85,12 +89,19 @@ modifyAt { subjId, what, newValue, path } report = case what of
     -- GroupStat -> do
     --     Report.withGroup subj path (\group -> setGroupStats (groupStatsFromEditable newValue group) group) report
     ItemName itemIdx -> do
-        Report.withItem subjId path itemIdx (identity {- TODO -}) report
+        Report.withItem subjId path itemIdx (setName @tag $ unwrapEditable newValue) report
     ItemPrefix itemIdx pkey -> do
         Report.withItem subjId path itemIdx (identity {- TODO -}) report
     ItemSuffix itemIdx skey -> do
-        Report.withItem subjId path itemIdx (identity {- TODO -}) report
+        Report.withItem subjId path itemIdx (setSuffix skey) report
     where
+        setSuffix :: Suffix.Key -> item -> item
+        setSuffix skey item =
+            let
+                (suffixes :: Suffixes tag) = i_suffixes @tag item
+                (mbDecodedValue :: Maybe (Suffix tag)) = fromEditable skey newValue
+                nextSuffixes = fromMaybe suffixes $ (\sfx -> Suffix.put sfx suffixes) <$> mbDecodedValue
+            in updateSuffixes nextSuffixes item
         unwrapEditable (EncodedValue string) = string
         -- groupStatsFromEditable :: Editable -> group -> Stats
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable

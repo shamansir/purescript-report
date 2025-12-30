@@ -7,6 +7,7 @@ import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
 import Data.Array (length, filter, all) as Array
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
 import Report.Class (class IsItem, class IsTag, TagColors)
@@ -16,7 +17,8 @@ import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Tags (Tags(..))
 import Report.Modifiers.Progress (Progress(..), NProgress(..), loadNProgress)
-import Report.Suffix (Suffixes)
+import Report.Modify (class ItemModify)
+import Report.Suffix (Suffix, Suffixes)
 import Report.Suffix as Suffixes
 import Report.Prefix (Prefixes)
 import Report.Prefix as Prefixes
@@ -203,6 +205,20 @@ loadSuffixes = unwrap >>> \achRec ->
        )
 
 
+applySuffixes :: Suffixes Tag -> Achievement -> Achievement
+applySuffixes suffixes = with \achRec ->
+    Suffixes.toArray suffixes
+        # foldl applySuffix achRec
+    where
+        applySuffix :: AchievementRec -> (Suffixes.Key /\ Suffix Tag) -> AchievementRec
+        applySuffix acc (key /\ suffix) = case suffix of
+            Suffixes.SProgress prog -> acc { progress = prog }
+            Suffixes.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
+            Suffixes.SDescription descr -> acc { mbDescription = Just descr }
+            Suffixes.SReference gpath -> acc { mbReference = Just gpath }
+            Suffixes.STags (Tags tagsArr) -> acc { tags = unwrap <$> tagsArr }
+
+
 loadPrefixes :: Achievement -> Prefixes
 loadPrefixes = const Prefixes.empty
 
@@ -214,6 +230,12 @@ instance IsItem Tag Achievement where
     -- i_tags = unwrap >>> _.tags >>> map Tag
     i_suffixes = loadSuffixes
     i_prefixes = loadPrefixes
+
+
+instance ItemModify Tag Achievement where
+    setName newName = with \achRec -> achRec { name = newName }
+    updateSuffixes newSuffixes = applySuffixes newSuffixes
+    updatePrefixes _ = identity
 
 
 bindToAchievement :: Achievement -> Group -> Group

@@ -27,7 +27,7 @@ encodeSuffix s = case s of
         KTags /\ TEnc.encodeTags tags
 
 
-decodeSuffix :: forall t. IsTag t =>Key -> CT.EncodedValue -> Maybe (Suffix t)
+decodeSuffix :: forall t. IsTag t => Key -> CT.EncodedValue -> Maybe (Suffix t)
 decodeSuffix key (CT.EncodedValue evStr) = case key of
     KProgress pTag ->
         PEnc.decodeProgress pTag (CT.EncodedValue evStr)

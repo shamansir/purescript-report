@@ -3,14 +3,15 @@ module Report.Suffix where
 import Prelude
 
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
+
+import Report.Modifiers (Modifiers, class IsModifier, modifierKey)
+import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 import Report.Modifiers.Progress (Progress, PValueTag) as P
 import Report.Modifiers.Tags (Tags)
--- import Report.Modifiers.Stats (Stats) as S
-import Report.Modifiers (Modifiers, class IsModifier, modifierKey)
-import Report.Modifiers (empty, get, put, keys) as Mod
 
 
 data Key
@@ -60,6 +61,10 @@ get = Mod.get
 
 put :: forall t. Suffix t -> Suffixes t -> Suffixes t
 put = Mod.put
+
+
+toArray :: forall t. Suffixes t -> Array (Key /\ Suffix t)
+toArray = Mod.toArray
 
 
 getProgress :: forall t. P.PValueTag -> Suffixes t -> Maybe P.Progress

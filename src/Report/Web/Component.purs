@@ -32,7 +32,7 @@ import Report.Encoding.Suffix (encodeSuffix) as Suffix
 import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Modify (Location(..))
-import Report.Modify (class GroupModify, What(..), WhatKey(..), modifyAt) as Modify
+import Report.Modify (class GroupModify, class ItemModify, What(..), WhatKey(..), modifyAt) as Modify
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 
 import Report.Web.GroupPath (groupPathId, renderPath)
@@ -106,6 +106,7 @@ component
     => Show subj_id
     => Ord group
     => Modify.GroupModify group
+    => Modify.ItemModify item_tag item
     => R.IsTag subj_tag
     => R.IsTag item_tag
     => R.IsItem item_tag item
@@ -333,7 +334,7 @@ component preSelected =
                         Nowhere -> curReport
                         AtGroup subjId groupPath ->
                             curReport
-                                # Modify.modifyAt
+                                # Modify.modifyAt @item_tag
                                     -- ( Debug.spy "edit at group"
                                     { subjId
                                     , path : groupPath
@@ -343,7 +344,7 @@ component preSelected =
                                 # fromMaybe curReport
                         AtItem subjId groupPath itemIdx ->
                             curReport
-                                # Modify.modifyAt
+                                # Modify.modifyAt @item_tag
                                     -- ( Debug.spy "edit at item"
                                     { subjId
                                     , path : groupPath
@@ -353,7 +354,7 @@ component preSelected =
                                 # fromMaybe curReport
                         AtSuffix subjId groupPath itemIdx suffixKey ->
                             curReport
-                                # Modify.modifyAt
+                                # Modify.modifyAt @item_tag
                                     -- ( Debug.spy "edit at suffix"
                                     { subjId
                                     , path : groupPath

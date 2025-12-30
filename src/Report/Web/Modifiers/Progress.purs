@@ -429,7 +429,7 @@ renderProgress events voeItemName voeProgress = case progress of
                             , HE.onClick events.onStartEditing
                             , HE.onValueChange (CT.EncodedValue >>> onEdit)
                             , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
-                                \code -> if code == "Escape"
+                                \code -> if code == "Escape" || code == "Enter"
                                     then events.onCancelEditing
                                     else events.noop)
                             , HE.onBlur $ const events.onCancelEditing

@@ -3,10 +3,11 @@ module Report.Prefix where
 import Prelude
 
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\), type (/\))
 
-import Report.Modifiers.Task (TaskP)
 import Report.Modifiers (Modifiers, class IsModifier)
-import Report.Modifiers (empty, get, put, keys) as Mod
+import Report.Modifiers (empty, get, put, keys, toArray) as Mod
+import Report.Modifiers.Task (TaskP)
 
 
 newtype Rating = Rating Int
@@ -53,6 +54,10 @@ get = Mod.get
 
 put :: Prefix -> Prefixes -> Prefixes
 put = Mod.put
+
+
+toArray :: Prefixes -> Array (Key /\ Prefix)
+toArray = Mod.toArray
 
 
 getRating :: Prefixes -> Maybe Rating
