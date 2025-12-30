@@ -6,16 +6,19 @@ import Data.Maybe (Maybe)
 
 import Report.Suffix (Suffixes)
 import Report.Prefix (Prefixes)
+import Report.Tabular (Tabular)
+import Report.Modifiers.Tabular.TabularValue (TabularValue)
 import Report.Modifiers.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 
 
 class IsItem t a where
     i_name :: a -> String
-    i_suffixes :: a -> Suffixes t
     i_prefixes :: a -> Prefixes
+    i_suffixes :: a -> Suffixes t
     i_mbTitle :: a -> Maybe String
     i_locked :: a -> Boolean
+    i_tabular :: a -> Tabular TabularValue
 
 
 class IsGroup a where

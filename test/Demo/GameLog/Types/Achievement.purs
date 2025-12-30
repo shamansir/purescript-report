@@ -22,6 +22,7 @@ import Report.Suffix (Suffix, Suffixes)
 import Report.Suffix as Suffixes
 import Report.Prefix (Prefixes)
 import Report.Prefix as Prefixes
+import Report.Tabular as Tabular
 
 import GameLog.Types as GLT
 
@@ -230,6 +231,7 @@ instance IsItem Tag Achievement where
     -- i_tags = unwrap >>> _.tags >>> map Tag
     i_suffixes = loadSuffixes
     i_prefixes = loadPrefixes
+    i_tabular = const Tabular.empty
 
 
 instance ItemModify Tag Achievement where

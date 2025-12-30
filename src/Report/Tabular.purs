@@ -92,7 +92,7 @@ fromRec record = toTabularBase (Proxy :: _ v) (Proxy :: _ rl) record empty
 -- reorder f (Tabular vs) = Tabular $ Array.sortWith (Tuple.fst >>> _.key >>> f) vs
 
 
-ordered :: forall @o v @x. TabularOrder o v x => Tabular v -> Tabular v
+ordered :: forall @o @x v. TabularOrder o v x => Tabular v -> Tabular v
 ordered (Tabular vs) = Tabular $ Array.sortWith (orderFor @o @_ @x) vs
 
 
