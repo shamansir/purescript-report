@@ -3,14 +3,21 @@ module Report.Modify where
 import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Array ((:))
+import Data.Array (index, catMaybes, snoc, updateAt, concat) as Array
 
-import Report (Report)
-import Report (withGroup, withItem) as Report
-import Report.Class (class IsGroup, class IsSubjectId, class IsItem, class IsTag, i_prefixes, i_suffixes)
+import Yoga.Tree (Tree)
+import Yoga.Tree.Extended (break, build, node, leaf) as Tree
+
+import Report (Report, TreeNode(..))
+import Report (withGroup, withItem, toTree, fromTree) as Report
+import Report.Class
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
+import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Class.ValueModify (fromEditable)
+import Report.Modifiers.Stats.Collect (collectStats)
 import Report.Prefix (Key, put) as Prefix
 import Report.Prefix (Prefix, Prefixes)
 import Report.Suffix (Key, put) as Suffix
@@ -141,3 +148,25 @@ modifyAt { subjId, what, newValue, path } report = case what of
         unwrapEditable (EncodedValue string) = string
         -- groupStatsFromEditable :: Editable -> group -> Stats
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable
+
+
+recalculate :: forall @tag subj group item. Ord subj => IsItem tag item => Ord group => IsGroup group => GroupModify group => Report subj group item -> Report subj group item
+recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity
+    where
+        updateTree :: Tree (TreeNode subj group item) -> Tree (TreeNode subj group item)
+        updateTree = Tree.break \node children ->
+            case node of
+                NRoot -> Tree.node NRoot $ map updateTree children
+                NSubject subj -> Tree.node (NSubject subj) $ map updateTree children
+                NGroup group ->
+                    let
+                         -- FIXME: we collect children as deep as we can, but we don't collect stats from subgroups yet
+                        itemsCollected = Array.concat $ Tree.break collectItems <$> children
+                        updatedChildren = map updateTree children
+                        updatedGroup = setGroupStats (collectStats @tag itemsCollected) group
+                    in Tree.node (NGroup updatedGroup) updatedChildren
+                NItem item -> Tree.leaf $ NItem item
+        collectItems :: TreeNode subj group item -> Array (Tree (TreeNode subj group item)) -> Array item
+        collectItems node children = case node of
+            NItem item -> item : (Array.concat $ Tree.break collectItems <$> children)
+            _ -> Array.concat $ Tree.break collectItems <$> children

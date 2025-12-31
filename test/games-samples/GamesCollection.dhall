@@ -6,8 +6,12 @@ let Forza5 = ./ForzaHorizon5.dhall
 let AnimalCrossing  = ./AnimalCrossing.dhall
 let AstralChain     = ./AstralChain.dhall
 let BreathOfTheWild = ./BreathOfTheWild.dhall
+let DoomDarkAges    = ./DoomDarkAges.dhall
+let KirbyTheForgottenLand = ./KirbyTheForgottenLand.dhall
+let LegoCityUndercover = ./LegoCityUndercover.dhall
 let MarioOdissey    = ./MarioOdissey.dhall
 let StarlinkBattleOfAtlas = ./StarlinkBattleOfAtlas.dhall
+let NoRestForTheWicked = ./NoRestForTheWicked.dhall
 let Torchlight2     = ./Torchlight2.dhall
 let Skyrim          = ./Skyrim.dhall
 
@@ -21,7 +25,11 @@ in
         , AnimalCrossing
         , AstralChain
         , BreathOfTheWild
+        , DoomDarkAges
+        , KirbyTheForgottenLand
+        , LegoCityUndercover
         , MarioOdissey
+        , NoRestForTheWicked
         , StarlinkBattleOfAtlas
         , Torchlight2
         , Skyrim

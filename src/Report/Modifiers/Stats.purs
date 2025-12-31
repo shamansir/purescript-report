@@ -122,5 +122,3 @@ gotTotalFrom =
                 , total : Array.length levels
                 }
         Error _ -> Undefined
-
-

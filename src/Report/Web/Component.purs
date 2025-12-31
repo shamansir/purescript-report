@@ -376,7 +376,7 @@ component preSelected =
                                 # fromMaybe curReport
             in
                 H.modify_
-                    \s -> s { report = nextReport s.report }
+                    \s -> s { report = Modify.recalculate @item_tag $ nextReport s.report }
 
         StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing

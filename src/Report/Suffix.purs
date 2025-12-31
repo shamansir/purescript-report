@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Array (catMaybes) as Array
 
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
@@ -71,6 +72,17 @@ getProgress :: forall t. P.PValueTag -> Suffixes t -> Maybe P.Progress
 getProgress pvtag sfx = get (KProgress pvtag) sfx >>= case _ of
     SProgress p -> Just p
     _ -> Nothing
+
+
+collectProgress :: forall t. Suffixes t -> Array (Maybe P.PValueTag /\ P.Progress)
+collectProgress sfx =
+    toArray sfx
+        <#> (\(key /\ suffix) -> case key /\ suffix of
+                KProgress pvtag /\ SProgress p -> Just $ Just pvtag /\ p
+                _ /\ SProgress p -> Just $ Nothing /\ p
+                _ -> Nothing
+            )
+         # Array.catMaybes
 
 
 getEarnedAt :: forall t. Suffixes t -> Maybe CT.SDate

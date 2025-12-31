@@ -22,18 +22,20 @@ import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
 import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter) as Map
 import Data.Map.Extra (lookupByEq, lookupByEq') as Map
-import Data.Array (index, catMaybes, snoc, updateAt) as Array
+import Data.Array ((:))
+import Data.Array (index, catMaybes, snoc, updateAt, concat) as Array
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Bifunctor (lmap, rmap)
 import Data.Foldable (foldl)
 
 import Yoga.Tree (Tree)
-import Yoga.Tree.Extended (break, build) as Tree
+import Yoga.Tree.Extended (break, build, node, leaf) as Tree
 
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
 import Report.Class (class IsGroup, g_path, class IsSubjectId, s_id)
+import Report.Modifiers.Stats.Collect (collectStats)
 
 
 type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)

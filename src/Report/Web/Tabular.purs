@@ -35,7 +35,6 @@ renderTabularValues item =
             HH.span_ []
 
 
-
 renderTabularValue :: forall w i. Tabular.Item TabularValue -> H w i
 renderTabularValue = unwrap >>> \{ key, label, value } ->
     HH.span_
