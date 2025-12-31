@@ -8,6 +8,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
+import Web.UIEvent.KeyboardEvent as KE
+
 import Report.Core (SDate(..), toLeadingZero) as CT
 import Report.Core.Logic (EncodedValue(..), view, edit) as CT
 import Report.Class as S
@@ -136,6 +138,17 @@ renderSuffix conf =
             }
         whenNotEditing :: H w i -> H w i
         whenNotEditing nonEditing = case conf.isEditingSuffix of
-            Just (CT.EncodedValue value) ->
-                HH.span [ HP.style "color: gray;" ] [ HH.text value ]
+            Just (CT.EncodedValue encVal) ->
+                HH.input
+                    [ HP.type_ HP.InputText
+                    , HP.value encVal
+                    , HE.onClick conf.onStartEditing
+                    , HE.onValueChange (CT.EncodedValue >>> conf.onEdit)
+                    , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
+                        \code -> if code == "Escape" || code == "Enter"
+                            then conf.onCancelEditing
+                            else conf.noop)
+                    , HE.onBlur $ const conf.onCancelEditing
+                    , HE.onAbort $ const conf.onCancelEditing
+                    ]
             Nothing -> nonEditing

@@ -22,6 +22,8 @@ import Prim.RowList as RL
 import Record (get) as R
 import Record.Extra (class Keys) as Record
 
+import Report.Modifiers (class IsModifier)
+
 -- import Data.Text.Format (class Formatter)
 -- import Data.Text.Format as F
 
@@ -30,7 +32,12 @@ class ToTabularValue a v where
     toTV :: a -> Maybe v
 
 
-type Item v = { key :: String, label :: String, value :: v }
+newtype Item v = Item { key :: String, label :: String, value :: v }
+derive instance Newtype (Item v) _
+
+
+instance IsModifier String (Item v) where
+    modifierKey (Item item) = item.key
 
 
 newtype Tabular v = Tabular (Array (Item v))
@@ -81,7 +88,7 @@ items (Tabular theItems) = theItems
 
 
 insert :: forall v. String -> v -> Tabular v -> Tabular v
-insert s v (Tabular vs) = Tabular $ Array.snoc vs { key : s, label : s, value : v }
+insert s v (Tabular vs) = Tabular $ Array.snoc vs $ wrap { key : s, label : s, value : v }
 
 
 fromRec :: forall rl row v. RL.RowToList row rl => Record.Keys rl => TabularRow rl row v => Record row -> Tabular v
@@ -101,12 +108,12 @@ class Ord o <= TabularOrder o v x where
 
 
 label :: forall v. (String -> String) -> Tabular v -> Tabular v
-label f (Tabular vs) = Tabular $ labelFor <$> vs
+label f (Tabular vs) = Tabular $ wrap <$> labelFor <$> unwrap <$> vs
     where labelFor r = r { label = f r.key }
 
 
 toString :: forall v. String -> (String -> v -> String) -> Tabular v -> String
-toString sep f (Tabular vs) = String.joinWith sep $ (\{ label, value } -> f label value) <$> vs
+toString sep f (Tabular vs) = String.joinWith sep $ (\{ label, value } -> f label value) <$> unwrap <$> vs
 
 {-
 instance Formatter (Tabular String) where

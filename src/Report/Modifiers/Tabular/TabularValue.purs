@@ -2,7 +2,7 @@ module Report.Modifiers.Tabular.TabularValue where
 
 import Prelude
 
-import Report.Core (SDateRec, STimeRec)
+import Report.Core (SDate, SDateRec, STimeRec)
 
 
 data TabularValue
@@ -10,11 +10,11 @@ data TabularValue
    | TVNumber Number
    | TVBoolean Boolean
    | TVTime STimeRec
-   | TVDate SDateRec
-   | TVDateTime SDateRec STimeRec
+   | TVDate SDate
+   | TVDateTime SDate STimeRec
    | TVTimeRange { from :: STimeRec, to :: STimeRec }
-   | TVDateRange { from :: SDateRec, to :: SDateRec }
+   | TVDateRange { from :: SDate,    to :: SDate }
    | TVDateTimeRange
-        { from :: { date :: SDateRec, time :: STimeRec }
-        , to :: { date :: SDateRec, time :: STimeRec }
+        { from :: { date :: SDate, time :: STimeRec }
+        , to   :: { date :: SDate, time :: STimeRec }
         }

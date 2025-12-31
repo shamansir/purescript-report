@@ -45,6 +45,7 @@ import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Prefix (renderPrefixes)
 import Report.Web.Suffix (renderSuffixes)
+import Report.Web.Tabular (renderTabularValues)
 
 
 showNavigationDebugHint = true :: Boolean
@@ -473,7 +474,7 @@ renderSubject navigatedTo subj itemsMap  =
                     : case R.i_mbTitle @item_tag item of
                         Just title -> HH.text title
                         Nothing -> HH.text ""
-                    : renderSuffixes
+                    : HH.span_ (renderSuffixes
                             @item_tag
                             { mbSelectedSuffix : mbCurrentSuffix
                             , isEditingSuffix
@@ -486,6 +487,8 @@ renderSubject navigatedTo subj itemsMap  =
                             , noop : NoOp
                             }
                             item
+                        )
+                    : pure (renderTabularValues @item_tag item)
 
 
 -- TODO: remove
