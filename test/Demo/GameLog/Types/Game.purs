@@ -5,8 +5,11 @@ import Prelude
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
 
-import Report.Class (class IsSubjectId, class IsSubject, class IsTag, TagColors)
+import Yoga.JSON (class WriteForeign, writeImpl)
+
+import Report.Class (class IsSubjectId, class IsSubject, class IsTag, TagColors, tagContent, decodeTag)
 import Report.Modifiers.Stats (Stats)
+import Report.Modifiers.Class.ValueModify (class EncodableKey)
 
 import GameLog.Types as GLT
 
@@ -104,6 +107,24 @@ instance IsTag GameTag where
     decodeTag = decodeGameTag
     allTags :: Array GameTag
     allTags = allTags
+
+
+instance EncodableKey GameId where
+    encodeKey = case _ of
+        DHL code -> "DHL:" <> code
+        LGS code mbPlatform ->
+            "LGS:" <> code <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
+        BLG code platform ->
+            "BLG:" <> code <> "(" <> show platform <> ")"
+        IBL id mbPlatform ->
+            "IBL:" <> show id <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
+        EPC code ->
+            "EPC:" <> code
+    decodeKey = const Nothing -- TODO
+
+
+instance WriteForeign GameTag where
+    writeImpl = tagContent >>> writeImpl
 
 
 instance IsSubjectId GameId Game where

@@ -16,7 +16,7 @@ import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\))
 
-import Yoga.JSON (writePrettyJSON)
+import Yoga.JSON (writePrettyJSON, class WriteForeign)
 
 import Web.Event.Event (stopPropagation) as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -38,6 +38,8 @@ import Report.Modify (Location(..))
 import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
+import Report.Modifiers.Class.ValueModify as VModify
+import Report.Export.Generic as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
@@ -124,11 +126,14 @@ component
     => Ord group
     => Modify.GroupModify group
     => Modify.ItemModify item_tag item
+    => VModify.EncodableKey subj_id
     => R.IsTag subj_tag
     => R.IsTag item_tag
     => R.IsItem item_tag item
     => R.IsGroup group
     => R.IsSubject subj_id subj_tag subj
+    => WriteForeign item_tag
+    => WriteForeign subj_tag
     => Array subj_id
     -> H.Component query (Input subj group item) output m
 component preSelected =
@@ -180,16 +185,20 @@ component preSelected =
                 Just exportTarget ->
                     HH.div
                         [ HP.style $ "position: absolute; right: 25%; top: 43px; width: 25%; max-height: 50%; overflow-y: scroll;"
-                        <> "background-color: aliceblue; border-radius: 5px; padding: 5px; font-size: 0.7em;"
+                        <> "background-color: aliceblue; border-radius: 5px; padding: 5px;"
                         ]
-                        [ HH.text $ exportTextFor exportTarget ]
+                        [ HH.textarea
+                            [ HP.style "white-space: pre-wrap; background: transparent; border: none; font-size: 0.7em;"
+                            , HP.value $ exportTextFor exportTarget, HP.cols 75, HP.rows 30
+                            ]
+                        ]
                 Nothing -> HH.text ""
             , if state.debugEnabled then navigationHint state.navigatedTo else HH.text ""
             ]
         where
 
             exportTextFor = case _ of
-                Json -> "" -- state.report # writePrettyJSON 4
+                Json -> state.report # Report.toExport @subj_id @subj_tag @item_tag # writePrettyJSON 4
                 Dhall -> ""
 
             exportSelected trg = state.mbExportTo == Just trg

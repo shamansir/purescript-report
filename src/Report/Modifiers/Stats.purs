@@ -7,6 +7,8 @@ import Data.Foldable (foldl)
 import Data.Maybe (fromMaybe)
 import Data.Array (length) as Array
 
+import Yoga.JSON (class WriteForeign, writeImpl)
+
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Progress (Progress(..))
 
@@ -122,3 +124,17 @@ gotTotalFrom =
                 , total : Array.length levels
                 }
         Error _ -> Undefined
+
+
+instance WriteForeign Stats where
+    writeImpl = case _ of
+        SGotTotal { got, total } ->
+            writeImpl { type: "GotTotal", got: got, total: total }
+        SWithProgress { got, total, onTheWay } ->
+            writeImpl { type: "WithProgress", got: got, total: total, onTheWay: onTheWay }
+        SFromProgress progress ->
+            writeImpl { type: "FromProgress", progress: progress }
+        SNotRelevant ->
+            writeImpl { type: "NotRelevant" }
+        SYetUnknown ->
+            writeImpl { type: "YetUnknown" }

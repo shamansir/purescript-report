@@ -6,8 +6,12 @@ import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Data.Int (fromString, toNumber) as Int
 
+import Yoga.JSON (class WriteForeign, writeImpl)
+
 
 newtype Priority = Priority (Either String Int)
+instance WriteForeign Priority where
+    writeImpl = toString >>> writeImpl
 
 
 priorityChar :: Priority -> String
@@ -26,6 +30,11 @@ priorityNum = Priority <<< Right
 
 maxLPriority = 3 :: Int
 maxRPriority = 20 :: Int
+
+
+toString :: Priority -> String
+toString (Priority (Left str)) = str
+toString (Priority (Right n)) = show n
 
 
 fromString :: String -> Maybe Priority

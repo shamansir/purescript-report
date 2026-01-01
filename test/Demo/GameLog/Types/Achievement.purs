@@ -167,6 +167,7 @@ newtype Tag = Tag String
 
 derive instance Newtype Tag _
 derive newtype instance Eq Tag
+derive newtype instance WriteForeign Tag
 
 
 instance IsTag Tag where

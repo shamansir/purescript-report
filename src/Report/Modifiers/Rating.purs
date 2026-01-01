@@ -7,8 +7,11 @@ import Data.Array (replicate) as Array
 import Data.Int (floor, toNumber) as Int
 import Data.String (joinWith) as String
 
+import Yoga.JSON (class WriteForeign)
+
 
 newtype Rating = Rating Number
+derive newtype instance WriteForeign Rating
 
 
 toStars :: Rating -> String

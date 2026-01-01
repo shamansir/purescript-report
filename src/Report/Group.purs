@@ -9,6 +9,8 @@ import Report.Modifiers.Stats (Stats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Modify (class GroupModify)
 
+import Yoga.JSON (class WriteForeign)
+
 {- Group -}
 
 
@@ -25,6 +27,8 @@ instance Eq Group where
     eq (Group groupA) (Group groupB) = groupA.path == groupB.path
 instance Ord Group where
     compare (Group groupA) (Group groupB) = compare groupA.path groupB.path
+
+derive newtype instance WriteForeign Group
 
 
 instance Show Group where

@@ -14,6 +14,8 @@ import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 import Report.Modifiers.Progress (Progress, PValueTag) as P
 import Report.Modifiers.Tags (Tags)
 
+import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
+
 
 data Key
     = KProgress P.PValueTag
@@ -125,3 +127,12 @@ debugNavLabel = case _ of
     KDescription -> "DESC"
     KReference -> "REF"
     KTags -> "TAGS"
+
+
+instance WriteForeign t => WriteForeign (Suffix t) where
+    writeImpl = case _ of
+        SProgress p -> writeImpl p
+        SEarnedAt d -> writeImpl d
+        SDescription desc -> writeImpl desc
+        SReference path -> writeImpl path
+        STags tags -> writeImpl tags

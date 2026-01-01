@@ -4,12 +4,14 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested (type (/\))
+import Data.String (stripPrefix, Pattern(..)) as String
 
 import Report.Core.Logic (EncodedValue)
 import Report.Class (class IsTag)
 
 import Report.Modifiers (modifierKey)
 import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
+import Report.Modifiers.Progress (PValueTag(..)) as P
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Task (TaskP)
 import Report.Modifiers.Tags (Tags)
@@ -57,3 +59,30 @@ instance (IsTag t) => ValueModify Sx.Key (Sx.Suffix t) where
 instance ValueModify Px.Key Px.Prefix where
     toEditable   = PxEnc.encodePrefix
     fromEditable = PxEnc.decodePrefix
+
+
+instance EncodableKey Px.Key where
+    encodeKey = case _ of
+        Px.KRating   -> "rating"
+        Px.KPriority -> "priority"
+        Px.KTask     -> "task"
+    decodeKey = case _ of
+        "rating"   -> Just Px.KRating
+        "priority" -> Just Px.KPriority
+        "task"     -> Just Px.KTask
+        _          -> Nothing
+
+
+instance EncodableKey Sx.Key where
+    encodeKey = case _ of
+        Sx.KProgress (P.PValueTag pvt) -> "progress:" <> pvt
+        Sx.KEarnedAt    -> "earnedAt"
+        Sx.KDescription -> "description"
+        Sx.KReference   -> "reference"
+        Sx.KTags        -> "tags"
+    decodeKey = case _ of
+        "earnedAt"    -> Just Sx.KEarnedAt
+        "description" -> Just Sx.KDescription
+        "reference"   -> Just Sx.KReference
+        "tags"        -> Just Sx.KTags
+        str ->           String.stripPrefix (String.Pattern "progress:") str <#> P.PValueTag <#> Sx.KProgress

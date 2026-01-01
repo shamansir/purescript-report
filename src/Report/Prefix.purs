@@ -5,6 +5,8 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 
+import Yoga.JSON (class WriteForeign, writeImpl)
+
 import Report.Modifiers (Modifiers, class IsModifier)
 import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 import Report.Modifiers.Priority (Priority)
@@ -81,3 +83,10 @@ debugNavLabel = case _ of
     KRating -> "RATING"
     KPriority -> "PRIORITY"
     KTask -> "TASK"
+
+
+instance WriteForeign Prefix where
+    writeImpl = case _ of
+        PRating rating -> writeImpl rating
+        PPriority priority -> writeImpl priority
+        PTask task -> writeImpl task
