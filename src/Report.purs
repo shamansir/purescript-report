@@ -93,11 +93,11 @@ toMap
 toMap (Report subjsMap) =
     subjGroups <$> subjsMap
     where
-        findGroup :: Map GroupPath group -> GroupPath -> Maybe group
-        findGroup pathToGroup groupPath =
+        findGroup' :: Map GroupPath group -> GroupPath -> Maybe group
+        findGroup' pathToGroup groupPath =
             Map.lookup groupPath pathToGroup
         wrapGroup :: Map GroupPath group -> GroupPath /\ Array item -> Maybe (group /\ Array item)
-        wrapGroup pathToGroup (groupPath /\ items) = findGroup pathToGroup groupPath <#> flip (/\) items
+        wrapGroup pathToGroup (groupPath /\ items) = findGroup' pathToGroup groupPath <#> flip (/\) items
         subjGroups (pathToGroup /\ pathToGroupItems) =
             Map.fromFoldable $ Array.catMaybes $ wrapGroup pathToGroup <$> Map.toUnfoldable pathToGroupItems
 

@@ -9,7 +9,7 @@ import Report.Modifiers.Stats (Stats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Modify (class GroupModify)
 
-{- Achievement Group -}
+{- Group -}
 
 
 newtype Group =

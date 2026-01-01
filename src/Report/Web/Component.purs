@@ -146,7 +146,7 @@ component preSelected =
         , tagFilter : []
         , optionsPaneExpanded : true
         , sortBy : ByWeight
-        , readOnlyMode : false
+        , readOnlyMode : true
         , debugEnabled : false
         , mbExportTo : Nothing
         , navigatedTo : Navigation.init
@@ -176,12 +176,21 @@ component preSelected =
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
-            -- , HH.div
-            --     [ HP.style "position: absolute; right: 25%; top: 0; width : 20%; max-height: 50%; overflow-y: scroll;" ]
-            --     [ HH.text $ "FOOBAR" {- writePrettyJSON 4 state.report -} ]
+            , case state.mbExportTo of
+                Just exportTarget ->
+                    HH.div
+                        [ HP.style $ "position: absolute; right: 25%; top: 43px; width: 25%; max-height: 50%; overflow-y: scroll;"
+                        <> "background-color: aliceblue; border-radius: 5px; padding: 5px; font-size: 0.7em;"
+                        ]
+                        [ HH.text $ exportTextFor exportTarget ]
+                Nothing -> HH.text ""
             , if state.debugEnabled then navigationHint state.navigatedTo else HH.text ""
             ]
         where
+
+            exportTextFor = case _ of
+                Json -> "" -- state.report # writePrettyJSON 4
+                Dhall -> ""
 
             exportSelected trg = state.mbExportTo == Just trg
 
@@ -421,7 +430,8 @@ component preSelected =
 
         StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
-        ToggleReadOnlyMode -> H.modify_ \s -> s { readOnlyMode = not s.readOnlyMode }
+        ToggleReadOnlyMode ->
+            H.modify_ clearEditing <> H.modify_ \s -> s { readOnlyMode = not s.readOnlyMode }
         ToggleDebugMode -> H.modify_ \s -> s { debugEnabled = not s.debugEnabled }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
