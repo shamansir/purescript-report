@@ -16,6 +16,8 @@ import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\))
 
+import Yoga.JSON (writePrettyJSON)
+
 import Web.Event.Event (stopPropagation) as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent (toEvent) as ME
@@ -48,9 +50,6 @@ import Report.Web.Suffix (renderSuffixes)
 import Report.Web.Tabular (renderTabularValues)
 
 
-showNavigationDebugHint = true :: Boolean
-
-
 type State subj_id subj_tag report =
     { subjects :: Array subj_id
     , report :: report
@@ -59,6 +58,8 @@ type State subj_id subj_tag report =
     , optionsPaneExpanded :: Boolean
     , sortBy :: SubjectSort
     , readOnlyMode :: Boolean
+    , debugEnabled :: Boolean
+    , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
     }
 
@@ -82,6 +83,10 @@ data Action subj_id subj_tag report
     | EditAt (Location subj_id) EncodedValue
     | StartEditing MouseEvent
     | CancelEditing
+    | ToggleReadOnlyMode
+    | ToggleDebugMode
+    | EnableExport ExportTarget
+    | DisableExport
     | NoOp
 
 
@@ -100,6 +105,14 @@ data SortKey
 
 derive instance Eq SortKey
 derive instance Ord SortKey
+
+
+data ExportTarget
+    = Json
+    | Dhall
+
+
+derive instance Eq ExportTarget
 
 
 component
@@ -134,6 +147,8 @@ component preSelected =
         , optionsPaneExpanded : true
         , sortBy : ByWeight
         , readOnlyMode : false
+        , debugEnabled : false
+        , mbExportTo : Nothing
         , navigatedTo : Navigation.init
         }
 
@@ -155,13 +170,39 @@ component preSelected =
                 [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;"
                 -- , HE.onClick $ const ClearNavigation
                 ]
-                 $  Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
+                $ ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
                 <$> Array.catMaybes ((\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> state.subjects)
+                ) <> pure menuButtons
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
-            , if showNavigationDebugHint then navigationHint state.navigatedTo else HH.text ""
+            -- , HH.div
+            --     [ HP.style "position: absolute; right: 25%; top: 0; width : 20%; max-height: 50%; overflow-y: scroll;" ]
+            --     [ HH.text $ "FOOBAR" {- writePrettyJSON 4 state.report -} ]
+            , if state.debugEnabled then navigationHint state.navigatedTo else HH.text ""
             ]
+        where
+
+            exportSelected trg = state.mbExportTo == Just trg
+
+            menuButtons =
+                HH.div
+                    [ HP.style "position: fixed; right: 25%; top: 0; border-radius: 5px; background: aliceblue; padding: 5px;" ]
+                    $ menuButton <$>
+                        [ { label : if state.readOnlyMode then "🔒" else "🔓", onClick : const ToggleReadOnlyMode, enabled : state.readOnlyMode }
+                        , { label : if state.debugEnabled then "🛠" else "🛠", onClick : const ToggleDebugMode,    enabled : state.debugEnabled }
+                        , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json }
+                        , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
+                        ]
+
+            menuButton { label, onClick, enabled } =
+                HH.button
+                    [ HE.onClick onClick
+                    , HP.style $ "margin: 0 5px; padding: 3px 8px; cursor: pointer; border-radius: 10px;"
+                        <> "background-color: " <> (if enabled then "#d0e7ff" else "white") <> ";"
+                        <> (if enabled then "border: 1px solid beige; opacity: 0.8" else "border: 1px solid lightgray; opacity: 0.6;")
+                    ]
+                    [ HH.text label ]
 
     subjectsToc state allSubjects =
         HH.div
@@ -236,7 +277,7 @@ component preSelected =
     sortSubjects :: SubjectSort -> subj -> SortKey
     sortSubjects = case _ of
         ByWeight -> R.s_stats @subj_id @subj_tag >>> R.weightOf >>> SN
-        Alpha -> R.s_name @subj_id @subj_tag >>> SS
+        Alpha ->    R.s_name  @subj_id @subj_tag >>> SS
 
     subjTocRow selectedSubjects subj =
         let
@@ -380,6 +421,10 @@ component preSelected =
 
         StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
+        ToggleReadOnlyMode -> H.modify_ \s -> s { readOnlyMode = not s.readOnlyMode }
+        ToggleDebugMode -> H.modify_ \s -> s { debugEnabled = not s.debugEnabled }
+        EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
+        DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         NoOp -> pure unit
 
 
