@@ -16,7 +16,7 @@ import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 
-import Yoga.JSON (writePrettyJSON, class WriteForeign)
+import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
 import Web.Event.Event (stopPropagation) as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -136,6 +136,7 @@ component
     => R.IsItem item_tag item
     => R.IsGroup group
     => R.IsSubject subj_id subj_tag subj
+    => ReadForeign item_tag
     => WriteForeign item_tag
     => WriteForeign subj_tag
     => Array subj_id

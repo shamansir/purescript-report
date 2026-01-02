@@ -2,9 +2,11 @@ module Report.Export.Dhall where
 
 import Prelude
 
-import Foreign (Foreign)
+import Foreign (Foreign, F)
+import Control.Monad.Except (runExcept)
 
 import Data.Maybe (Maybe(..), maybe)
+import Data.Either (either)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Tuple (uncurry) as Tuple
 import Data.String (joinWith) as String
@@ -12,20 +14,22 @@ import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Array as Array
 
-import Yoga.JSON (class WriteForeign, writePrettyJSON)
+import Yoga.JSON (class WriteForeign, writePrettyJSON, class ReadForeign, readImpl)
 
 import Report (Report)
 import Report.Core as CT
 import Report.Group (Group)
-import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag)
+import Report.GroupPath (GroupPath)
+import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Modifiers.Class.ValueModify (class EncodableKey, decodeKey)
 import Report.Export.Types
 import Report.Export.Generic (toExport) as Report
 
-import Report.Modifiers.Progress (Progress(..))
+import Report.Modifiers.Progress (Progress(..), PValueTag(..))
 import Report.Modifiers.Task (TaskP(..))
-import Report.Prefix (Key) as P
-import Report.Suffix (Key) as S
+import Report.Modifiers.Tags (Tags)
+import Report.Prefix (Key(..)) as P
+import Report.Suffix (Key(..)) as S
 
 {- type DhallItemRec =
     { key :: Maybe String
@@ -50,7 +54,9 @@ toDhall
      . Ord group
     => EncodableKey subj_id
     => WriteForeign item_tag
+    => ReadForeign item_tag
     => IsTag subj_tag
+    => IsTag item_tag
     => IsItem item_tag item
     => IsGroup group
     => IsSubject subj_id subj_tag subj
@@ -65,7 +71,6 @@ toDhall =
         >>> Array.concat
         >>> String.joinWith "\n"
     where
-        indent = "    "
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Array String
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
@@ -93,16 +98,39 @@ toDhall =
         convertItem itemRec =
             "T.kv_ " <> quote itemRec.name <> " " <> (String.joinWith " " $ convertModifier <$> itemRec.modifiers)
 
-
         convertModifier :: ModifierRec -> String
         convertModifier modRec =
             case modRec.mkind of
                 P ->
-                    let (pKey :: Maybe P.Key) = decodeKey modRec.mkey in
-                    quote modRec.mkey -- FIXME: implemenet
+                    let (mbPKey :: Maybe P.Key) = decodeKey modRec.mkey in
+                    case mbPKey of
+                        Just P.KRating ->
+                            "p_rating " -- <> quote (modRec.value)
+                        Just P.KPriority ->
+                            "p_priority " -- <> quote (modRec.value)
+                        Just P.KTask ->
+                            "p_task " -- <> quote (modRec.value)
+                        Nothing ->
+                            quote modRec.mkey
                 S ->
-                    let (sKey :: Maybe S.Key) = decodeKey modRec.mkey in
-                    quote modRec.mkey
+                    let (mbSKey :: Maybe S.Key) = decodeKey modRec.mkey in
+                    String.joinWith ("\n" <> indent <> indent) $ case mbSKey of
+                        Just (S.KProgress _) ->
+                            withImpl @Progress _progressToDhall modRec.value
+                        Just S.KEarnedAt ->
+                            withImpl @CT.SDate (sdaterec >>> prefix "// T.inj/date" >>> pure) modRec.value
+                        Just S.KDescription ->
+                            withImpl @String (quote >>> prefix "// T.inj/det" >>> pure) modRec.value
+                        Just S.KReference ->
+                            withImpl @GroupPath
+                                (unwrap >>> map (unwrap >>> quote) >>> ilarray >>> prefix "// T.inj/self" >>> pure)
+                                modRec.value
+                        Just S.KTags ->
+                            withImpl @(Tags item_tag)
+                                (unwrap >>> map (tagContent >>> quote) >>> ilarray >>> prefix "// T.inj/tags" >>> pure)
+                                modRec.value
+                        Nothing ->
+                            pure $ quote modRec.mkey
 
 
 
@@ -128,38 +156,41 @@ toDhall =
     # (...)
 -}
 
+withImpl :: forall @t. ReadForeign t => (t -> Array String) -> Foreign -> Array String
+withImpl f frgn = (readImpl frgn :: F t) # runExcept # either (const $ pure "{- <error> -}") f
+
 
 _progressToDhall :: Progress -> Array String
 _progressToDhall = case _ of
     None ->        pure "T.v_empty"
     Unknown ->     pure "T.v_empty"
-    PInt i ->      pure $ "T.v_i" <> " " <> "+" <> show i
-    PNumber n ->   pure $ "T.v_n" <> " " <> show n
-    PText text ->  pure $ "T.v_t" <> " " <> quote text
+    PInt i ->      pure $ wrapbrk $ "T.v_i" <> " " <> "+" <> show i
+    PNumber n ->   pure $ wrapbrk $ "T.v_n" <> " " <> show n
+    PText text ->  pure $ wrapbrk $ "T.v_t" <> " " <> quote text
     ToComplete { done } -> pure $ if done then "T.v_done" else "T.v_none"
-    PercentI i ->  pure $ "T.v_pcti" <> " " <> "+" <> show i
-    PercentN n ->  pure $ "T.v_pct" <> " " <> show n
+    PercentI i ->  pure $ wrapbrk $ "T.v_pcti" <> " " <> "+" <> show i
+    PercentN n ->  pure $ wrapbrk $ "T.v_pct" <> " " <> show n
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "T.v_pctx" <> " " <> sign_s <> " " <> show pct
+        in pure $ wrapbrk $ "T.v_pctx" <> " " <> sign_s <> " " <> show pct
     ToGetI { got, total } ->
-        pure $ "T.v_pi " <> wrecord
+        pure $ wrapbrk $ "T.v_pi " <> wrecord
             [ "got" /\ ("+" <> show got)
             , "total" /\ ("+" <> show total)
             ]
     ToGetN { got, total } ->
-        pure $ "T.v_pd " <> wrecord
+        pure $ wrapbrk $ "T.v_pd " <> wrecord
             [ "got" /\ show got
             , "total" /\ show total
             ]
     OnTime timeRec ->
-        pure $ "T.v_time " <> wrecord
+        pure $ wrapbrk $ "T.v_time " <> wrecord
             [ "hrs" /\ ("+" <> show timeRec.hrs)
             , "min" /\ ("+" <> show timeRec.min)
             , "sec" /\ ("+" <> show timeRec.sec)
             ]
     OnDate sdate ->
-        pure $ "T.v_date " <> sdaterec sdate
+        pure $ wrapbrk $ "T.v_date " <> sdaterec sdate
         {-
         let dateRec = CT.dateToRec sdate
         in pure $ "T.v_date " <> wrecord
@@ -169,28 +200,28 @@ _progressToDhall = case _ of
             ]
         -}
     PerI { amount, per } ->
-        pure $ "T.v_per " <> " +" <> show amount <> " " <> quote per
+        pure $ wrapbrk $ "T.v_per " <> " +" <> show amount <> " " <> quote per
     PerN { amount, per } ->
-        pure $ "T.v_per " <> show amount <> " " <> quote per
+        pure $ wrapbrk $ "T.v_per " <> show amount <> " " <> quote per
     MeasuredI { amount, measure } ->
-        pure $ "T.v_mes " <> " +" <> show amount <> " " <> quote measure
+        pure $ wrapbrk $ "T.v_mes " <> " +" <> show amount <> " " <> quote measure
     MeasuredN { amount, measure } ->
-        pure $ "T.v_mesd " <> show amount <> " " <> quote measure
+        pure $ wrapbrk $ "T.v_mesd " <> show amount <> " " <> quote measure
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "T.v_mesx " <> sign_s <> " +" <> show amount <> " " <> quote measure
+        in pure $ wrapbrk $ "T.v_mesx " <> sign_s <> " +" <> show amount <> " " <> quote measure
     RangeI { from, to } ->
-        pure $ "T.v_rng " <> wrecord
+        pure $ wrapbrk $ "T.v_rng " <> wrecord
             [ "from" /\ ("+" <> show from)
             , "to" /\ ("+" <> show to)
             ]
     RangeN { from, to } ->
-        pure $ "T.v_rngd " <> wrecord
+        pure $ wrapbrk $ "T.v_rngd " <> wrecord
             [ "from" /\ show from
             , "to" /\ show to
             ]
     Task taskP ->
-        pure $ "T.v_proc " <> quote (vtaskP taskP)
+        pure $ wrapbrk $ "T.v_proc " <> quote (vtaskP taskP)
     LevelsI { reached, levels } ->
         let
             levelrec lrec =
@@ -200,11 +231,12 @@ _progressToDhall = case _ of
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "T.v_lvli"
+        [ "( T.v_lvli"
         , indent <> (sfield $ "reached" /\ ("+" <> show reached))
         , indent <> (xfield "levels")
         , array (indent <> indent) $ levelrec <$> levels
         , indent <> recend
+        , ")"
         ]
     LevelsN { reached, levels } ->
         let
@@ -215,11 +247,12 @@ _progressToDhall = case _ of
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "T.v_lvld"
+        [ "( T.v_lvld"
         , indent <> (sfield $ "reached" /\  show reached)
         , indent <> (xfield "levels")
         , array (indent <> indent) $ levelrec <$> levels
         , indent <> recend
+        , ")"
         ]
     LevelsS { reached, levels } ->
         let
@@ -229,18 +262,20 @@ _progressToDhall = case _ of
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "T.v_lvls"
+        [ "( T.v_lvls"
         , indent <> (sfield $ "reached" /\ ("+" <> show reached))
         , indent <> (xfield "levels")
         , array (indent <> indent) $ levelrec <$> levels
         , indent <> recend
+        , ")"
         ]
     LevelsE levelsE ->
-        [ "T.v_lvlio"
+        [ "( T.v_lvlio"
         , wrecord
             [ "reached" /\ ("+" <> show levelsE.reached)
             , "total" /\ ("+" <> show levelsE.total)
             ]
+        , ")"
         ]
     LevelsP { levels } ->
         let
@@ -251,13 +286,14 @@ _progressToDhall = case _ of
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "T.v_lvlp"
+        [ "( T.v_lvlp"
         , indent <> (sxfield "levels")
         , array (indent <> indent) $ levelrec <$> levels
         , indent <> recend
+        , ")"
         ]
     LevelsC levelsC ->
-        pure $ "T.v_lvlc " <>
+        pure $ wrapbrk $ "T.v_lvlc " <>
             wrecord
               [ "reached" /\ ("+" <> show levelsC.levelReached)
               , "current" /\ ("+" <> show levelsC.reachedAtCurrent)
@@ -274,20 +310,21 @@ _progressToDhall = case _ of
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "T.v_lvli"
+        [ "( T.v_lvli"
         , indent <> (sfield $ "reached" /\ ("+" <> show reached))
         , indent <> (xfield "levels")
         , array (indent <> indent) $ levelrec <$> levels
         , indent <> recend
+        , ")"
         ]
     Error err ->
         pure "" -- FIXME:
     where
-        indent = "    "
         sfield p = "{ " <> field p
         nfield p = ", " <> field p
         xfield n = ", " <> n <> " ="
         sxfield n = "{ " <> n <> " ="
+        wrapbrk p = "(" <> p <> ")"
         recend = "}"
         vtaskP = case _ of
             TTodo -> "T.p_todo"
@@ -307,6 +344,9 @@ array aindent items = aindent <> "[ " <>  String.joinWith ("\n" <> aindent <> ",
 
 quote :: String -> String
 quote s = "\"" <> s <> "\""
+
+prefix :: String -> String -> String
+prefix p s = p <> " " <> s
 
 field :: (String /\ String) -> String
 field = Tuple.uncurry $ \n v -> n <> " = " <> v
@@ -332,3 +372,6 @@ mbdaterec =
 
 mbgen :: forall a. String -> (a -> String) -> Maybe a -> String
 mbgen t f = maybe ("None " <> t) $ \v -> "Some " <> f v
+
+
+indent = "    " :: String
