@@ -40,6 +40,7 @@ import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 import Report.Modifiers.Class.ValueModify as VModify
 import Report.Export.Json (toJson) as Report
+import Report.Export.Dhall (toDhall) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
@@ -205,7 +206,7 @@ component preSelected =
 
             exportTextFor = case _ of
                 Json -> state.report # Report.toJson @subj_id @subj_tag @item_tag
-                Dhall -> ""
+                Dhall -> state.report # Report.toDhall @subj_id @subj_tag @item_tag
 
             exportSelected trg = state.mbExportTo == Just trg
 

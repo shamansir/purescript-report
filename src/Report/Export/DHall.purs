@@ -18,12 +18,14 @@ import Report (Report)
 import Report.Core as CT
 import Report.Group (Group)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag)
-import Report.Modifiers.Class.ValueModify (class EncodableKey)
+import Report.Modifiers.Class.ValueModify (class EncodableKey, decodeKey)
 import Report.Export.Types
 import Report.Export.Generic (toExport) as Report
 
 import Report.Modifiers.Progress (Progress(..))
 import Report.Modifiers.Task (TaskP(..))
+import Report.Prefix (Key) as P
+import Report.Suffix (Key) as S
 
 {- type DhallItemRec =
     { key :: Maybe String
@@ -59,16 +61,17 @@ toDhall =
         >>> unwrap
         >>> _.subjects
         >>> map (unwrap >>> convertSubject)
+        >>> Array.intersperse (pure "\n\n\n")
         >>> Array.concat
-        >>> String.joinWith "\n\n\n"
+        >>> String.joinWith "\n"
     where
         indent = "    "
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Array String
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
             [ "T.collapseAt"
-            , indent <> "{ id = " <> unwrap subjectRec.id
-            , indent <> ", name = " <> subjectRec.name
+            , indent <> "{ id = " <> quote (unwrap subjectRec.id)
+            , indent <> ", name = " <> quote subjectRec.name
             , indent <> ", platform = T.Platform.<TODO>"
             , indent <> ", playtime = T.Playtime.<TODO>"
             , indent <> "}"
@@ -76,17 +79,30 @@ toDhall =
             , ""
             , indent <> "("
             ]
-            <> (Array.concat $ Array.intersperse (pure $ "\n\n" <> indent <> "# ") $ convertGroup <$> groups)
+            <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
             <> [ indent <> ")" ]
 
         convertGroup :: { group :: Group, items :: Array ItemRec } -> Array String
         convertGroup { group, items } =
-            []
-            -- [ "T.groupStats " <> quote group.title <> " " <> array (indent <> indent) (group.path) ]
-            -- <> [ "" ]
-            -- <> [ indent <> "[" ]
-            -- <> (Array.concat $ Array.intersperse (pure $ ",") $ map (indent <> indent <> indent <>) $ map convertItem items)
-            -- <> [ indent <> "]" ]
+            let groupRec = unwrap group in
+            [ "# T.groupStats " <> quote groupRec.title <> " " <> ilarray (quote <$> unwrap <$> unwrap groupRec.path)
+            ]
+            <> pure (array (indent <> indent) (convertItem <$> items))
+
+        convertItem :: ItemRec -> String
+        convertItem itemRec =
+            "T.kv_ " <> quote itemRec.name <> " " <> (String.joinWith " " $ convertModifier <$> itemRec.modifiers)
+
+
+        convertModifier :: ModifierRec -> String
+        convertModifier modRec =
+            case modRec.mkind of
+                P ->
+                    let (pKey :: Maybe P.Key) = decodeKey modRec.mkey in
+                    quote modRec.mkey -- FIXME: implemenet
+                S ->
+                    let (sKey :: Maybe S.Key) = decodeKey modRec.mkey in
+                    quote modRec.mkey
 
 
 
@@ -268,14 +284,11 @@ _progressToDhall = case _ of
         pure "" -- FIXME:
     where
         indent = "    "
-        quote s = "\"" <> s <> "\""
-
         sfield p = "{ " <> field p
         nfield p = ", " <> field p
         xfield n = ", " <> n <> " ="
         sxfield n = "{ " <> n <> " ="
         recend = "}"
-        array aindent items = aindent <> "[ " <>  String.joinWith ("\n" <> aindent <> ",") items <> "\n" <> aindent <> "]"
         vtaskP = case _ of
             TTodo -> "T.p_todo"
             TDoing -> "T.p_doing"
@@ -286,6 +299,14 @@ _progressToDhall = case _ of
             TLater -> "T.p_later"
         pvptaskP task = vtaskP task <> "_"
 
+ilarray :: Array String -> String
+ilarray items = "[ " <>  String.joinWith "," items <> " ]"
+
+array :: String -> Array String -> String
+array aindent items = aindent <> "[ " <>  String.joinWith ("\n" <> aindent <> ", ") items <> "\n" <> aindent <> "]"
+
+quote :: String -> String
+quote s = "\"" <> s <> "\""
 
 field :: (String /\ String) -> String
 field = Tuple.uncurry $ \n v -> n <> " = " <> v
