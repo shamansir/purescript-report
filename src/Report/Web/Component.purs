@@ -14,7 +14,7 @@ import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Yoga.JSON (writePrettyJSON, class WriteForeign)
 
@@ -27,7 +27,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-import Report (Report, toMap, findGroup, findItem, withItem, withGroup) as R
+import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Encoding.Prefix (encodePrefix) as Prefix
@@ -39,7 +39,7 @@ import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 import Report.Modifiers.Class.ValueModify as VModify
-import Report.Export.Generic as Report
+import Report.Export.Json (toJson) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
@@ -109,6 +109,9 @@ derive instance Eq SortKey
 derive instance Ord SortKey
 
 
+type Version = Int
+
+
 data ExportTarget
     = Json
     | Dhall
@@ -163,6 +166,9 @@ component preSelected =
     selectionKeyToSubject :: Array subj -> Map subj_id subj
     selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
 
+    selectedSubjects :: R.TransferMap subj group item -> Map subj_id subj -> Array subj_id -> Array (subj /\ Map group (Array item))
+    selectedSubjects report selKeys subjects = Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
+
     render :: State subj_id subj_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
     render state =
         let
@@ -176,7 +182,7 @@ component preSelected =
                 -- , HE.onClick $ const ClearNavigation
                 ]
                 $ ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
-                <$> Array.catMaybes ((\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> state.subjects)
+                <$> selectedSubjects report selKeys state.subjects
                 ) <> pure menuButtons
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
@@ -198,7 +204,7 @@ component preSelected =
         where
 
             exportTextFor = case _ of
-                Json -> state.report # Report.toExport @subj_id @subj_tag @item_tag # writePrettyJSON 4
+                Json -> state.report # Report.toJson @subj_id @subj_tag @item_tag
                 Dhall -> ""
 
             exportSelected trg = state.mbExportTo == Just trg

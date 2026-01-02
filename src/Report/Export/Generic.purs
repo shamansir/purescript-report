@@ -2,12 +2,9 @@ module Report.Export.Generic where
 
 import Prelude
 
-import Foreign (Foreign)
-
 import Data.Maybe (Maybe(..))
 import Data.Map (Map)
 import Data.Map (toUnfoldable) as Map
-import Data.Map.Extra (mapKeys) as Map
 import Data.Newtype (unwrap)
 import Data.Tuple (curry, uncurry) as Tuple
 
@@ -17,12 +14,15 @@ import Report (Report)
 import Report.Group (Group(..))
 import Report.Class
 import Report (toMap) as Report
-import Report.Modifiers.Class.ValueModify
+import Report.Modifiers.Class.ValueModify (class EncodableKey, encodeKey)
 import Report.Prefix (Prefix)
 import Report.Prefix (Key) as Prefix
 import Report.Suffix (Suffix)
 import Report.Suffix (Key) as Suffix
 import Report.Export.Types
+
+
+exportVersion = ExportVersion 1 :: ExportVersion
 
 
 toExport
@@ -37,7 +37,11 @@ toExport
     => Report subj group item
     -> ReportToExport
 toExport =
-    ReportToExport <<< map (Tuple.uncurry subjectToExport) <<< Map.toUnfoldable <<< Report.toMap
+    ReportToExport
+        <<< (\subjects -> { version : exportVersion, subjects })
+        <<< map (Tuple.uncurry subjectToExport)
+        <<< Map.toUnfoldable
+        <<< Report.toMap
     where
         collectSubject :: subj -> SubjectRec
         collectSubject subj =

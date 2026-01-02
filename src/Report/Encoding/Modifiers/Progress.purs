@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Number (fromString) as Number
 import Data.String (split, Pattern(..)) as String
 import Data.Tuple.Nested ((/\), type (/\))
-import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt) as CT
+import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt, toLeadingZero) as CT
 import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Modifiers.Progress (PValueTag(..), Progress(..), unwrapValueTag, valueTagOf)
 import Report.Modifiers.Task (taskPFromString, taskPToString)
@@ -53,7 +53,7 @@ decodeValueTag = case _ of
 
 encodeDate :: CT.SDate -> String
 encodeDate (CT.SDate { day, month, year }) =
-    show day <> "-" <> show (CT.monthToInt month) <> "-" <> show year
+    CT.toLeadingZero day <> "-" <> CT.toLeadingZero (CT.monthToInt month) <> "-" <> show year
 
 
 decodeDate :: String -> Maybe CT.SDate
@@ -67,7 +67,7 @@ decodeDate evStr = case qsplit "-" evStr of
 
 
 encodeTime :: CT.STimeRec -> String
-encodeTime { hrs, min, sec } = show hrs <> ":" <> show min <> ":" <> show sec
+encodeTime { hrs, min, sec } = show hrs <> ":" <> CT.toLeadingZero min <> ":" <> CT.toLeadingZero sec
 
 
 decodeTime :: String -> Maybe CT.STimeRec

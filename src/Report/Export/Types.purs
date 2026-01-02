@@ -58,6 +58,7 @@ type ItemRec =
 
 
 newtype SubjectId = SubjectId String
+derive instance Newtype SubjectId _
 derive newtype instance WriteForeign SubjectId
 
 
@@ -71,8 +72,8 @@ type SubjectRec =
     }
 
 
-newtype Subject =
-    Subject SubjectRec
+newtype Subject = Subject SubjectRec
+derive instance Newtype Subject _
 
 derive newtype instance WriteForeign Subject
 
@@ -82,7 +83,11 @@ derive instance Newtype SubjectWithGroups _
 derive newtype instance WriteForeign SubjectWithGroups
 
 
-newtype ReportToExport = ReportToExport (Array SubjectWithGroups)
+newtype ExportVersion = ExportVersion Int
+derive newtype instance WriteForeign ExportVersion
+
+
+newtype ReportToExport = ReportToExport { version :: ExportVersion, subjects :: Array SubjectWithGroups }
 derive instance Newtype ReportToExport _
 derive newtype instance WriteForeign ReportToExport
 

@@ -39,7 +39,7 @@ import Yoga.JSON (class ReadForeign, readImpl)
 {- DHALL Import -}
 
 
-type DHallAchRec =
+type DhallAchRec =
     { key :: Maybe String
     , title :: Maybe String
     , kind :: Maybe String
@@ -69,7 +69,7 @@ derive instance Newtype FromDhall _
 
 type DhallGameJson =
     { trackedAt :: Maybe DateRec
-    , properties :: Array DHallAchRec
+    , properties :: Array DhallAchRec
     , game ::
         { name :: String
         , id :: String
@@ -87,7 +87,7 @@ instance ReadForeign FromDhall where
     readImpl :: Foreign -> F FromDhall
     readImpl frgn = do
         (dhallJSON :: DhallJson) <- readImpl frgn
-        pure $ collectFromDHall dhallJSON -- $ foldl insertByRef Map.empty dhallJSON.properties
+        pure $ collectFromDhall dhallJSON -- $ foldl insertByRef Map.empty dhallJSON.properties
 
 
 instance ReadForeign DhallGame where
@@ -105,8 +105,8 @@ platformFromDhall = case _ of
     _ -> Nothing
 
 
-collectFromDHall :: DhallJson -> FromDhall
-collectFromDHall { collection } = -- TODO: use `trackedAt`
+collectFromDhall :: DhallJson -> FromDhall
+collectFromDhall { collection } = -- TODO: use `trackedAt`
     FromDhall $ processGame <$> collection
 
 
@@ -166,7 +166,7 @@ processGame { properties, game } =
                 Nothing -> Group group
 
 
-dhallRecToAchievement :: DHallAchRec -> Achievement
+dhallRecToAchievement :: DhallAchRec -> Achievement
 dhallRecToAchievement rec =
     Achievement
         { name : fromMaybe "" rec.key
@@ -190,7 +190,7 @@ dhallRecToAchievement rec =
         }
 
 
-achievementToDhallRec :: Achievement -> DHallAchRec
+achievementToDhallRec :: Achievement -> DhallAchRec
 achievementToDhallRec (Achievement ach) =
     { key : if ach.name == "" then Nothing else Just ach.name
     , title : ach.mbTitle
@@ -220,7 +220,7 @@ achievementToDhallRec (Achievement ach) =
     }
   -}
 
-readDhallRec :: DHallAchRec -> Either Group (GroupPath /\ Achievement)
+readDhallRec :: DhallAchRec -> Either Group (GroupPath /\ Achievement)
 readDhallRec ach =
     maybe
       (Right $ pathFromRef ach.ref /\ dhallRecToAchievement ach)
@@ -238,10 +238,11 @@ pathFromRef :: Array String -> GroupPath
 pathFromRef ref = GroupPath $ PathSegment <$> ref
 
 
-isGroup :: DHallAchRec -> Maybe Group
+isGroup :: DhallAchRec -> Maybe Group
 isGroup = readDhallRec >>> blush
 
-isAchievement :: DHallAchRec -> Maybe (GroupPath /\ Achievement)
+
+isAchievement :: DhallAchRec -> Maybe (GroupPath /\ Achievement)
 isAchievement = readDhallRec >>> hush
 
 

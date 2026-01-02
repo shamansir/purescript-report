@@ -1,5 +1,8 @@
 module Report
     ( Report
+    , ReportMap
+    , TransferMap
+    , GroupsMap
     , empty
     , toMap
     , unwrap
@@ -41,12 +44,18 @@ import Report.Modifiers.Stats.Collect (collectStats)
 type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)
 
 
+type ReportMap subj group item = Map subj (GroupsMap group item)
+
+
+type TransferMap subj group item = Map subj (Map group (Array item))
+
+
 class ToReport subj group item a where
     toReport :: a -> Report subj group item
 
 
 newtype Report subj group item =
-    Report (Map subj (GroupsMap group item))
+    Report (ReportMap subj group item)
 
 
 empty :: forall subj group item. Report subj group item
@@ -56,7 +65,7 @@ empty = Report Map.empty
 unwrap
     :: forall subj group item
      . Report subj group item
-    -> Map subj (GroupsMap group item)
+    -> ReportMap subj group item
 unwrap (Report subjsMap) = subjsMap
 
 
@@ -89,7 +98,7 @@ toMap
     :: forall subj group item
      . Ord group
     => Report subj group item
-    -> Map subj (Map group (Array item))
+    -> TransferMap subj group item
 toMap (Report subjsMap) =
     subjGroups <$> subjsMap
     where
@@ -102,7 +111,7 @@ toMap (Report subjsMap) =
             Map.fromFoldable $ Array.catMaybes $ wrapGroup pathToGroup <$> Map.toUnfoldable pathToGroupItems
 
 
-fromMap :: forall subj group item. Ord subj => IsGroup group => Map subj (Map group (Array item)) -> Report subj group item
+fromMap :: forall subj group item. Ord subj => IsGroup group => TransferMap subj group item -> Report subj group item
 fromMap = build <<< map (map Map.toUnfoldable) <<< Map.toUnfoldable
 
 
