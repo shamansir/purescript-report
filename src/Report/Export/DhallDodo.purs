@@ -85,13 +85,65 @@ toDhall =
             let groupRec = unwrap group in
             D.break <> D.break <> D.indent
                 (  (if index == 0 then mempty else D.text "#" <> D.space)
-                <> D.text "T.group" <> D.space <> quote groupRec.title
+                <> D.text "T.group" <> D.space <> quote groupRec.title <> D.space <> ilarrayD (quote <$> unwrap <$> unwrap groupRec.path)
                 )
+                <> D.break <> D.indent (D.indent $ joinWith D.break $ arrayD $ convertItem <$> items)
             -- [ indent <> "( T.group " <> quote groupRec.title <> " " <> ilarray (quote <$> unwrap <$> unwrap groupRec.path)
             -- ]
             -- <> pure (array (indent <> indent) (convertItem <$> items))
             -- <> [ indent <> ")"
             --    ]
+
+        convertItem :: ItemRec -> Doc Unit
+        convertItem itemRec =
+            D.text "T.kv_" <> D.space <> quote itemRec.name <> D.space <> (alignModifiers $ convertModifier <$> itemRec.modifiers)
+
+
+        convertModifier :: ModifierRec -> Array (Doc Unit)
+        convertModifier modRec =
+            case modRec.mkind of
+                P ->
+                    let (mbPKey :: Maybe P.Key) = decodeKey modRec.mkey in
+                    case mbPKey of
+                        Just P.KRating ->
+                            pure $ D.text "p_rating " -- <> quote (modRec.value)
+                        Just P.KPriority ->
+                            pure $ D.text "p_priority " -- <> quote (modRec.value)
+                        Just P.KTask ->
+                            pure $ D.text "p_task " -- <> quote (modRec.value)
+                        Nothing ->
+                            pure $ quote modRec.mkey
+                S ->
+                    let (mbSKey :: Maybe S.Key) = decodeKey modRec.mkey in
+                    case mbSKey of
+                        Just (S.KProgress _) ->
+                            withImpl @Progress _progressToDhall modRec.value
+                        Just S.KEarnedAt ->
+                            withImpl @CT.SDate (sdaterec >>> prefixD "// T.inj/date" >>> pure) modRec.value
+                        Just S.KDescription ->
+                            withImpl @String (quote >>> prefixD "// T.inj/det" >>> pure) modRec.value
+                        Just S.KReference ->
+                            withImpl @GroupPath
+                                (unwrap >>> map (unwrap >>> quote) >>> ilarrayD >>> prefixD "// T.inj/self" >>> pure)
+                                modRec.value
+                        Just S.KTags ->
+                            withImpl @(Tags item_tag)
+                                (unwrap >>> map (tagContent >>> quote) >>> ilarrayD >>> prefixD "// T.inj/tags" >>> pure)
+                                modRec.value
+                        Nothing ->
+                            pure $ quote modRec.mkey
+
+
+        alignModifiers :: Array (Array (Doc Unit)) -> Doc Unit
+        alignModifiers =
+            fold <<< map fold
+            -- map (\arr ->
+            --         case Array.uncons arr of
+            --             Just { head, tail } -> head <> String.joinWith ("\n" <> indent3) tail
+            --             Nothing -> ""
+            --     )
+            -- >>> String.joinWith " "
+
 
         {-
         convertGroup :: { group :: Group, items :: Array ItemRec } -> Array String
@@ -150,8 +202,8 @@ toDhall =
         -}
 
 
-withImpl :: forall @t. ReadForeign t => (t -> Array String) -> Foreign -> Array String
-withImpl f frgn = (readImpl frgn :: F t) # runExcept # either (const $ pure "{- <error> -}") f
+withImpl :: forall @t a. ReadForeign t => (t -> Array (Doc a)) -> Foreign -> Array (Doc a)
+withImpl f frgn = (readImpl frgn :: F t) # runExcept # either (const $ pure $ D.text "{- <error> -}") f
 
 
 brindent2 :: forall a. Array (Doc a) -> Doc a
@@ -378,7 +430,11 @@ wraparrD = D.enclose (D.text "[ ") (D.text " ]")
 
 
 prefix :: forall a. String -> String -> Doc a
-prefix p s = D.text p <+> D.text s
+prefix p = D.text >>> prefixD p
+
+
+prefixD :: forall a. String -> Doc a -> Doc a
+prefixD p s = D.text p <+> s
 
 
 prefixnosp :: forall a. String -> String -> Doc a
@@ -409,7 +465,7 @@ mpi = mapWithIndex
 wrecord :: forall a. Array (String /\ String) -> Doc a
 wrecord fields =
     D.enclose (D.text "{ ") (D.text " }") $
-        joinWith (D.text "," <> D.space) $ field <$> fields
+        joinWith (D.text ",") $ field <$> fields
 
 
 wrecordD :: forall a. Array (String /\ Doc a) -> Doc a
