@@ -92,9 +92,11 @@ in
         , T.kv_ "Grade" (T.v_t "Expert")
         , T.kv_ "Play Style" (T.v_t "Pt Standard")
         ]
+
     # T.group "Stats" [ "01-stats" ]
         [ T.kv_ "Order Completion" (T.v_pi { done = +67, total = +185 })
         ]
+
     # T.group "Hero" [ "01-stats", "00-hero" ]
         [ T.kv_ "Health" (T.v_rng { from = +1200, to = +1200 })
         , T.kv_ "Resonance" (T.v_pct 1.0)
@@ -104,6 +106,7 @@ in
         , T.kv_ "Duty Evaluation" (T.v_i +41832)
         , T.kv_ "Order Completion" (T.v_pct 0.36)
         ]
+
     # T.group "Weapons" [ "01-stats", "01-weapons" ]
         [ T.kv_ "X-Baton Level" (T.v_i +6)
         , T.kv_ "Baton Atk" (T.v_i +130)
@@ -117,10 +120,11 @@ in
         , T.kv_ "Limiter Max" (T.v_i +130)
         , T.kv_ "Additional AED Batteries" (T.v_i +1)
         ]
+
     # T.group "Basic" [ "01-stats", "02-basic" ]
         [ T.kv_ "All Pure Platinum" (T.v_none_)
         , T.kv_ "Red Cases Closed"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +90
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -131,7 +135,7 @@ in
                 }
             )
         , T.kv_ "Blue Cases Closed"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +68
                 , levels =
                     [ { maximum = +1,  name = "Lvl. 1" } // T.inj/no_date
@@ -193,7 +197,7 @@ in
         ]
     # T.group "Combat" [ "01-stats", "03-combat" ]
         [ T.kv_ "Chimeradicator"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +781
                 , levels =
                     [ { maximum = +100,  name = "Lvl. 1" } // T.inj/no_date
@@ -203,7 +207,7 @@ in
                 }
             )
         , T.kv_ "Itemanical"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +300
                 , levels =
                     [ { maximum = +30,  name = "Lvl. 1" } // T.inj/no_date
@@ -244,7 +248,7 @@ in
         ]
     # T.group "Collection" [ "01-stats", "04-collection" ]
         [ T.kv_ "Supply Snatcher"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +201
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -254,7 +258,7 @@ in
                 }
             )
         , T.kv_ "Finders Keepers"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +69
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -266,7 +270,7 @@ in
         , T.kv_unk
         , T.kv_unk
         , T.kv_ "Know Your Enemy"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +14
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -280,7 +284,7 @@ in
         , T.kv_ "It's Who You Know" (T.v_pi { done = +1, total = +40 })
         , T.kv_ "Ask Tourist" (T.v_pi { done = +2, total = +28 })
         , T.kv_ "Blueshifter"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +30 -- check it
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -290,7 +294,7 @@ in
                 }
             )
         , T.kv_ "Retirement Fund"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +380128
                 , levels =
                     [ { maximum = +10000,   name = "Lvl. 1" } // T.inj/no_date
@@ -300,7 +304,7 @@ in
                 }
             )
         , T.kv_ "Gene Code Glutton"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +33814
                 , levels =
                     [ { maximum = +1000,   name = "Lvl. 1" } // T.inj/no_date
@@ -526,7 +530,7 @@ in
     # T.group "Basic" [ "01-stats", "02-basic" ]
         [ T.kv_ "All Pure Platinum" (T.v_none_)
         , T.kv_ "Red Cases Closed"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +90
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -537,7 +541,7 @@ in
                 }
             )
         , T.kv_ "Blue Cases Closed"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +68
                 , levels =
                     [ { maximum = +1,  name = "Lvl. 1" } // T.inj/no_date
@@ -599,7 +603,7 @@ in
         ]
     # T.group "Combat" [ "01-stats", "03-combat" ]
         [ T.kv_ "Chimeradicator"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +781
                 , levels =
                     [ { maximum = +100,  name = "Lvl. 1" } // T.inj/no_date
@@ -609,7 +613,7 @@ in
                 }
             )
         , T.kv_ "Itemanical"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +300
                 , levels =
                     [ { maximum = +30,  name = "Lvl. 1" } // T.inj/no_date
@@ -650,7 +654,7 @@ in
         ]
     # T.group "Collection" [ "01-stats", "04-collection" ]
         [ T.kv_ "Supply Snatcher"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +201
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -660,7 +664,7 @@ in
                 }
             )
         , T.kv_ "Finders Keepers"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +69
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -672,7 +676,7 @@ in
         , T.kv_unk
         , T.kv_unk
         , T.kv_ "Know Your Enemy"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +14
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -686,7 +690,7 @@ in
         , T.kv_ "It's Who You Know" (T.v_pi { done = +1, total = +40 })
         , T.kv_ "Ask Tourist" (T.v_pi { done = +2, total = +28 })
         , T.kv_ "Blueshifter"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +30 -- check it
                 , levels =
                     [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
@@ -696,7 +700,7 @@ in
                 }
             )
         , T.kv_ "Retirement Fund"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +380128
                 , levels =
                     [ { maximum = +10000,   name = "Lvl. 1" } // T.inj/no_date
@@ -706,7 +710,7 @@ in
                 }
             )
         , T.kv_ "Gene Code Glutton"
-            (T.v_lvli
+            ( T.v_lvli
                 { reached = +33814
                 , levels =
                     [ { maximum = +1000,   name = "Lvl. 1" } // T.inj/no_date

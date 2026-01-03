@@ -224,10 +224,15 @@ _progressToDhall = case _ of
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
         in pure $ wrapbrkD $ D.text "T.v_pctx" <+> D.text sign_s <+> D.text (show pct)
     ToGetI { got, total } ->
-        pure $ wrapbrkD $ D.text "T.v_pi " <> wrecord
-            [ "got" /\ ("+" <> show got)
-            , "total" /\ ("+" <> show total)
-            ]
+        if (got == 0) && (total == 1) then
+            pure $ wrapbrkD $ D.text "T.v_none_"
+        else if (got == 1) && (total == 1) then
+            pure $ wrapbrkD $ D.text "T.v_done_"
+        else
+            pure $ wrapbrkD $ D.text "T.v_pi " <> wrecord
+                [ "done" /\ ("+" <> show got)
+                , "total" /\ ("+" <> show total)
+                ]
     ToGetN { got, total } ->
         pure $ wrapbrkD $ D.text "T.v_pd " <> wrecord
             [ "got" /\ show got
@@ -281,13 +286,15 @@ _progressToDhall = case _ of
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ D.text "(" <+> D.text "T.v_lvli"
-        , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
-        , D.indent $ xfield "levels"
-        ]
-        <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
-        [ D.indent recend
-        , D.text ")"
+        [ D.break <> (D.indent $ joinWith D.break $
+            [ D.text "(" <+> D.text "T.v_lvli"
+            , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+            , D.indent $ xfield "levels"
+            ]
+            <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
+            [ D.indent recend
+            , D.text ")"
+            ])
         ]
     LevelsN { reached, levels } ->
         let
@@ -396,7 +403,7 @@ ilarray = ilarrayD <<< map D.text
 
 
 ilarrayD :: forall a. Array (Doc a) -> Doc a
-ilarrayD = wraparrD <<< joinWith (D.text ",")
+ilarrayD = wraparrD <<< joinWith (D.text "," <> D.space)
 
 
 array :: forall a. Array String -> Array (Doc a)
@@ -451,6 +458,11 @@ fieldD = Tuple.uncurry $ \n docv -> D.text n <+> D.text "=" <+> docv
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
 joinWith sep =
+    fold <<< mpix \d -> sep <> d
+
+
+joinWithSp :: forall a. Doc a -> Array (Doc a) -> Doc a
+joinWithSp sep =
     fold <<< mpix \d -> sep <+> d
 
 
@@ -465,7 +477,7 @@ mpi = mapWithIndex
 wrecord :: forall a. Array (String /\ String) -> Doc a
 wrecord fields =
     D.enclose (D.text "{ ") (D.text " }") $
-        joinWith (D.text ",") $ field <$> fields
+        joinWith (D.text "," <> D.space) $ field <$> fields
 
 
 wrecordD :: forall a. Array (String /\ Doc a) -> Doc a
