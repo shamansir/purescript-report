@@ -13,6 +13,8 @@ import Data.String (joinWith) as String
 import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Array as Array
+import Data.Foldable (fold)
+import Data.FunctorWithIndex (mapWithIndex)
 
 import Yoga.JSON (class WriteForeign, writePrettyJSON, class ReadForeign, readImpl)
 
@@ -65,29 +67,31 @@ toDhall =
             D.text "let T = ./Types.dhall"
             <> D.break <> D.break <> D.text "in"
             <> D.break <> D.indent (D.text "T.collapseAt")
-            <> D.break <> D.indent (D.indent $ D.text "{ id = " <> D.text (quote $ unwrap subjectRec.id))
-            <> D.break <> D.indent (D.indent $ D.text ", name = " <> D.text (quote subjectRec.name))
-            <> D.break <> D.indent (D.indent $ D.text ", platform = " <> D.text "T.Platform.<TODO>")
-            <> D.break <> D.indent (D.indent $ D.text ", playtime = " <> D.text "T.Playtime.<TODO>")
-            <> D.break <> D.indent (D.indent $ D.text "}")
-            <> D.break <> D.indent (D.indent (D.enclose (D.text "(") (D.text ")") $ D.text $ mbdaterec subjectRec.trackedAt) <> D.space <> D.text "(")
-
-            {-
-
-            [ "let T = ./Types.dhall\n\nin\n" <> indent <> "T.collapseAt"
-            , indent <> "{ id = " <> quote (unwrap subjectRec.id)
-            , indent <> ", name = " <> quote subjectRec.name
-            , indent <> ", platform = T.Platform.<TODO>"
-            , indent <> ", playtime = T.Playtime.<TODO>"
-            , indent <> "}"
-            , indent <> mbdaterec subjectRec.trackedAt
-            , ""
-            , indent <> "("
-            ]
-            -}
+            <> brindent2
+                [ D.text "{ id = " <> (quote $ unwrap subjectRec.id)
+                , D.text ", name = " <> quote subjectRec.name
+                , D.text ", platform = " <> D.text "T.Platform.<TODO>"
+                , D.text ", playtime = " <> D.text "T.Playtime.<TODO>"
+                , D.text "}"
+                , (D.enclose (D.text "(") (D.text ")") $ mbdaterec subjectRec.trackedAt) <> D.space <> D.text "("
+                ]
+            <> fold (mapWithIndex convertGroup groups)
 
             -- <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
             -- <> [ indent <> ")" ]
+
+        convertGroup :: Int -> { group :: Group, items :: Array ItemRec } -> Doc Unit
+        convertGroup index { group, items } =
+            let groupRec = unwrap group in
+            D.break <> D.break <> D.indent
+                (  (if index == 0 then mempty else D.text "#" <> D.space)
+                <> D.text "T.group" <> D.space <> quote groupRec.title
+                )
+            -- [ indent <> "( T.group " <> quote groupRec.title <> " " <> ilarray (quote <$> unwrap <$> unwrap groupRec.path)
+            -- ]
+            -- <> pure (array (indent <> indent) (convertItem <$> items))
+            -- <> [ indent <> ")"
+            --    ]
 
         {-
         convertGroup :: { group :: Group, items :: Array ItemRec } -> Array String
@@ -150,37 +154,41 @@ withImpl :: forall @t. ReadForeign t => (t -> Array String) -> Foreign -> Array 
 withImpl f frgn = (readImpl frgn :: F t) # runExcept # either (const $ pure "{- <error> -}") f
 
 
-_progressToDhall :: Progress -> Array String
+brindent2 :: forall a. Array (Doc a) -> Doc a
+brindent2 = map (\d -> D.break <> D.indent (D.indent d)) >>> fold
+
+
+_progressToDhall :: Progress -> Array (Doc Unit)
 _progressToDhall = case _ of
-    None ->        pure "T.v_empty"
-    Unknown ->     pure "T.v_empty"
-    PInt i ->      pure $ wrapbrk $ "T.v_i" <> " " <> "+" <> show i
-    PNumber n ->   pure $ wrapbrk $ "T.v_n" <> " " <> show n
-    PText text ->  pure $ wrapbrk $ "T.v_t" <> " " <> quote text
-    ToComplete { done } -> pure $ if done then "T.v_done" else "T.v_none"
-    PercentI i ->  pure $ wrapbrk $ "T.v_pcti" <> " " <> "+" <> show i
-    PercentN n ->  pure $ wrapbrk $ "T.v_pct" <> " " <> show n
+    None ->        pure $ D.text "T.v_empty"
+    Unknown ->     pure $ D.text "T.v_empty"
+    PInt i ->      pure $ wrapbrkD $ D.text "T.v_i" <+> (prefixnosp "+" $ show i)
+    PNumber n ->   pure $ wrapbrkD $ D.text "T.v_n" <+> D.text (show n)
+    PText text ->  pure $ wrapbrkD $ D.text "T.v_t" <+> quote text
+    ToComplete { done } -> pure $ D.text $ if done then "T.v_done" else "T.v_none"
+    PercentI i ->  pure $ wrapbrkD $ D.text "T.v_pcti" <+> (prefixnosp "+" $ show i)
+    PercentN n ->  pure $ wrapbrkD $ D.text "T.v_pct" <+> D.text (show n)
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ wrapbrk $ "T.v_pctx" <> " " <> sign_s <> " " <> show pct
+        in pure $ wrapbrkD $ D.text "T.v_pctx" <+> D.text sign_s <+> D.text (show pct)
     ToGetI { got, total } ->
-        pure $ wrapbrk $ "T.v_pi " <> wrecord
+        pure $ wrapbrkD $ D.text "T.v_pi " <> wrecord
             [ "got" /\ ("+" <> show got)
             , "total" /\ ("+" <> show total)
             ]
     ToGetN { got, total } ->
-        pure $ wrapbrk $ "T.v_pd " <> wrecord
+        pure $ wrapbrkD $ D.text "T.v_pd " <> wrecord
             [ "got" /\ show got
             , "total" /\ show total
             ]
     OnTime timeRec ->
-        pure $ wrapbrk $ "T.v_time " <> wrecord
+        pure $ wrapbrkD $ D.text "T.v_time " <> wrecord
             [ "hrs" /\ ("+" <> show timeRec.hrs)
             , "min" /\ ("+" <> show timeRec.min)
             , "sec" /\ ("+" <> show timeRec.sec)
             ]
     OnDate sdate ->
-        pure $ wrapbrk $ "T.v_date " <> sdaterec sdate
+        pure $ wrapbrkD $ D.text "T.v_date " <> sdaterec sdate
         {-
         let dateRec = CT.dateToRec sdate
         in pure $ "T.v_date " <> wrecord
@@ -190,133 +198,137 @@ _progressToDhall = case _ of
             ]
         -}
     PerI { amount, per } ->
-        pure $ wrapbrk $ "T.v_per " <> " +" <> show amount <> " " <> quote per
+        pure $ wrapbrkD $ D.text "T.v_per" <+> (prefixnosp "+" $ show amount) <+> quote per
     PerN { amount, per } ->
-        pure $ wrapbrk $ "T.v_per " <> show amount <> " " <> quote per
+        pure $ wrapbrkD $ D.text "T.v_per" <+> D.text (show amount) <+> quote per
     MeasuredI { amount, measure } ->
-        pure $ wrapbrk $ "T.v_mes " <> " +" <> show amount <> " " <> quote measure
+        pure $ wrapbrkD $ D.text "T.v_mes" <+> (prefixnosp "+" $ show amount) <+> quote measure
     MeasuredN { amount, measure } ->
-        pure $ wrapbrk $ "T.v_mesd " <> show amount <> " " <> quote measure
+        pure $ wrapbrkD $ D.text "T.v_mesd" <+> D.text (show amount) <+> quote measure
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ wrapbrk $ "T.v_mesx " <> sign_s <> " +" <> show amount <> " " <> quote measure
+        in pure $ wrapbrkD $ D.text "T.v_mesx" <+> D.text sign_s <+> (prefixnosp "+" $ show amount) <+> quote measure
     RangeI { from, to } ->
-        pure $ wrapbrk $ "T.v_rng " <> wrecord
+        pure $ wrapbrkD $ D.text "T.v_rng " <> wrecord
             [ "from" /\ ("+" <> show from)
             , "to" /\ ("+" <> show to)
             ]
     RangeN { from, to } ->
-        pure $ wrapbrk $ "T.v_rngd " <> wrecord
+        pure $ wrapbrkD $ D.text "T.v_rngd " <> wrecord
             [ "from" /\ show from
             , "to" /\ show to
             ]
     Task taskP ->
-        pure $ wrapbrk $ "T.v_proc " <> quote (vtaskP taskP)
+        pure $ wrapbrkD $ D.text "T.v_proc " <> quoteD (vtaskP taskP)
     LevelsI { reached, levels } ->
         let
             levelrec lrec =
-                wrecord
-                    [ "maximum" /\ ("+" <> show lrec.maximum)
+                wrecordD
+                    [ "maximum" /\ (prefixnosp "+" $ show lrec.maximum)
                     , "name" /\ quote lrec.name
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "( T.v_lvli"
-        , indent <> (sfield $ "reached" /\ ("+" <> show reached))
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        , ")"
+        [ D.text "(" <+> D.text "T.v_lvli"
+        , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+        , D.indent $ xfield "levels"
+        ]
+        <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
+        [ D.indent recend
+        , D.text ")"
         ]
     LevelsN { reached, levels } ->
         let
             levelrec lrec =
-                wrecord
-                    [ "maximum" /\ show lrec.maximum
+                wrecordD
+                    [ "maximum" /\ D.text (show lrec.maximum)
                     , "name" /\ quote lrec.name
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "( T.v_lvld"
-        , indent <> (sfield $ "reached" /\  show reached)
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        , ")"
+        [ D.text "(" <+> D.text "T.v_lvld"
+        , D.indent $ sfield $ "reached" /\ show reached
+        , D.indent $ xfield "levels"
+        ]
+        <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
+        [ D.indent recend
+        , D.text ")"
         ]
     LevelsS { reached, levels } ->
         let
             levelrec lrec =
-                wrecord
+                wrecordD
                     [ "gives" /\ quote lrec.gives
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "( T.v_lvls"
-        , indent <> (sfield $ "reached" /\ ("+" <> show reached))
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        , ")"
+        [ D.text "(" <+> D.text "T.v_lvls"
+        , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+        , D.indent $ xfield "levels"
+        ]
+        <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
+        [ D.indent recend
+        , D.text ")"
         ]
     LevelsE levelsE ->
-        [ "( T.v_lvlio"
+        [ D.text "(" <+> D.text "T.v_lvlio"
         , wrecord
             [ "reached" /\ ("+" <> show levelsE.reached)
             , "total" /\ ("+" <> show levelsE.total)
             ]
-        , ")"
+        , D.text ")"
         ]
     LevelsP { levels } ->
         let
             levelrec lrec =
-                wrecord
+                wrecordD
                     [ "name" /\ quote lrec.name
                     , "proc" /\ pvptaskP lrec.proc
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "( T.v_lvlp"
-        , indent <> (sxfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        , ")"
+        [ D.text "(" <+> D.text "T.v_lvlp"
+        , D.indent $ xfield "levels"
+        ]
+        <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
+        [ D.indent recend
+        , D.text ")"
         ]
     LevelsC levelsC ->
-        pure $ wrapbrk $ "T.v_lvlc " <>
-            wrecord
-              [ "reached" /\ ("+" <> show levelsC.levelReached)
-              , "current" /\ ("+" <> show levelsC.reachedAtCurrent)
-              , "total" /\ ("+" <> show levelsC.totalLevels)
-              , "maxcurrent" /\ ("+" <> show levelsC.maximumAtCurrent)
+        pure $ wrapbrkD $ D.text "T.v_lvlc" <+>
+            wrecordD
+              [ "reached" /\ (prefixnosp "+" $ show levelsC.levelReached)
+              , "current" /\ (prefixnosp "+" $ show levelsC.reachedAtCurrent)
+              , "total" /\ (prefixnosp "+" $ show levelsC.totalLevels)
+              , "maxcurrent" /\ (prefixnosp "+" $ show levelsC.maximumAtCurrent)
               , "date" /\ mbdaterec levelsC.date
               ]
     LevelsO { reached, levels } ->
         let
             levelrec lrec =
-                wrecord
-                    [ "maximum" /\ mbgen "Integer" (\v -> "+" <> show v) lrec.mbMaximum
+                wrecordD
+                    [ "maximum" /\ mbgenD (D.text "Integer") (\v -> prefixnosp "+" $ show v) lrec.mbMaximum
                     , "name" /\ quote lrec.name
                     , "date" /\ mbdaterec lrec.date
                     ]
         in
-        [ "( T.v_lvli"
-        , indent <> (sfield $ "reached" /\ ("+" <> show reached))
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        , ")"
+        [ D.text "(" <+> D.text "T.v_lvli"
+        , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+        , D.indent $ xfield "levels"
+        ]
+        <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
+        [ D.indent recend
+        , D.text ")"
         ]
     Error err ->
-        pure "" -- FIXME:
+        [ D.text "ERR" ] -- FIXME:
     where
-        sfield p = "{ " <> field p
-        nfield p = ", " <> field p
-        xfield n = ", " <> n <> " ="
-        sxfield n = "{ " <> n <> " ="
-        wrapbrk p = "(" <> p <> ")"
-        recend = "}"
-        vtaskP = case _ of
+        sfield p = D.text "{" <+> field p
+        nfield p = D.text "," <+> field p
+        xfield n = D.text "," <+> D.text n <+> D.text "="
+        sxfield n = D.text "{" <+> D.text n <+> D.text "="
+        recend = D.text "}"
+        vtaskP = D.text <<< case _ of
             TTodo -> "T.p_todo"
             TDoing -> "T.p_doing"
             TDone -> "T.p_done"
@@ -324,28 +336,89 @@ _progressToDhall = case _ of
             TNow -> "T.p_now"
             TCanceled -> "T.p_canceled"
             TLater -> "T.p_later"
-        pvptaskP task = vtaskP task <> "_"
+        pvptaskP task = vtaskP task <> D.text "_"
 
-ilarray :: Array String -> String
-ilarray items = "[ " <>  String.joinWith "," items <> " ]"
 
-array :: String -> Array String -> String
--- array aindent items = "b" <> aindent <> "[ " <>  String.joinWith ("\nx" <> aindent <> ", ") items <> "\nz" <> aindent <> "]"
-array aindent items = aindent <> "[ " <>  String.joinWith ("\n" <> aindent <> ", ") items <> "\n" <> aindent <> "]"
+ilarray :: forall a. Array String -> Doc a
+ilarray = ilarrayD <<< map D.text
 
-quote :: String -> String
-quote s = "\"" <> s <> "\""
 
-prefix :: String -> String -> String
-prefix p s = p <> " " <> s
+ilarrayD :: forall a. Array (Doc a) -> Doc a
+ilarrayD = wraparrD <<< joinWith (D.text ",")
 
-field :: (String /\ String) -> String
-field = Tuple.uncurry $ \n v -> n <> " = " <> v
 
-wrecord :: Array (String /\ String) -> String
-wrecord fields = "{" <> String.joinWith ", " (field <$> fields) <> " }"
+array :: forall a. Array String -> Array (Doc a)
+array = map D.text >>> arrayD
 
-daterecf :: CT.SDateRec -> String
+
+arrayD :: forall a. Array (Doc a) -> Array (Doc a)
+arrayD items =
+    mpi (\i d -> if i == 0 then D.text "[" <+> d else D.text "," <+> d) items <> [ D.text "]" ]
+
+
+quote :: forall a. String -> Doc a
+quote = D.text >>> quoteD
+
+quoteD :: forall a. Doc a -> Doc a
+quoteD = D.enclose (D.text "\"") (D.text "\"")
+
+wrapbrk :: forall a. String -> Doc a
+wrapbrk = D.text >>> wrapbrkD
+
+wrapbrkD :: forall a. Doc a -> Doc a
+wrapbrkD = D.enclose (D.text "(") (D.text ")")
+
+
+-- wraparr :: forall a. String -> Doc a
+-- wraparr = D.text >>> wraparrD
+
+
+wraparrD :: forall a. Doc a -> Doc a
+wraparrD = D.enclose (D.text "[ ") (D.text " ]")
+
+
+prefix :: forall a. String -> String -> Doc a
+prefix p s = D.text p <+> D.text s
+
+
+prefixnosp :: forall a. String -> String -> Doc a
+prefixnosp p s = D.text p <> D.text s
+
+
+field :: forall a. (String /\ String) -> Doc a
+field = Tuple.uncurry $ \n v -> D.text n <+> D.text "=" <+> D.text v
+
+
+fieldD :: forall a. (String /\ Doc a) -> Doc a
+fieldD = Tuple.uncurry $ \n docv -> D.text n <+> D.text "=" <+> docv
+
+
+joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
+joinWith sep =
+    fold <<< mpix \d -> sep <+> d
+
+
+mpix :: forall a. (Doc a -> Doc a) -> Array (Doc a) -> Array (Doc a)
+mpix f = mpi $ \i d -> if i == 0 then d else f d
+
+
+mpi :: forall a. (Int -> Doc a -> Doc a) -> Array (Doc a) -> Array (Doc a)
+mpi = mapWithIndex
+
+
+wrecord :: forall a. Array (String /\ String) -> Doc a
+wrecord fields =
+    D.enclose (D.text "{ ") (D.text " }") $
+        joinWith (D.text "," <> D.space) $ field <$> fields
+
+
+wrecordD :: forall a. Array (String /\ Doc a) -> Doc a
+wrecordD fields =
+    D.enclose (D.text "{ ") (D.text " }") $
+        joinWith (D.text "," <> D.space) $ fieldD <$> fields
+
+
+daterecf :: forall a. CT.SDateRec -> Doc a
 daterecf dateRec =
     wrecord
         [ "day"  /\ ("+" <> show dateRec.day)
@@ -353,16 +426,22 @@ daterecf dateRec =
         , "year" /\ ("+" <> show dateRec.year)
         ]
 
-sdaterec :: CT.SDate -> String
+sdaterec :: forall a. CT.SDate -> Doc a
 sdaterec =
     daterecf <<< CT.dateToRec
 
-mbdaterec :: Maybe CT.SDateRec -> String
-mbdaterec =
-    mbgen "T.DATE" daterecf
 
-mbgen :: forall a. String -> (a -> String) -> Maybe a -> String
-mbgen t f = maybe ("None " <> t) $ \v -> "Some " <> f v
+mbdaterec :: forall a. Maybe CT.SDateRec -> Doc a
+mbdaterec =
+    mbgenD (D.text "T.DATE") daterecf
+
+
+mbgen :: forall x a. String -> (x -> String) -> Maybe x -> Doc a
+mbgen t f = mbgenD (D.text t) (D.text <<< f)
+
+
+mbgenD :: forall x a. Doc a -> (x -> Doc a) -> Maybe x -> Doc a
+mbgenD t f = maybe (D.text "None" <+> t) $ \v -> D.text "Some" <+> f v
 
 
 indent = "    " :: String
