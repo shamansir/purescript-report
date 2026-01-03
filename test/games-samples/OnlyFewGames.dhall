@@ -1,10 +1,11 @@
 let T = ./Types.dhall
 
-let AnimalCrossing  = ./AnimalCrossing.dhall
+-- let AnimalCrossing  = ./AnimalCrossing.dhall
+let AstralChain     = ./AstralChain.dhall
 
 
 in
     { collection =
-        [ AnimalCrossing
+        [ AstralChain
         ]
     }

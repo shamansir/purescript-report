@@ -31,6 +31,9 @@ import Report.Modifiers.Tags (Tags)
 import Report.Prefix (Key(..)) as P
 import Report.Suffix (Key(..)) as S
 
+import Dodo
+import Dodo as D
+
 
 toDhall
     :: forall @subj_id @subj_tag @item_tag subj group item
@@ -50,14 +53,28 @@ toDhall =
         >>> unwrap
         >>> _.subjects
         >>> map (unwrap >>> convertSubject)
-        >>> Array.intersperse (pure "\n\n\n")
-        >>> Array.concat
-        >>> String.joinWith "\n"
+        >>> D.lines
+        >>> D.print D.plainText D.fourSpaces
+        -- >>> Array.intersperse (pure "\n\n\n")
+        -- >>> Array.concat
+        -- >>> String.joinWith "\n"
     where
-        convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Array String
+        convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            [ "T.collapseAt"
+            D.text "let T = ./Types.dhall"
+            <> D.break <> D.break <> D.text "in"
+            <> D.break <> D.indent (D.text "T.collapseAt")
+            <> D.break <> D.indent (D.indent $ D.text "{ id = " <> D.text (quote $ unwrap subjectRec.id))
+            <> D.break <> D.indent (D.indent $ D.text ", name = " <> D.text (quote subjectRec.name))
+            <> D.break <> D.indent (D.indent $ D.text ", platform = " <> D.text "T.Platform.<TODO>")
+            <> D.break <> D.indent (D.indent $ D.text ", playtime = " <> D.text "T.Playtime.<TODO>")
+            <> D.break <> D.indent (D.indent $ D.text "}")
+            <> D.break <> D.indent (D.indent (D.enclose (D.text "(") (D.text ")") $ D.text $ mbdaterec subjectRec.trackedAt) <> D.space <> D.text "(")
+
+            {-
+
+            [ "let T = ./Types.dhall\n\nin\n" <> indent <> "T.collapseAt"
             , indent <> "{ id = " <> quote (unwrap subjectRec.id)
             , indent <> ", name = " <> quote subjectRec.name
             , indent <> ", platform = T.Platform.<TODO>"
@@ -67,9 +84,12 @@ toDhall =
             , ""
             , indent <> "("
             ]
-            <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
-            <> [ indent <> ")" ]
+            -}
 
+            -- <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
+            -- <> [ indent <> ")" ]
+
+        {-
         convertGroup :: { group :: Group, items :: Array ItemRec } -> Array String
         convertGroup { group, items } =
             let groupRec = unwrap group in
@@ -123,6 +143,7 @@ toDhall =
                         Nothing -> ""
                 )
             >>> String.joinWith " "
+        -}
 
 
 withImpl :: forall @t. ReadForeign t => (t -> Array String) -> Foreign -> Array String
