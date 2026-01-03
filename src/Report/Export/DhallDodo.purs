@@ -1,4 +1,4 @@
-module Report.Export.Dhall where
+module Report.Export.DhallDodo where
 
 import Prelude
 
@@ -123,7 +123,6 @@ toDhall =
                         Nothing -> ""
                 )
             >>> String.joinWith " "
-
 
 
 withImpl :: forall @t. ReadForeign t => (t -> Array String) -> Foreign -> Array String

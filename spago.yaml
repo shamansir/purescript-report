@@ -2,6 +2,7 @@ package:
   name: report
   dependencies:
     - console
+    - dodo-printer
     - effect
     - either
     - halogen
@@ -18,12 +19,15 @@ package:
   test:
     main: Test.Main
     dependencies:
+      - spec
+      - spec-node
       - affjax
       - affjax-node
       - affjax-web
       - fetch
       - debug
       - fetch-yoga-json
+      - diff-compare
 workspace:
   packageSet:
     registry: 68.10.1
@@ -38,3 +42,5 @@ workspace:
     yoga-tree-svg:
       git: https://github.com/shamansir/purescript-yoga-tree-svg.git
       ref: e8d398426367b47af624097b6b60c8dadde5bda6
+    diff-compare:
+      path: ../purescript-diff-compare

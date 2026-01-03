@@ -10,30 +10,22 @@ import Effect.Console (log) as Console
 import Effect.Aff.Class (class MonadAff)
 
 import Data.Maybe (Maybe(..))
-import Data.Either (Either(..))
-import Data.Array (length) as Array
 import Data.String (joinWith) as String
 import Data.Tuple (uncurry) as Tuple
 
-import Test.Demo.Request as Request
-import Fetch as F
+import Fetch (Method(..), fetch)  as F
 import Fetch.Yoga.Json (fromJSON) as F
 
 import Halogen as H
 import Halogen.Aff as HA
-import Halogen.HTML (input)
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
-import Halogen.Query.Event (eventListener)
 import Halogen.VDom.Driver (runUI)
 
-import GameLog.Dhall as GL
-import GameLog.Types.Game as GL
-import GameLog.Types.SingleGameStats as GL
-import GameLog.Types.ManyGamesStats as GL
-import GameLog.Types.Achievement as GL
-import GameLog.Types.Game (GameId(..), GameTag) as GL
+import GameLog.Dhall (FromDhall, dhallToAchievements) as GL
+import GameLog.Types.Game (GameId(..), GameTag, gameName) as GL
+import GameLog.Types.SingleGameStats (totalAchievements) as GL
+import GameLog.Types.ManyGamesStats (GamesReport, fromArray) as GL
+import GameLog.Types.Achievement (Tag) as GL
 
 import Report (toReport)
 import Report.Web.Component as StatsReport
