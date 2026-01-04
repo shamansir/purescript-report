@@ -79,8 +79,8 @@ let Value =
     | D : Bool
     | PI : PI -- total/done : int
     | PD : PD -- total/done : double
-    | PCT : Double -- percents
-    | PCTI : Integer
+    | PCT : Double -- percents (0..1)
+    | PCTI : Integer  -- percents (0..100)
     | PCTX : PCTX -- percents with sign
     | MESI : MESI -- int / measure
     | MESD : MESD -- double / measure
@@ -429,6 +429,7 @@ let Platform =
     | Steam
     | GPlay
     | Playstation5
+    | IOS
     | Other -- Web? Shared?
     >
 

@@ -85,6 +85,7 @@ parsePlatform =
         "WiiU" -> WiiU
         "Wii U" -> WiiU
         "iOS" -> IOS Nothing
+        "IOS" -> IOS Nothing
         "Steam" -> Steam
         "Oculus" -> Oculus
         "MetaQuest" -> Oculus
