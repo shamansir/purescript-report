@@ -6,21 +6,25 @@ import Prelude
 import Yoga.JSON (class WriteForeign, writeImpl)
 
 import Report.Core (SDate, SDateRec, STimeRec)
+import Report.Prefix (Prefix)
+import Report.Suffix (Suffix)
 
 
 data TabularValue
-   = TVString String
-   | TVNumber Number
-   | TVBoolean Boolean
-   | TVTime STimeRec
-   | TVDate SDate
-   | TVDateTime SDate STimeRec
-   | TVTimeRange { from :: STimeRec, to :: STimeRec }
-   | TVDateRange { from :: SDate,    to :: SDate }
-   | TVDateTimeRange
-        { from :: { date :: SDate, time :: STimeRec }
-        , to   :: { date :: SDate, time :: STimeRec }
-        }
+    = TVString String
+    | TVNumber Number
+    | TVBoolean Boolean
+    | TVTime STimeRec
+    | TVDate SDate
+    | TVDateTime SDate STimeRec
+    | TVTimeRange { from :: STimeRec, to :: STimeRec }
+    | TVDateRange { from :: SDate,    to :: SDate }
+    | TVDateTimeRange
+         { from :: { date :: SDate, time :: STimeRec }
+         , to   :: { date :: SDate, time :: STimeRec }
+         }
+     | TVPrefix Prefix
+     | TVSuffix (Suffix String)
 
 
 instance WriteForeign TabularValue where -- FIXME: needs key for the value type
@@ -34,3 +38,5 @@ instance WriteForeign TabularValue where -- FIXME: needs key for the value type
          TVTimeRange range -> writeImpl range
          TVDateRange range -> writeImpl range
          TVDateTimeRange range -> writeImpl range
+         TVPrefix prefix -> writeImpl prefix
+         TVSuffix suffix -> writeImpl suffix

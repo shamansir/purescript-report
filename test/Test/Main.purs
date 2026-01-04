@@ -36,7 +36,7 @@ import Test.Utils (shouldEqual) as U
 
 import GameLog.Dhall (FromDhall, dhallToAchievements) as GL
 import GameLog.Types.Game (GameId(..), GameTag, gameName) as GL
-import GameLog.Types.ManyGamesStats (GamesReport, fromArray) as GL
+import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as GL
 import GameLog.Types.Achievement (Tag) as GL
 import Report (toReport)
 
@@ -60,7 +60,7 @@ main = runSpecAndExitProcess [consoleReporter] do
             (\dhallGameCollection -> do
                 let gameCollection  = GL.dhallToAchievements dhallGameCollection
                 let (glReport :: GL.GamesReport) = toReport $ GL.fromArray gameCollection
-                let reportDhall = D.toDhall @GL.GameId @GL.GameTag @GL.Tag glReport
+                let reportDhall = D.toDhall @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag glReport
                 reportDhall `U.shouldEqual` expectedDhall
             )
             eDhallGameCollection

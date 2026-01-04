@@ -12,29 +12,46 @@ import Report.Modifiers.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 
 
-class IsItem t a where
-    i_name :: a -> String
+class HasPrefixes a where
     i_prefixes :: a -> Prefixes
+
+
+class HasSuffixes t a where
     i_suffixes :: a -> Suffixes t
+
+
+class (HasPrefixes a, HasSuffixes t a) <= HasModifiers t a
+
+
+class HasTabular a where
+    i_tabular :: a -> Tabular TabularValue
+
+
+class HasTags t a where
+    i_tags :: a -> Array t
+
+
+class HasStats a where
+    i_stats :: a -> S.Stats
+
+
+class IsItem a where
+    i_name :: a -> String
     i_mbTitle :: a -> Maybe String
     i_locked :: a -> Boolean
-    i_tabular :: a -> Tabular TabularValue
 
 
 class IsGroup a where
     g_title :: a -> String
     g_path :: a -> S.GroupPath
-    g_stats :: a -> S.Stats
 
 
 class IsSubjectId i a where
     s_id :: a -> i
 
 
-class IsSubjectId i a <= IsSubject i t a where
+class IsSubjectId i a <= IsSubject i a where
     s_name :: a -> String
-    s_tags :: a -> Array t
-    s_stats :: a -> S.Stats
 
 
 type TagColors =

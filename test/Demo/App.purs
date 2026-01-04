@@ -24,7 +24,7 @@ import Halogen.VDom.Driver (runUI)
 import GameLog.Dhall (FromDhall, dhallToAchievements) as GL
 import GameLog.Types.Game (GameId(..), GameTag, gameName) as GL
 import GameLog.Types.SingleGameStats (totalAchievements) as GL
-import GameLog.Types.ManyGamesStats (GamesReport, fromArray) as GL
+import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as GL
 import GameLog.Types.Achievement (Tag) as GL
 
 import Report (toReport)
@@ -104,4 +104,4 @@ component = H.mkComponent
 
 reportComponent :: forall query output m. MonadEffect m => H.Component query GL.GamesReport output m
 reportComponent =
-    StatsReport.component @GL.GameId @GL.GameTag @GL.Tag [ GL.DHL "astral-chain" ]
+    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag [ GL.DHL "astral-chain" ]

@@ -6,13 +6,13 @@ import Data.Tuple (snd) as Tuple
 import Data.Maybe (fromMaybe)
 import Data.Array (filter, length, head) as Array
 
-import Report.Class (class IsItem, i_suffixes)
+import Report.Class (class HasSuffixes, i_suffixes)
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Progress (Progress(..), NProgress(..), loadNProgress)
 import Report.Suffix (collectProgress) as Suffix
 
 
-collectStats :: forall @tag item. IsItem tag item => Array item -> Stats
+collectStats :: forall @tag item. HasSuffixes tag item => Array item -> Stats
 collectStats flattened =
     let
         allProgressN = loadNProgress <$> getProgress <$> flattened

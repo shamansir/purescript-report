@@ -10,14 +10,14 @@ import Data.Array (length, filter, all) as Array
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
-import Report.Class (class IsItem, class IsTag, TagColors)
+import Report.Class
 import Report.Group (Group(..))
 import Report.GroupPath (GroupPath)
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Tags (Tags(..))
 import Report.Modifiers.Progress (Progress(..), NProgress(..), loadNProgress)
-import Report.Modify (class ItemModify)
+import Report.Modify
 import Report.Suffix (Suffix, Suffixes)
 import Report.Suffix as Suffixes
 import Report.Prefix (Prefixes)
@@ -226,19 +226,34 @@ loadPrefixes :: Achievement -> Prefixes
 loadPrefixes = const Prefixes.empty
 
 
-instance IsItem Tag Achievement where
+instance IsItem Achievement where
     i_name = unwrap >>> _.name
     i_mbTitle = unwrap >>> _.mbTitle
     i_locked =  unwrap >>> _.locked
     -- i_tags = unwrap >>> _.tags >>> map Tag
-    i_suffixes = loadSuffixes
+
+
+instance HasPrefixes Achievement where
     i_prefixes = loadPrefixes
+
+
+instance HasSuffixes Tag Achievement where
+    i_suffixes = loadSuffixes
+
+
+instance HasTabular Achievement where
     i_tabular = const Tabular.empty
 
 
-instance ItemModify Tag Achievement where
-    setName newName = with \achRec -> achRec { name = newName }
+instance ItemModify Achievement where
+    setItemName newName = with \achRec -> achRec { name = newName }
+
+
+instance SuffixesModify Tag Achievement where
     updateSuffixes newSuffixes = applySuffixes newSuffixes
+
+
+instance PrefixesModify Achievement where
     updatePrefixes _ = identity
 
 

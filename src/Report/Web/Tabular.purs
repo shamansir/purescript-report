@@ -17,14 +17,14 @@ import Report.Web.Helpers
 
 
 renderTabularValues
-    :: forall @item_tag item w i
-     . S.IsItem item_tag item
+    :: forall item w i
+     . S.HasTabular item
     -- => SuffixesRenderConfig i
     => item
     -> H w i
 renderTabularValues item =
     let
-        i_tabular = S.i_tabular @item_tag item
+        i_tabular = S.i_tabular item
         tabularItems = Tabular.items i_tabular
     in
         if Array.length tabularItems > 0 then
@@ -100,3 +100,5 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                         , qspacerSpan
                         , valueSpan (TVTime to.time)
                         ]
+                TVPrefix prefix -> HH.text "" -- TODO: implement
+                TVSuffix suffix -> HH.text "" -- TODO: implement

@@ -22,14 +22,14 @@ import Report.Web.Modifiers (PrefixesRenderConfig, PrefixRenderConfig)
 
 
 renderPrefixes
-    :: forall @item_tag item w i
-     . S.IsItem item_tag item
+    :: forall item w i
+     . S.HasPrefixes item
     => PrefixesRenderConfig i
     -> item
     -> Array (H w i)
 renderPrefixes conf item =
     let
-        i_prefixes = S.i_prefixes @item_tag item
+        i_prefixes = S.i_prefixes item
         prefixesKeys = Prefixes.keys i_prefixes
         isSelected prefixKey =
             case conf.mbSelectedPrefix of

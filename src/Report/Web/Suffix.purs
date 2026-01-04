@@ -27,14 +27,15 @@ import Report.Web.Modifiers (SuffixesRenderConfig, SuffixRenderConfig)
 renderSuffixes
     :: forall @item_tag item w i
      . S.IsTag item_tag
-    => S.IsItem item_tag item
+    => S.IsItem item
+    => S.HasSuffixes item_tag item
     => SuffixesRenderConfig i
     -> item
     -> Array (H w i)
 renderSuffixes conf item =
     let
         i_suffixes = S.i_suffixes @item_tag item
-        i_name = S.i_name @item_tag item
+        i_name = S.i_name item
         suffixesKeys = Suffixes.keys i_suffixes
         isSelected suffixKey =
             case conf.mbSelectedSuffix of

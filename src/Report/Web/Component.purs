@@ -27,7 +27,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap) as R
+import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap, class ToReport) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Encoding.Prefix (encodePrefix) as Prefix
@@ -39,6 +39,7 @@ import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 import Report.Modifiers.Class.ValueModify as VModify
+import Report.Export.Generic (class ToExport) as Report
 import Report.Export.Json (toJson) as Report
 import Report.Export.Dhall (toDhall) as Report
 
@@ -122,23 +123,34 @@ derive instance Eq ExportTarget
 
 
 component
-    :: forall @subj_id @subj_tag @item_tag subj group item query output m
+    :: forall @x @subj_id @subj_tag @item_tag subj group item query output m
      . MonadEffect m
     => Ord subj
     => Ord subj_id
-    => Show subj_id
     => Ord group
-    => Modify.GroupModify group
-    => Modify.ItemModify item_tag item
-    => VModify.EncodableKey subj_id
+    => Show subj_id
     => R.IsTag subj_tag
     => R.IsTag item_tag
-    => R.IsItem item_tag item
+    => R.HasTags subj_tag subj
+    => R.IsItem item
+    => R.HasPrefixes item
+    => R.HasSuffixes item_tag item
+    => R.HasTabular item
     => R.IsGroup group
-    => R.IsSubject subj_id subj_tag subj
+    => R.IsSubject subj_id subj
+    => R.HasStats subj
+    => R.HasStats group
+    => Modify.GroupModify group
+    => Modify.StatsModify group
+    => Modify.SuffixesModify item_tag item
+    => Modify.PrefixesModify item
+    => Modify.ItemModify item
+    => VModify.EncodableKey subj_id
     => ReadForeign item_tag
     => WriteForeign item_tag
     => WriteForeign subj_tag
+    => R.ToReport subj group item x
+    => Report.ToExport subj_id subj_tag item_tag subj group item x
     => Array subj_id
     -> H.Component query (Input subj group item) output m
 component preSelected =
@@ -206,8 +218,8 @@ component preSelected =
         where
 
             exportTextFor = case _ of
-                Json  -> state.report # Report.toJson  @subj_id @subj_tag @item_tag
-                Dhall -> state.report # Report.toDhall @subj_id @subj_tag @item_tag
+                Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag
+                Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag
 
             exportSelected trg = state.mbExportTo == Just trg
 
@@ -241,13 +253,13 @@ component preSelected =
             : []
 
     makeTagFilter [] _ = true
-    makeTagFilter tags subj = Array.any (flip Array.elem tags) (R.s_tags @subj_id @subj_tag subj :: Array subj_tag)
+    makeTagFilter tags subj = Array.any (flip Array.elem tags) (R.i_tags @subj_tag subj :: Array subj_tag)
 
     applyFilter tagFilter sortBy mbFilter subjects
         = subjects
             # Array.filter (makeTagFilter tagFilter)
             # Array.filter (case mbFilter of
-                Just filterStr -> \subj -> String.contains (String.Pattern $ String.toLower filterStr) $ String.toLower $ R.s_name @subj_id @subj_tag subj
+                Just filterStr -> \subj -> String.contains (String.Pattern $ String.toLower filterStr) $ String.toLower $ R.s_name @subj_id subj
                 Nothing -> const true)
             # Array.sortWith (sortSubjects sortBy)
             # (if sortBy == ByWeight then Array.reverse else identity)
@@ -302,8 +314,8 @@ component preSelected =
 
     sortSubjects :: SubjectSort -> subj -> SortKey
     sortSubjects = case _ of
-        ByWeight -> R.s_stats @subj_id @subj_tag >>> R.weightOf >>> SN
-        Alpha ->    R.s_name  @subj_id @subj_tag >>> SS
+        ByWeight -> R.i_stats >>> R.weightOf >>> SN
+        Alpha ->    R.s_name @subj_id >>> SS
 
     subjTocRow selectedSubjects subj =
         let
@@ -322,12 +334,12 @@ component preSelected =
                 , HP.style $ "background-color: " <> (if isSelected then "bisque" else "transparent") <> "; cursor: pointer; padding: 5px; margin-left: 5px;"
                 ]
                 (
-                    [ HH.text $ R.s_name @subj_id @subj_tag subj
-                    , case R.gotTotalFromStats $ R.s_stats @subj_id @subj_tag subj of
+                    [ HH.text $ R.s_name @subj_id subj
+                    , case R.gotTotalFromStats $ R.i_stats subj of
                         R.Defined gotTotal -> gotTotalBadge gotTotal
                         _ -> HH.text ""
                     ] <>
-                    (subjTagBadge <$> R.s_tags @subj_id @subj_tag subj)
+                    (subjTagBadge <$> R.i_tags @subj_tag subj)
                 )
 
             ]
@@ -383,13 +395,13 @@ component preSelected =
                                                 $ R.findGroup subjId groupPath s.report
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.editItemName subjId groupPath itemIdx
-                                                $ maybe (EncodedValue "") (R.i_name @item_tag >>> EncodedValue)
+                                                $ maybe (EncodedValue "") (R.i_name >>> EncodedValue)
                                                 $ R.findItem subjId groupPath itemIdx s.report
                     AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
                                                 Navigation.editPrefix subjId groupPath itemIdx prefixKey
                                                 $ maybe (EncodedValue "") (Prefix.encodePrefix >>> Tuple.snd)
                                                 $ Prefix.get prefixKey
-                                                =<< R.i_prefixes @item_tag
+                                                =<< R.i_prefixes
                                                 <$> R.findItem subjId groupPath itemIdx s.report
                     AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
                                                 Navigation.editSuffix subjId groupPath itemIdx suffixKey
@@ -459,9 +471,13 @@ renderSubject
     :: forall @subj_id @subj_tag @item_tag subj group item slots m
      . Eq subj_id
     => R.IsTag item_tag
-    => R.IsItem item_tag item
+    => R.IsItem item
+    => R.HasPrefixes item
+    => R.HasSuffixes item_tag item
+    => R.HasTabular item
+    => R.HasStats group
     => R.IsGroup group
-    => R.IsSubject subj_id subj_tag subj
+    => R.IsSubject subj_id subj
     => NavigatedTo subj_id
     -> subj
     -> Map group (Array item)
@@ -473,7 +489,7 @@ renderSubject navigatedTo subj itemsMap  =
             [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
             , HE.onClick $ const ClearNavigation
             ]
-            [ HH.text $ R.s_name @subj_id @subj_tag subj ]
+            [ HH.text $ R.s_name @subj_id subj ]
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
             subjId = R.s_id subj
@@ -483,7 +499,7 @@ renderSubject navigatedTo subj itemsMap  =
             renderTree (group /\ groupItems) =
                 let
                     groupPath = R.g_path group
-                    groupStats = R.g_stats group
+                    groupStats = R.i_stats group
                     isNavigatedTo = navigatedTo # Navigation.atGroup subjId groupPath
                 in HH.div
                     [ HP.style $ "padding-bottom: 10px; line-height: "
@@ -532,7 +548,6 @@ renderSubject navigatedTo subj itemsMap  =
                     ]
                     $ HH.span_
                         (renderPrefixes
-                            @item_tag
                             { mbSelectedPrefix : mbCurrentPrefix
                             , isEditingPrefix
                             , onClick : makePrefixClickEvt
@@ -543,7 +558,7 @@ renderSubject navigatedTo subj itemsMap  =
                             }
                             item
                         )
-                    : case R.i_mbTitle @item_tag item of
+                    : case R.i_mbTitle item of
                         Just title -> HH.text title
                         Nothing -> HH.text ""
                     : HH.span_ (renderSuffixes
@@ -560,7 +575,7 @@ renderSubject navigatedTo subj itemsMap  =
                             }
                             item
                         )
-                    : pure (renderTabularValues @item_tag item)
+                    : pure (renderTabularValues item)
 
 
 -- TODO: remove

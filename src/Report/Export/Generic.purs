@@ -10,7 +10,7 @@ import Data.Tuple (curry, uncurry) as Tuple
 
 import Yoga.JSON (class WriteForeign, writeImpl)
 
-import Report (Report)
+import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
 import Report (toMap) as Report
@@ -25,15 +25,27 @@ import Report.Export.Types
 exportVersion = ExportVersion 1 :: ExportVersion
 
 
+class
+    ( Ord group -- V
+    , EncodableKey subj_id -- V
+    , WriteForeign item_tag -- V
+    , IsTag subj_tag -- V
+    , HasTags subj_tag subj -- V
+    , HasPrefixes item -- V
+    , HasSuffixes item_tag item -- V
+    , HasStats subj -- V
+    , HasStats group -- V
+    , IsItem item -- V
+    , IsGroup group -- V
+    , IsSubject subj_id subj -- V
+    , ToReport subj group item x
+    )
+    <= ToExport subj_id subj_tag item_tag subj group item (x :: Type)
+
+
 toExport
-    :: forall @subj_id @subj_tag @item_tag subj group item
-     . Ord group
-    => EncodableKey subj_id
-    => WriteForeign item_tag
-    => IsTag subj_tag
-    => IsItem item_tag item
-    => IsGroup group
-    => IsSubject subj_id subj_tag subj
+    :: forall @x @subj_id @subj_tag @item_tag subj group item
+     . ToExport subj_id subj_tag item_tag subj group item x
     => Report subj group item
     -> ReportToExport
 toExport =
@@ -46,9 +58,9 @@ toExport =
         collectSubject :: subj -> SubjectRec
         collectSubject subj =
             { id : SubjectId $ encodeKey @subj_id $ s_id subj
-            , name  : s_name  @subj_id @subj_tag subj
-            , tags  : s_tags  @subj_id @subj_tag subj <#> tagContent
-            , stats : s_stats @subj_id @subj_tag subj
+            , name  : s_name  @subj_id subj
+            , tags  : i_tags  @subj_tag subj <#> tagContent
+            , stats : i_stats subj
             , trackedAt : Nothing -- TODO
             , properties : [] -- TODO
             }
@@ -57,16 +69,16 @@ toExport =
             Group
                 { title : g_title group
                 , path  : g_path group
-                , stats : g_stats group
+                , stats : i_stats group
                 }
         collectItem :: item -> ItemRec
         collectItem item =
-            { name : i_name @item_tag item
+            { name : i_name item
             , modifiers :
-                (Tuple.uncurry collectPrefix <$> (Map.toUnfoldable $ unwrap $ i_prefixes @item_tag item)) <>
+                (Tuple.uncurry collectPrefix <$> (Map.toUnfoldable $ unwrap $ i_prefixes item)) <>
                 (Tuple.uncurry collectSuffix <$> (Map.toUnfoldable $ unwrap $ i_suffixes @item_tag item))
-            , mbTitle : i_mbTitle @item_tag item
-            , locked  : i_locked  @item_tag item
+            , mbTitle : i_mbTitle item
+            , locked  : i_locked  item
             }
         collectPrefix :: Prefix.Key -> Prefix -> ModifierRec
         collectPrefix pkey prefix =

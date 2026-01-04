@@ -77,15 +77,26 @@ type Modification subj_id =
     }
 
 
+
+
 class GroupModify group where
     setGroupName :: String -> group -> group
-    setGroupStats :: Stats -> group -> group
 
 
-class ItemModify t a where
-    setName :: String -> a -> a
+class StatsModify a where
+    setStats :: Stats -> a -> a
+
+
+class SuffixesModify t a where
     updateSuffixes :: Suffixes t -> a -> a
+
+
+class PrefixesModify a where
     updatePrefixes :: Prefixes -> a -> a
+
+
+class ItemModify a where
+    setItemName :: String -> a -> a
 
 
 loadModifierKey :: WhatMod -> WhatModKey
@@ -113,9 +124,13 @@ modifyAt
     => IsSubjectId subj_id subj
     => IsTag tag
     => IsGroup group
-    => IsItem tag item
+    => IsItem item
+    => HasPrefixes item
+    => HasSuffixes tag item
     => GroupModify group
-    => ItemModify tag item
+    => ItemModify item
+    => SuffixesModify tag item
+    => PrefixesModify item
     => Modification subj_id
     -> Report subj group item
     -> Maybe (Report subj group item)
@@ -125,7 +140,7 @@ modifyAt { subjId, what, newValue, path } report = case what of
     -- GroupStat -> do
     --     Report.withGroup subj path (\group -> setGroupStats (groupStatsFromEditable newValue group) group) report
     ItemName itemIdx -> do
-        Report.withItem subjId path itemIdx (setName @tag $ unwrapEditable newValue) report
+        Report.withItem subjId path itemIdx (setItemName $ unwrapEditable newValue) report
     ItemModifier itemIdx (PrefixMod pkey) -> do
         Report.withItem subjId path itemIdx (setPrefix pkey) report
     ItemModifier itemIdx (SuffixMod skey) -> do
@@ -134,10 +149,10 @@ modifyAt { subjId, what, newValue, path } report = case what of
         setPrefix :: Prefix.Key -> item -> item
         setPrefix pkey item =
             let
-                (prefixes :: Prefixes) = i_prefixes @tag item
+                (prefixes :: Prefixes) = i_prefixes item
                 (mbDecodedValue :: Maybe Prefix) = fromEditable pkey newValue
                 nextPrefixes = fromMaybe prefixes $ (\pfx -> Prefix.put pfx prefixes) <$> mbDecodedValue
-            in updatePrefixes @tag nextPrefixes item
+            in updatePrefixes nextPrefixes item
         setSuffix :: Suffix.Key -> item -> item
         setSuffix skey item =
             let
@@ -150,7 +165,17 @@ modifyAt { subjId, what, newValue, path } report = case what of
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable
 
 
-recalculate :: forall @tag subj group item. Ord subj => IsItem tag item => Ord group => IsGroup group => GroupModify group => Report subj group item -> Report subj group item
+recalculate
+    :: forall @tag subj group item
+     . Ord subj
+    => Ord group
+    => IsItem item
+    => IsGroup group
+    => HasSuffixes tag item
+    => StatsModify group
+    => GroupModify group
+    => Report subj group item
+    -> Report subj group item
 recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity
     where
         updateTree :: Tree (TreeNode subj group item) -> Tree (TreeNode subj group item)
@@ -163,7 +188,7 @@ recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity
                          -- FIXME: we collect children as deep as we can, but we don't collect stats from subgroups yet
                         itemsCollected = Array.concat $ Tree.break collectItems <$> children
                         updatedChildren = map updateTree children
-                        updatedGroup = setGroupStats (collectStats @tag itemsCollected) group
+                        updatedGroup = setStats (collectStats @tag itemsCollected) group
                     in Tree.node (NGroup updatedGroup) updatedChildren
                 NItem item -> Tree.leaf $ NItem item
         collectItems :: TreeNode subj group item -> Array (Tree (TreeNode subj group item)) -> Array item

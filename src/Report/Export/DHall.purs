@@ -26,7 +26,7 @@ import Report.GroupPath (GroupPath)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Modifiers.Class.ValueModify (class EncodableKey, decodeKey)
 import Report.Export.Types
-import Report.Export.Generic (toExport) as Report
+import Report.Export.Generic (class ToExport, toExport) as Report
 
 import Report.Modifiers.Progress (Progress(..), PValueTag(..))
 import Report.Modifiers.Task (TaskP(..))
@@ -39,20 +39,14 @@ import Dodo as D
 
 
 toDhall
-    :: forall @subj_id @subj_tag @item_tag subj group item
-     . Ord group
-    => EncodableKey subj_id
-    => WriteForeign item_tag
+    :: forall @x @subj_id @subj_tag @item_tag subj group item
+     . Report.ToExport subj_id subj_tag item_tag subj group item x
     => ReadForeign item_tag
-    => IsTag subj_tag
     => IsTag item_tag
-    => IsItem item_tag item
-    => IsGroup group
-    => IsSubject subj_id subj_tag subj
     => Report subj group item
     -> String
 toDhall =
-    Report.toExport @subj_id @subj_tag @item_tag
+    Report.toExport @x @subj_id @subj_tag @item_tag
         >>> unwrap
         >>> _.subjects
         >>> map (unwrap >>> convertSubject)

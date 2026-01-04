@@ -7,7 +7,7 @@ import Data.Newtype (class Newtype, unwrap)
 
 import Yoga.JSON (class WriteForeign, writeImpl)
 
-import Report.Class (class IsSubjectId, class IsSubject, class IsTag, TagColors, tagContent, decodeTag)
+import Report.Class
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Class.ValueModify (class EncodableKey)
 
@@ -131,10 +131,17 @@ instance IsSubjectId GameId Game where
     s_id = unwrap >>> _.gameId
 
 
-instance IsSubject GameId GameTag Game where
+instance IsSubject GameId Game where
     s_name  = unwrap >>> _.name
-    s_stats = unwrap >>> _.stats
-    s_tags  = unwrap >>> case _ of
+
+
+instance HasStats Game where
+    i_stats = unwrap >>> _.stats
+
+
+instance HasTags GameTag Game where
+    i_tags =
+        unwrap >>> case _ of
         { mbSource, mbPlatform } ->
                (maybe [] pure $ SourceTag   <$> mbSource)
             <> (maybe [] pure $ PlatformTag <$> mbPlatform)
