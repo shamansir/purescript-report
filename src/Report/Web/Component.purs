@@ -206,7 +206,7 @@ component preSelected =
         where
 
             exportTextFor = case _ of
-                Json -> state.report # Report.toJson @subj_id @subj_tag @item_tag
+                Json  -> state.report # Report.toJson  @subj_id @subj_tag @item_tag
                 Dhall -> state.report # Report.toDhall @subj_id @subj_tag @item_tag
 
             exportSelected trg = state.mbExportTo == Just trg
