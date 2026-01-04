@@ -280,10 +280,9 @@ _progressToDhall = case _ of
     LevelsI { reached, levels } ->
         let
             levelrec lrec =
-                wrecordD
+                wrecordDWithDate lrec.date
                     [ "maximum" /\ (prefixnosp "+" $ show lrec.maximum)
                     , "name" /\ quote lrec.name
-                    , "date" /\ mbdaterec lrec.date
                     ]
         in
         fromnl $ D.indent $ joinWith D.break $
@@ -298,10 +297,9 @@ _progressToDhall = case _ of
     LevelsN { reached, levels } ->
         let
             levelrec lrec =
-                wrecordD
+                wrecordDWithDate lrec.date
                     [ "maximum" /\ D.text (show lrec.maximum)
                     , "name" /\ quote lrec.name
-                    , "date" /\ mbdaterec lrec.date
                     ]
         in
         fromnl $ D.indent $ joinWith D.break $
@@ -316,9 +314,8 @@ _progressToDhall = case _ of
     LevelsS { reached, levels } ->
         let
             levelrec lrec =
-                wrecordD
+                 wrecordDWithDate lrec.date
                     [ "gives" /\ quote lrec.gives
-                    , "date" /\ mbdaterec lrec.date
                     ]
         in
         fromnl $ D.indent $ joinWith D.break $
@@ -342,10 +339,9 @@ _progressToDhall = case _ of
     LevelsP { levels } ->
         let
             levelrec lrec =
-                wrecordD
+                wrecordDWithDate lrec.date
                     [ "name" /\ quote lrec.name
                     , "proc" /\ pvptaskP lrec.proc
-                    , "date" /\ mbdaterec lrec.date
                     ]
         in
         fromnl $ D.indent $ joinWith D.break $
@@ -358,20 +354,18 @@ _progressToDhall = case _ of
             ]
     LevelsC levelsC ->
         wrapbrkD $ D.text "T.v_lvlc" <+>
-            wrecordD
-              [ "reached" /\ (prefixnosp "+" $ show levelsC.levelReached)
-              , "current" /\ (prefixnosp "+" $ show levelsC.reachedAtCurrent)
-              , "total" /\ (prefixnosp "+" $ show levelsC.totalLevels)
-              , "maxcurrent" /\ (prefixnosp "+" $ show levelsC.maximumAtCurrent)
-              , "date" /\ mbdaterec levelsC.date
-              ]
+            wrecordDWithDate levelsC.date
+                [ "reached" /\ (prefixnosp "+" $ show levelsC.levelReached)
+                , "current" /\ (prefixnosp "+" $ show levelsC.reachedAtCurrent)
+                , "total" /\ (prefixnosp "+" $ show levelsC.totalLevels)
+                , "maxcurrent" /\ (prefixnosp "+" $ show levelsC.maximumAtCurrent)
+                ]
     LevelsO { reached, levels } ->
         let
             levelrec lrec =
-                wrecordD
+                wrecordDWithDate lrec.date
                     [ "maximum" /\ mbgenD (D.text "Integer") (\v -> prefixnosp "+" $ show v) lrec.mbMaximum
                     , "name" /\ quote lrec.name
-                    , "date" /\ mbdaterec lrec.date
                     ]
         in
         fromnl $ D.indent $ joinWith D.break $
@@ -492,6 +486,18 @@ wrecordD :: forall a. Array (String /\ Doc a) -> Doc a
 wrecordD fields =
     D.enclose (D.text "{ ") (D.text " }") $
         joinWith (D.text "," <> D.space) $ fieldD <$> fields
+
+
+wrecordDWithDate :: forall a. Maybe CT.SDateRec -> Array (String /\ Doc a) -> Doc a
+wrecordDWithDate mbDateRec fields =
+    case mbDateRec of
+        Just _ ->
+            wrecordD
+                $ fields <>
+                [ "date" /\ mbdaterec mbDateRec ]
+        Nothing ->
+            wrecordD fields
+            <+> D.text "// T.inj/no_date"
 
 
 daterecf :: forall a. CT.SDateRec -> Doc a

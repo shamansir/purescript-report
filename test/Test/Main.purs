@@ -127,9 +127,9 @@ in
             ( T.v_lvli
                 { reached = +90
                 , levels =
-                    [ { maximum = +1,   name = "Lvl. 1" } // T.inj/no_date
-                    , { maximum = +25,  name = "Lvl. 2" } // T.inj/no_date
-                    , { maximum = +50,  name = "Lvl. 3" } // T.inj/no_date
+                    [ { maximum = +1, name = "Lvl. 1" } // T.inj/no_date
+                    , { maximum = +25, name = "Lvl. 2" } // T.inj/no_date
+                    , { maximum = +50, name = "Lvl. 3" } // T.inj/no_date
                     , { maximum = +131, name = "Lvl. Max" } // T.inj/no_date
                     ]
                 }
@@ -138,7 +138,7 @@ in
             ( T.v_lvli
                 { reached = +68
                 , levels =
-                    [ { maximum = +1,  name = "Lvl. 1" } // T.inj/no_date
+                    [ { maximum = +1, name = "Lvl. 1" } // T.inj/no_date
                     , { maximum = +25, name = "Lvl. 2" } // T.inj/no_date
                     , { maximum = +50, name = "Lvl. 3" } // T.inj/no_date
                     , { maximum = +87, name = "Lvl. 4" } // T.inj/no_date
