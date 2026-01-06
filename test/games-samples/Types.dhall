@@ -116,12 +116,12 @@ let Value =
     >
 
 
-let TaggedValue =
+let KeyedValue =
     { v : Value, t : Text }
 
 
 let tag
-    : Value -> TaggedValue
+    : Value -> KeyedValue
     = \(v : Value)
     -> merge
         { E = { t = "E", v = v }
@@ -196,7 +196,7 @@ let KeyValRec =
     { ref : Ref
     , key : Text
     , detailed : Optional Text
-    , value : TaggedValue
+    , value : KeyedValue
     , selfRef : Optional Ref
     , date : Optional DATE
     , stat : Optional Stat
@@ -459,7 +459,7 @@ let p_locked_   : PROC = PROC.LOCKED
 
 
 let TabularValue
-    = TaggedValue
+    = KeyedValue
 
 
 let TabularKVR =

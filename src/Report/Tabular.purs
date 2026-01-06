@@ -17,7 +17,7 @@ import Prim.RowList as RL
 import Record (get) as R
 import Record.Extra (class Keys) as Record
 
-import Report.Modifiers (class IsModifier)
+import Report.Convert.Keyed
 
 import Yoga.JSON (class ReadForeign, class WriteForeign)
 
@@ -36,8 +36,8 @@ derive newtype instance ReadForeign v => ReadForeign (Item v)
 derive newtype instance WriteForeign v => WriteForeign (Item v)
 
 
-instance IsModifier String (Item v) where
-    modifierKey (Item item) = item.key
+instance Keyed String (Item v) where
+    keyOf (Item item) = item.key
 
 
 newtype Tabular v = Tabular (Array (Item v))

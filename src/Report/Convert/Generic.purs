@@ -14,7 +14,7 @@ import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
 import Report (toMap) as Report
-import Report.Convert.Tagged (class EncodableKey, encodeKey)
+import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Prefix (Prefix)
 import Report.Prefix (Key) as Prefix
 import Report.Suffix (Suffix)

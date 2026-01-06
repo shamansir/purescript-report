@@ -9,7 +9,7 @@ import Data.String (stripPrefix, Pattern(..)) as String
 import Report.Core.Logic (EncodedValue)
 import Report.Class (class IsTag)
 
-import Report.Modifiers (modifierKey)
+import Report.Convert.Keyed (keyOf)
 import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
 import Report.Modifiers.Progress (PValueTag(..)) as P
 import Report.Modifiers.Stats (Stats)
@@ -21,7 +21,7 @@ import Report.Convert.Text.Modifiers.Stats as SEnc
 import Report.Convert.Text.Modifiers.Tags as Tags
 import Report.Convert.Text.Prefix as PxEnc
 import Report.Convert.Text.Suffix as SxEnc
-import Report.Convert.Tagged (class EncodableKey)
+import Report.Convert.Keyed (class EncodableKey)
 
 import Report.Prefix as Px
 import Report.Suffix as Sx

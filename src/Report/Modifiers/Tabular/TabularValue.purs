@@ -14,8 +14,7 @@ import Report.Core (SDate, SDateRec, STimeRec)
 import Report.Prefix (Prefix)
 import Report.Suffix (Suffix(..))
 import Report.Modifiers.Progress (Progress) as P
-import Report.Modifiers (class IsModifier)
-import Report.Convert.Tagged
+import Report.Convert.Keyed
 
 
 
@@ -42,8 +41,8 @@ derive newtype instance ReadForeign  TVTag
 derive newtype instance WriteForeign TVTag
 
 
-instance IsModifier TVTag TabularValue where
-    modifierKey = tagOf
+instance Keyed TVTag TabularValue where
+    keyOf = tagOf
 
 
 instance EncodableKey TVTag where
@@ -51,7 +50,7 @@ instance EncodableKey TVTag where
     decodeKey str = Just $ TVTag str
 
 
-instance DecodeTagged TVTag TabularValue where
+instance DecodeKeyed TVTag TabularValue where
     toValue = decodeWithKey
 
 
@@ -83,21 +82,21 @@ instance ReadForeign TabularValue where
 
 instance WriteForeign TabularValue where
     writeImpl = case _ of
-        TVString str -> encodeTagged (TVTag "S") str
-        TVNumber num -> encodeTagged (TVTag "N") num
-        TVBoolean bool -> encodeTagged (TVTag "B") bool
-        TVTime timeRec -> encodeTagged (TVTag "T") timeRec
-        TVDate sdate -> encodeTagged (TVTag "D") sdate
-        TVDateTime sdate stimeRec -> encodeTagged (TVTag "DT") { date: sdate, time: stimeRec }
-        TVTimeRange range -> encodeTagged (TVTag "TR") range
-        TVDateRange range -> encodeTagged (TVTag "DR") range
-        TVDateTimeRange range -> encodeTagged (TVTag "DTR") range
-        TVPrefix prefix -> encodeTagged (TVTag "PX") prefix
-        TVSuffix suffix -> encodeTagged (TVTag "SX") suffix
+        TVString str -> encodeKeyed (TVTag "S") str
+        TVNumber num -> encodeKeyed (TVTag "N") num
+        TVBoolean bool -> encodeKeyed (TVTag "B") bool
+        TVTime timeRec -> encodeKeyed (TVTag "T") timeRec
+        TVDate sdate -> encodeKeyed (TVTag "D") sdate
+        TVDateTime sdate stimeRec -> encodeKeyed (TVTag "DT") { date: sdate, time: stimeRec }
+        TVTimeRange range -> encodeKeyed (TVTag "TR") range
+        TVDateRange range -> encodeKeyed (TVTag "DR") range
+        TVDateTimeRange range -> encodeKeyed (TVTag "DTR") range
+        TVPrefix prefix -> encodeKeyed (TVTag "PX") prefix
+        TVSuffix suffix -> encodeKeyed (TVTag "SX") suffix
 
         where
-            encodeTagged :: forall a. WriteForeign a => TVTag -> a -> Foreign
-            encodeTagged tag v = writeImpl ({ tv_tag : tag, tv_v : writeImpl v } :: EncodedTV)
+            encodeKeyed :: forall a. WriteForeign a => TVTag -> a -> Foreign
+            encodeKeyed tag v = writeImpl ({ tv_tag : tag, tv_v : writeImpl v } :: EncodedTV)
 
 
 
@@ -139,11 +138,11 @@ decodeWithKey key frgn = case key of
 
 
 instance ReadForeign TabularValue where
-    readImpl frgn = decodeTagged @TVTag =<< (readImpl frgn :: F JsonTM)
+    readImpl frgn = decodeKeyed @TVTag =<< (readImpl frgn :: F JsonTM)
 
 
 instance WriteForeign TabularValue where
-    writeImpl prefix = writeImpl $ encodeTagged @TVTag prefix
+    writeImpl prefix = writeImpl $ encodeKeyed @TVTag prefix
 
 
 progress :: P.Progress -> TabularValue

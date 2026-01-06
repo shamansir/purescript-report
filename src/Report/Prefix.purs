@@ -7,12 +7,12 @@ import Foreign (Foreign, F)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 
-import Report.Modifiers (Modifiers, class IsModifier)
+import Report.Modifiers (Modifiers)
 import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 import Report.Modifiers.Priority (Priority)
 import Report.Modifiers.Rating (Rating)
 import Report.Modifiers.Task (TaskP)
-import Report.Convert.Tagged
+import Report.Convert.Keyed
 
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
@@ -36,8 +36,8 @@ data Prefix
 type Prefixes = Modifiers Key Prefix
 
 
-instance IsModifier Key Prefix where
-    modifierKey = case _ of
+instance Keyed Key Prefix where
+    keyOf = case _ of
         PRating _ -> KRating
         PPriority _ -> KPriority
         PTask _ -> KTask
@@ -112,16 +112,16 @@ instance EncodableKey Key where
     decodeKey = decodeKey
 
 
-instance DecodeTagged Key Prefix where
+instance DecodeKeyed Key Prefix where
     toValue = decodeWithKey
 
 
 instance ReadForeign Prefix where
-    readImpl frgn = decodeTagged @Key =<< (readImpl frgn :: F JsonTM)
+    readImpl frgn = decodeKeyed @Key =<< (readImpl frgn :: F JsonTM)
 
 
 instance WriteForeign Prefix where
-    writeImpl prefix = writeImpl $ encodeTagged @Key prefix
+    writeImpl prefix = writeImpl $ encodeKeyed @Key prefix
 
 
 -- instance WriteForeign Prefix where

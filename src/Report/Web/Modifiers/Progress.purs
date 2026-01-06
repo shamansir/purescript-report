@@ -15,9 +15,9 @@ import Web.UIEvent.KeyboardEvent as KE
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Suffix (Key) as Suffix
-import Report.Modifiers (class IsModifier)
 import Report.Modifiers.Task (TaskP(..)) as S
 import Report.Modifiers.Progress (Progress(..)) as Prog
+import Report.Convert.Keyed
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP

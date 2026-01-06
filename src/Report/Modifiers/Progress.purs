@@ -10,13 +10,12 @@ import Data.String (joinWith) as String
 import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
 import Data.Array (length, all) as Array
-import Report.Convert.Tagged
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
 import Report.Core.Logic as CT
-import Report.Modifiers (class IsModifier)
+import Report.Convert.Keyed
 import Report.Modifiers.Task (TaskP(..))
 
 type DateRec = CT.SDateRec
@@ -230,7 +229,7 @@ instance EncodableKey PValueTag where
     decodeKey str = Just $ PValueTag str
 
 
-instance DecodeTagged PValueTag Progress where
+instance DecodeKeyed PValueTag Progress where
     toValue = _readProgress
 
 
@@ -391,8 +390,8 @@ unwrapValueTag :: PValueTag -> String
 unwrapValueTag (PValueTag t) = t
 
 
-instance IsModifier PValueTag Progress where
-    modifierKey = valueTagOf
+instance Keyed PValueTag Progress where
+    keyOf = valueTagOf
 
 
 loadNProgress :: Progress -> NProgress

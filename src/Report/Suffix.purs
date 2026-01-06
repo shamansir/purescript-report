@@ -11,13 +11,13 @@ import Data.Array (catMaybes) as Array
 
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
-import Report.Modifiers (Modifiers, class IsModifier, modifierKey)
+import Report.Modifiers (Modifiers)
 import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 -- import Report.Modifiers.Class.ValueModify (decodeKey)
 import Report.Modifiers.Progress (Progress, PValueTag(..)) as P
 import Report.Modifiers.Tags (Tags)
-import Report.Convert.Tagged
-import Report.Convert.Tagged (encodeKey, decodeKey) as B
+import Report.Convert.Keyed
+import Report.Convert.Keyed (encodeKey, decodeKey) as B
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
 
@@ -46,9 +46,9 @@ data Suffix t
 type Suffixes t = Modifiers Key (Suffix t)
 
 
-instance IsModifier Key (Suffix t) where
-    modifierKey = case _ of
-        SProgress prog -> KProgress $ modifierKey prog
+instance Keyed Key (Suffix t) where
+    keyOf = case _ of
+        SProgress prog -> KProgress $ keyOf prog
         SEarnedAt _ -> KEarnedAt
         SDescription _ -> KDescription
         SReference _ -> KReference
@@ -130,7 +130,7 @@ instance EncodableKey Key where
     decodeKey = decodeKey
 
 
-instance ReadForeign t => DecodeTagged Key (Suffix t) where
+instance ReadForeign t => DecodeKeyed Key (Suffix t) where
     toValue = decodeWithKey
 
 
@@ -175,8 +175,8 @@ debugNavLabel = case _ of
 
 
 instance ReadForeign t => ReadForeign (Suffix t) where
-    readImpl frgn = decodeTagged @Key =<< (readImpl frgn :: F JsonTM)
+    readImpl frgn = decodeKeyed @Key =<< (readImpl frgn :: F JsonTM)
 
 
 instance WriteForeign t => WriteForeign (Suffix t) where
-    writeImpl prefix = writeImpl $ encodeTagged @Key prefix
+    writeImpl prefix = writeImpl $ encodeKeyed @Key prefix
