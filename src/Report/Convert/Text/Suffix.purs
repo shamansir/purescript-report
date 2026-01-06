@@ -1,4 +1,4 @@
-module Report.Encoding.Suffix where
+module Report.Convert.Text.Suffix where
 
 import Prelude
 
@@ -9,8 +9,8 @@ import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Class (class IsTag)
 import Report.GroupPath as GP
 import Report.Suffix (Suffix(..), Key(..))
-import Report.Encoding.Modifiers.Progress as PEnc
-import Report.Encoding.Modifiers.Tags as TEnc
+import Report.Convert.Text.Modifiers.Progress as PEnc
+import Report.Convert.Text.Modifiers.Tags as TEnc
 
 
 encodeSuffix :: forall t. IsTag t => Suffix t -> Key /\ CT.EncodedValue

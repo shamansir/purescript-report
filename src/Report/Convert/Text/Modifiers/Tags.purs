@@ -1,4 +1,4 @@
-module Report.Encoding.Modifiers.Tags where
+module Report.Convert.Text.Modifiers.Tags where
 
 import Prelude
 

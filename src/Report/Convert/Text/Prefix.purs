@@ -1,4 +1,4 @@
-module Report.Encoding.Prefix where
+module Report.Convert.Text.Prefix where
 
 import Prelude
 
@@ -12,9 +12,9 @@ import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Class (class IsTag)
 import Report.GroupPath as GP
 import Report.Prefix (Prefix(..), Key(..))
-import Report.Encoding.Modifiers.Rating as REnc
-import Report.Encoding.Modifiers.Priority as PEnc
-import Report.Encoding.Modifiers.Task as TEnc
+import Report.Convert.Text.Modifiers.Rating as REnc
+import Report.Convert.Text.Modifiers.Priority as PEnc
+import Report.Convert.Text.Modifiers.Task as TEnc
 
 
 encodePrefix :: Prefix -> Key /\ CT.EncodedValue

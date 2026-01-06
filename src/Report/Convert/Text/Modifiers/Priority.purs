@@ -1,4 +1,4 @@
-module Report.Encoding.Modifiers.Priority where
+module Report.Convert.Text.Modifiers.Priority where
 
 import Prelude
 

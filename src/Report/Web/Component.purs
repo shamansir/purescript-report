@@ -30,8 +30,8 @@ import Halogen.HTML.Properties as HP
 import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap, class ToReport) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
-import Report.Encoding.Prefix (encodePrefix) as Prefix
-import Report.Encoding.Suffix (encodeSuffix) as Suffix
+import Report.Convert.Text.Prefix (encodePrefix) as Prefix
+import Report.Convert.Text.Suffix (encodeSuffix) as Suffix
 import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Modify (Location(..))

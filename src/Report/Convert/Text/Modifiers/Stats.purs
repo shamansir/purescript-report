@@ -1,4 +1,4 @@
-module Report.Encoding.Modifiers.Stats where
+module Report.Convert.Text.Modifiers.Stats where
 
 import Prelude
 
@@ -11,7 +11,7 @@ import Data.String (split, Pattern(..)) as String
 import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Progress (PValueTag)
-import Report.Encoding.Modifiers.Progress (decodeProgress, encodeProgress)
+import Report.Convert.Text.Modifiers.Progress (decodeProgress, encodeProgress)
 
 
 encodeStats :: Stats -> Maybe PValueTag /\ CT.EncodedValue

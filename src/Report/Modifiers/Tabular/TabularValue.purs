@@ -15,7 +15,7 @@ import Report.Prefix (Prefix)
 import Report.Suffix (Suffix(..))
 import Report.Modifiers.Progress (Progress) as P
 import Report.Modifiers (class IsModifier)
-import Report.Modifiers.Convert.Tagged
+import Report.Convert.Tagged
 
 
 

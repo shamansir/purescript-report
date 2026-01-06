@@ -12,7 +12,7 @@ import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 import Report.Modifiers.Priority (Priority)
 import Report.Modifiers.Rating (Rating)
 import Report.Modifiers.Task (TaskP)
-import Report.Modifiers.Convert.Tagged
+import Report.Convert.Tagged
 
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 

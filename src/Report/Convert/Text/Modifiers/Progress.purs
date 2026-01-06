@@ -1,4 +1,4 @@
-module Report.Encoding.Modifiers.Progress where
+module Report.Convert.Text.Modifiers.Progress where
 
 import Prelude
 

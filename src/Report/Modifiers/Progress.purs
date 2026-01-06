@@ -10,6 +10,7 @@ import Data.String (joinWith) as String
 import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
 import Data.Array (length, all) as Array
+import Report.Convert.Tagged
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
@@ -222,6 +223,15 @@ either
     identity
 $ ME.runExcept $ _readProgress (PValueTag t) v
 -}
+
+
+instance EncodableKey PValueTag where
+    encodeKey (PValueTag str) = str
+    decodeKey str = Just $ PValueTag str
+
+
+instance DecodeTagged PValueTag Progress where
+    toValue = _readProgress
 
 
 rawToProgressJson :: { t :: String, v :: Foreign } -> ProgressJson

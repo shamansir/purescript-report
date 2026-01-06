@@ -4,6 +4,7 @@ import Prelude
 
 import Foreign (Foreign, F)
 
+import Data.String as String
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (catMaybes) as Array
@@ -15,7 +16,8 @@ import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 -- import Report.Modifiers.Class.ValueModify (decodeKey)
 import Report.Modifiers.Progress (Progress, PValueTag(..)) as P
 import Report.Modifiers.Tags (Tags)
-import Report.Modifiers.Convert.Tagged
+import Report.Convert.Tagged
+import Report.Convert.Tagged (encodeKey, decodeKey) as B
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
 
@@ -134,7 +136,7 @@ instance ReadForeign t => DecodeTagged Key (Suffix t) where
 
 encodeKey :: Key -> String
 encodeKey = case _ of
-    KProgress pvtag -> "PROG"
+    KProgress pvtag -> "PROG:" <> B.encodeKey @P.PValueTag pvtag
     KEarnedAt -> "EARN"
     KDescription -> "DESC"
     KReference -> "REF"
@@ -142,13 +144,16 @@ encodeKey = case _ of
 
 
 decodeKey :: String -> Maybe Key
-decodeKey str = case str of
-    "PROG" -> Just $ KProgress $ P.PValueTag "UNK" -- FIXME
-    "EARN" -> Just KEarnedAt
-    "DESC" -> Just KDescription
-    "REF"  -> Just KReference
-    "TAGS" -> Just KTags
-    _      -> Nothing
+decodeKey str =
+    case String.stripPrefix (String.Pattern "PROG:") str of
+        Just pvtag -> (B.decodeKey pvtag :: Maybe P.PValueTag) <#> KProgress
+        Nothing -> case str of
+            "PROG" -> Just $ KProgress $ P.PValueTag "UNK" -- FIXME
+            "EARN" -> Just KEarnedAt
+            "DESC" -> Just KDescription
+            "REF"  -> Just KReference
+            "TAGS" -> Just KTags
+            _      -> Nothing
 
 
 decodeWithKey :: forall t. ReadForeign t => Key -> Foreign -> F (Suffix t)
@@ -158,7 +163,6 @@ decodeWithKey key f = case key of
     KDescription -> SDescription <$> readImpl f
     KReference -> SReference <$> readImpl f
     KTags -> STags <$> readImpl f
-
 
 
 debugNavLabel :: Key -> String

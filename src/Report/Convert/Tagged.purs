@@ -1,4 +1,4 @@
-module Report.Modifiers.Convert.Tagged where
+module Report.Convert.Tagged where
 
 import Prelude
 
