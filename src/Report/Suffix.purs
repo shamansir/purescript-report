@@ -16,8 +16,7 @@ import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 -- import Report.Modifiers.Class.ValueModify (decodeKey)
 import Report.Modifiers.Progress (Progress, PValueTag(..)) as P
 import Report.Modifiers.Tags (Tags)
-import Report.Convert.Keyed
-import Report.Convert.Keyed (encodeKey, decodeKey) as B
+import Report.Convert.Keyed as B
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
 
@@ -46,13 +45,8 @@ data Suffix t
 type Suffixes t = Modifiers Key (Suffix t)
 
 
-instance Keyed Key (Suffix t) where
-    keyOf = case _ of
-        SProgress prog -> KProgress $ keyOf prog
-        SEarnedAt _ -> KEarnedAt
-        SDescription _ -> KDescription
-        SReference _ -> KReference
-        STags _ -> KTags
+instance B.Keyed Key (Suffix t) where
+    keyOf = keyOf
 
 
 empty :: forall t. Suffixes t
@@ -125,12 +119,12 @@ orderIndex = case _ of
     KTags -> 4
 
 
-instance EncodableKey Key where
+instance B.EncodableKey Key where
     encodeKey = encodeKey
     decodeKey = decodeKey
 
 
-instance ReadForeign t => DecodeKeyed Key (Suffix t) where
+instance ReadForeign t => B.DecodeKeyed Key (Suffix t) where
     toValue = decodeWithKey
 
 
@@ -156,6 +150,15 @@ decodeKey str =
             _      -> Nothing
 
 
+keyOf :: forall t. Suffix t -> Key
+keyOf = case _ of
+    SProgress prog -> KProgress $ B.keyOf prog
+    SEarnedAt _ -> KEarnedAt
+    SDescription _ -> KDescription
+    SReference _ -> KReference
+    STags _ -> KTags
+
+
 decodeWithKey :: forall t. ReadForeign t => Key -> Foreign -> F (Suffix t)
 decodeWithKey key f = case key of
     KProgress _ -> SProgress <$> readImpl f
@@ -175,8 +178,16 @@ debugNavLabel = case _ of
 
 
 instance ReadForeign t => ReadForeign (Suffix t) where
-    readImpl frgn = decodeKeyed @Key =<< (readImpl frgn :: F JsonTM)
+    readImpl frgn = B.decodeKeyed @Key =<< (readImpl frgn :: F B.JsonTM)
 
 
 instance WriteForeign t => WriteForeign (Suffix t) where
-    writeImpl prefix = writeImpl $ encodeKeyed @Key prefix
+    -- somehow we cannot use `B.encodeKeyed @Key @(Suffix t) suffix` here, it leads to recursion. Maybe we need to convert tags to strings first
+    writeImpl suffix = writeImpl $ B.make suffixKey $ case suffix of
+        SProgress p -> writeImpl p -- B.encodeKeyed @P.PValueTag p
+        SEarnedAt d -> writeImpl d
+        SDescription desc -> writeImpl desc
+        SReference path -> writeImpl path
+        STags tags -> writeImpl tags
+        where
+            suffixKey = encodeKey $ keyOf suffix

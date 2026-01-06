@@ -24,6 +24,7 @@ class DecodeKeyed k v where
 
 
 newtype KeyedValue k v = TM { mod_key :: k, mod_v :: v }
+derive instance Functor (KeyedValue k)
 
 type JsonTM = KeyedValue String Foreign
 
@@ -31,8 +32,20 @@ derive newtype instance (ReadForeign k,  ReadForeign v)  => ReadForeign  (KeyedV
 derive newtype instance (WriteForeign k, WriteForeign v) => WriteForeign (KeyedValue k v)
 
 
+make :: forall k v. k -> v -> KeyedValue k v
+make k v = TM { mod_key: k, mod_v: v }
+
+
 mark :: forall k v. Keyed k v => v -> KeyedValue k v
-mark v = TM { mod_key : keyOf v, mod_v : v }
+mark v = TM { mod_key : keyOf @k v, mod_v : v }
+
+
+rekey :: forall k k' v. (k -> k') -> KeyedValue k v -> KeyedValue k' v
+rekey f (TM { mod_key, mod_v }) = TM { mod_key: f mod_key, mod_v }
+
+
+toJson :: forall @k @v. WriteForeign v => EncodableKey k => KeyedValue k v -> JsonTM
+toJson = rekey encodeKey <#> map writeImpl
 
 
 encodeKeyed :: forall @k v. EncodableKey k => WriteForeign v => Keyed k v => v -> JsonTM

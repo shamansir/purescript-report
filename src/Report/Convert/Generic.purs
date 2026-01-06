@@ -19,10 +19,11 @@ import Report.Prefix (Prefix)
 import Report.Prefix (Key) as Prefix
 import Report.Suffix (Suffix)
 import Report.Suffix (Key) as Suffix
+import Report.Tabular as Tabular
 import Report.Convert.Types
 
 
-exportVersion = ExportVersion 1 :: ExportVersion
+exportVersion = ExportVersion 2 :: ExportVersion
 
 class
     ( Ord group -- V
@@ -65,6 +66,7 @@ toExport =
             , stats : i_stats subj
             , trackedAt : Nothing -- TODO
             , properties : [] -- TODO
+            -- , tabular : Tabular.empty
             , tabular : i_tabular subj
             }
         collectGroup :: group -> Group
@@ -94,6 +96,8 @@ toExport =
             , value : writeImpl suffix -- ValueModify.toEditable
             }
         collectModifiers :: forall @t a. WriteForeign t => HasPrefixes a => HasSuffixes t a => a -> Array ModifierRec
+        -- collectModifiers a = []
+        -- collectModifiers a = Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)
         collectModifiers a =
             (Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)) <>
             (Tuple.uncurry (collectSuffix @t) <$> (Map.toUnfoldable $ unwrap $ i_suffixes @t a))
