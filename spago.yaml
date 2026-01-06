@@ -3,6 +3,7 @@ package:
   dependencies:
     - console
     - dodo-printer
+    - dotlang
     - effect
     - either
     - halogen
@@ -44,3 +45,6 @@ workspace:
       ref: e8d398426367b47af624097b6b60c8dadde5bda6
     diff-compare:
       path: ../purescript-diff-compare
+    dotlang:
+      git: https://github.com/shamansir/purescript-dotlang.git
+      ref: b40e6aeb3b4a03499011182d0d7b5936f3c72c30

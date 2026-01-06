@@ -7,6 +7,7 @@
           "dependencies": [
             "console",
             "dodo-printer",
+            "dotlang",
             "effect",
             "either",
             "halogen",
@@ -26,6 +27,7 @@
             "avar",
             "bifunctors",
             "catenable-lists",
+            "colors",
             "console",
             "const",
             "contravariant",
@@ -34,6 +36,7 @@
             "distributive",
             "dodo-printer",
             "dom-indexed",
+            "dotlang",
             "effect",
             "either",
             "enums",
@@ -73,6 +76,7 @@
             "partial",
             "prelude",
             "profunctor",
+            "psci-support",
             "record",
             "record-extra",
             "refs",
@@ -789,6 +793,10 @@
       "diff-compare": {
         "path": "../purescript-diff-compare"
       },
+      "dotlang": {
+        "git": "https://github.com/shamansir/purescript-dotlang.git",
+        "ref": "b40e6aeb3b4a03499011182d0d7b5936f3c72c30"
+      },
       "play": {
         "git": "https://github.com/shamansir/purescript-play.git",
         "ref": "7a0610f165ccbd4f06a9923a4d49a00520a92da3"
@@ -982,6 +990,19 @@
         "unfoldable"
       ]
     },
+    "colors": {
+      "type": "registry",
+      "version": "7.0.1",
+      "integrity": "sha256-udlg/y2PFsHYli8Tgz8BQGGrOjyGo0BcJj36IfgYADs=",
+      "dependencies": [
+        "arrays",
+        "integers",
+        "lists",
+        "numbers",
+        "partial",
+        "strings"
+      ]
+    },
     "console": {
       "type": "registry",
       "version": "6.1.0",
@@ -1111,6 +1132,21 @@
         "web-clipboard",
         "web-pointerevents",
         "web-touchevents"
+      ]
+    },
+    "dotlang": {
+      "type": "git",
+      "url": "https://github.com/shamansir/purescript-dotlang.git",
+      "rev": "b40e6aeb3b4a03499011182d0d7b5936f3c72c30",
+      "dependencies": [
+        "arrays",
+        "colors",
+        "console",
+        "effect",
+        "maybe",
+        "prelude",
+        "psci-support",
+        "strings"
       ]
     },
     "effect": {
@@ -1923,6 +1959,16 @@
         "newtype",
         "prelude",
         "tuples"
+      ]
+    },
+    "psci-support": {
+      "type": "registry",
+      "version": "6.0.0",
+      "integrity": "sha256-C6ql4P9TEP06hft/1Z5QumPA4yARR4VIxDdhmL1EO+Y=",
+      "dependencies": [
+        "console",
+        "effect",
+        "prelude"
       ]
     },
     "quickcheck": {

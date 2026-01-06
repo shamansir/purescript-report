@@ -13,6 +13,7 @@ import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Progress (PValueTag)
 import Report.Encoding.Modifiers.Progress (decodeProgress, encodeProgress)
 
+
 encodeStats :: Stats -> Maybe PValueTag /\ CT.EncodedValue
 encodeStats stats = case stats of
     SGotTotal { got, total } -> Nothing /\ (CT.EncodedValue $ show got <> "/" <> show total)

@@ -8,7 +8,7 @@ import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Tuple (curry, uncurry) as Tuple
 
-import Yoga.JSON (class WriteForeign, writeImpl)
+import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 import Report (Report, class ToReport)
 import Report.Group (Group(..))
@@ -24,20 +24,21 @@ import Report.Export.Types
 
 exportVersion = ExportVersion 1 :: ExportVersion
 
-
 class
     ( Ord group -- V
-    , EncodableKey subj_id -- V
-    , WriteForeign item_tag -- V
     , IsTag subj_tag -- V
+    , IsItem item -- V
+    , IsGroup group -- V
+    , IsSubject subj_id subj -- V
     , HasTags subj_tag subj -- V
     , HasPrefixes item -- V
     , HasSuffixes item_tag item -- V
     , HasStats subj -- V
     , HasStats group -- V
-    , IsItem item -- V
-    , IsGroup group -- V
-    , IsSubject subj_id subj -- V
+    , EncodableKey subj_id -- V
+    , WriteForeign item_tag -- V
+    , ReadForeign item_tag
+    -- => WriteForeign subj_tag
     , ToReport subj group item x
     )
     <= ToExport subj_id subj_tag item_tag subj group item (x :: Type)

@@ -122,6 +122,38 @@ data ExportTarget
 derive instance Eq ExportTarget
 
 
+
+class
+    ( R.IsTag subj_tag
+    , R.IsTag item_tag
+    , R.IsItem item
+    , R.IsGroup group
+    , R.IsSubject subj_id subj
+    )
+    <= Is subj_id subj_tag item_tag subj group item (x :: Type)
+
+
+class
+    ( R.HasPrefixes item
+    , R.HasSuffixes item_tag item
+    , R.HasTabular item
+    , R.HasTags subj_tag subj
+    , R.HasStats subj
+    , R.HasStats group
+    )
+    <= Has subj_tag item_tag subj group item (x :: Type)
+
+
+class
+    ( Modify.GroupModify group
+    , Modify.StatsModify group
+    , Modify.SuffixesModify item_tag item
+    , Modify.PrefixesModify item
+    , Modify.ItemModify item
+    )
+    <= Modify item_tag group item (x :: Type)
+
+
 component
     :: forall @x @subj_id @subj_tag @item_tag subj group item query output m
      . MonadEffect m
@@ -129,28 +161,15 @@ component
     => Ord subj_id
     => Ord group
     => Show subj_id
-    => R.IsTag subj_tag
-    => R.IsTag item_tag
-    => R.HasTags subj_tag subj
-    => R.IsItem item
-    => R.HasPrefixes item
-    => R.HasSuffixes item_tag item
-    => R.HasTabular item
-    => R.IsGroup group
-    => R.IsSubject subj_id subj
-    => R.HasStats subj
-    => R.HasStats group
-    => Modify.GroupModify group
-    => Modify.StatsModify group
-    => Modify.SuffixesModify item_tag item
-    => Modify.PrefixesModify item
-    => Modify.ItemModify item
-    => VModify.EncodableKey subj_id
-    => ReadForeign item_tag
-    => WriteForeign item_tag
-    => WriteForeign subj_tag
-    => R.ToReport subj group item x
+    => Is subj_id subj_tag item_tag subj group item x
+    => Has subj_tag item_tag subj group item x
+    => Modify item_tag group item x
+    -- => VModify.EncodableKey subj_id
+    -- => ReadForeign item_tag
+    -- => WriteForeign item_tag
+    -- => WriteForeign subj_tag
     => Report.ToExport subj_id subj_tag item_tag subj group item x
+    => R.ToReport subj group item x
     => Array subj_id
     -> H.Component query (Input subj group item) output m
 component preSelected =
@@ -248,7 +267,7 @@ component preSelected =
             $ filterInput state
             : optionsPane state
             : (HH.div
-                    [ HP.style $ "overflow-y: scroll;" ]
+                    [ HP.style $ "overflow-y: scroll; height: 100%; position: absolute;" ]
                     $ subjTocRow state.subjects <$> (applyFilter state.tagFilter state.sortBy state.filter) allSubjects)
             : []
 
@@ -472,12 +491,12 @@ renderSubject
      . Eq subj_id
     => R.IsTag item_tag
     => R.IsItem item
+    => R.IsGroup group
+    => R.IsSubject subj_id subj
     => R.HasPrefixes item
     => R.HasSuffixes item_tag item
     => R.HasTabular item
     => R.HasStats group
-    => R.IsGroup group
-    => R.IsSubject subj_id subj
     => NavigatedTo subj_id
     -> subj
     -> Map group (Array item)
