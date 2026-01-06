@@ -1,10 +1,11 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
-in T.collapseAt
+in GT.collapseAt
         { id = "no-rest-for-the-wicked"
         , name = "No Rest For The Wicked"
-        , platform = T.Platform.Steam
-        , playtime = T.Playtime.MoreThan { hrs = +22, min = +42, sec = +0 }
+        , platform = GT.Platform.Steam
+        , playtime = GT.Playtime.MoreThan { hrs = +22, min = +42, sec = +0 }
         }
         { day = +27, mon = +12, year = +2025 } (
 

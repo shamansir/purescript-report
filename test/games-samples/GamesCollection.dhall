@@ -1,4 +1,5 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 let Forza5 = ./ForzaHorizon5.dhall
 -- let YakuzaInfiniteWealth = ./Steam/_YakuzaInfiniteWealth.dhall

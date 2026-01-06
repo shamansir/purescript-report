@@ -72,9 +72,10 @@ main = runSpecAndExitProcess [consoleReporter] do
 
 
 expectedDhall = """let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "DHL:astral-chain"
         , name = "Astral Chain"
         , platform = T.Platform.<TODO>

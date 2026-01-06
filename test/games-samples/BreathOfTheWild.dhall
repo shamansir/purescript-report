@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "zelda-breath-of-the-wild"
         , name = "Zelda: Breath of the Wild"
-        , platform = T.Platform.Switch
-        , playtime = T.Playtime.MoreThan { hrs = +205, min = +0, sec = +0 }
+        , platform = GT.Platform.Switch
+        , playtime = GT.Playtime.MoreThan { hrs = +205, min = +0, sec = +0 }
         }
         { day = +29, mon = +8, year = +2025 }
 

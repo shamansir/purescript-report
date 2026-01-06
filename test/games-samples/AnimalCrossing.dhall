@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "animal-crossing"
         , name = "Animal Crossing"
-        , platform = T.Platform.Other
-        , playtime = T.Playtime.MoreThan { hrs = +110, min = +0, sec = +0 }
+        , platform = GT.Platform.Other
+        , playtime = GT.Playtime.MoreThan { hrs = +110, min = +0, sec = +0 }
         }
         { day = +29, mon = +8, year = +2025 } (
 

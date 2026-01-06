@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "starlink-battle-of-atlas"
         , name = "Starlink: Battle of Atlas"
-        , platform = T.Platform.Switch
-        , playtime = T.Playtime.MoreThan { hrs = +45, min = +0, sec = +0 }
+        , platform = GT.Platform.Switch
+        , playtime = GT.Playtime.MoreThan { hrs = +45, min = +0, sec = +0 }
         }
         { day = +12, mon = +8, year = +2025 } (
 

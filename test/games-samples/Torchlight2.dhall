@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "torchlight-2"
         , name = "Torchlight II"
-        , platform = T.Platform.Switch
-        , playtime = T.Playtime.MoreThan { hrs = +10, min = +0, sec = +0 }
+        , platform = GT.Platform.Switch
+        , playtime = GT.Playtime.MoreThan { hrs = +10, min = +0, sec = +0 }
         }
         { day = +5, mon = +8, year = +2025 } (
 

@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "kirby-the-forgotten-land"
         , name = "Kirby: The Forgotten Land"
-        , platform = T.Platform.Switch
-        , playtime = T.Playtime.MoreThan { hrs = +10, min = +0, sec = +0 }
+        , platform = GT.Platform.Switch
+        , playtime = GT.Playtime.MoreThan { hrs = +10, min = +0, sec = +0 }
         }
         { day = +18, mon = +9, year = +2025 } (
 

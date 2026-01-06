@@ -5,6 +5,9 @@ let DATE = { mon : Integer, day: Integer, year : Integer }
 let TIME = { hrs : Integer, min: Integer, sec : Integer }
 
 
+let version = +2 : Integer
+
+
 let PROC =
     < TODO
     | DOING
@@ -69,6 +72,14 @@ let LVLP = { levels : List LevelP }
 let PCTX = { sign : Integer, pct : Double }
 
 
+let Relation =
+    \(t : Type) ->
+    < MoreThan : t
+    | LessThan : t
+    | Exact : t
+    >
+
+
 let Value =
     < E
     | UNK
@@ -98,6 +109,10 @@ let Value =
     | LVLP : LVLP -- levels : total / done
     | LVLIO : LVLIO -- levels : optional int -- TODO: "== only current" sometimes?
     | PROC : PROC
+    | RELN : Relation Natural
+    | RELI : Relation Integer
+    | RELD : Relation Double
+    | RELT : Relation TIME
     >
 
 
@@ -137,6 +152,10 @@ let tag
         , LVLP = \(x : LVLP) -> { t = "LVLP", v = v }
         , LVLIO = \(x : LVLIO) -> { t = "LVLIO", v = v }
         , PROC = \(x : PROC) -> { t = "PROC", v = v }
+        , RELI = \(x : Relation Integer) -> { t = "RELI", v = v }
+        , RELN = \(x : Relation Natural) -> { t = "RELN", v = v }
+        , RELD = \(x : Relation Double) -> { t = "RELD", v = v }
+        , RELT = \(x : Relation TIME) -> { t = "RELT", v = v }
         }
         v
 
@@ -399,9 +418,24 @@ let v_pct_mes : Integer -> Value = \(i : Integer) -> v_mes i "%"
 let v_pct_mesd : Double -> Value = \(d : Double) -> v_mesd d "%"
 let v_mesx : Integer -> Double -> Text -> Value = \(sign : Integer) -> \(d : Double) -> \(text : Text)  -> Value.MESX { d = d, measure = text, sign = sign }
 let v_pct_mesx : Integer -> Double -> Value = \(sign : Integer) -> \(d : Double) -> v_mesx sign d "%"
+let v_reln : Relation Natural -> Value = Value.RELN
+let v_reli : Relation Integer -> Value = Value.RELI
+let v_reld : Relation Double -> Value = Value.RELD
+let v_relt : Relation TIME -> Value = Value.RELT
 let v_unk : Value = Value.UNK
 
+
 let kv_unk : KeyValRec = kv_ "???" Value.UNK
+
+
+let rel_more_than
+    = \(a : Type) -> \(v : a) -> (Relation a).MoreThan v
+let rel_less_than
+    = \(a : Type) -> \(v : a) -> (Relation a).LessThan v
+let rel_exact
+    = \(a : Type) -> \(v : a) -> (Relation a).Exact v
+
+-- let time_more_than : TIME -> Relation TIME = rl_more_than TIME
 
 
 let p_todo     : Value = Value.PROC PROC.TODO
@@ -424,69 +458,62 @@ let p_canceled_ : PROC = PROC.CANCELED
 let p_locked_   : PROC = PROC.LOCKED
 
 
-let Platform =
-    < Switch
-    | Steam
-    | GPlay
-    | Playstation5
-    | IOS
-    | Other -- Web? Shared?
-    >
+let TabularValue
+    = TaggedValue
 
 
-let Playtime =
-    < Unknown
-    | Irrelevant
-    | MoreThan : TIME
-    | Exact : TIME
-    >
+let TabularKVR =
+    { key : Text, value : TabularValue }
 
 
-let Game =
-    { name : Text
-    , id : Text
-    , platform : Platform
-    , playtime : Playtime
+let Tabular = List TabularKVR
+
+
+let Tabular/empty : Tabular
+    = ([] : List TabularKVR)
+
+
+let Subject =
+    { id : Text
+    , name : Text
+    , properties : List Property
+    , tabular : List TabularKVR
+    , tags : List Text
     }
 
 
-let AchievementsData =
-    { game : Game
-    , trackedAt : Optional DATE
-    , properties : List Property
+let QSubject =
+    { id : Text
+    , name : Text
     }
 
 
 let collapse
-    : Game -> List Property -> AchievementsData
-    = \(game : Game) -> \(properties : List Property) ->
-        { trackedAt = None DATE
+    : QSubject -> List Property -> Subject
+    = \(subject : QSubject) -> \(properties : List Property) ->
+        { id = subject.id
+        , name = subject.name
         , properties = properties
-        , game = game
-        }
-
-
-let collapseAt
-    : Game -> DATE -> List Property -> AchievementsData
-    = \(game : Game) -> \(date : DATE) -> \(properties : List Property) ->
-        { trackedAt = Some date
-        , properties = properties
-        , game = game
+        , tabular = ([] : List TabularKVR)
+        , tags = ([] : List Text)
         }
 
 
 let introduce
-    : Game -> AchievementsData
-    = \(game : Game) ->
-        { trackedAt = None DATE
+    : QSubject -> Subject
+    = \(subject : QSubject) ->
+        { id = subject.id
+        , name = subject.name
         , properties = ([] : List Property)
-        , game = game
+        , tabular = ([] : List TabularKVR)
+        , tags = ([] : List Text)
         }
 
 
 in
-    { Value, Ref, Property, Properties, KVR, DATE, TIME, Platform, Playtime, AchievementsData, Group/Empty, Group/Kind
-    , kv, kv_, kvd_, group, group_, groupK, groupK_, groupStats, groupStats_, groupColl, groupColl_, kv_unk, kvd_secret, kv_det, kv_self, kv_date
+    { version
+    , Value, Ref, Property, Properties, KVR, DATE, TIME, Relation, Group/Empty, Group/Kind, TabularValue, TabularKVR, Tabular, Tabular/empty, Subject, QSubject
+    , kv, kv_, kvd_, group, group_, groupK, groupK_, groupStats, groupStats_, groupColl, groupColl_, kv_unk, kvd_secret, kv_det, kv_self, kv_date, tag
     , v_t, v_i, v_n, v_f
     , v_time, v_date
     , v_done, v_none, v_done_, v_none_, v_vone_, v_proc
@@ -496,9 +523,11 @@ in
     , v_lvld, v_lvli, v_lvls, v_lvlc, v_lvlp, v_lvlio
     , v_mes, v_mesd, v_pct_mes, v_pct_mesd, v_mesx, v_pct_mesx
     , v_per, v_perd
+    , v_reli, v_reld, v_reln, v_relt
     , v_empty, v_unk
     , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tags
-    , collapse, collapseAt, introduce
+    , collapse, introduce
     , p_todo, p_doing, p_done, p_now, p_later, p_canceled, p_wait, p_locked
     , p_todo_, p_doing_, p_done_, p_now_, p_later_, p_canceled_, p_wait_, p_locked_
+    , rel_more_than, rel_less_than, rel_exact
     }

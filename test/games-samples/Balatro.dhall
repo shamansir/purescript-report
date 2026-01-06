@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "balatro-ios"
         , name = "Balatro+"
-        , platform = T.Platform.IOS
-        , playtime = T.Playtime.Unknown
+        , platform = GT.Platform.IOS
+        , playtime = GT.Playtime.Unknown
         }
         { day = +4, mon = +1, year = +2026 }
 

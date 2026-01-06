@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "doom-dark-ages-manual"
         , name = "Doom: Dark Ages"
-        , platform = T.Platform.Playstation5
-        , playtime = T.Playtime.MoreThan { hrs = +60, min = +0, sec = +0 }
+        , platform = GT.Platform.Playstation5
+        , playtime = GT.Playtime.MoreThan { hrs = +60, min = +0, sec = +0 }
         }
         { day = +18, mon = +12, year = +2025 }
 

@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "nonograms-katana"
         , name = "Nonograms Katana"
-        , platform = T.Platform.GPlay
-        , playtime = T.Playtime.Unknown
+        , platform = GT.Platform.GPlay
+        , playtime = GT.Playtime.Unknown
         }
         { day = +12, mon = +8, year = +2025 } (
 

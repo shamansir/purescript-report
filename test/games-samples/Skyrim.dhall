@@ -1,11 +1,12 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "elder-scrolls-5-skyrim"
         , name = "Elder Scrolls V: Skyrim"
-        , platform = T.Platform.Switch
-        , playtime = T.Playtime.MoreThan { hrs = +65, min = +0, sec = +0 }
+        , platform = GT.Platform.Switch
+        , playtime = GT.Playtime.MoreThan { hrs = +65, min = +0, sec = +0 }
         }
         { day = +12, mon = +9, year = +2025 } (
 

@@ -59,9 +59,10 @@ toDhall =
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            D.text "let T = ./Types.dhall"
+            D.text "let T = ./Types.dhall
+let GT = ./Game.Types.dhall"
             <> D.break <> D.break <> D.text "in"
-            <> D.break <> D.indent (D.text "T.collapseAt")
+            <> D.break <> D.indent (D.text "GT.collapseAt")
             <> brindent2
                 [ D.text "{ id = " <> (quote $ unwrap subjectRec.id)
                 , D.text ", name = " <> quote subjectRec.name

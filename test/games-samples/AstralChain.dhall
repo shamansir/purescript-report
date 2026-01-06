@@ -1,4 +1,5 @@
 let T = ./Types.dhall
+let GT = ./Game.Types.dhall
 
 let CH =
     { startup : T.Value
@@ -70,11 +71,11 @@ let with_FL_HQ
 
 
 in
-    T.collapseAt
+    GT.collapseAt
         { id = "astral-chain"
         , name = "Astral Chain"
-        , platform = T.Platform.Switch
-        , playtime = T.Playtime.MoreThan { hrs = +40, min = +0, sec = +0 }
+        , platform = GT.Platform.Switch
+        , playtime = GT.Playtime.MoreThan { hrs = +40, min = +0, sec = +0 }
         }
         { day = +12, mon = +8, year = +2025 } (
 
