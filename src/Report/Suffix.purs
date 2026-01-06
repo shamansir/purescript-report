@@ -2,17 +2,20 @@ module Report.Suffix where
 
 import Prelude
 
+import Foreign (Foreign, F)
+
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (catMaybes) as Array
 
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
-
 import Report.Modifiers (Modifiers, class IsModifier, modifierKey)
 import Report.Modifiers (empty, get, put, keys, toArray) as Mod
-import Report.Modifiers.Progress (Progress, PValueTag) as P
+-- import Report.Modifiers.Class.ValueModify (decodeKey)
+import Report.Modifiers.Progress (Progress, PValueTag(..)) as P
 import Report.Modifiers.Tags (Tags)
+import Report.Modifiers.Convert.Tagged
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
 
@@ -120,6 +123,44 @@ orderIndex = case _ of
     KTags -> 4
 
 
+instance EncodableKey Key where
+    encodeKey = encodeKey
+    decodeKey = decodeKey
+
+
+instance ReadForeign t => DecodeTagged Key (Suffix t) where
+    toValue = decodeWithKey
+
+
+encodeKey :: Key -> String
+encodeKey = case _ of
+    KProgress pvtag -> "PROG"
+    KEarnedAt -> "EARN"
+    KDescription -> "DESC"
+    KReference -> "REF"
+    KTags -> "TAGS"
+
+
+decodeKey :: String -> Maybe Key
+decodeKey str = case str of
+    "PROG" -> Just $ KProgress $ P.PValueTag "UNK" -- FIXME
+    "EARN" -> Just KEarnedAt
+    "DESC" -> Just KDescription
+    "REF"  -> Just KReference
+    "TAGS" -> Just KTags
+    _      -> Nothing
+
+
+decodeWithKey :: forall t. ReadForeign t => Key -> Foreign -> F (Suffix t)
+decodeWithKey key f = case key of
+    KProgress _ -> SProgress <$> readImpl f
+    KEarnedAt -> SEarnedAt <$> readImpl f
+    KDescription -> SDescription <$> readImpl f
+    KReference -> SReference <$> readImpl f
+    KTags -> STags <$> readImpl f
+
+
+
 debugNavLabel :: Key -> String
 debugNavLabel = case _ of
     KProgress pvtag -> "PROG(" <> show pvtag <> ")"
@@ -129,10 +170,9 @@ debugNavLabel = case _ of
     KTags -> "TAGS"
 
 
+instance ReadForeign t => ReadForeign (Suffix t) where
+    readImpl frgn = decodeTagged @Key =<< (readImpl frgn :: F JsonTM)
+
+
 instance WriteForeign t => WriteForeign (Suffix t) where
-    writeImpl = case _ of
-        SProgress p -> writeImpl p
-        SEarnedAt d -> writeImpl d
-        SDescription desc -> writeImpl desc
-        SReference path -> writeImpl path
-        STags tags -> writeImpl tags
+    writeImpl prefix = writeImpl $ encodeTagged @Key prefix

@@ -1,11 +1,11 @@
-module Report.Export.Json where
+module Report.Convert.Json where
 
 import Prelude
 
 import Yoga.JSON (class WriteForeign, writePrettyJSON)
 
 import Report (Report)
-import Report.Export.Generic (class ToExport, toExport) as Report
+import Report.Convert.Generic (class ToExport, toExport) as Report
 
 
 toJson

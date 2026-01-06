@@ -2,16 +2,19 @@ module Report.Prefix where
 
 import Prelude
 
+import Foreign (Foreign, F)
+
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
-
-import Yoga.JSON (class WriteForeign, writeImpl)
 
 import Report.Modifiers (Modifiers, class IsModifier)
 import Report.Modifiers (empty, get, put, keys, toArray) as Mod
 import Report.Modifiers.Priority (Priority)
 import Report.Modifiers.Rating (Rating)
 import Report.Modifiers.Task (TaskP)
+import Report.Modifiers.Convert.Tagged
+
+import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
 
 data Key
@@ -78,15 +81,51 @@ getTask pfx = Mod.get KTask pfx >>= case _ of
     _ -> Nothing
 
 
-debugNavLabel :: Key -> String
-debugNavLabel = case _ of
+encodeKey :: Key -> String
+encodeKey = case _ of
     KRating -> "RATING"
     KPriority -> "PRIORITY"
     KTask -> "TASK"
 
 
+decodeKey :: String -> Maybe Key
+decodeKey str = case str of
+    "RATING"   -> Just KRating
+    "PRIORITY" -> Just KPriority
+    "TASK"     -> Just KTask
+    _          -> Nothing
+
+
+decodeWithKey :: Key -> Foreign -> F Prefix
+decodeWithKey key f = case key of
+    KRating   -> PRating   <$> readImpl f
+    KPriority -> PPriority <$> readImpl f
+    KTask     -> PTask     <$> readImpl f
+
+
+debugNavLabel :: Key -> String
+debugNavLabel = encodeKey
+
+
+instance EncodableKey Key where
+    encodeKey = encodeKey
+    decodeKey = decodeKey
+
+
+instance DecodeTagged Key Prefix where
+    toValue = decodeWithKey
+
+
+instance ReadForeign Prefix where
+    readImpl frgn = decodeTagged @Key =<< (readImpl frgn :: F JsonTM)
+
+
 instance WriteForeign Prefix where
-    writeImpl = case _ of
-        PRating rating -> writeImpl rating
-        PPriority priority -> writeImpl priority
-        PTask task -> writeImpl task
+    writeImpl prefix = writeImpl $ encodeTagged @Key prefix
+
+
+-- instance WriteForeign Prefix where
+--     writeImpl = case _ of
+--         PRating rating -> writeImpl rating
+--         PPriority priority -> writeImpl priority
+--         PTask task -> writeImpl task

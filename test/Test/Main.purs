@@ -40,7 +40,7 @@ import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as
 import GameLog.Types.Achievement (Tag) as GL
 import Report (toReport)
 
-import Report.Export.Dhall (toDhall) as D
+import Report.Convert.Dhall (toDhall) as D
 
 
 onlyFewGamesFilePath = "test/games-samples/only-few-games.json" :: String

@@ -1,4 +1,4 @@
-module Report.Export.Generic where
+module Report.Convert.Generic where
 
 import Prelude
 
@@ -19,7 +19,7 @@ import Report.Prefix (Prefix)
 import Report.Prefix (Key) as Prefix
 import Report.Suffix (Suffix)
 import Report.Suffix (Key) as Suffix
-import Report.Export.Types
+import Report.Convert.Types
 
 
 exportVersion = ExportVersion 1 :: ExportVersion
@@ -33,6 +33,7 @@ class
     , HasTags subj_tag subj -- V
     , HasPrefixes item -- V
     , HasSuffixes item_tag item -- V
+    , HasTabular subj
     , HasStats subj -- V
     , HasStats group -- V
     , EncodableKey subj_id -- V
@@ -64,6 +65,7 @@ toExport =
             , stats : i_stats subj
             , trackedAt : Nothing -- TODO
             , properties : [] -- TODO
+            , tabular : i_tabular subj
             }
         collectGroup :: group -> Group
         collectGroup group =
@@ -75,9 +77,7 @@ toExport =
         collectItem :: item -> ItemRec
         collectItem item =
             { name : i_name item
-            , modifiers :
-                (Tuple.uncurry collectPrefix <$> (Map.toUnfoldable $ unwrap $ i_prefixes item)) <>
-                (Tuple.uncurry collectSuffix <$> (Map.toUnfoldable $ unwrap $ i_suffixes @item_tag item))
+            , modifiers : collectModifiers @item_tag item
             , mbTitle : i_mbTitle item
             , locked  : i_locked  item
             }
@@ -87,12 +87,16 @@ toExport =
             , mkind : P
             , value : writeImpl prefix -- ValueModify.toEditable
             }
-        collectSuffix :: Suffix.Key -> Suffix item_tag -> ModifierRec
+        collectSuffix :: forall @t. WriteForeign t => Suffix.Key -> Suffix t -> ModifierRec
         collectSuffix skey suffix =
             { mkey  : encodeKey skey
             , mkind : S
             , value : writeImpl suffix -- ValueModify.toEditable
             }
+        collectModifiers :: forall @t a. WriteForeign t => HasPrefixes a => HasSuffixes t a => a -> Array ModifierRec
+        collectModifiers a =
+            (Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)) <>
+            (Tuple.uncurry (collectSuffix @t) <$> (Map.toUnfoldable $ unwrap $ i_suffixes @t a))
         subjectToExport :: subj -> Map group (Array item) -> SubjectWithGroups
         subjectToExport subj groupsMap =
             SubjectWithGroups

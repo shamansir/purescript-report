@@ -76,6 +76,7 @@ data Progress
     | LevelsE LevelsE
     | LevelsC LevelsC
     | LevelsP LevelsP
+    -- TODO: Relation
     | Error String
 
 

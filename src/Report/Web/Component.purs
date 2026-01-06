@@ -39,9 +39,9 @@ import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 import Report.Modifiers.Class.ValueModify as VModify
-import Report.Export.Generic (class ToExport) as Report
-import Report.Export.Json (toJson) as Report
-import Report.Export.Dhall (toDhall) as Report
+import Report.Convert.Generic (class ToExport) as Report
+import Report.Convert.Json (toJson) as Report
+import Report.Convert.Dhall (toDhall) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)

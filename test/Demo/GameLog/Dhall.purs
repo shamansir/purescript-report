@@ -29,6 +29,7 @@ import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Core as CT
 import Report.Core.Logic as CT
+import Report.Convert.Dhall.Import (DhallItemRec)
 
 import GameLog.Types as GLT
 import GameLog.Types.Achievement (Achievement(..), collectStatsRaw, getProgress)
@@ -42,21 +43,7 @@ import Yoga.JSON (class ReadForeign, readImpl)
 {- DHALL Import -}
 
 
-type DhallAchRec =
-    { key :: Maybe String
-    , title :: Maybe String
-    , kind :: Maybe String
-    , ref :: Array String
-    , detailed :: Maybe String
-    , selfRef :: Maybe (Array String)
-    , date :: Maybe DateRec
-    , tags :: Maybe (Array String)
-    , value ::
-        Maybe
-            { t :: String
-            , v :: Foreign
-            }
-    }
+type DhallAchRec = DhallItemRec
 
 
 newtype DhallGameId = DhallGameId String
@@ -86,6 +73,7 @@ type DhallSubjectJson =
     { id :: String
     , name :: String
     , properties :: Array DhallAchRec
+    , tags :: Array String
     , tabular ::
         Array
             { key :: String
@@ -94,7 +82,6 @@ type DhallSubjectJson =
                 , v :: Foreign
                 }
             }
-    , tags :: Array String
     }
 
 
@@ -122,6 +109,8 @@ platformFromDhall = case _ of
     Just "GPlay" -> Just GLT.Android
     Just "Switch" -> Just GLT.NintendoSwitch
     Just "Steam" -> Just GLT.Steam
+    Just "Playstation5" -> Just GLT.Playstation5
+    Just "IOS" -> Just $ GLT.IOS Nothing
     -- FIXME: TODO
     _ -> Nothing
 
@@ -138,7 +127,7 @@ loadProgressTextValue = case _ of
 
 
 findProgressInTabular :: String -> Array { key :: String, value :: { t :: String, v :: Foreign } } -> Maybe Progress
-findProgressInTabular keyName  =
+findProgressInTabular keyName = -- FIXME: move to `Report.Tabular`
     Array.find (_.key >>> (_ == keyName))
         >>> map _.value
         >>> flip bind ( Progress.rawToProgressJson >>> Progress.fromJson)

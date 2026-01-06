@@ -2,14 +2,22 @@ module Report.Modifiers.Priority where
 
 import Prelude
 
+import Foreign (fail, ForeignError(..))
+
 import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Data.Int (fromString, toNumber) as Int
 
-import Yoga.JSON (class WriteForeign, writeImpl)
+import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 
 newtype Priority = Priority (Either String Int)
+instance ReadForeign Priority where
+    readImpl f = do
+        (str :: String) <- readImpl f
+        case fromString str :: Maybe Priority of
+            Just priority  -> pure priority
+            Nothing -> fail $ ForeignError $ "Invalid Priority string: " <> str
 instance WriteForeign Priority where
     writeImpl = toString >>> writeImpl
 

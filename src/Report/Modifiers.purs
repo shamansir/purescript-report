@@ -40,5 +40,3 @@ toArray = unwrap >>> Map.toUnfoldable
 
 fromArray :: forall k v. Ord k => Array (k /\ v) -> Modifiers k v
 fromArray = wrap <<< Map.fromFoldable
-
-

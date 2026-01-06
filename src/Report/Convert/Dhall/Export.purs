@@ -1,4 +1,4 @@
-module Report.Export.Dhall where
+module Report.Convert.Dhall.Export where
 
 import Prelude
 
@@ -25,8 +25,8 @@ import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Modifiers.Class.ValueModify (class EncodableKey, decodeKey)
-import Report.Export.Types
-import Report.Export.Generic (class ToExport, toExport) as Report
+import Report.Convert.Types
+import Report.Convert.Generic (class ToExport, toExport) as Report
 
 import Report.Modifiers.Progress (Progress(..), PValueTag(..))
 import Report.Modifiers.Task (TaskP(..))

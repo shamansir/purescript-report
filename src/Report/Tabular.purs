@@ -3,14 +3,9 @@ module Report.Tabular where
 import Prelude
 
 import Data.Int as Int
-import Data.Number as Number
 import Data.Array (snoc, sortWith) as Array
-import Data.Tuple (uncurry)
-import Data.Tuple (fst) as Tuple
-import Data.Tuple.Nested (type (/\), (/\))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
-import Data.Bifunctor (lmap)
 import Data.String (joinWith) as String
 
 import Type.Proxy (Proxy(..))
@@ -24,6 +19,8 @@ import Record.Extra (class Keys) as Record
 
 import Report.Modifiers (class IsModifier)
 
+import Yoga.JSON (class ReadForeign, class WriteForeign)
+
 -- import Data.Text.Format (class Formatter)
 -- import Data.Text.Format as F
 
@@ -34,6 +31,9 @@ class ToTabularValue a v where
 
 newtype Item v = Item { key :: String, label :: String, value :: v }
 derive instance Newtype (Item v) _
+derive instance Functor Item
+derive newtype instance ReadForeign v => ReadForeign (Item v)
+derive newtype instance WriteForeign v => WriteForeign (Item v)
 
 
 instance IsModifier String (Item v) where
@@ -41,6 +41,9 @@ instance IsModifier String (Item v) where
 
 
 newtype Tabular v = Tabular (Array (Item v))
+derive instance Functor Tabular
+derive newtype instance ReadForeign v => ReadForeign (Tabular v)
+derive newtype instance WriteForeign v => WriteForeign (Tabular v)
 
 
 class ToTabular v x where

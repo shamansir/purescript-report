@@ -10,7 +10,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Report (Report, class ToReport)
 import Report (fromMap) as Report
 import Report.Group (Group)
-import Report.Export.Generic (class ToExport)
+import Report.Convert.Generic (class ToExport)
 import Report.Web.Component as ForWeb
 
 import GameLog.Types.Game (Game, GameId, GameTag)

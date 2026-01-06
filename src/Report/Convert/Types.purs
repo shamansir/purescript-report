@@ -1,44 +1,27 @@
-module Report.Export.Types where
+module Report.Convert.Types where
 
 import Prelude
 
-import Foreign (Foreign)
+import Foreign (Foreign, fail)
+import Foreign (fail, ForeignError(..)) as F
 
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 
-import Yoga.JSON (class WriteForeign, writeImpl)
+import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
 import Report.Group (Group)
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Progress (DateRec)
-import Report.Modifiers.Class.ValueModify
+import Report.Tabular (Tabular)
+import Report.Modifiers.Tabular.TabularValue (TabularValue)
 
-
-{-
-type ItemRec =
-    { key :: Maybe String
-    , title :: Maybe String
-    , kind :: Maybe String
-    , ref :: Array String
-    , detailed :: Maybe String
-    , selfRef :: Maybe (Array String)
-    , date :: Maybe DateRec
-    , tags :: Maybe (Array String)
-    , value ::
-        Maybe
-            { t :: String
-            , v :: Foreign
-            }
-    -- TODO: , tabular :: Array ({ key :: String, label :: String, value :: Foreign })
-    }
-
--}
 
 data MKind
     = P -- Prefix
     | S -- Suffix
+    -- | X -- Unknown
 
 
 type ModifierRec =
@@ -59,22 +42,25 @@ type ItemRec =
 
 newtype SubjectId = SubjectId String
 derive instance Newtype SubjectId _
+derive newtype instance ReadForeign SubjectId
 derive newtype instance WriteForeign SubjectId
 
 
 type SubjectRec =
     { name :: String
     , id :: SubjectId
-    , tags :: Array String
     , stats :: Stats
-    , trackedAt :: Maybe DateRec
-    , properties :: Array ItemRec
+    , trackedAt :: Maybe DateRec -- TODO
+    , properties :: Array ModifierRec
+    , tags :: Array String
+    , tabular :: Tabular TabularValue
     }
 
 
 newtype Subject = Subject SubjectRec
 derive instance Newtype Subject _
 
+--derive newtype instance ReadForeign Subject
 derive newtype instance WriteForeign Subject
 
 
@@ -90,6 +76,15 @@ derive newtype instance WriteForeign ExportVersion
 newtype ReportToExport = ReportToExport { version :: ExportVersion, subjects :: Array SubjectWithGroups }
 derive instance Newtype ReportToExport _
 derive newtype instance WriteForeign ReportToExport
+
+
+instance ReadForeign MKind where
+    readImpl frgn = do
+        str <- readImpl frgn
+        case str of
+            "P" -> pure P
+            "S" -> pure S
+            _   -> fail $ F.ForeignError $ "Unknown MKind: " <> str
 
 
 instance WriteForeign MKind where

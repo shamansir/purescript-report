@@ -10,6 +10,7 @@ import Yoga.JSON (class WriteForeign, writeImpl)
 import Report.Class
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Class.ValueModify (class EncodableKey)
+import Report.Tabular as Tabular
 
 import GameLog.Types as GLT
 
@@ -121,6 +122,10 @@ instance EncodableKey GameId where
         EPC code ->
             "EPC:" <> code
     decodeKey = const Nothing -- TODO
+
+
+instance HasTabular Game where
+    i_tabular = const $ Tabular.empty -- FIXME
 
 
 instance WriteForeign GameTag where
