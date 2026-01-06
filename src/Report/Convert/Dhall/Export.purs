@@ -31,8 +31,8 @@ import Report.Convert.Generic (class ToExport, toExport) as Report
 import Report.Modifiers.Progress (Progress(..), PValueTag(..))
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Tags (Tags)
-import Report.Prefix (Key(..)) as P
-import Report.Suffix (Key(..)) as S
+import Report.Prefix (Key(..), Prefix(..)) as P
+import Report.Suffix (Key(..), Suffix(..)) as S
 
 import Dodo
 import Dodo as D
@@ -99,19 +99,55 @@ toDhall =
         convertModifier modRec =
             case modRec.mkind of
                 P ->
-                    let (mbPKey :: Maybe P.Key) = decodeKey modRec.mkey in
-                    case mbPKey of
-                        Just P.KRating ->
-                            _ol $ D.text "p_rating " -- <> quote (modRec.value)
-                        Just P.KPriority ->
-                            _ol $ D.text "p_priority " -- <> quote (modRec.value)
-                        Just P.KTask ->
-                            _ol $ D.text "p_task " -- <> quote (modRec.value)
-                        Nothing ->
-                            _ol $ quote modRec.mkey
+                    withImplRA @P.Prefix
+                        (case _ of
+                            P.PRating rating ->
+                                _ol $ D.text "p_rating " -- <> quote (modRec.value)
+                            P.PPriority priority ->
+                                _ol $ D.text "p_priority " -- <> quote (modRec.value)
+                            P.PTask task ->
+                                _ol $ D.text "p_task " -- <> quote (modRec.value)
+                        )
+                        modRec.value
+
+                    -- let (mbPKey :: Maybe P.Key) = decodeKey modRec.mkey in
+                    -- case mbPKey of
+                    --     Just P.KRating ->
+                    --         _ol $ D.text "p_rating " -- <> quote (modRec.value)
+                    --     Just P.KPriority ->
+                    --         _ol $ D.text "p_priority " -- <> quote (modRec.value)
+                    --     Just P.KTask ->
+                    --         _ol $ D.text "p_task " -- <> quote (modRec.value)
+                    --     Nothing ->
+                    --         _ol $ quote modRec.mkey
                 S ->
-                    let (mbSKey :: Maybe S.Key) = decodeKey modRec.mkey in
-                    case mbSKey of
+                    withImplRA @(S.Suffix item_tag)
+                        (case _ of
+                            S.SProgress p ->
+                                _progressToDhall p
+                            S.SEarnedAt ea ->
+                                ea # sdaterec # prefixD "// T.inj/date" # _ol
+                            S.SDescription desc ->
+                                desc # quote # prefixD "// T.inj/det" # _ol
+                            S.SReference path ->
+                                unwrap path
+                                    # map (unwrap >>> quote)
+                                    # ilarrayD
+                                    # prefixD "// T.inj/self"
+                                    # _ol
+                            S.STags tags ->
+                                unwrap tags
+                                    # map (tagContent >>> quote)
+                                    # ilarrayD
+                                    # prefixD "// T.inj/tags"
+                                    # _ol
+                        )
+                        modRec.value
+                    -- case (readImpl modRec.value :: F (Suffix item_tag)) of
+                    --     Just
+
+                    {-
+                    case Debug.spy "mbSKey" mbSKey of
                         Just (S.KProgress _) ->
                             withImplRA @Progress _progressToDhall modRec.value
                         Just S.KEarnedAt ->
@@ -128,6 +164,7 @@ toDhall =
                                 modRec.value
                         Nothing ->
                             _ol $ quote modRec.mkey
+                    -}
 
 
         alignModifiers :: Array (RenderedAs (Doc Unit)) -> Doc Unit
@@ -141,70 +178,6 @@ toDhall =
                             (fromnl $ D.indent $ joinWith D.break $ dhead) <> alignModifiers tail
                 Nothing ->
                     mempty
-            -- fold
-            -- map (\arr ->
-            --         case Array.uncons arr of
-            --             Just { head, tail } -> head <> String.joinWith ("\n" <> indent3) tail
-            --             Nothing -> ""
-            --     )
-            -- >>> String.joinWith " "
-
-
-        {-
-        convertGroup :: { group :: Group, items :: Array ItemRec } -> Array String
-        convertGroup { group, items } =
-            let groupRec = unwrap group in
-            [ "# T.groupStats " <> quote groupRec.title <> " " <> ilarray (quote <$> unwrap <$> unwrap groupRec.path)
-            ]
-            <> pure (array (indent <> indent) (convertItem <$> items))
-
-        convertItem :: ItemRec -> String
-        convertItem itemRec =
-            "T.kv_ " <> quote itemRec.name <> " " <> (alignModifiers $ convertModifier <$> itemRec.modifiers)
-
-        convertModifier :: ModifierRec -> Array String
-        convertModifier modRec =
-            case modRec.mkind of
-                P ->
-                    let (mbPKey :: Maybe P.Key) = decodeKey modRec.mkey in
-                    case mbPKey of
-                        Just P.KRating ->
-                            pure "p_rating " -- <> quote (modRec.value)
-                        Just P.KPriority ->
-                            pure "p_priority " -- <> quote (modRec.value)
-                        Just P.KTask ->
-                            pure "p_task " -- <> quote (modRec.value)
-                        Nothing ->
-                            pure $ quote modRec.mkey
-                S ->
-                    let (mbSKey :: Maybe S.Key) = decodeKey modRec.mkey in
-                    case mbSKey of
-                        Just (S.KProgress _) ->
-                            withImpl @Progress _progressToDhall modRec.value
-                        Just S.KEarnedAt ->
-                            withImpl @CT.SDate (sdaterec >>> prefix "// T.inj/date" >>> pure) modRec.value
-                        Just S.KDescription ->
-                            withImpl @String (quote >>> prefix "// T.inj/det" >>> pure) modRec.value
-                        Just S.KReference ->
-                            withImpl @GroupPath
-                                (unwrap >>> map (unwrap >>> quote) >>> ilarray >>> prefix "// T.inj/self" >>> pure)
-                                modRec.value
-                        Just S.KTags ->
-                            withImpl @(Tags item_tag)
-                                (unwrap >>> map (tagContent >>> quote) >>> ilarray >>> prefix "// T.inj/tags" >>> pure)
-                                modRec.value
-                        Nothing ->
-                            pure $ quote modRec.mkey
-
-        alignModifiers :: Array (Array String) -> String
-        alignModifiers =
-            map (\arr ->
-                    case Array.uncons arr of
-                        Just { head, tail } -> head <> String.joinWith ("\n" <> indent3) tail
-                        Nothing -> ""
-                )
-            >>> String.joinWith " "
-        -}
 
 
 withImpl :: forall @t x. ReadForeign t => x -> (t -> x) -> Foreign -> x
