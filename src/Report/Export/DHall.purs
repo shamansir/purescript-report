@@ -59,15 +59,14 @@ toDhall =
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            D.text "let T = ./Types.dhall
-let GT = ./Game.Types.dhall"
+            D.text "let T = ./Types.dhall\nlet GT = ./Game.Types.dhall"
             <> D.break <> D.break <> D.text "in"
             <> D.break <> D.indent (D.text "GT.collapseAt")
             <> brindent2
                 [ D.text "{ id = " <> (quote $ unwrap subjectRec.id)
                 , D.text ", name = " <> quote subjectRec.name
-                , D.text ", platform = " <> D.text "T.Platform.<TODO>"
-                , D.text ", playtime = " <> D.text "T.Playtime.<TODO>"
+                , D.text ", platform = " <> D.text "GT.Platform.<TODO>"
+                , D.text ", playtime = " <> D.text "GT.Playtime.<TODO>"
                 , D.text "}"
                 , (D.enclose (D.text "(") (D.text ")") $ mbdaterec subjectRec.trackedAt) <> D.space <> D.text "("
                 ]

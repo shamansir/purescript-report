@@ -19,13 +19,16 @@ import Data.Tuple.Nested ((/\), type (/\))
 
 import Foreign (Foreign, F, fail, ForeignError(..), renderForeignError)
 
+
 -- import Input.CV.Key (w)
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Stats (Stats(..))
-import Report.Modifiers.Progress  (DateRec, PValueTag(..), Progress(..), _readProgress)
+import Report.Modifiers.Progress (DateRec, PValueTag(..), Progress(..), ProgressJson(..))
+import Report.Modifiers.Progress (fromJson, _readProgress, rawToProgressJson) as Progress
 import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Core as CT
+import Report.Core.Logic as CT
 
 import GameLog.Types as GLT
 import GameLog.Types.Achievement (Achievement(..), collectStatsRaw, getProgress)
@@ -67,6 +70,7 @@ newtype FromDhall = FromDhall (Array DhallGame)
 derive instance Newtype FromDhall _
 
 
+{-
 type DhallGameJson =
     { trackedAt :: Maybe DateRec
     , properties :: Array DhallAchRec
@@ -76,10 +80,26 @@ type DhallGameJson =
         , platform :: String
         }
     }
+-}
+
+type DhallSubjectJson =
+    { id :: String
+    , name :: String
+    , properties :: Array DhallAchRec
+    , tabular ::
+        Array
+            { key :: String
+            , value ::
+                { t :: String
+                , v :: Foreign
+                }
+            }
+    , tags :: Array String
+    }
 
 
 type DhallJson =
-    { collection :: Array DhallGameJson
+    { collection :: Array DhallSubjectJson
     }
 
 
@@ -93,15 +113,16 @@ instance ReadForeign FromDhall where
 instance ReadForeign DhallGame where
     readImpl :: Foreign -> F DhallGame
     readImpl frgn = do
-        (dhallGameJSON :: DhallGameJson) <- readImpl frgn
+        (dhallGameJSON :: DhallSubjectJson) <- readImpl frgn
         pure $ processGame dhallGameJSON -- $ foldl insertByRef Map.empty dhallJSON.properties
 
 
-platformFromDhall :: String -> Maybe GLT.Platform
+platformFromDhall :: Maybe String -> Maybe GLT.Platform
 platformFromDhall = case _ of
-    "GPlay" -> Just GLT.Android
-    "Switch" -> Just GLT.NintendoSwitch
-    "Steam" -> Just GLT.Steam
+    Just "GPlay" -> Just GLT.Android
+    Just "Switch" -> Just GLT.NintendoSwitch
+    Just "Steam" -> Just GLT.Steam
+    -- FIXME: TODO
     _ -> Nothing
 
 
@@ -110,16 +131,29 @@ collectFromDhall { collection } = -- TODO: use `trackedAt`
     FromDhall $ processGame <$> collection
 
 
-processGame :: DhallGameJson -> DhallGame
-processGame { properties, game } =
+loadProgressTextValue :: Progress -> Maybe String
+loadProgressTextValue = case _ of
+    PText txt -> Just txt
+    _ -> Nothing
+
+
+findProgressInTabular :: String -> Array { key :: String, value :: { t :: String, v :: Foreign } } -> Maybe Progress
+findProgressInTabular keyName  =
+    Array.find (_.key >>> (_ == keyName))
+        >>> map _.value
+        >>> flip bind ( Progress.rawToProgressJson >>> Progress.fromJson)
+
+
+processGame :: DhallSubjectJson -> DhallGame
+processGame subject =
     DhallGame $ let
         gameAchievements = fillSelfRefs $ fillWithStats $ groupAchievements collectedAchievements
     in
         { game :
             Game
-                { gameId : DHL game.id
-                , name : game.name
-                , mbPlatform : platformFromDhall game.platform
+                { gameId : DHL subject.id
+                , name : subject.name
+                , mbPlatform : platformFromDhall $ loadProgressTextValue =<< findProgressInTabular "platform" subject.tabular
                 , mbSource : Just S_Dhall
                 , stats : collectStats $ GameAchievements gameAchievements
                 }
@@ -129,9 +163,9 @@ processGame { properties, game } =
         emptyGroupsMap :: Map Group (Array Achievement)
         emptyGroupsMap = Map.fromFoldable $ emptyGroupPair <$> {- fillIndexPaths indicesMap -} collectedGroups
         collectedGroups :: Array Group
-        collectedGroups = Array.catMaybes $ isGroup <$> properties
+        collectedGroups = Array.catMaybes $ isGroup <$> subject.properties
         collectedAchievements :: Array (GroupPath /\ Achievement)
-        collectedAchievements = Array.catMaybes $ isAchievement <$> properties
+        collectedAchievements = Array.catMaybes $ isAchievement <$> subject.properties
         emptyGroupPair :: Group -> Group /\ Array Achievement
         emptyGroupPair = flip (/\) []
 
@@ -171,14 +205,14 @@ dhallRecToAchievement rec =
     Achievement
         { name : fromMaybe "" rec.key
         , progress : case rec.value of
-            Just { t, v } ->
+            Just { t, v } -> -- FIXME: see Progress._decodeProgress
                 either
                     (NEL.toUnfoldable
                         >>> map renderForeignError
                         >>> String.joinWith "; "
                         >>> Error)
                     identity
-                $ ME.runExcept $ _readProgress (PValueTag t) v
+                $ ME.runExcept $ Progress._readProgress (PValueTag t) v
             Nothing -> None
         , mbTitle : rec.title
         , mbDescription : rec.detailed
@@ -248,202 +282,3 @@ isAchievement = readDhallRec >>> hush
 
 dhallToAchievements :: FromDhall -> Array (Game /\ GameAchievements)
 dhallToAchievements = unwrap >>> map unwrap >>> map \{ game, groups } -> game /\ GameAchievements groups
-
-
-_writeDhallProgressLines :: Progress -> Array String
-_writeDhallProgressLines = case _ of
-    None ->        pure "T.v_empty"
-    Unknown ->     pure "T.v_empty"
-    PInt i ->      pure $ "T.v_i" <> " " <> "+" <> show i
-    PNumber n ->   pure $ "T.v_n" <> " " <> show n
-    PText text ->  pure $ "T.v_t" <> " " <> quote text
-    ToComplete { done } -> pure $ if done then "T.v_done" else "T.v_none"
-    PercentI i ->  pure $ "T.v_pcti" <> " " <> "+" <> show i
-    PercentN n ->  pure $ "T.v_pct" <> " " <> show n
-    PercentSign { sign, pct } ->
-        let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "T.v_pctx" <> " " <> sign_s <> " " <> show pct
-    ToGetI { got, total } ->
-        pure $ "T.v_pi " <> wrecord
-            [ "got" /\ ("+" <> show got)
-            , "total" /\ ("+" <> show total)
-            ]
-    ToGetN { got, total } ->
-        pure $ "T.v_pd " <> wrecord
-            [ "got" /\ show got
-            , "total" /\ show total
-            ]
-    OnTime timeRec ->
-        pure $ "T.v_time " <> wrecord
-            [ "hrs" /\ ("+" <> show timeRec.hrs)
-            , "min" /\ ("+" <> show timeRec.min)
-            , "sec" /\ ("+" <> show timeRec.sec)
-            ]
-    OnDate sdate ->
-        pure $ "T.v_date " <> sdaterec sdate
-        {-
-        let dateRec = CT.dateToRec sdate
-        in pure $ "T.v_date " <> wrecord
-            [ "day"  /\ ("+" <> show dateRec.day)
-            , "mon"  /\ ("+" <> show dateRec.mon)
-            , "year" /\ ("+" <> show dateRec.year)
-            ]
-        -}
-    PerI { amount, per } ->
-        pure $ "T.v_per " <> " +" <> show amount <> " " <> quote per
-    PerN { amount, per } ->
-        pure $ "T.v_per " <> show amount <> " " <> quote per
-    MeasuredI { amount, measure } ->
-        pure $ "T.v_mes " <> " +" <> show amount <> " " <> quote measure
-    MeasuredN { amount, measure } ->
-        pure $ "T.v_mesd " <> show amount <> " " <> quote measure
-    MeasuredSign { sign, amount, measure } ->
-        let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "T.v_mesx " <> sign_s <> " +" <> show amount <> " " <> quote measure
-    RangeI { from, to } ->
-        pure $ "T.v_rng " <> wrecord
-            [ "from" /\ ("+" <> show from)
-            , "to" /\ ("+" <> show to)
-            ]
-    RangeN { from, to } ->
-        pure $ "T.v_rngd " <> wrecord
-            [ "from" /\ show from
-            , "to" /\ show to
-            ]
-    Task taskP ->
-        pure $ "T.v_proc " <> quote (vtaskP taskP)
-    LevelsI { reached, levels } ->
-        let
-            levelrec lrec =
-                wrecord
-                    [ "maximum" /\ ("+" <> show lrec.maximum)
-                    , "name" /\ quote lrec.name
-                    , "date" /\ mbdaterec lrec.date
-                    ]
-        in
-        [ "T.v_lvli"
-        , indent <> (sfield $ "reached" /\ ("+" <> show reached))
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        ]
-    LevelsN { reached, levels } ->
-        let
-            levelrec lrec =
-                wrecord
-                    [ "maximum" /\ show lrec.maximum
-                    , "name" /\ quote lrec.name
-                    , "date" /\ mbdaterec lrec.date
-                    ]
-        in
-        [ "T.v_lvld"
-        , indent <> (sfield $ "reached" /\  show reached)
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        ]
-    LevelsS { reached, levels } ->
-        let
-            levelrec lrec =
-                wrecord
-                    [ "gives" /\ quote lrec.gives
-                    , "date" /\ mbdaterec lrec.date
-                    ]
-        in
-        [ "T.v_lvls"
-        , indent <> (sfield $ "reached" /\ ("+" <> show reached))
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        ]
-    LevelsE levelsE ->
-        [ "T.v_lvlio"
-        , wrecord
-            [ "reached" /\ ("+" <> show levelsE.reached)
-            , "total" /\ ("+" <> show levelsE.total)
-            ]
-        ]
-    LevelsP { levels } ->
-        let
-            levelrec lrec =
-                wrecord
-                    [ "name" /\ quote lrec.name
-                    , "proc" /\ pvptaskP lrec.proc
-                    , "date" /\ mbdaterec lrec.date
-                    ]
-        in
-        [ "T.v_lvlp"
-        , indent <> (sxfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        ]
-    LevelsC levelsC ->
-        pure $ "T.v_lvlc " <>
-            wrecord
-              [ "reached" /\ ("+" <> show levelsC.levelReached)
-              , "current" /\ ("+" <> show levelsC.reachedAtCurrent)
-              , "total" /\ ("+" <> show levelsC.totalLevels)
-              , "maxcurrent" /\ ("+" <> show levelsC.maximumAtCurrent)
-              , "date" /\ mbdaterec levelsC.date
-              ]
-    LevelsO { reached, levels } ->
-        let
-            levelrec lrec =
-                wrecord
-                    [ "maximum" /\ mbgen "Integer" (\v -> "+" <> show v) lrec.mbMaximum
-                    , "name" /\ quote lrec.name
-                    , "date" /\ mbdaterec lrec.date
-                    ]
-        in
-        [ "T.v_lvli"
-        , indent <> (sfield $ "reached" /\ ("+" <> show reached))
-        , indent <> (xfield "levels")
-        , array (indent <> indent) $ levelrec <$> levels
-        , indent <> recend
-        ]
-    Error err ->
-        pure "" -- FIXME:
-    where
-        indent = "    "
-        quote s = "\"" <> s <> "\""
-        field :: (String /\ String) -> String
-        field = Tuple.uncurry $ \n v -> n <> " = " <> v
-        sfield p = "{ " <> field p
-        nfield p = ", " <> field p
-        xfield n = ", " <> n <> " ="
-        sxfield n = "{ " <> n <> " ="
-        recend = "}"
-        array aindent items = aindent <> "[ " <>  String.joinWith ("\n" <> aindent <> ",") items <> "\n" <> aindent <> "]"
-        wrecord :: Array (String /\ String) -> String
-        wrecord fields = "{" <> String.joinWith ", " (field <$> fields) <> " }"
-        daterecf dateRec =
-            wrecord
-                [ "day"  /\ ("+" <> show dateRec.day)
-                , "mon"  /\ ("+" <> show dateRec.mon)
-                , "year" /\ ("+" <> show dateRec.year)
-                ]
-        sdaterec sdate =
-            daterecf $ CT.dateToRec sdate
-        mbgen :: forall a. String -> (a -> String) -> Maybe a -> String
-        mbgen t f = maybe ("None " <> t) $ \v -> "Some " <> f v
-        mbdaterec =
-            mbgen "T.DATE" daterecf
-        vtaskP = case _ of
-            TTodo -> "T.p_todo"
-            TDoing -> "T.p_doing"
-            TDone -> "T.p_done"
-            TWait -> "T.p_wait"
-            TNow -> "T.p_now"
-            TCanceled -> "T.p_canceled"
-            TLater -> "T.p_later"
-        pvptaskP task = vtaskP task <> "_"
-
-
-_writeDhallAchievementLine :: Achievement -> Array String
-_writeDhallAchievementLine (Achievement ach) =
-      [ "T.kv_" <> " " <> "\"" <> ach.name <> "\"" <> " "
-      ] <> _writeDhallProgressLines ach.progress
-      <> case ach.mbDescription of
-           Just description -> pure "" -- TODO:
-           Nothing -> pure ""
-

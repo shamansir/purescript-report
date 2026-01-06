@@ -62,7 +62,8 @@ let AD/collectTabular
                     ach.trackedAt
                 )
             }
-        ,   { key = "playtime"
+        ,
+            { key = "playtime"
             , value =
                 T.tag (
                     merge
@@ -74,6 +75,10 @@ let AD/collectTabular
                         }
                     ach.game.playtime
                 )
+            }
+        ,
+            { key = "platform"
+            , value = T.tag (T.v_t (platformToTag ach.game.platform))
             }
         ]
 

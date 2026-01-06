@@ -2,11 +2,11 @@ let T = ./Types.dhall
 let GT = ./Game.Types.dhall
 
 in
-    GGT.collapseAt
+    GT.collapseAt
         { id = "forza-horizon-5"
         , name = "Forza Horizon 5"
-        , platform = GGT.Platform.Steam
-        , playtime = GGT.Playtime.Exact { hrs = +69, min = +30, sec = +0 }
+        , platform = GT.Platform.Steam
+        , playtime = GT.Playtime.Exact { hrs = +69, min = +30, sec = +0 }
         }
         { day = +14, mon = +8, year = +2025 }
 

@@ -14,6 +14,7 @@ import Data.Array (length, all) as Array
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
+import Report.Core.Logic as CT
 import Report.Modifiers (class IsModifier)
 import Report.Modifiers.Task (TaskP(..))
 
@@ -222,6 +223,10 @@ $ ME.runExcept $ _readProgress (PValueTag t) v
 -}
 
 
+rawToProgressJson :: { t :: String, v :: Foreign } -> ProgressJson
+rawToProgressJson { t, v } = ProgressJson { t : PValueTag t, v }
+
+
 instance WriteForeign Progress where
     writeImpl = writeImpl <<< _writeProgress
 
@@ -334,6 +339,10 @@ _readProgress (PValueTag atag) frgn =
           }
 
 
+fromJson :: ProgressJson -> Maybe Progress
+fromJson = _decodeProgress >>> CT.foreignToMaybe
+
+
 valueTagOf :: Progress -> PValueTag
 valueTagOf = case _ of
     None -> PValueTag "E"
@@ -444,6 +453,3 @@ nProgressToNumber = case _ of
     NotAchieved -> 0.0
     StatsValue -> -1.0
     Skip -> -2.0
-
-
-

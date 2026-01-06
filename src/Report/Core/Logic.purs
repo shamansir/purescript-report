@@ -2,7 +2,11 @@ module Report.Core.Logic where
 
 import Prelude
 
+import Foreign (F)
+import Control.Monad.Except (runExcept)
+
 import Data.Maybe (Maybe(..), maybe)
+import Data.Either (hush)
 import Data.Newtype (class Newtype)
 
 
@@ -53,3 +57,7 @@ voeFromMaybe = maybe view edit
 newtype EncodedValue = EncodedValue String
 derive instance Newtype EncodedValue _
 derive newtype instance Eq EncodedValue
+
+
+foreignToMaybe :: forall a. F a -> Maybe a
+foreignToMaybe = runExcept >>> hush
