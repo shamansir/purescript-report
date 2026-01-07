@@ -33,6 +33,10 @@ import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Tags (Tags)
 import Report.Prefix (Key(..), Prefix(..)) as P
 import Report.Suffix (Key(..), Suffix(..)) as S
+import Report.Modifiers.Progress (Progress(..)) as P
+import Report.Tabular (Tabular)
+import Report.Tabular (findV) as Tabular
+import Report.Modifiers.Tabular.TabularValue as TV
 
 import Dodo
 import Dodo as D
@@ -56,6 +60,14 @@ toDhall =
         -- >>> Array.concat
         -- >>> String.joinWith "\n"
     where
+        mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
+            TV.TVDate sdate -> Just $ CT.dateToRec sdate
+            TV.TVSuffix (S.SProgress (P.OnDate sdate)) -> Just $ CT.dateToRec sdate
+            _ -> Nothing
+        -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
+        --     TV.TVTime timeRec -> Just timeRec
+        --     _ -> Nothing
+
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
@@ -68,7 +80,7 @@ toDhall =
                 , D.text ", platform = " <> D.text "GT.Platform.<TODO>"
                 , D.text ", playtime = " <> D.text "GT.Playtime.<TODO>"
                 , D.text "}"
-                , (D.enclose (D.text "(") (D.text ")") $ mbdaterec subjectRec.trackedAt) <> D.space <> D.text "("
+                , (D.enclose (D.text "(") (D.text ")") $ mbdaterec $ mbTrackedAt subjectRec.tabular) <> D.space <> D.text "("
                 ]
             <> fold (mapWithIndex convertGroup groups)
             <> D.break <> D.break <> D.indent (D.text ")")
@@ -109,19 +121,8 @@ toDhall =
                                 _ol $ D.text "p_task " -- <> quote (modRec.value)
                         )
                         modRec.value
-
-                    -- let (mbPKey :: Maybe P.Key) = decodeKey modRec.mkey in
-                    -- case mbPKey of
-                    --     Just P.KRating ->
-                    --         _ol $ D.text "p_rating " -- <> quote (modRec.value)
-                    --     Just P.KPriority ->
-                    --         _ol $ D.text "p_priority " -- <> quote (modRec.value)
-                    --     Just P.KTask ->
-                    --         _ol $ D.text "p_task " -- <> quote (modRec.value)
-                    --     Nothing ->
-                    --         _ol $ quote modRec.mkey
                 S ->
-                    withImplRA @(S.Suffix item_tag)
+                    withImplRA @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
                         (case _ of
                             S.SProgress p ->
                                 _progressToDhall p
@@ -143,28 +144,6 @@ toDhall =
                                     # _ol
                         )
                         modRec.value
-                    -- case (readImpl modRec.value :: F (Suffix item_tag)) of
-                    --     Just
-
-                    {-
-                    case Debug.spy "mbSKey" mbSKey of
-                        Just (S.KProgress _) ->
-                            withImplRA @Progress _progressToDhall modRec.value
-                        Just S.KEarnedAt ->
-                            withImplRA @CT.SDate (sdaterec >>> prefixD "// T.inj/date" >>> _ol) modRec.value
-                        Just S.KDescription ->
-                            withImplRA @String (quote >>> prefixD "// T.inj/det" >>> _ol) modRec.value
-                        Just S.KReference ->
-                            withImplRA @GroupPath
-                                (unwrap >>> map (unwrap >>> quote) >>> ilarrayD >>> prefixD "// T.inj/self" >>> _ol)
-                                modRec.value
-                        Just S.KTags ->
-                            withImplRA @(Tags item_tag)
-                                (unwrap >>> map (tagContent >>> quote) >>> ilarrayD >>> prefixD "// T.inj/tags" >>> _ol)
-                                modRec.value
-                        Nothing ->
-                            _ol $ quote modRec.mkey
-                    -}
 
 
         alignModifiers :: Array (RenderedAs (Doc Unit)) -> Doc Unit
@@ -246,11 +225,7 @@ _progressToDhall = case _ of
             , "total" /\ show total
             ]
     OnTime timeRec ->
-        _ol $ wrapbrkD $ D.text "T.v_time " <> wrecord
-            [ "hrs" /\ ("+" <> show timeRec.hrs)
-            , "min" /\ ("+" <> show timeRec.min)
-            , "sec" /\ ("+" <> show timeRec.sec)
-            ]
+        _ol $ wrapbrkD $ D.text "T.v_time " <> timereccf timeRec
     OnDate sdate ->
         _ol $ wrapbrkD $ D.text "T.v_date " <> sdaterec sdate
         {-
@@ -513,6 +488,15 @@ daterecf dateRec =
         [ "day"  /\ ("+" <> show dateRec.day)
         , "mon"  /\ ("+" <> show dateRec.mon)
         , "year" /\ ("+" <> show dateRec.year)
+        ]
+
+
+timereccf :: forall a. CT.STimeRec -> Doc a
+timereccf timeRec =
+    wrecord
+        [ "hrs" /\ ("+" <> show timeRec.hrs)
+        , "min" /\ ("+" <> show timeRec.min)
+        , "sec" /\ ("+" <> show timeRec.sec)
         ]
 
 sdaterec :: forall a. CT.SDate -> Doc a

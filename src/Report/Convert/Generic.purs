@@ -40,6 +40,7 @@ class
     , EncodableKey subj_id -- V
     , WriteForeign item_tag -- V
     , ReadForeign item_tag
+    , WriteForeign subj_tag
     -- => WriteForeign subj_tag
     , ToReport subj group item x
     )
@@ -64,8 +65,8 @@ toExport =
             , name  : s_name  @subj_id subj
             , tags  : i_tags  @subj_tag subj <#> tagContent
             , stats : i_stats subj
-            , trackedAt : Nothing -- TODO
-            , properties : [] -- TODO
+            -- , trackedAt : Nothing -- TODO
+            -- , properties : [] -- collectModifiers @subj_tag subj
             -- , tabular : Tabular.empty
             , tabular : i_tabular subj
             }

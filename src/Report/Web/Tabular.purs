@@ -16,13 +16,32 @@ import Report.Modifiers.Tabular.TabularValue (TabularValue(..))
 import Report.Web.Helpers
 
 
-renderTabularValues
+renderSubjectTabularValues
     :: forall item w i
      . S.HasTabular item
     -- => SuffixesRenderConfig i
     => item
     -> H w i
-renderTabularValues item =
+renderSubjectTabularValues item =
+    let
+        i_tabular = S.i_tabular item
+        tabularItems = Tabular.items i_tabular
+    in
+        if Array.length tabularItems > 0 then
+            HH.span
+                [ HP.style "display: block; margin: 0 0 14px 2px; color: royalblue; font-size: 0.8em; position: relative; top: -19px;" ]
+                $ tabularItems <#> renderTabularValue
+        else
+            HH.span_ []
+
+
+renderItemTabularValues
+    :: forall item w i
+     . S.HasTabular item
+    -- => SuffixesRenderConfig i
+    => item
+    -> H w i
+renderItemTabularValues item =
     let
         i_tabular = S.i_tabular item
         tabularItems = Tabular.items i_tabular
@@ -41,6 +60,7 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
         [ qcolorSpan tabularLabelColor label
         , qspacerSpan
         , qtabularsplitSpan
+        , qspacerSpan
         , valueSpan value
         ]
     where

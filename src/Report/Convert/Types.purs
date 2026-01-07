@@ -50,8 +50,8 @@ type SubjectRec =
     { name :: String
     , id :: SubjectId
     , stats :: Stats
-    , trackedAt :: Maybe DateRec -- TODO
-    , properties :: Array ModifierRec
+    -- , trackedAt :: Maybe DateRec -- TODO
+    -- , properties :: Array ModifierRec
     , tags :: Array String
     , tabular :: Tabular TabularValue
     }

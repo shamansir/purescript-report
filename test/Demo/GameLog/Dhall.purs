@@ -25,8 +25,12 @@ import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Progress (DateRec, PValueTag(..), Progress(..), ProgressJson(..))
 import Report.Modifiers.Progress (fromJson, _readProgress, rawToProgressJson) as Progress
+import Report.Tabular (Tabular)
+import Report.Tabular (findV, fromArray) as Tabular
+import Report.Modifiers.Tabular.TabularValue as TV
 import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
+import Report.Suffix (Suffix(..), Key(..)) as S
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Convert.Dhall.Import (DhallItemRec)
@@ -69,25 +73,40 @@ type DhallGameJson =
     }
 -}
 
+type DhallTabular =
+    Array
+        { key :: String
+        , value ::
+            { t :: String
+            , v :: Foreign
+            }
+        }
+
+
 type DhallSubjectJson =
     { id :: String
     , name :: String
     , properties :: Array DhallAchRec
     , tags :: Array String
-    , tabular ::
-        Array
-            { key :: String
-            , value ::
-                { t :: String
-                , v :: Foreign
-                }
-            }
+    , tabular :: DhallTabular
     }
 
 
 type DhallJson =
     { collection :: Array DhallSubjectJson
     }
+
+
+loadTabular :: DhallTabular -> Tabular Progress
+loadTabular = Tabular.fromArray <<< map loadProgress
+    where
+        loadProgress { key, value } =
+            key /\
+                (Progress.rawToProgressJson value
+                    # Progress.fromJson
+                    # fromMaybe Unknown
+                    -- # maybe (TV.TVString "---") (TV.TVSuffix <<< S.SProgress)
+                    )
 
 
 instance ReadForeign FromDhall where
@@ -144,11 +163,16 @@ processGame subject =
                 , name : subject.name
                 , mbPlatform : platformFromDhall $ loadProgressTextValue =<< findProgressInTabular "platform" subject.tabular
                 , mbSource : Just S_Dhall
+                , mbTrackedAt : gameTabluar # Tabular.findV "trackedAt" >>= case _ of
+                    OnDate sdate -> Just sdate
+                    _ -> Nothing
                 , stats : collectStats $ GameAchievements gameAchievements
                 }
         , groups : gameAchievements
         }
     where
+        gameTabluar = loadTabular subject.tabular
+
         emptyGroupsMap :: Map Group (Array Achievement)
         emptyGroupsMap = Map.fromFoldable $ emptyGroupPair <$> {- fillIndexPaths indicesMap -} collectedGroups
         collectedGroups :: Array Group
@@ -189,19 +213,24 @@ processGame subject =
                 Nothing -> Group group
 
 
+adaptForeignProgress :: F Progress -> Progress -- -- FIXME: see Progress.rawToProgressJson value # Progress.fromJson,  also `loadTabular` above
+adaptForeignProgress =
+    either
+        (NEL.toUnfoldable
+            >>> map renderForeignError
+            >>> String.joinWith "; "
+            >>> Error)
+        identity
+        <<< ME.runExcept
+
+
 dhallRecToAchievement :: DhallAchRec -> Achievement
 dhallRecToAchievement rec =
     Achievement
         { name : fromMaybe "" rec.key
         , progress : case rec.value of
-            Just { t, v } -> -- FIXME: see Progress._decodeProgress
-                either
-                    (NEL.toUnfoldable
-                        >>> map renderForeignError
-                        >>> String.joinWith "; "
-                        >>> Error)
-                    identity
-                $ ME.runExcept $ Progress._readProgress (PValueTag t) v
+            Just { t, v } -> -- FIXME: see Progress.rawToProgressJson value # Progress.fromJson, Progress._decodeProgress / DecodeKeyed.toValue, also `loadTabular` above
+                adaptForeignProgress $ Progress._readProgress (PValueTag t) v
             Nothing -> None
         , mbTitle : rec.title
         , mbDescription : rec.detailed

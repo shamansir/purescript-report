@@ -51,7 +51,7 @@ import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Prefix (renderPrefixes)
 import Report.Web.Suffix (renderSuffixes)
-import Report.Web.Tabular (renderTabularValues)
+import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 
 
 type State subj_id subj_tag report =
@@ -139,6 +139,9 @@ class
     , R.HasTabular item
     , R.HasTags subj_tag subj
     , R.HasStats subj
+    , R.HasTabular subj
+    -- , R.HasPrefixes subj
+    -- , R.HasSuffixes subj_tag subj
     , R.HasStats group
     )
     <= Has subj_tag item_tag subj group item (x :: Type)
@@ -490,13 +493,16 @@ renderSubject
     :: forall @subj_id @subj_tag @item_tag subj group item slots m
      . Eq subj_id
     => R.IsTag item_tag
+    => R.IsTag subj_tag
     => R.IsItem item
     => R.IsGroup group
     => R.IsSubject subj_id subj
     => R.HasPrefixes item
     => R.HasSuffixes item_tag item
     => R.HasTabular item
+    => R.HasTabular subj
     => R.HasStats group
+    => R.HasTags subj_tag subj
     => NavigatedTo subj_id
     -> subj
     -> Map group (Array item)
@@ -508,13 +514,20 @@ renderSubject navigatedTo subj itemsMap  =
             [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
             , HE.onClick $ const ClearNavigation
             ]
-            [ HH.text $ R.s_name @subj_id subj ]
+            [ HH.text $ R.s_name @subj_id subj
+            , HH.span [ HP.style "font-size: 0.8em; margin-left: 5px;" ] $ pure $ renderSubjTags (R.i_tags @subj_tag subj)
+            ]
+        : (renderSubjectTabularValues subj)
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
             subjId = R.s_id subj
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"
+
+            renderSubjTags :: Array subj_tag -> _
+            renderSubjTags subj_tags = HH.span [] $ subjTagWrap <$> subj_tags
+
             renderTree (group /\ groupItems) =
                 let
                     groupPath = R.g_path group
@@ -594,7 +607,7 @@ renderSubject navigatedTo subj itemsMap  =
                             }
                             item
                         )
-                    : pure (renderTabularValues item)
+                    : pure (renderItemTabularValues item)
 
 
 -- TODO: remove

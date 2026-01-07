@@ -8,9 +8,11 @@ import Data.Newtype (class Newtype, unwrap)
 import Yoga.JSON (class WriteForeign, writeImpl)
 
 import Report.Class
+import Report.Core as CT
 import Report.Modifiers.Stats (Stats)
-import Report.Convert.Keyed (class EncodableKey)
+import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Tabular as Tabular
+import Report.Modifiers.Tabular.TabularValue as TV
 
 import GameLog.Types as GLT
 
@@ -49,13 +51,18 @@ newtype Game =
         , gameId :: GameId
         , mbPlatform :: Maybe GLT.Platform
         , mbSource :: Maybe Source
+        , mbTrackedAt :: Maybe CT.SDate
         , stats :: Stats
         }
 
 
 derive instance Newtype Game _
-derive instance Eq Game -- TODO: compare by GameId+Platform?
-derive instance Ord Game -- TODO: compare by GameId+Platform?
+instance Eq Game where eq a b = toUniqueKey a == toUniqueKey b
+instance Ord Game where compare a b = compare (toUniqueKey a) (toUniqueKey b)
+
+
+toUniqueKey :: Game -> String
+toUniqueKey game = gameName game <> " :: " <> encodeKey (gameId game)
 
 
 gameName :: Game -> String
@@ -125,7 +132,13 @@ instance EncodableKey GameId where
 
 
 instance HasTabular Game where
-    i_tabular = const $ Tabular.empty -- FIXME
+    i_tabular (Game gameRec) =
+        Tabular.empty
+            -- # Tabular.insert "name" (TV.TVString gameRec.name)
+            # case gameRec.mbTrackedAt of
+                Nothing -> identity
+                Just trackedAt ->
+                    Tabular.insert "trackedAt" $ TV.TVDate trackedAt
 
 
 instance WriteForeign GameTag where

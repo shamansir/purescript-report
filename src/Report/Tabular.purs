@@ -3,10 +3,11 @@ module Report.Tabular where
 import Prelude
 
 import Data.Int as Int
-import Data.Array (snoc, sortWith) as Array
+import Data.Array (snoc, sortWith, find) as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.String (joinWith) as String
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Type.Proxy (Proxy(..))
 import Type.Data.Symbol (class IsSymbol, reflectSymbol)
@@ -78,6 +79,14 @@ instance ToTabularValue Int String where toTV = Just <<< Int.toStringAs Int.deci
 instance ToTabularValue Number String where toTV = Just <<< show
 
 
+find :: forall v. String -> Tabular v -> Maybe (Item v)
+find s (Tabular vs) = Array.find (unwrap >>> _.key >>> (_ == s)) vs
+
+
+findV :: forall v. String -> Tabular v -> Maybe v
+findV s = find s >>> map (unwrap >>> _.value)
+
+
 empty :: forall v. Tabular v
 empty = Tabular []
 
@@ -96,6 +105,10 @@ insert s v (Tabular vs) = Tabular $ Array.snoc vs $ wrap { key : s, label : s, v
 
 fromRec :: forall rl row v. RL.RowToList row rl => Record.Keys rl => TabularRow rl row v => Record row -> Tabular v
 fromRec record = toTabularBase (Proxy :: _ v) (Proxy :: _ rl) record empty
+
+
+fromArray :: forall v. Array (String /\ v) -> Tabular v
+fromArray arr = Tabular $ (\(k /\ v) -> Item { key: k, label: k, value: v }) <$> arr
 
 
 -- reorder :: forall v. (String -> Int) -> Tabular v -> Tabular v
