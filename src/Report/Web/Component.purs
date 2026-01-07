@@ -63,6 +63,7 @@ type State subj_id subj_tag report =
     , sortBy :: SubjectSort
     , readOnlyMode :: Boolean
     , debugEnabled :: Boolean
+    , showSubjectNavNames :: Boolean
     , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
     }
@@ -89,6 +90,8 @@ data Action subj_id subj_tag report
     | CancelEditing
     | ToggleReadOnlyMode
     | ToggleDebugMode
+    | TurnSubjectNavNamesOn
+    | TurnSubjectNavNamesOff
     | EnableExport ExportTarget
     | DisableExport
     | NoOp
@@ -192,6 +195,7 @@ component preSelected =
         , sortBy : ByWeight
         , readOnlyMode : true
         , debugEnabled : false
+        , showSubjectNavNames : false
         , mbExportTo : Nothing
         , navigatedTo : Navigation.init
         }
@@ -202,24 +206,24 @@ component preSelected =
     selectionKeyToSubject :: Array subj -> Map subj_id subj
     selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
 
+
     selectedSubjects :: R.TransferMap subj group item -> Map subj_id subj -> Array subj_id -> Array (subj /\ Map group (Array item))
     selectedSubjects report selKeys subjects = Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
 
     render :: State subj_id subj_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
     render state =
-        let
-            report = R.toMap state.report
-            allSubjects = Set.toUnfoldable $ Map.keys report
-            selKeys = selectionKeyToSubject allSubjects
-        in HH.div
+        HH.div
             [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
             [ HH.div
                 [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;"
                 -- , HE.onClick $ const ClearNavigation
                 ]
-                $ ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
-                <$> selectedSubjects report selKeys state.subjects
-                ) <> pure menuButtons
+                $
+                ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
+                    <$> selectedSubjects report selKeys state.subjects
+                )
+                <> pure menuButtons
+                <> pure subjSelNavigation
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
@@ -239,6 +243,10 @@ component preSelected =
             ]
         where
 
+            report = R.toMap state.report
+            allSubjects = Set.toUnfoldable $ Map.keys report
+            selKeys = selectionKeyToSubject allSubjects
+
             includeRule = Report.includeOnly state.subjects
 
             exportTextFor = case _ of
@@ -246,10 +254,19 @@ component preSelected =
                 Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
             exportSelected trg = state.mbExportTo == Just trg
 
+            findSubjName :: subj_id -> Maybe String
+            findSubjName subjId = Map.lookup subjId selKeys <#> R.s_name @subj_id
+
             menuButtons =
                 HH.div
                     [ HP.style "position: fixed; right: 25%; top: 0; border-radius: 5px; background: aliceblue; padding: 5px;" ]
                     $ menuButton <$>
+                        (if not state.readOnlyMode && Navigation.isEditing state.navigatedTo then
+                            [ { label : "✎", onClick : const CancelEditing, enabled : true } ]
+                        else
+                            [ ]
+                        )
+                        <>
                         [ { label : if state.readOnlyMode then "🔒" else "🔓", onClick : const ToggleReadOnlyMode, enabled : state.readOnlyMode }
                         , { label : if state.debugEnabled then "🛠" else "🛠", onClick : const ToggleDebugMode,    enabled : state.debugEnabled }
                         , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json }
@@ -264,6 +281,33 @@ component preSelected =
                         <> (if enabled then "border: 1px solid beige; opacity: 0.8" else "border: 1px solid lightgray; opacity: 0.6;")
                     ]
                     [ HH.text label ]
+
+            subjSelNavigation =
+                HH.div
+                    [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
+                        -- <> if state.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
+                    ]
+                    $ subjNavigationItem <$> state.subjects
+
+            subjNavigationItem subjId =
+                let
+                    uniqueId = R.s_unique @subj_id @subj subjId
+                    subjName = findSubjName subjId # fromMaybe "--"
+                in HH.span
+                    []
+                    [ HH.a
+                        [ HP.href $ "#subject-" <> uniqueId, HP.style "color: darkgoldenrod; text-decoration: none;"
+                        , HE.onMouseEnter $ const TurnSubjectNavNamesOn
+                        , HE.onMouseLeave $ const TurnSubjectNavNamesOff
+                        ]
+                        [ if state.showSubjectNavNames
+                            then HH.span
+                                [ HP.style "color: black; margin-right: 5px; font-size: 0.7em; position: relative; top: -1px; margin-left: 4px; " ]
+                                [ HH.text subjName ]
+                            else HH.text ""
+                        , HH.text "⦿"
+                        ]
+                    ]
 
     subjectsToc state allSubjects =
         HH.div
@@ -340,10 +384,10 @@ component preSelected =
         ByWeight -> R.i_stats >>> R.weightOf >>> SN
         Alpha ->    R.s_name @subj_id >>> SS
 
-    subjTocRow selectedSubjects subj =
+    subjTocRow selectedSubjectsIds subj =
         let
             subjId = s_id subj
-            isSelected = Array.elem subjId selectedSubjects
+            isSelected = Array.elem subjId selectedSubjectsIds
         in HH.div
             [ HP.style "margin: 5px 0;" ]
             [ HH.span
@@ -487,6 +531,8 @@ component preSelected =
         ToggleDebugMode -> H.modify_ \s -> s { debugEnabled = not s.debugEnabled }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
+        TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
+        TurnSubjectNavNamesOn -> H.modify_ \s -> s { showSubjectNavNames = true }
         NoOp -> pure unit
 
 
@@ -497,6 +543,7 @@ renderSubject
     => R.IsTag subj_tag
     => R.IsItem item
     => R.IsGroup group
+    => R.IsSubjectId subj_id subj
     => R.IsSubject subj_id subj
     => R.HasPrefixes item
     => R.HasSuffixes item_tag item
@@ -510,7 +557,9 @@ renderSubject
     -> HH.ComponentHTML (Action subj_id subj_tag (R.Report subj group item)) slots m
 renderSubject navigatedTo subj itemsMap  =
     HH.div
-        [ HP.style "padding: 10px 0 10px 20px;" ]
+        [ HP.style "padding: 10px 0 10px 20px;"
+        , HP.id $ "subject-" <> subjUniqueId
+        ]
         $ HH.div
             [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
             , HE.onClick $ const ClearNavigation
@@ -522,6 +571,7 @@ renderSubject navigatedTo subj itemsMap  =
         : (renderTree <$> Map.toUnfoldable itemsMap)
         where
             subjId = R.s_id subj
+            subjUniqueId = R.s_unique @subj_id @subj subjId
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"

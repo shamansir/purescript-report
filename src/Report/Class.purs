@@ -48,6 +48,7 @@ class IsGroup a where
 
 class IsSubjectId i a where
     s_id :: a -> i
+    s_unique :: i -> String
 
 
 class IsSubjectId i a <= IsSubject i a where

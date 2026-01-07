@@ -147,6 +147,7 @@ instance WriteForeign GameTag where
 
 instance IsSubjectId GameId Game where
     s_id = unwrap >>> _.gameId
+    s_unique = encodeKey
 
 
 instance IsSubject GameId Game where
