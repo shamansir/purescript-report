@@ -40,6 +40,7 @@ import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as
 import GameLog.Types.Achievement (Tag) as GL
 import Report (toReport)
 
+import Report.Convert.Generic (includeAll) as R
 import Report.Convert.Dhall (toDhall) as D
 
 
@@ -60,7 +61,7 @@ main = runSpecAndExitProcess [consoleReporter] do
             (\dhallGameCollection -> do
                 let gameCollection  = GL.dhallToAchievements dhallGameCollection
                 let (glReport :: GL.GamesReport) = toReport $ GL.fromArray gameCollection
-                let reportDhall = D.toDhall @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag glReport
+                let reportDhall = D.toDhall @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag R.includeAll glReport
                 reportDhall `U.shouldEqual` expectedDhall
             )
             eDhallGameCollection
@@ -78,10 +79,10 @@ in
     GT.collapseAt
         { id = "DHL:astral-chain"
         , name = "Astral Chain"
-        , platform = T.Platform.<TODO>
-        , playtime = T.Playtime.<TODO>
+        , platform = GT.Platform.<TODO>
+        , playtime = GT.Playtime.<TODO>
         }
-        (None T.DATE) (
+        (Some { day = +12, mon = +8, year = +2025 }) (
 
     T.group "File" [ "00-file" ]
         [ T.kv_ "Time" (T.v_time { hrs = +7, min = +54, sec = +0 })

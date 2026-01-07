@@ -2,17 +2,18 @@ module Report.Convert.Json where
 
 import Prelude
 
-import Yoga.JSON (class WriteForeign, writePrettyJSON)
+import Yoga.JSON (writePrettyJSON)
 
 import Report (Report)
-import Report.Convert.Generic (class ToExport, toExport) as Report
+import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 
 
 toJson
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Ord group
     => Report.ToExport subj_id subj_tag item_tag subj group item x
-    => Report subj group item
+    => Report.IncludeRule subj_id
+    -> Report subj group item
     -> String
-toJson =
-    Report.toExport @x @subj_id @subj_tag @item_tag >>> writePrettyJSON 4
+toJson inclRule =
+    Report.toExport @x @subj_id @subj_tag @item_tag inclRule >>> writePrettyJSON 4

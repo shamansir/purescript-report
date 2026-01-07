@@ -26,7 +26,7 @@ import Report.GroupPath (GroupPath)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
-import Report.Convert.Generic (class ToExport, toExport) as Report
+import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 
 import Report.Modifiers.Progress (Progress(..), PValueTag(..))
 import Report.Modifiers.Task (TaskP(..))
@@ -47,10 +47,11 @@ toDhall
      . Report.ToExport subj_id subj_tag item_tag subj group item x
     => ReadForeign item_tag
     => IsTag item_tag
-    => Report subj group item
+    => Report.IncludeRule subj_id
+    -> Report subj group item
     -> String
-toDhall =
-    Report.toExport @x @subj_id @subj_tag @item_tag
+toDhall inclRule =
+    Report.toExport @x @subj_id @subj_tag @item_tag inclRule
         >>> unwrap
         >>> _.subjects
         >>> map (unwrap >>> convertSubject)

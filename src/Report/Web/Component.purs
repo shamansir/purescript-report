@@ -39,7 +39,7 @@ import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
 import Report.Modifiers.Class.ValueModify as VModify
-import Report.Convert.Generic (class ToExport) as Report
+import Report.Convert.Generic (class ToExport, includeOnly) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Dhall (toDhall) as Report
 
@@ -239,10 +239,11 @@ component preSelected =
             ]
         where
 
-            exportTextFor = case _ of
-                Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag
-                Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag
+            includeRule = Report.includeOnly state.subjects
 
+            exportTextFor = case _ of
+                Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
+                Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
             exportSelected trg = state.mbExportTo == Just trg
 
             menuButtons =

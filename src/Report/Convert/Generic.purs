@@ -6,7 +6,8 @@ import Data.Maybe (Maybe(..))
 import Data.Map (Map)
 import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
-import Data.Tuple (curry, uncurry) as Tuple
+import Data.Tuple (fst, snd, curry, uncurry) as Tuple
+import Data.Array (filter, elem) as Array
 
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
@@ -27,6 +28,7 @@ exportVersion = ExportVersion 2 :: ExportVersion
 
 class
     ( Ord group -- V
+    , Eq subj_id
     , IsTag subj_tag -- V
     , IsItem item -- V
     , IsGroup group -- V
@@ -47,15 +49,29 @@ class
     <= ToExport subj_id subj_tag item_tag subj group item (x :: Type)
 
 
+data IncludeRule subj_id
+    = IncludeAll
+    | IncludeOnly (Array subj_id)
+
+
+includeAll = IncludeAll :: forall subj_id. IncludeRule subj_id
+includeOnly = IncludeOnly :: forall subj_id. Array subj_id -> IncludeRule subj_id
+
+
 toExport
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . ToExport subj_id subj_tag item_tag subj group item x
-    => Report subj group item
+    => IncludeRule subj_id
+    -> Report subj group item
     -> ReportToExport
-toExport =
+toExport inclRule =
     ReportToExport
         <<< (\subjects -> { version : exportVersion, subjects })
         <<< map (Tuple.uncurry subjectToExport)
+        <<< Array.filter (Tuple.fst >>> \subj -> case inclRule of
+            IncludeAll -> true
+            IncludeOnly ids -> Array.elem (s_id subj) ids
+        )
         <<< Map.toUnfoldable
         <<< Report.toMap
     where
