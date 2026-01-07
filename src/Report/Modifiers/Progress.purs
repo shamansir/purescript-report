@@ -76,7 +76,7 @@ data Progress
     | LevelsE LevelsE
     | LevelsC LevelsC
     | LevelsP LevelsP
-    -- TODO: Relation
+    | RelTime Relation TimeRec
     | Error String
 
 
@@ -93,6 +93,15 @@ data NProgress
     | NotAchieved
     | StatsValue
     | Skip
+
+
+data Relation
+    = RMoreThan
+    | REqual
+    | RLessThan
+
+
+derive instance Eq Relation
 
 
 -- data IProgress
@@ -160,6 +169,7 @@ progressToString = case _ of
         show levelReached <> "/" <> show totalLevels <> "L" <> ":" <> show reachedAtCurrent <> "/" <> show maximumAtCurrent
     LevelsP { levels } ->
         levelPrefix <> (String.joinWith levelSep $ show <$> levels)
+    RelTime rel { hrs, min, sec } -> relation rel <> " " <> show hrs <> ":" <> show min <> ":" <> show sec
     Error err -> "ERROR: " <> show err
     where
         done_ = "[V]"
@@ -188,6 +198,10 @@ progressToString = case _ of
         showLevelS :: Int -> Int -> LevelS -> String
         showLevelS reached n { gives } =
             show n <> " : " <>  gives
+        relation = case _ of
+            RMoreThan -> ">"
+            REqual -> "="
+            RLessThan -> "<"
 
 
 {- JSON -}
@@ -291,6 +305,8 @@ _writeProgress = case _ of
         { t : pvt "LVLP", v : writeImpl levelsP }
     LevelsC levelsC ->
         { t : pvt "LVLC", v : writeImpl $ convertLevelsC levelsC }
+    RelTime rel timeRec ->
+        { t : pvt "RELT", v : writeImpl { rel : encodeRel rel, time : timeRec } }
     Error err ->
         { t : pvt "X", v : writeImpl err }
     where
@@ -336,6 +352,8 @@ _readProgress (PValueTag atag) frgn =
         "LVLS" -> LevelsS <$> (readImpl frgn :: F LevelsS)
         "LVLP" -> LevelsP <$> (readImpl frgn :: F LevelsP)
         "LVLC" -> LevelsC <$> convertLevelsC <$> (readImpl frgn :: F { reached :: Int, levels :: Int, current :: Int, maxcurrent :: Int, date :: Maybe DateRec })
+        "RELT" ->
+            (readImpl frgn :: F { rel :: String, time :: TimeRec }) <#> \{ rel, time } -> RelTime (decodeRel rel) time
         "X" -> Error <$> (readImpl frgn :: F String)
         _ -> pure None
     where
@@ -383,6 +401,7 @@ valueTagOf = case _ of
     LevelsP _ -> PValueTag "LVLP"
     LevelsC _ -> PValueTag "LVLC"
     LevelsE _ -> PValueTag "LVLE"
+    RelTime _ _ -> PValueTag "RELT"
     Error _ -> PValueTag "X"
 
 
@@ -411,6 +430,7 @@ loadNProgress =
         OnTime _ -> StatsValue
         RangeI _ -> StatsValue
         RangeN _ -> StatsValue
+        RelTime _ _ -> StatsValue
         ToComplete { done } -> if done then Achieved else NotAchieved
         ToGetI { got, total } -> if got >= total && total /=   0 then Achieved else if got == 0   || total == 0   then NotAchieved else OnTheWay $ Int.toNumber $ got / total
         ToGetN { got, total } -> if got >= total && total /= 0.0 then Achieved else if got == 0.0 || total == 0.0 then NotAchieved else OnTheWay $ got / total
@@ -463,3 +483,18 @@ nProgressToNumber = case _ of
     NotAchieved -> 0.0
     StatsValue -> -1.0
     Skip -> -2.0
+
+
+encodeRel :: Relation -> String
+encodeRel = case _ of
+    RMoreThan -> ">"
+    REqual -> "="
+    RLessThan -> "<"
+
+
+decodeRel :: String -> Relation
+decodeRel = case _ of
+    ">" -> RMoreThan
+    "=" -> REqual
+    "<" -> RLessThan
+    _   -> REqual

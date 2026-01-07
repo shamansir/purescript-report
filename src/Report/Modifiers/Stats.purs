@@ -89,6 +89,7 @@ gotTotalFrom =
         OnTime _ -> GTStatsValue
         RangeI _ -> GTStatsValue
         RangeN _ -> GTStatsValue
+        RelTime _ _ -> GTStatsValue
         ToComplete { done } -> Defined { got : if done then 1 else 0, total : 1 }
         Task task -> Defined { got : if task == TDone then 1 else 0, total : 1 }
         ToGetI { got, total } -> Defined { got, total }

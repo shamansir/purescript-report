@@ -32,6 +32,7 @@ import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
 import Report.Convert.Text.Suffix (encodeSuffix) as Suffix
+import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Modify (Location(..))
@@ -66,6 +67,7 @@ type State subj_id subj_tag report =
     , showSubjectNavNames :: Boolean
     , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
+    -- , TODO: collapsed :: Map subj_id (Map GroupPath Boolean)
     }
 
 

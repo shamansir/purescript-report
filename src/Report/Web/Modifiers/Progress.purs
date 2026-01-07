@@ -16,7 +16,7 @@ import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Suffix (Key) as Suffix
 import Report.Modifiers.Task (TaskP(..)) as S
-import Report.Modifiers.Progress (Progress(..)) as Prog
+import Report.Modifiers.Progress (Progress(..), Relation(..)) as Prog
 import Report.Convert.Keyed
 
 import Halogen.HTML as HH
@@ -396,6 +396,23 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
                 ]
                 : -} (renderLevelO reached <$> levels)
+
+    Prog.RelTime rel { hrs, min, sec } ->
+        HH.span_
+            [ qitemmarkerSpan completeColor
+            , qspacerSpan
+            , qitemnameSpan completeColor
+            , qspacerSpan
+            , qprogress $ HH.span_
+                [ qcolorSpan measureColor $ relMarker rel
+                , qthinspacerSpan
+                , qcolorSpan timeColor $ CT.toLeadingZero hrs
+                , qtimesplitSpan
+                , qcolorSpan timeColor $ CT.toLeadingZero min
+                , qtimesplitSpan
+                , qcolorSpan timeColor $ CT.toLeadingZero sec
+                ]
+            ]
     where
         progress = CT.loadViewOrEdit voeProgress
         { itemName } = CT.loadViewOrEdit voeItemName
@@ -409,6 +426,10 @@ renderProgress events voeItemName voeProgress = case progress of
                 else mkValueEditInput events.onEdit voeProgress
         editingName = CT.isEditing voeItemName
         editingProgress = CT.isEditing voeProgress
+        relMarker = case _ of
+            Prog.RMoreThan -> ">"
+            Prog.REqual -> "="
+            Prog.RLessThan -> "<"
         mkValueEditInput :: forall a. (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
         mkValueEditInput onEdit =
                 maybe (HH.text "<EDIT>")

@@ -28,7 +28,7 @@ import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 
-import Report.Modifiers.Progress (Progress(..), PValueTag(..))
+import Report.Modifiers.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Tags (Tags)
 import Report.Prefix (Key(..), Prefix(..)) as P
@@ -360,6 +360,14 @@ _progressToDhall = case _ of
             [ D.indent recend
             , D.text ")"
             ]
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    RMoreThan -> "T.rel_more_than"
+                    REqual -> "T.rel_equal"
+                    RLessThan -> "T.rel_less_than"
+        in _ol $ wrapbrkD $ D.text "T.v_relt" <+> (wrapbrkD $ D.text "T.v_rel_" <> D.text relText <+> D.text "T.TIME" <+> timereccf timeRec)
+        -- T.v_relt (T.rel_more_than T.TIME time)
     Error err ->
         _ol $ D.text "ERR" -- FIXME:
     where

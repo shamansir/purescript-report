@@ -9,7 +9,7 @@ import Data.String (split, Pattern(..)) as String
 import Data.Tuple.Nested ((/\), type (/\))
 import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt, toLeadingZero) as CT
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Modifiers.Progress (PValueTag(..), Progress(..), unwrapValueTag, valueTagOf)
+import Report.Modifiers.Progress (PValueTag(..), Progress(..), Relation(..), unwrapValueTag, valueTagOf, encodeRel, decodeRel)
 import Report.Modifiers.Task (taskPFromString, taskPToString)
 
 
@@ -114,6 +114,8 @@ encodeProgress p = valueTagOf p /\ (CT.EncodedValue $ case p of
     LevelsP _ -> "" -- TODO
     LevelsC _ -> "" -- TODO
     LevelsE _ -> "" -- TODO
+    RelTime rel timeRec ->
+        encodeRel rel <> ";" <> encodeTime timeRec
     Error err -> err
     )
 
@@ -203,6 +205,12 @@ decodeProgress pvt (CT.EncodedValue evStr) = case unwrapValueTag pvt of
     "LVLP" -> Nothing -- TODO
     "LVLC" -> Nothing -- TODO
     "LVLE" -> Nothing -- TODO
+    "RELT" -> case qsplit ";" evStr of
+        [ relStr, timeStr ] ->
+            (\rel timeRec -> RelTime (decodeRel rel) timeRec)
+            <$> Just relStr
+            <*> decodeTime timeStr
+        _ -> Nothing
     "X" -> Just $ Error evStr
     _ -> Nothing
     where
