@@ -26,10 +26,14 @@ class DecodeKeyed k v where
 newtype KeyedValue k v = TM { mod_key :: k, mod_v :: v }
 derive instance Functor (KeyedValue k)
 
-type JsonTM = KeyedValue String Foreign
+newtype JsonTM = JsonTM (KeyedValue String Foreign)
 
 derive newtype instance (ReadForeign k,  ReadForeign v)  => ReadForeign  (KeyedValue k v)
 derive newtype instance (WriteForeign k, WriteForeign v) => WriteForeign (KeyedValue k v)
+
+
+derive newtype instance ReadForeign JsonTM
+derive newtype instance WriteForeign JsonTM
 
 
 make :: forall k v. k -> v -> KeyedValue k v
@@ -45,15 +49,15 @@ rekey f (TM { mod_key, mod_v }) = TM { mod_key: f mod_key, mod_v }
 
 
 toJson :: forall @k @v. WriteForeign v => EncodableKey k => KeyedValue k v -> JsonTM
-toJson = rekey encodeKey <#> map writeImpl
+toJson = JsonTM <<< (rekey encodeKey <#> map writeImpl)
 
 
 encodeKeyed :: forall @k v. EncodableKey k => WriteForeign v => Keyed k v => v -> JsonTM
-encodeKeyed v = TM { mod_key: encodeKey @k (keyOf v), mod_v: writeImpl v }
+encodeKeyed v = JsonTM $ TM { mod_key: encodeKey @k (keyOf v), mod_v: writeImpl v }
 
 
 decodeKeyed :: forall @k @v. EncodableKey k => DecodeKeyed k v => ReadForeign v => JsonTM -> F v
-decodeKeyed (TM { mod_key, mod_v }) = do
+decodeKeyed (JsonTM (TM { mod_key, mod_v })) = do
     case decodeKey @k mod_key of
         Just key -> toValue key mod_v
         Nothing  -> F.fail $ F.ForeignError $ "Failed to decode modifier key: " <> mod_key

@@ -182,7 +182,7 @@ instance ReadForeign t => ReadForeign (Suffix t) where
 
 
 instance WriteForeign t => WriteForeign (Suffix t) where
-    -- somehow we cannot use `B.encodeKeyed @Key @(Suffix t) suffix` here, it leads to recursion. Maybe we need to convert tags to strings first
+    -- somehow we cannot use `B.encodeKeyed @Key @(Suffix t) suffix` here, it leads to stack overflow. Maybe we need to convert tags to strings first
     writeImpl suffix = writeImpl $ B.make suffixKey $ case suffix of
         SProgress p -> writeImpl p -- B.encodeKeyed @P.PValueTag p
         SEarnedAt d -> writeImpl d

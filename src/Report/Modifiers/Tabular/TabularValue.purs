@@ -14,7 +14,7 @@ import Report.Core (SDate, SDateRec, STimeRec)
 import Report.Prefix (Prefix)
 import Report.Suffix (Suffix(..))
 import Report.Modifiers.Progress (Progress) as P
-import Report.Convert.Keyed
+import Report.Convert.Keyed as B
 
 
 
@@ -41,16 +41,16 @@ derive newtype instance ReadForeign  TVTag
 derive newtype instance WriteForeign TVTag
 
 
-instance Keyed TVTag TabularValue where
+instance B.Keyed TVTag TabularValue where
     keyOf = tagOf
 
 
-instance EncodableKey TVTag where
+instance B.EncodableKey TVTag where
     encodeKey (TVTag str) = str
     decodeKey str = Just $ TVTag str
 
 
-instance DecodeKeyed TVTag TabularValue where
+instance B.DecodeKeyed TVTag TabularValue where
     toValue = decodeWithKey
 
 
@@ -91,11 +91,26 @@ decodeWithKey key frgn = case key of
 
 
 instance ReadForeign TabularValue where
-    readImpl frgn = decodeKeyed @TVTag =<< (readImpl frgn :: F JsonTM)
+    readImpl frgn = B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
 
 
 instance WriteForeign TabularValue where
-    writeImpl tabular = writeImpl $ encodeKeyed @TVTag tabular
+    -- somehow we cannot use `B.encodeKeyed @Key @(Suffix t) suffix` here, it leads to stack overflow.
+    -- writeImpl tabular = -- writeImpl $ encodeKeyed @TVTag tabular
+    writeImpl tabular = writeImpl $ B.make tabularKey $ case tabular of
+        TVString s -> writeImpl s
+        TVNumber n -> writeImpl n
+        TVBoolean b -> writeImpl b
+        TVTime t -> writeImpl t
+        TVDate d -> writeImpl d
+        TVDateTime d t -> writeImpl { date: d, time: t }
+        TVTimeRange tr -> writeImpl tr
+        TVDateRange dr -> writeImpl dr
+        TVDateTimeRange dtr -> writeImpl dtr
+        TVPrefix pfx -> writeImpl pfx
+        TVSuffix sfx -> writeImpl sfx
+        where
+            tabularKey = B.encodeKey $ tagOf tabular
 
 
 progress :: P.Progress -> TabularValue
