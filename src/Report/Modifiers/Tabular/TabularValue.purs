@@ -117,6 +117,14 @@ progress :: P.Progress -> TabularValue
 progress = TVSuffix <<< SProgress
 
 
+suf :: Suffix String -> TabularValue
+suf = TVSuffix
+
+
+pref :: Prefix -> TabularValue
+pref = TVPrefix
+
+
 str :: String -> TabularValue
 str = TVString
 

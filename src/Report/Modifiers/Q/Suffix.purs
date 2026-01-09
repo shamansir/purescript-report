@@ -7,7 +7,7 @@ import Report.Modifiers.Task (TaskP(..)) as T
 import Report.Modifiers.Progress as P
 import Report.Modifiers.Tags (Tags(..))
 import Report.GroupPath (GroupPath)
-import Report.Suffix (Suffix(..), Key(..))
+import Report.Suffix (Suffix(..))
 
 
 
@@ -56,6 +56,7 @@ data Sign
     | Negative
 
 
+_ston :: Sign -> Int
 _ston = case _ of
     Positive -> 1
     Negative -> -1
