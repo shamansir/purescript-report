@@ -86,5 +86,5 @@ from item =
         }
 
 
--- derive newtype instance (ReadForeign item_tag)  => ReadForeign  (Item item_tag)
--- derive newtype instance (WriteForeign item_tag) => WriteForeign (Item item_tag)
+derive newtype instance (ReadForeign item_tag)  => ReadForeign  (Item item_tag)
+derive newtype instance (WriteForeign item_tag) => WriteForeign (Item item_tag)

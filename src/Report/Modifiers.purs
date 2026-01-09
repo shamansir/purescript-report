@@ -2,22 +2,35 @@ module Report.Modifiers where
 
 import Prelude
 
+import Foreign (F, Foreign)
+
 import Data.Map (Map)
 import Data.Map (empty, lookup, insert, keys, fromFoldable, toUnfoldable) as Map
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Array (catMaybes) as Array
 import Data.Newtype (class Newtype, unwrap, wrap)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
 
-import Report.Convert.Keyed (class Keyed, keyOf)
+import Report.Convert.Keyed (class Keyed, keyOf, class EncodableKey, encodeKey, decodeKey)
 
 newtype Modifiers k v = Modifiers (Map k v)
 derive instance Newtype (Modifiers k v) _
 
--- instance (ReadForeign k, ReadForeign v)  => ReadForeign  (Modifiers k v) where readImpl = toArray >>> readImpl
--- instance (WriteForeign k, WriteForeign v) => WriteForeign (Modifiers k v) where writeImpl = toArray >>> writeImpl
+
+instance (Ord k, EncodableKey k, ReadForeign v)  => ReadForeign (Modifiers k v)
+    where
+        readImpl frgn = do
+            recArr <- (readImpl frgn :: F (Array { key :: String, value :: v }))
+            let tupleArr = recArr <#> (\{ key, value } -> decodeKey @k key <#> \k -> k /\ value)
+            pure $ fromArray $ Array.catMaybes tupleArr
+instance (EncodableKey k, WriteForeign v) => WriteForeign (Modifiers k v)
+    where
+        writeImpl modifiers =
+            let recArr = toArray modifiers <#> \(k /\ v) -> { key: encodeKey @k k, value: v }
+            in  writeImpl recArr
 
 
 

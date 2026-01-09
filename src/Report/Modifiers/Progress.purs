@@ -241,6 +241,7 @@ $ ME.runExcept $ _readProgress (PValueTag t) v
 instance EncodableKey PValueTag where
     encodeKey (PValueTag str) = str
     decodeKey str = Just $ PValueTag str
+    -- default = PValueTag "UNK"
 
 
 instance DecodeKeyed PValueTag Progress where

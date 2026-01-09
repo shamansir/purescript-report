@@ -17,6 +17,7 @@ class Keyed k v where
 class EncodableKey k where
     encodeKey :: k -> String
     decodeKey :: String -> Maybe k
+    -- default :: k
 
 
 class DecodeKeyed k v where
