@@ -9,10 +9,16 @@ import Data.Set (toUnfoldable) as Set
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Newtype (class Newtype, unwrap, wrap)
 
+import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
+
 import Report.Convert.Keyed (class Keyed, keyOf)
 
 newtype Modifiers k v = Modifiers (Map k v)
 derive instance Newtype (Modifiers k v) _
+
+-- instance (ReadForeign k, ReadForeign v)  => ReadForeign  (Modifiers k v) where readImpl = toArray >>> readImpl
+-- instance (WriteForeign k, WriteForeign v) => WriteForeign (Modifiers k v) where writeImpl = toArray >>> writeImpl
+
 
 
 empty :: forall k v. Modifiers k v
