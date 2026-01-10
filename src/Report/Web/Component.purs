@@ -138,6 +138,16 @@ class
     <= Is subj_id subj_tag item_tag subj group item (x :: Type)
 
 
+instance
+    ( R.IsTag subj_tag
+    , R.IsTag item_tag
+    , R.IsItem item
+    , R.IsGroup group
+    , R.IsSubject subj_id subj
+    ) =>
+    Is subj_id subj_tag item_tag subj group item (R.Report subj group item)
+
+
 class
     ( R.HasPrefixes item
     , R.HasSuffixes item_tag item
@@ -152,6 +162,20 @@ class
     <= Has subj_tag item_tag subj group item (x :: Type)
 
 
+instance
+    ( R.HasPrefixes item
+    , R.HasSuffixes item_tag item
+    , R.HasTabular item
+    , R.HasTags subj_tag subj
+    , R.HasStats subj
+    , R.HasTabular subj
+    -- , R.HasPrefixes subj
+    -- , R.HasSuffixes subj_tag subj
+    , R.HasStats group
+    ) =>
+    Has subj_tag item_tag subj group item (R.Report subj group item)
+
+
 class
     ( Modify.GroupModify group
     , Modify.StatsModify group
@@ -160,6 +184,16 @@ class
     , Modify.ItemModify item
     )
     <= Modify item_tag group item (x :: Type)
+
+
+instance
+    ( Modify.GroupModify group
+    , Modify.StatsModify group
+    , Modify.SuffixesModify item_tag item
+    , Modify.PrefixesModify item
+    , Modify.ItemModify item
+    ) =>
+    Modify item_tag group item (R.Report subj group item)
 
 
 component

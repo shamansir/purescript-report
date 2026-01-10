@@ -20,6 +20,11 @@ class EncodableKey k where
     -- default :: k
 
 
+instance EncodableKey String where
+    encodeKey = identity
+    decodeKey = Just
+
+
 class DecodeKeyed k v where
     toValue :: k -> Foreign -> F v
 

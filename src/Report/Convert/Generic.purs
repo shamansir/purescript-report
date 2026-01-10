@@ -27,26 +27,50 @@ import Report.Convert.Types
 exportVersion = ExportVersion 2 :: ExportVersion
 
 class
-    ( Ord group -- V
+    ( Ord group
     , Eq subj_id
-    , IsTag subj_tag -- V
-    , IsItem item -- V
-    , IsGroup group -- V
-    , IsSubject subj_id subj -- V
-    , HasTags subj_tag subj -- V
-    , HasPrefixes item -- V
-    , HasSuffixes item_tag item -- V
+    , IsTag subj_tag
+    , IsItem item
+    , IsGroup group
+    , IsSubject subj_id subj
+    , HasTags subj_tag subj
+    , HasPrefixes item
+    , HasSuffixes item_tag item
     , HasTabular subj
-    , HasStats subj -- V
-    , HasStats group -- V
-    , EncodableKey subj_id -- V
-    , WriteForeign item_tag -- V
+    , HasStats subj
+    , HasStats group
+    , EncodableKey subj_id
+    , WriteForeign item_tag
     , ReadForeign item_tag
     , WriteForeign subj_tag
     -- => WriteForeign subj_tag
     , ToReport subj group item x
     )
     <= ToExport subj_id subj_tag item_tag subj group item (x :: Type)
+
+
+
+instance
+    ( Ord group
+    , Eq subj_id
+    , IsTag subj_tag
+    , IsItem item
+    , IsGroup group
+    , IsSubject subj_id subj
+    , HasTags subj_tag subj
+    , HasPrefixes item
+    , HasSuffixes item_tag item
+    , HasTabular subj
+    , HasStats subj
+    , HasStats group
+    , EncodableKey subj_id
+    , WriteForeign item_tag
+    , ReadForeign item_tag
+    , WriteForeign subj_tag
+    -- => WriteForeign subj_tag
+    , ToReport subj group item x
+    )
+    => ToExport subj_id subj_tag item_tag subj group item (Report subj group item)
 
 
 data IncludeRule subj_id

@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Newtype (class Newtype, unwrap, wrap)
 
-import Report.Class (class IsGroup, class HasStats)
+import Report.Class
 import Report.Modifiers.Stats (Stats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Modify (class GroupModify, class StatsModify)
@@ -78,3 +78,18 @@ instance GroupModify Group where
 
 instance StatsModify Group where
     setStats stats = unwrap >>> _ { stats = stats } >>> wrap
+
+
+
+from ::
+   forall group
+   . IsGroup group
+   => HasStats group
+   => group
+   -> Group
+from grp =
+    Group
+        { title : g_title grp
+        , path : g_path grp
+        , stats : i_stats grp
+        }

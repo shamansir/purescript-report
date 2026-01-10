@@ -12,26 +12,27 @@ import Report.Suffix (Suffixes)
 import Report.Suffix (empty, getTags) as Suffix
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
+import Report.Modify
 import Report.Modifiers.Tags (toArray) as Tags
 import Report.Modifiers.Tabular.TabularValue (TabularValue)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
 
 
-type ItemRec t =
+type ItemRec item_tag =
     { title :: String
     , prefixes :: Prefixes
-    , suffixes :: Suffixes t
+    , suffixes :: Suffixes item_tag
     , tabular :: Tabular TabularValue
     , locked :: Boolean
     }
 
 
-newtype Item t = Item (ItemRec t)
-derive instance Newtype (Item t) _
+newtype Item item_tag = Item (ItemRec item_tag)
+derive instance Newtype (Item item_tag) _
 
 
-instance IsItem (Item t) where
+instance IsItem (Item item_tag) where
     i_name = _.title <<< unwrap
     i_mbTitle item =
         let title = i_name item
@@ -39,26 +40,41 @@ instance IsItem (Item t) where
     i_locked = _.locked <<< unwrap
 
 
-instance HasPrefixes (Item t) where
+instance HasPrefixes (Item item_tag) where
     i_prefixes = _.prefixes <<< unwrap
 
 
-instance HasSuffixes t (Item t) where
+instance HasSuffixes item_tag (Item item_tag) where
     i_suffixes = _.suffixes <<< unwrap
 
 
-instance HasTabular (Item t) where
+instance HasTabular (Item item_tag) where
     i_tabular = _.tabular <<< unwrap
 
 
-instance HasModifiers t (Item t)
+instance HasModifiers item_tag (Item item_tag)
 
 
-instance HasTags t (Item t) where
+instance HasTags item_tag (Item item_tag) where
     i_tags = unwrap >>> _.suffixes >>> Suffix.getTags >>> maybe [] Tags.toArray
 
 
-init :: forall t. String -> Item t
+instance ItemModify (Item item_tag) where
+    setItemName newName =
+        unwrap >>> _ { title = newName } >>> wrap
+
+
+instance SuffixesModify item_tag (Item item_tag) where
+    updateSuffixes nextSuffixes =
+        unwrap >>> _ { suffixes = nextSuffixes } >>> wrap
+
+
+instance PrefixesModify (Item item_tag) where
+    updatePrefixes nextPrefixes =
+        unwrap >>> _ { prefixes = nextPrefixes } >>> wrap
+
+
+init :: forall item_tag. String -> Item item_tag
 init name =
     Item
         { title: name
@@ -69,13 +85,13 @@ init name =
         }
 
 
-from :: forall a t.
-    IsItem a =>
-    HasPrefixes a =>
-    HasSuffixes t a =>
-    HasTabular a =>
-    a ->
-    Item t
+from :: forall item item_tag.
+    IsItem item =>
+    HasPrefixes item =>
+    HasSuffixes item_tag item =>
+    HasTabular item =>
+    item ->
+    Item item_tag
 from item =
     Item
         { title: i_name item

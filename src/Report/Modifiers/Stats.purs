@@ -2,12 +2,14 @@ module Report.Modifiers.Stats where
 
 import Prelude
 
+import Foreign (Foreign, F)
+
 import Data.Int (toNumber, floor) as Int
 import Data.Foldable (foldl)
 import Data.Maybe (fromMaybe)
 import Data.Array (length) as Array
 
-import Yoga.JSON (class WriteForeign, writeImpl)
+import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Progress (Progress(..))
@@ -127,15 +129,33 @@ gotTotalFrom =
         Error _ -> Undefined
 
 
+instance ReadForeign Stats where
+    readImpl frgn = do
+        ({ kind, stats } :: { kind :: String, stats :: Foreign }) <- readImpl frgn
+        case kind of
+            "GotTotal" -> do
+                ( readImpl stats :: F { got :: Int, total :: Int } ) <#> SGotTotal
+            "WithProgress" -> do
+                ( readImpl stats :: F { got :: Int, total :: Int, onTheWay :: Int } ) <#> SWithProgress
+            "FromProgress" -> do
+                ( readImpl stats :: F Progress ) <#> SFromProgress
+            "NotRelevant" ->
+                pure SNotRelevant
+            "YetUnknown" ->
+                pure SYetUnknown
+            _ ->
+                pure SYetUnknown
+
+
 instance WriteForeign Stats where
     writeImpl = case _ of
         SGotTotal { got, total } ->
-            writeImpl { type: "GotTotal", got: got, total: total }
+            writeImpl { kind: "GotTotal", stats : writeImpl { got: got, total: total } }
         SWithProgress { got, total, onTheWay } ->
-            writeImpl { type: "WithProgress", got: got, total: total, onTheWay: onTheWay }
+            writeImpl { kind: "WithProgress", stats : writeImpl { got: got, total: total, onTheWay: onTheWay } }
         SFromProgress progress ->
-            writeImpl { type: "FromProgress", progress: progress }
+            writeImpl { kind: "FromProgress", stats : writeImpl progress }
         SNotRelevant ->
-            writeImpl { type: "NotRelevant" }
+            writeImpl { type: "NotRelevant", stats : writeImpl "" }
         SYetUnknown ->
-            writeImpl { type: "YetUnknown" }
+            writeImpl { kind: "YetUnknown", stats : writeImpl "" }

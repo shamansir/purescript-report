@@ -1,0 +1,103 @@
+module Test.ReportImpl where
+
+import Prelude
+
+import Effect (Effect)
+import Foreign (fail, ForeignError(..))
+
+import Data.Maybe (Maybe(..))
+
+import Type.Proxy (Proxy(..))
+
+import Test.Spec (Spec, it, itOnly, describe)
+import Test.Spec.Assertions (shouldEqual)
+
+import Halogen as H
+import Halogen.HTML as HH
+
+import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
+
+import Report (Report)
+import Report.Class (class IsTag, tagContent, decodeTag)
+import Report as Report
+
+import Report.Impl.Group (Group)
+import Report.Impl.Item (Item)
+import Report.Impl.Subject (Subject)
+import Report.Impl.Tag (defaultColors)
+import Report.Convert.Generic (class ToExport) as Report
+import Report.Web.Component as Report
+
+
+
+
+type SubjectId = String
+data SubjectTag = SubjectTag
+data ItemTag = ItemTag
+
+
+derive instance Eq SubjectTag
+derive instance Eq ItemTag
+
+
+instance IsTag SubjectTag where
+    tagColors _ = defaultColors
+    tagContent _ = "subj"
+    decodeTag = const $ Just SubjectTag
+    allTags = [ SubjectTag ]
+
+
+instance IsTag ItemTag where
+    tagColors _ = defaultColors
+    tagContent _ = "item"
+    decodeTag = const $ Just ItemTag
+    allTags = [ ItemTag ]
+
+
+instance WriteForeign SubjectTag where
+    writeImpl = tagContent >>> writeImpl
+instance WriteForeign ItemTag where
+    writeImpl = tagContent >>> writeImpl
+instance ReadForeign SubjectTag where
+    readImpl frgn = do
+        str <- readImpl frgn
+        case decodeTag @SubjectTag str of
+            Just tag -> pure tag
+            Nothing  -> fail $ ForeignError $ "Cannot decode SubjectTag from " <> str
+instance ReadForeign ItemTag where
+    readImpl frgn = do
+        str <- readImpl frgn
+        case decodeTag @ItemTag str of
+            Just tag -> pure tag
+            Nothing  -> fail $ ForeignError $ "Cannot decode ItemTag from " <> str
+
+
+type MySubject = Subject SubjectId SubjectTag
+type MyGroup = Group
+type MyItem = Item ItemTag
+
+
+type MyReportT = Report MySubject MyGroup MyItem
+newtype MyReport = MyReport MyReportT
+
+
+derive newtype instance Report.Is SubjectId SubjectTag ItemTag MySubject MyGroup MyItem MyReport
+derive newtype instance Report.Has SubjectTag ItemTag MySubject MyGroup MyItem MyReport
+derive newtype instance Report.Modify ItemTag MyGroup MyItem MyReport
+derive newtype instance Report.ToReport MySubject MyGroup MyItem MyReport
+instance Report.ToExport SubjectId SubjectTag ItemTag MySubject MyGroup MyItem MyReport
+
+
+_report  = Proxy :: _ "report"
+
+
+spec :: Spec Unit
+spec =
+    describe "use" do
+      it "report impl" do
+        let report :: Report MySubject MyGroup MyItem
+            report = Report.empty
+            component :: H.Component _ MyReportT _ Effect
+            component = Report.component @MyReport @String @SubjectTag @ItemTag []
+            slot = HH.slot_ _report unit component report
+        true `shouldEqual` true

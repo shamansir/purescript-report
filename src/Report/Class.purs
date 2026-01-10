@@ -2,7 +2,7 @@ module Report.Class where
 
 import Prelude
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 
 import Report.Suffix (Suffixes)
 import Report.Prefix (Prefixes)
@@ -67,3 +67,10 @@ class Eq t <= IsTag t where
     tagContent :: t -> String
     decodeTag :: String -> Maybe t
     allTags :: Array t
+
+
+instance IsTag Unit where
+    tagColors _ = { text: "#000000", background: "#FFFFFF", border: "#CCCCCC" }
+    tagContent _ = ""
+    decodeTag _ = Just unit
+    allTags = [unit]

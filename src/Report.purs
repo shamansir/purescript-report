@@ -58,6 +58,10 @@ newtype Report subj group item =
     Report (ReportMap subj group item)
 
 
+instance ToReport subj group item (Report subj group item) where
+    toReport = identity
+
+
 empty :: forall subj group item. Report subj group item
 empty = Report Map.empty
 
