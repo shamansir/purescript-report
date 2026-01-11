@@ -13,4 +13,4 @@ import Data.Text.Diff.Effectful (compareByWP) as Diff
 
 
 shouldEqual :: forall m. MonadEffect m ⇒ MonadThrow Error m ⇒ String -> String -> m Unit
-shouldEqual = Diff.compareByWP (Diff.OnlyDifferent $ Diff.NoLimit)
+shouldEqual = Diff.compareByWP (Diff.OnlyDifferent $ Diff.Limit 20)

@@ -24,7 +24,7 @@ import Report as Report
 import Report.Impl.Group (Group)
 import Report.Impl.Item (Item)
 import Report.Impl.Subject (Subject)
-import Report.Impl.Tag (defaultColors)
+import Report.Impl.Tag (defaultColors, defaultWriteImpl, defaultReadImpl) as Tag
 import Report.Convert.Generic (class ToExport) as Report
 import Report.Web.Component as Report
 
@@ -41,35 +41,27 @@ derive instance Eq ItemTag
 
 
 instance IsTag SubjectTag where
-    tagColors _ = defaultColors
+    tagColors _ = Tag.defaultColors
     tagContent _ = "subj"
     decodeTag = const $ Just SubjectTag
     allTags = [ SubjectTag ]
 
 
 instance IsTag ItemTag where
-    tagColors _ = defaultColors
+    tagColors _ = Tag.defaultColors
     tagContent _ = "item"
     decodeTag = const $ Just ItemTag
     allTags = [ ItemTag ]
 
 
 instance WriteForeign SubjectTag where
-    writeImpl = tagContent >>> writeImpl
+    writeImpl = Tag.defaultWriteImpl
 instance WriteForeign ItemTag where
-    writeImpl = tagContent >>> writeImpl
+    writeImpl = Tag.defaultWriteImpl
 instance ReadForeign SubjectTag where
-    readImpl frgn = do
-        str <- readImpl frgn
-        case decodeTag @SubjectTag str of
-            Just tag -> pure tag
-            Nothing  -> fail $ ForeignError $ "Cannot decode SubjectTag from " <> str
+    readImpl = Tag.defaultReadImpl
 instance ReadForeign ItemTag where
-    readImpl frgn = do
-        str <- readImpl frgn
-        case decodeTag @ItemTag str of
-            Just tag -> pure tag
-            Nothing  -> fail $ ForeignError $ "Cannot decode ItemTag from " <> str
+    readImpl = Tag.defaultReadImpl
 
 
 type MySubject = Subject SubjectId SubjectTag
