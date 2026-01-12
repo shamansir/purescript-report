@@ -88,7 +88,7 @@ toOrg inclRule =
                         Just $ "TrackedAt" /\ orgDate dateRec
                     ]
                 )
-            <> D.break <> fold (mapWithIndex convertGroup groups)
+            <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
         propertiesBlock :: Array (String /\ Doc Unit) -> Doc Unit
         propertiesBlock [] = mempty
@@ -216,7 +216,7 @@ toOrg inclRule =
                         mempty
                         (case _ of
                             S.SProgress p ->
-                                _progressSuffixOneLiner p >>= \prg_item -> Just $ D.space <> D.text ":" <+> prg_item
+                                _progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
                             S.SEarnedAt ea ->
                                 Just $ D.text " at " <> orgDate (CT.dateToRec ea)
                             S.SDescription desc ->
@@ -336,9 +336,9 @@ _progressSuffixOneLiner = case _ of
     ToGetN { got, total } ->
         pure $ D.text (show got <> "/" <> show total)
     OnTime timeRec ->
-        pure $ D.text "on " <> orgTime timeRec
+        pure $ orgTime timeRec
     OnDate sdate ->
-        pure $ D.text "on " <> orgDate (CT.dateToRec sdate)
+        pure $ orgDate (CT.dateToRec sdate)
     PerI { amount, per } ->
         pure $ D.text (show amount) <> D.text "/" <> D.text per
     PerN { amount, per } ->
