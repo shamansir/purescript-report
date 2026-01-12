@@ -37,6 +37,9 @@ import Report.Suffix (Key(..), Suffix(..)) as S
 import Report.Modifiers.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
+import Report.Modifiers.Rating as Rating
+import Report.Modifiers.Priority as Priority
+import Report.Modifiers.Task as Task
 import Report.Modifiers.Tabular.TabularValue as TV
 
 import Dodo
@@ -93,6 +96,7 @@ toOrg inclRule =
             <> D.text ">"
 
         propertiesBlock :: Array (String /\ Doc Unit) -> Doc Unit
+        propertiesBlock [] = mempty
         propertiesBlock fields =
             D.text ":PROPERTIES:" <> D.break
             <> (joinWith D.break $ propertyLine <$> fields)
@@ -121,12 +125,85 @@ toOrg inclRule =
                 , "Index" /\ D.text (show index)
                 ]
             <> D.break
-            <> (joinWith D.break $ arrayD $ convertItem groupRec.path <$> items)
+            <> (joinWith D.break $ convertItem groupRec.path <$> items)
 
         convertItem :: GroupPath -> ItemRec -> Doc Unit
         convertItem grpPath itemRec =
-            let itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2 in
-            D.text "T.kv_" <> D.space <> quote itemRec.name <> (alignModifiers $ convertModifier <$> itemRec.modifiers)
+            let
+                itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2
+                modifiersPrefixes   = Array.catMaybes $ convertModifierToPrefix   <$> itemRec.modifiers
+                modifiersSuffixes   = Array.catMaybes $ convertModifierToSuffix   <$> itemRec.modifiers
+                modifiersProperties = Array.concat    $ convertModifierToProperty <$> itemRec.modifiers
+                modifiersPrefixesDoc =
+                    case modifiersPrefixes of
+                        [] -> mempty
+                        prefixes -> joinWith D.space prefixes <> D.space
+                modifiersSuffixesDoc =
+                    case modifiersSuffixes of
+                        [] -> mempty
+                        prefixes -> D.space <> joinWith D.space prefixes
+                propertiesBlockDoc =
+                    case modifiersProperties of
+                        [] -> mempty
+                        props -> D.break <> propertiesBlock ( ("Name" /\ D.text itemRec.name) : props )
+            in
+            itemHeadingPrefix <+> modifiersPrefixesDoc <> D.text itemRec.name <> modifiersSuffixesDoc
+            <> propertiesBlockDoc
+            -- D.text "T.kv_" <> D.space <> quote itemRec.name <> (alignModifiers $ convertModifier <$> itemRec.modifiers)
+
+        convertModifierToProperty :: ModifierRec -> Array (String /\ Doc Unit)
+        convertModifierToProperty modRec =
+            case modRec.mkind of
+                P ->
+                    withImpl @P.Prefix
+                        []
+                        (case _ of
+                            P.PRating rating ->
+                                pure $ "Rating" /\ (D.text $ show $ Rating.toNumber rating)
+                            P.PPriority priority ->
+                                pure $ "Priority" /\ (D.text $ Priority.priorityChar priority)
+                            P.PTask task ->
+                                pure $ "Task" /\ (D.text $ Task.taskPToString task)
+                        )
+                        modRec.value
+                _ ->
+                    withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
+                        []
+                        (case _ of
+                            S.SProgress p ->
+                                [] -- TODO
+                                -- _progressToDhall p
+                            S.SEarnedAt ea ->
+                                pure $ "EarnedAt" /\ orgDate (CT.dateToRec ea)
+                            S.SDescription desc ->
+                                pure $ "Description" /\ D.text desc
+                            S.SReference path ->
+                                pure $ "Reference" /\ convertPath path
+                            S.STags tags ->
+                                pure $ "Tags" /\ joinWith D.space (D.text <$> tagContent <$> unwrap tags)
+                        )
+                        modRec.value
+
+        convertModifierToPrefix :: ModifierRec -> Maybe (Doc Unit)
+        convertModifierToPrefix modRec =
+            case modRec.mkind of
+                P ->
+                    withImpl @P.Prefix
+                        Nothing
+                        (case _ of
+                            P.PRating rating ->
+                                Just $ D.text $ show $ Rating.toStars rating
+                            P.PPriority priority ->
+                                Just $ D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
+                            P.PTask task ->
+                                Just $ D.text $ Task.taskPToString task
+                        )
+                        modRec.value
+                _ ->
+                    Nothing
+
+        convertModifierToSuffix :: ModifierRec -> Maybe (Doc Unit)
+        convertModifierToSuffix = const Nothing
 
         convertModifier :: ModifierRec -> RenderedAs (Doc Unit)
         convertModifier modRec =
