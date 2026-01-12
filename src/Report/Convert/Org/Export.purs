@@ -42,6 +42,8 @@ import Report.Modifiers.Priority as Priority
 import Report.Modifiers.Task as Task
 import Report.Modifiers.Tabular.TabularValue as TV
 
+import Report.Convert.Dhall.Export as DH
+
 import Dodo
 import Dodo as D
 
@@ -87,13 +89,6 @@ toOrg inclRule =
                     ]
                 )
             <> D.break <> fold (mapWithIndex convertGroup groups)
-
-        orgDate :: CT.SDateRec -> Doc Unit
-        orgDate dateRec
-            =  D.text "<" <> D.text (show dateRec.year)
-            <> D.text "-" <> D.text (CT.toLeadingZero dateRec.mon)
-            <> D.text "-" <> D.text (CT.toLeadingZero dateRec.day)
-            <> D.text ">"
 
         propertiesBlock :: Array (String /\ Doc Unit) -> Doc Unit
         propertiesBlock [] = mempty
@@ -149,13 +144,12 @@ toOrg inclRule =
             in
             itemHeadingPrefix <+> modifiersPrefixesDoc <> D.text itemRec.name <> modifiersSuffixesDoc
             <> propertiesBlockDoc
-            -- D.text "T.kv_" <> D.space <> quote itemRec.name <> (alignModifiers $ convertModifier <$> itemRec.modifiers)
 
         convertModifierToProperty :: ModifierRec -> Array (String /\ Doc Unit)
         convertModifierToProperty modRec =
             case modRec.mkind of
                 P ->
-                    withImpl @P.Prefix
+                    DH.withImpl @P.Prefix
                         []
                         (case _ of
                             P.PRating rating ->
@@ -167,12 +161,11 @@ toOrg inclRule =
                         )
                         modRec.value
                 _ ->
-                    withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
+                    DH.withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
                         []
                         (case _ of
                             S.SProgress p ->
-                                [] -- TODO
-                                -- _progressToDhall p
+                                _progressProperties p
                             S.SEarnedAt ea ->
                                 pure $ "EarnedAt" /\ orgDate (CT.dateToRec ea)
                             S.SDescription desc ->
@@ -180,7 +173,7 @@ toOrg inclRule =
                             S.SReference path ->
                                 pure $ "Reference" /\ convertPath path
                             S.STags tags ->
-                                pure $ "Tags" /\ joinWith D.space (D.text <$> tagContent <$> unwrap tags)
+                                pure $ "Tags" /\ DH.joinWith D.space (D.text <$> tagContent <$> unwrap tags)
                         )
                         modRec.value
 
@@ -188,7 +181,7 @@ toOrg inclRule =
         convertModifierToPrefix modRec =
             case modRec.mkind of
                 P ->
-                    withImpl @P.Prefix
+                    DH.withImpl @P.Prefix
                         Nothing
                         (case _ of
                             P.PRating rating ->
@@ -199,99 +192,197 @@ toOrg inclRule =
                                 Just $ D.text $ Task.taskPToString task
                         )
                         modRec.value
-                _ ->
-                    Nothing
-
-        convertModifierToSuffix :: ModifierRec -> Maybe (Doc Unit)
-        convertModifierToSuffix = const Nothing
-
-        convertModifier :: ModifierRec -> RenderedAs (Doc Unit)
-        convertModifier modRec =
-            case modRec.mkind of
-                P ->
-                    withImplRA @P.Prefix
-                        (case _ of
-                            P.PRating rating ->
-                                _ol $ D.text "p_rating " -- <> quote (modRec.value)
-                            P.PPriority priority ->
-                                _ol $ D.text "p_priority " -- <> quote (modRec.value)
-                            P.PTask task ->
-                                _ol $ D.text "p_task " -- <> quote (modRec.value)
-                        )
-                        modRec.value
                 S ->
-                    withImplRA @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
+                    DH.withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
+                        mempty
                         (case _ of
                             S.SProgress p ->
-                                _progressToDhall p
-                            S.SEarnedAt ea ->
-                                ea # sdaterec # prefixD "// T.inj/date" # _ol
-                            S.SDescription desc ->
-                                desc # quote # prefixD "// T.inj/det" # _ol
-                            S.SReference path ->
-                                unwrap path
-                                    # map (unwrap >>> quote)
-                                    # ilarrayD
-                                    # prefixD "// T.inj/self"
-                                    # _ol
-                            S.STags tags ->
-                                unwrap tags
-                                    # map (tagContent >>> quote)
-                                    # ilarrayD
-                                    # prefixD "// T.inj/tags"
-                                    # _ol
+                                case p of
+                                    ToComplete { done } -> pure $ D.text $ if done then "[X]" else "[ ]"
+                                    Task taskP -> pure $ D.text $ Task.taskPToString taskP
+                                    _ -> mempty
+                            _ ->
+                                mempty
                         )
                         modRec.value
 
+        convertModifierToSuffix :: ModifierRec -> Maybe (Doc Unit)
+        convertModifierToSuffix modRec =
+            case modRec.mkind of
+                P ->
+                    Nothing
+                S ->
+                    DH.withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
+                        mempty
+                        (case _ of
+                            S.SProgress p ->
+                                _progressSuffixOneLiner p >>= \prg_item -> Just $ D.space <> D.text ":" <+> prg_item
+                            S.SEarnedAt ea ->
+                                Just $ D.text " at " <> orgDate (CT.dateToRec ea)
+                            S.SDescription desc ->
+                                Just $ D.text "/ " <> D.text desc <> D.text " /"
+                            S.SReference _ ->
+                                Nothing
+                            S.STags tags ->
+                                case unwrap tags of
+                                    [] -> Nothing
+                                    tagArr ->
+                                        Just $ D.text " #" <> (joinWith (D.space <> D.text "#") $ D.text <$> tagContent <$> tagArr)
+                        )
+                        modRec.value
 
-        alignModifiers :: Array (RenderedAs (Doc Unit)) -> Doc Unit
-        alignModifiers renderedAs =
-            case Array.uncons renderedAs of
-                Just { head, tail } ->
-                    case head of
-                        OneLine dhead ->
-                            D.space <> dhead <> alignModifiers tail
-                        MutliLine dhead ->
-                            (fromnl $ D.indent $ joinWith D.break $ dhead) <> alignModifiers tail
-                Nothing ->
-                    mempty
-
-
-withImpl :: forall @t x. ReadForeign t => x -> (t -> x) -> Foreign -> x
-withImpl err f frgn = (readImpl frgn :: F t) # runExcept # either (const err) f
-
-
-withImplD :: forall @t a. ReadForeign t => (t -> Doc a) -> Foreign -> Doc a
-withImplD = withImpl $ D.text "{- <error> -}"
-
-
-withImplRA :: forall @t a. ReadForeign t => (t -> RenderedAs (Doc a)) -> Foreign -> RenderedAs (Doc a)
-withImplRA = withImpl $ _ol $ D.text "{- <error> -}"
-
-
-brindent2 :: forall a. Array (Doc a) -> Doc a
-brindent2 = map (\d -> D.break <> D.indent (D.indent d)) >>> fold
-
-
-data RenderedAs a
-    = OneLine a
-    | MutliLine (Array a)
+joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
+joinWith sep =
+    fold <<< DH.mpix \d -> sep <> d
 
 
-_unwrapRA :: forall a. RenderedAs a -> Array a
-_unwrapRA = case _ of
-    OneLine a -> pure a
-    MutliLine arr -> arr
+orgDate :: CT.SDateRec -> Doc Unit
+orgDate dateRec
+    =  D.text "<" <> D.text (show dateRec.year)
+    <> D.text "-" <> D.text (CT.toLeadingZero dateRec.mon)
+    <> D.text "-" <> D.text (CT.toLeadingZero dateRec.day)
+    <> D.text ">"
 
 
-_ol :: forall a. Doc a -> RenderedAs (Doc a)
-_ol = OneLine
+orgTime :: CT.STimeRec -> Doc Unit
+orgTime timeRec
+    =  D.text (CT.toLeadingZero timeRec.hrs)
+    <> D.text ":" <> D.text (CT.toLeadingZero timeRec.min)
+    <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
 
 
-_ml :: forall a. Array (Doc a) -> RenderedAs (Doc a)
-_ml = MutliLine
+_progressProperties :: Progress -> Array ( String /\ Doc Unit )
+_progressProperties = case _ of
+    None -> mempty
+    Unknown -> mempty
+    PInt i -> pure $ "INTVAL" /\ D.text (show i)
+    PNumber n -> pure $ "NUMVAL" /\ D.text (show n)
+    PText text -> pure $ "TEXTVAL" /\ D.text text
+    ToComplete { done } -> pure $ "TOCOMPLETE" /\ D.text (if done then "true" else "false")
+    PercentI i -> pure $ "PERCENTI" /\ D.text (show i)
+    PercentN n -> pure $ "PERCENTN" /\ D.text (show n)
+    PercentSign { sign, pct } ->
+        let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
+        in pure $ "PERCENTX" /\ D.text (sign_s <> " " <> show pct)
+    ToGetI { got, total } -> pure $
+        "TOGETI" /\ D.text (show got <> " " <> show total)
+    ToGetN { got, total } -> pure $
+        "TOGETN" /\ D.text (show got <> " " <> show total)
+    OnTime timeRec ->
+        pure $ "ONTIME" /\ orgTime timeRec
+    OnDate sdate ->
+        pure $ "ONDATE" /\ orgDate (CT.dateToRec sdate)
+    PerI { amount, per } ->
+        pure $ "PERI" /\ (D.text (show amount) <> D.text " " <> D.text per)
+    PerN { amount, per } ->
+        pure $ "PERN" /\ (D.text (show amount) <> D.text " " <> D.text per)
+    MeasuredI { amount, measure } ->
+        pure $ "MESI" /\ (D.text (show amount) <> D.text " " <> D.text measure)
+    MeasuredN { amount, measure } ->
+        pure $ "MESN" /\ (D.text (show amount) <> D.text " " <> D.text measure)
+    MeasuredSign { sign, amount, measure } ->
+        let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
+        in pure $ "MESX" /\ (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text "    " <> D.text measure)
+    RangeI { from, to } ->
+        pure $ "RANGEI" /\ D.text (show from <> " " <> show to)
+    RangeN { from, to } ->
+        pure $ "RANGEN" /\ D.text (show from <> " " <> show to)
+    Task taskP ->
+        pure $ "TASK" /\ D.text (Task.taskPToString taskP)
+    LevelsI { reached, levels } ->
+        mempty -- TODO
+    LevelsN { reached, levels } ->
+        mempty -- TODO
+    LevelsS { reached, levels } ->
+        mempty -- TODO
+    LevelsE levelsE ->
+        pure $ "LEVELSE" /\ D.text (show levelsE.reached <> " " <> show levelsE.total)
+    LevelsP { levels } ->
+        mempty -- TODO
+    LevelsC levelsC ->
+        [ "LEVELSC_REACHED" /\ D.text (show levelsC.levelReached)
+        , "LEVELSC_CURRENT" /\ D.text (show levelsC.reachedAtCurrent)
+        , "LEVELSC_TOTAL" /\ D.text (show levelsC.totalLevels)
+        , "LEVELSC_MAXCURRENT" /\ D.text (show levelsC.maximumAtCurrent)
+        ]
+    LevelsO { reached, levels } ->
+        mempty -- TODO
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    RMoreThan -> "more_than"
+                    REqual -> "equal"
+                    RLessThan -> "less_than"
+        in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
+    Error err ->
+        mempty
 
 
+_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
+_progressSuffixOneLiner = case _ of
+    None -> mempty
+    Unknown -> mempty
+    PInt i -> pure $ D.text $ show i
+    PNumber n -> pure $ D.text $ show n
+    PText text -> pure $ D.text text
+    ToComplete { done } -> mempty -- FIXME: goes as prefix
+    PercentI i -> pure $ D.text (show i) <> D.text "%"
+    PercentN n -> pure $ D.text (show n) <> D.text "%"
+    PercentSign { sign, pct } ->
+        let sign_s = if sign > 0 then "" else if sign < 0 then "-" else ""
+        in pure $ D.text (sign_s <> show pct <> "%")
+    ToGetI { got, total } ->
+        pure $ D.text (show got <> "/" <> show total)
+    ToGetN { got, total } ->
+        pure $ D.text (show got <> "/" <> show total)
+    OnTime timeRec ->
+        pure $ D.text "on " <> orgTime timeRec
+    OnDate sdate ->
+        pure $ D.text "on " <> orgDate (CT.dateToRec sdate)
+    PerI { amount, per } ->
+        pure $ D.text (show amount) <> D.text "/" <> D.text per
+    PerN { amount, per } ->
+        pure $ D.text (show amount) <> D.text "/" <> D.text per
+    MeasuredI { amount, measure } ->
+        pure $ D.text (show amount) <> D.text measure
+    MeasuredN { amount, measure } ->
+        pure $ D.text (show amount) <> D.text measure
+    MeasuredSign { sign, amount, measure } ->
+        let sign_s = if sign > 0 then "" else if sign < 0 then "-" else ""
+        in pure $ D.text sign_s <> D.text (show amount) <> D.text measure
+    RangeI { from, to } ->
+        pure $ D.text (show from <> "--" <> show to)
+    RangeN { from, to } ->
+        pure $ D.text (show from <> "--" <> show to)
+    Task taskP ->
+        mempty -- FIXME: goes as prefix
+    LevelsI { reached, levels } ->
+        mempty -- TODO
+    LevelsN { reached, levels } ->
+        mempty-- TODO
+    LevelsS { reached, levels } ->
+        mempty -- TODO
+    LevelsE levelsE ->
+        pure $ D.text $ show levelsE.reached <> "/" <> show levelsE.total
+    LevelsP { levels } ->
+        mempty -- TODO
+    LevelsC levelsC ->
+        mempty -- TODO
+    LevelsO { reached, levels } ->
+        mempty -- TODO
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    RMoreThan -> ">"
+                    REqual -> "="
+                    RLessThan -> "<"
+        in pure $ D.text relText <> D.space <> orgTime timeRec
+    Error err ->
+        mempty
+
+
+
+{-
 _progressToDhall :: Progress -> RenderedAs (Doc Unit)
 _progressToDhall = case _ of
     None ->        _ol $ D.text "T.v_empty"
@@ -326,14 +417,6 @@ _progressToDhall = case _ of
         _ol $ wrapbrkD $ D.text "T.v_time " <> timereccf timeRec
     OnDate sdate ->
         _ol $ wrapbrkD $ D.text "T.v_date " <> sdaterec sdate
-        {-
-        let dateRec = CT.dateToRec sdate
-        in pure $ "T.v_date " <> wrecord
-            [ "day"  /\ ("+" <> show dateRec.day)
-            , "mon"  /\ ("+" <> show dateRec.mon)
-            , "year" /\ ("+" <> show dateRec.year)
-            ]
-        -}
     PerI { amount, per } ->
         _ol $ wrapbrkD $ D.text "T.v_per" <+> (prefixnosp "+" $ show amount) <+> quote per
     PerN { amount, per } ->
@@ -482,148 +565,4 @@ _progressToDhall = case _ of
             TCanceled -> "T.p_canceled"
             TLater -> "T.p_later"
         pvptaskP task = vtaskP task <> D.text "_"
-
-
-ilarray :: forall a. Array String -> Doc a
-ilarray = ilarrayD <<< map D.text
-
-
-ilarrayD :: forall a. Array (Doc a) -> Doc a
-ilarrayD = wraparrD <<< joinWith (D.text "," <> D.space)
-
-
-array :: forall a. Array String -> Array (Doc a)
-array = map D.text >>> arrayD
-
-
-arrayD :: forall a. Array (Doc a) -> Array (Doc a)
-arrayD items =
-    mpi (\i d -> if i == 0 then D.text "[" <+> d else D.text "," <+> d) items <> [ D.text "]" ]
-
-
-quote :: forall a. String -> Doc a
-quote = D.text >>> quoteD
-
-quoteD :: forall a. Doc a -> Doc a
-quoteD = D.enclose (D.text "\"") (D.text "\"")
-
-wrapbrk :: forall a. String -> Doc a
-wrapbrk = D.text >>> wrapbrkD
-
-wrapbrkD :: forall a. Doc a -> Doc a
-wrapbrkD = D.enclose (D.text "(") (D.text ")")
-
-
--- wraparr :: forall a. String -> Doc a
--- wraparr = D.text >>> wraparrD
-
-
-wraparrD :: forall a. Doc a -> Doc a
-wraparrD = D.enclose (D.text "[ ") (D.text " ]")
-
-
-prefix :: forall a. String -> String -> Doc a
-prefix p = D.text >>> prefixD p
-
-
-prefixD :: forall a. String -> Doc a -> Doc a
-prefixD p s = D.text p <+> s
-
-
-fromnl :: forall a. Doc a -> Doc a
-fromnl d = D.break <> d
-
-
-prefixnosp :: forall a. String -> String -> Doc a
-prefixnosp p s = D.text p <> D.text s
-
-
-field :: forall a. (String /\ String) -> Doc a
-field = Tuple.uncurry $ \n v -> D.text n <+> D.text "=" <+> D.text v
-
-
-fieldD :: forall a. (String /\ Doc a) -> Doc a
-fieldD = Tuple.uncurry $ \n docv -> D.text n <+> D.text "=" <+> docv
-
-
-joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
-joinWith sep =
-    fold <<< mpix \d -> sep <> d
-
-
-joinWithSp :: forall a. Doc a -> Array (Doc a) -> Doc a
-joinWithSp sep =
-    fold <<< mpix \d -> sep <+> d
-
-
-mpix :: forall a. (Doc a -> Doc a) -> Array (Doc a) -> Array (Doc a)
-mpix f = mpi $ \i d -> if i == 0 then d else f d
-
-
-mpi :: forall a. (Int -> Doc a -> Doc a) -> Array (Doc a) -> Array (Doc a)
-mpi = mapWithIndex
-
-
-wrecord :: forall a. Array (String /\ String) -> Doc a
-wrecord fields =
-    D.enclose (D.text "{ ") (D.text " }") $
-        joinWith (D.text "," <> D.space) $ field <$> fields
-
-
-wrecordD :: forall a. Array (String /\ Doc a) -> Doc a
-wrecordD fields =
-    D.enclose (D.text "{ ") (D.text " }") $
-        joinWith (D.text "," <> D.space) $ fieldD <$> fields
-
-
-wrecordDWithDate :: forall a. Maybe CT.SDateRec -> Array (String /\ Doc a) -> Doc a
-wrecordDWithDate mbDateRec fields =
-    case mbDateRec of
-        Just _ ->
-            wrecordD
-                $ fields <>
-                [ "date" /\ mbdaterec mbDateRec ]
-        Nothing ->
-            wrecordD fields
-            <+> D.text "// T.inj/no_date"
-
-
-daterecf :: forall a. CT.SDateRec -> Doc a
-daterecf dateRec =
-    wrecord
-        [ "day"  /\ ("+" <> show dateRec.day)
-        , "mon"  /\ ("+" <> show dateRec.mon)
-        , "year" /\ ("+" <> show dateRec.year)
-        ]
-
-
-timereccf :: forall a. CT.STimeRec -> Doc a
-timereccf timeRec =
-    wrecord
-        [ "hrs" /\ ("+" <> show timeRec.hrs)
-        , "min" /\ ("+" <> show timeRec.min)
-        , "sec" /\ ("+" <> show timeRec.sec)
-        ]
-
-sdaterec :: forall a. CT.SDate -> Doc a
-sdaterec =
-    daterecf <<< CT.dateToRec
-
-
-mbdaterec :: forall a. Maybe CT.SDateRec -> Doc a
-mbdaterec =
-    mbgenD (D.text "T.DATE") daterecf
-
-
-mbgen :: forall x a. String -> (x -> String) -> Maybe x -> Doc a
-mbgen t f = mbgenD (D.text t) (D.text <<< f)
-
-
-mbgenD :: forall x a. Doc a -> (x -> Doc a) -> Maybe x -> Doc a
-mbgenD t f = maybe (D.text "None" <+> t) $ \v -> D.text "Some" <+> f v
-
-
-indent = "    " :: String
-indent2 = indent <> indent :: String
-indent3 = indent2 <> indent :: String
-indent4 = indent3 <> indent :: String
+-}
