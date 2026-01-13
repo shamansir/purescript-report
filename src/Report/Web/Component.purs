@@ -43,6 +43,7 @@ import Report.Modifiers.Class.ValueModify as VModify
 import Report.Convert.Generic (class ToExport, includeOnly) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Dhall (toDhall) as Report
+import Report.Convert.Org (toOrg) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
@@ -122,6 +123,7 @@ type Version = Int
 data ExportTarget
     = Json
     | Dhall
+    | Org
 
 
 derive instance Eq ExportTarget
@@ -288,6 +290,7 @@ component preSelected =
             exportTextFor = case _ of
                 Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
                 Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
+                Org   -> state.report # Report.toOrg   @x @subj_id @subj_tag @item_tag includeRule
             exportSelected trg = state.mbExportTo == Just trg
 
             findSubjName :: subj_id -> Maybe String
@@ -305,8 +308,9 @@ component preSelected =
                         <>
                         [ { label : if state.readOnlyMode then "🔒" else "🔓", onClick : const ToggleReadOnlyMode, enabled : state.readOnlyMode }
                         , { label : if state.debugEnabled then "🛠" else "🛠", onClick : const ToggleDebugMode,    enabled : state.debugEnabled }
-                        , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json }
+                        , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json  }
                         , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
+                        , { label : "ORG",   onClick : const $ if exportSelected Org   then DisableExport else EnableExport Org,   enabled : exportSelected Org   }
                         ]
 
             menuButton { label, onClick, enabled } =
