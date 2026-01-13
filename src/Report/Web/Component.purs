@@ -27,7 +27,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap, class ToReport) as R
+import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap, class ToReport, toReport) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
@@ -72,7 +72,8 @@ type State subj_id subj_tag report =
     }
 
 
-type Input subj group item = R.Report subj group item
+type Input subj group item =
+    R.Report subj group item
 
 
 data Action subj_id subj_tag report
@@ -199,7 +200,7 @@ instance
 
 
 component
-    :: forall @x @subj_id @subj_tag @item_tag subj group item query output m
+    :: forall @x @subj_id @subj_tag @item_tag @subj @group @item query output m
      . MonadEffect m
     => Ord subj
     => Ord subj_id
@@ -215,18 +216,18 @@ component
     => Report.ToExport subj_id subj_tag item_tag subj group item x
     => R.ToReport subj group item x
     => Array subj_id
-    -> H.Component query (Input subj group item) output m
+    -> H.Component query x output m
 component preSelected =
     H.mkComponent
         { initialState
         , render
-        , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, receive = Just <<< Receive }
+        , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, receive = Just <<< Receive <<< R.toReport }
         }
     where
-    initialState :: Input subj group item -> State subj_id subj_tag (R.Report subj group item)
-    initialState report =
+    initialState :: x -> State subj_id subj_tag (R.Report subj group item)
+    initialState x =
         { subjects : preSelected
-        , report
+        , report : R.toReport x
         , filter : Nothing
         , tagFilter : []
         , optionsPaneExpanded : true

@@ -14,7 +14,7 @@ in
 
         [ T.kv_ "Yellow Dots" (T.v_i +1864960)
         , T.kv_ "White Squares" (T.v_i +31489)
-        , T.kv_ "Completion" (T.v_pct 40.7)
+        , T.kv_ "Completion" (T.v_pct 0.407)
 
         , T.kv_ "Red Bricks" (T.v_pi { done = +14, total = +39 })
         , T.kv_ "People" (T.v_pi { done = +107, total = +305 })

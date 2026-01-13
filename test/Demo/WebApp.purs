@@ -22,12 +22,13 @@ import Halogen.HTML as HH
 import Halogen.VDom.Driver (runUI)
 
 import GameLog.Dhall (FromDhall, dhallToAchievements) as GL
-import GameLog.Types.Game (GameId(..), GameTag, gameName) as GL
+import GameLog.Types.Game (Game, GameId(..), GameTag, gameName) as GL
 import GameLog.Types.SingleGameStats (totalAchievements) as GL
 import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as GL
-import GameLog.Types.Achievement (Tag) as GL
+import GameLog.Types.Achievement (Achievement, Tag) as GL
 
 import Report (toReport)
+import Report.Group (Group) as Report
 import Report.Web.Component as StatsReport
 
 
@@ -44,7 +45,7 @@ type Slots =
 
 
 type State =
-    { report :: Maybe GL.GamesReport
+    { report :: Maybe GL.RawAchievements
     }
 
 
@@ -99,9 +100,9 @@ component = H.mkComponent
                         <$> gameCollection
 
                     pure gameCollection
-                H.modify_ \s -> s { report = Just $ toReport $ GL.fromArray gameCollection}
+                H.modify_ \s -> s { report = Just $ GL.fromArray gameCollection}
 
 
-reportComponent :: forall query output m. MonadEffect m => H.Component query GL.GamesReport output m
+reportComponent :: forall query output m. MonadEffect m => H.Component query GL.RawAchievements output m
 reportComponent =
-    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag [ GL.DHL "astral-chain" ]
+    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag @GL.Game @Report.Group @GL.Achievement [ GL.DHL "astral-chain" ]

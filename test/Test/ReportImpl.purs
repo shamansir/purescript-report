@@ -87,9 +87,9 @@ spec :: Spec Unit
 spec =
     describe "use" do
       it "report impl" do
-        let report :: Report MySubject MyGroup MyItem
-            report = Report.empty
-            component :: H.Component _ MyReportT _ Effect
-            component = Report.component @MyReport @String @SubjectTag @ItemTag []
-            slot = HH.slot_ _report unit component report
+        let myReport :: MyReport
+            myReport = MyReport Report.empty
+            component :: H.Component _ MyReport _ Effect
+            component = Report.component @MyReport @String @SubjectTag @ItemTag @MySubject @MyGroup @MyItem []
+            slot = HH.slot_ _report unit component myReport
         true `shouldEqual` true

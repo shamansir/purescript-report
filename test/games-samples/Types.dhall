@@ -116,12 +116,12 @@ let Value =
     >
 
 
-let KeyedValue =
+let TaggedValue =
     { v : Value, t : Text }
 
 
 let tag
-    : Value -> KeyedValue
+    : Value -> TaggedValue
     = \(v : Value)
     -> merge
         { E = { t = "E", v = v }
@@ -170,6 +170,23 @@ let Ref =
     >
 
 
+let TabularValue
+    = TaggedValue
+
+
+let TabularKVR =
+    { key : Text
+    , value : TabularValue
+    }
+
+
+let Tabular = List TabularKVR
+
+
+let Tabular/empty : Tabular
+    = ([] : List TabularKVR)
+
+
 -- let KV = { key : Text, value : Value }
 -- let KVD = { key : Text, detailed : Text, value : Value }
 
@@ -196,12 +213,13 @@ let KeyValRec =
     { ref : Ref
     , key : Text
     , detailed : Optional Text
-    , value : KeyedValue
+    , value : TaggedValue
     , selfRef : Optional Ref
     , date : Optional DATE
     , stat : Optional Stat
     , count : Optional Integer
     , tags : Optional (List Text)
+    , tabular : List TabularKVR
     }
 let KVR = KeyValRec
 
@@ -232,6 +250,7 @@ let KVR/init
         , stat = None Stat
         , count = None Integer
         , tags = None (List Text)
+        , tabular = Tabular/empty
         }
 
 
@@ -297,6 +316,21 @@ let inj/self
 let inj/tags
     : List Text -> { tags : Optional (List Text) }
     = \(tags : List Text) -> { tags = Some tags }
+
+
+let inj/tag
+    : Text -> { tags : Optional (List Text) }
+    = \(tag : Text) -> inj/tags [ tag ]
+
+
+let inj/tabs
+    : List TabularKVR -> { tabular : List TabularKVR }
+    = \(tabs : List TabularKVR) -> { tabular = tabs }
+
+
+let inj/tab
+    : Text -> Value -> { tabular : List TabularKVR }
+    = \(key : Text) -> \(value : Value) -> inj/tabs [ { key, value = tag value } ]
 
 
 let kv_
@@ -458,21 +492,6 @@ let p_canceled_ : PROC = PROC.CANCELED
 let p_locked_   : PROC = PROC.LOCKED
 
 
-let TabularValue
-    = KeyedValue
-
-
-let TabularKVR =
-    { key : Text, value : TabularValue }
-
-
-let Tabular = List TabularKVR
-
-
-let Tabular/empty : Tabular
-    = ([] : List TabularKVR)
-
-
 let Subject =
     { id : Text
     , name : Text
@@ -525,7 +544,7 @@ in
     , v_per, v_perd
     , v_reli, v_reld, v_reln, v_relt
     , v_empty, v_unk
-    , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tags
+    , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tag, inj/tags, inj/tab, inj/tabs
     , collapse, introduce
     , p_todo, p_doing, p_done, p_now, p_later, p_canceled, p_wait, p_locked
     , p_todo_, p_doing_, p_done_, p_now_, p_later_, p_canceled_, p_wait_, p_locked_
