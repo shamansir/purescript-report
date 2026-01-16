@@ -180,3 +180,7 @@ self_ref = SReference
 
 tags :: forall t. Array t -> Suffix t
 tags = STags <<< Tags
+
+
+tag :: forall t. t -> Suffix t
+tag = tags <<< pure

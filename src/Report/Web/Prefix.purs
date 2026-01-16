@@ -13,7 +13,7 @@ import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Class as S
 import Report.Prefix as Prefixes
 import Report.Prefix (Key(..), Prefix(..)) as Prefix
-import Report.Modifiers.Rating (toNumber, maxValue, toStars) as Rating
+import Report.Modifiers.Rating (toNumber, maxValue, relValue, toStars) as Rating
 import Report.Modifiers.Priority (priorityChar) as Priority
 import Report.Modifiers.Task (taskPToString) as Task
 
@@ -70,7 +70,7 @@ renderPrefix conf =
         Prefix.KRating -> case currentPrefix of
             Just (Prefix.PRating rating) -> HH.span_
                 [ whenNotEditing $
-                    let ratingColor' = ratingColor $ Rating.maxValue / Rating.toNumber rating
+                    let ratingColor' = ratingColor $ Rating.relValue rating
                     in HH.span_
                         [ qcolorSpan ratingColor' $ Rating.toStars rating
                         , qthinspacerSpan

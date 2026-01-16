@@ -7,12 +7,12 @@ import Data.Number (fromString) as Number
 
 import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Modifiers.Rating (Rating)
-import Report.Modifiers.Rating (fromNumber, toNumber) as Rating
+import Report.Modifiers.Rating (toString, fromString) as Rating
 
 
 encodeRating :: Rating -> CT.EncodedValue
-encodeRating = CT.EncodedValue <<< show <<< Rating.toNumber
+encodeRating = CT.EncodedValue <<< Rating.toString
 
 
 decodeRating :: CT.EncodedValue -> Maybe Rating
-decodeRating (CT.EncodedValue evStr) = Rating.fromNumber <$> Number.fromString evStr
+decodeRating (CT.EncodedValue evStr) = Rating.fromString evStr
