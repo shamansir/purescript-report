@@ -13,7 +13,7 @@ import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Class as S
 import Report.Prefix as Prefixes
 import Report.Prefix (Key(..), Prefix(..)) as Prefix
-import Report.Modifiers.Rating (toNumber, maxValue, relValue, toStars) as Rating
+import Report.Modifiers.Rating (toNumber, maxValue, relValue, toStars, toString) as Rating
 import Report.Modifiers.Priority (priorityChar) as Priority
 import Report.Modifiers.Task (taskPToString) as Task
 
@@ -74,7 +74,7 @@ renderPrefix conf =
                     in HH.span_
                         [ qcolorSpan ratingColor' $ Rating.toStars rating
                         , qthinspacerSpan
-                        , qcolorSpan ratingColor' $ show $ Rating.toNumber rating
+                        , qcolorSpan ratingColor' $ Rating.toString rating
                         ]
                 , qspacerSpan
                 ]

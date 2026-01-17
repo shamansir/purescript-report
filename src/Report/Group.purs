@@ -6,6 +6,7 @@ import Data.Newtype (class Newtype, unwrap, wrap)
 
 import Report.Class
 import Report.Modifiers.Stats (Stats)
+import Report.Modifiers.Stats (Stats(..)) as Stats
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Modify (class GroupModify, class StatsModify)
 
@@ -36,13 +37,31 @@ instance Show Group where
         title <> " (" <> show path <> ")"
 
 
-rootGroup :: Stats -> Group
-rootGroup stats =
+
+mkGroup :: Array PathSegment -> String -> Group
+mkGroup path title =
+    mkGroupWith path title Stats.SYetUnknown
+
+
+mkGroupWith :: Array PathSegment -> String -> Stats -> Group
+mkGroupWith path title stats =
     Group
-        { title : "All"
+        { title
         , stats
-        , path : GroupPath [ PathSegment "root" ]
+        , path : GroupPath path
         }
+
+
+rootGroup :: Group
+rootGroup = rootGroupWith Stats.SYetUnknown
+
+
+rootGroupWith :: Stats -> Group
+rootGroupWith stats =
+    mkGroupWith
+        [ PathSegment "root" ]
+        "All"
+        stats
 
 
 isGroupAt :: GroupPath -> Group -> Boolean
