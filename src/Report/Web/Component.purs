@@ -21,7 +21,7 @@ import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
 import Web.Event.Event (stopPropagation) as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent (toEvent) as ME
+import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
 
 import Halogen as H
 import Halogen.HTML as HH
@@ -109,8 +109,8 @@ data Action subj_id subj_tag item_tag report
     | TurnSubjectNavNamesOff
     | EnableExport ExportTarget
     | DisableExport
-    | AddToFilter MouseEvent item_tag
-    | RemoveFromFilter MouseEvent item_tag
+    | AddToItemsFilter MouseEvent item_tag
+    | RemoveFromItemsFilter MouseEvent item_tag
     | SortItemsBy MouseEvent item_tag
     | GroupItemsBy MouseEvent item_tag
     | ResetPostProcess
@@ -599,8 +599,8 @@ component preSelected =
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
         TurnSubjectNavNamesOn -> H.modify_ \s -> s { showSubjectNavNames = true }
-        AddToFilter mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (Filter itemTag) }
-        RemoveFromFilter mevt itemTag -> stopPropagation mevt <> H.modify_ \s -> s { process = Array.filter (_ /= Filter itemTag) s.process }
+        AddToItemsFilter mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (Filter itemTag) }
+        RemoveFromItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ \s -> s { process = Array.filter (_ /= Filter itemTag) s.process }
         SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (SortBy itemTag) }
         GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (GroupBy itemTag) }
         ResetPostProcess -> H.modify_ \s -> s { process = [] }
@@ -693,6 +693,14 @@ renderSubject navigatedTo subj itemsMap  =
                     makePrefixEditEvt prefixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.PrefixMod prefixKey
                     makeSuffixClickEvt suffixKey mevt = NavigateTo mevt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
                     makeSuffixEditEvt suffixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
+                    makeTagClickEvt tag mevt =
+                        if ME.shiftKey mevt && not (ME.altKey mevt || ME.metaKey mevt) then
+                            AddToItemsFilter mevt tag
+                        else if (not $ ME.shiftKey mevt) && (ME.altKey mevt || ME.metaKey mevt) then
+                            SortItemsBy mevt tag
+                        else if (ME.ctrlKey mevt || (ME.shiftKey mevt && (ME.altKey mevt || ME.metaKey mevt))) then
+                            GroupItemsBy mevt tag
+                        else NoOp
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
@@ -723,6 +731,7 @@ renderSubject navigatedTo subj itemsMap  =
                             , onClick : makeSuffixClickEvt
                             , onEdit : makeSuffixEditEvt
                             , onEditItemName : makeItemNameEditEvt
+                            , onTagClick : makeTagClickEvt
                             , onStartEditing  : StartEditing
                             , onCancelEditing : CancelEditing
                             , noop : NoOp

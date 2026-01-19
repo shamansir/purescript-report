@@ -29,7 +29,7 @@ renderSuffixes
      . S.IsTag item_tag
     => S.IsItem item
     => S.HasSuffixes item_tag item
-    => SuffixesRenderConfig i
+    => SuffixesRenderConfig i item_tag
     -> item
     -> Array (H w i)
 renderSuffixes conf item =
@@ -55,6 +55,7 @@ renderSuffixes conf item =
                             , parentItemName : i_name
                             , onStartEditing : conf.onStartEditing
                             , onCancelEditing : conf.onCancelEditing
+                            , onTagClick : conf.onTagClick
                             , noop : conf.noop
                             }
 
@@ -125,7 +126,7 @@ renderSuffix conf =
             Nothing -> HH.text ""
         Suffix.KTags -> case currentSuffix of
             Just (Suffix.STags (Tags tags)) ->
-                whenNotEditing $ HH.span_ $ itemTagBadge <$> tags
+                whenNotEditing $ HH.span_ $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> tags
             Just _ -> HH.text ""
             Nothing -> HH.text ""
     where

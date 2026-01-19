@@ -2,13 +2,13 @@ module Report.Web.Modifiers where
 
 import Data.Maybe (Maybe)
 
+import Web.UIEvent.MouseEvent (MouseEvent)
+
 import Report.Core.Logic as CT
 import Report.Prefix (Key) as Prefix
 import Report.Prefix (Prefixes)
 import Report.Suffix (Key) as Suffix
 import Report.Suffix (Suffixes)
-import Web.UIEvent.MouseEvent (MouseEvent)
-
 
 type Events i =
     { onEdit :: CT.EncodedValue -> i
@@ -55,12 +55,13 @@ type PrefixRenderConfig i =
        )
 
 
-type SuffixesRenderConfig i =
+type SuffixesRenderConfig i t =
     ModifiersEventConfig Suffix.Key i
        ( mbSelectedSuffix :: Maybe Suffix.Key
        , isEditingSuffix :: Suffix.Key -> Maybe CT.EncodedValue
        , isEditingItemName :: Maybe CT.EncodedValue
        , onEditItemName :: CT.EncodedValue -> i
+       , onTagClick :: t -> MouseEvent -> i
        )
 
 
@@ -73,6 +74,7 @@ type SuffixRenderConfig i t =
        , onEditItemName :: CT.EncodedValue -> i
        , parentSuffixes :: Suffixes t
        , parentItemName :: String
+       , onTagClick :: t -> MouseEvent -> i
        )
 
 
