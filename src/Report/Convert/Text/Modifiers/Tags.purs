@@ -8,13 +8,14 @@ import Data.Newtype (unwrap)
 
 
 import Report.Core.Logic as CT
+import Report.MbWrapped as MbW
 import Report.Class (class IsTag, tagContent, decodeTag)
 import Report.Modifiers.Tags (Tags(..))
 
 
 encodeTags :: forall t. IsTag t => Tags t -> CT.EncodedValue
-encodeTags (Tags ts) = CT.EncodedValue $ String.joinWith "," $ tagContent <$> ts
+encodeTags (Tags ts) = CT.EncodedValue $ String.joinWith "," $ MbW.toString <$> tagContent <$> ts
 
 
 decodeTags :: forall t. IsTag t => CT.EncodedValue -> Tags t
-decodeTags = unwrap >>> String.split (String.Pattern ",") >>> map decodeTag >>> Array.catMaybes >>> Tags
+decodeTags = unwrap >>> String.split (String.Pattern ",") >>> map decodeTag >>> Array.catMaybes >>> Tags -- FIXME: doesn't do MbWrapped reconstruction

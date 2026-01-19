@@ -21,6 +21,8 @@ import Yoga.JSON (class WriteForeign, writePrettyJSON, class ReadForeign, readIm
 
 import Report (Report)
 import Report.Core as CT
+import Report.MbWrapped (MbWrapped)
+import Report.MbWrapped as MbW
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
@@ -139,7 +141,7 @@ toDhall inclRule =
                                     # _ol
                             S.STags tags ->
                                 unwrap tags
-                                    # map (tagContent >>> quote)
+                                    # map (tagContent >>> MbW.toString >>> quote)
                                     # ilarrayD
                                     # prefixD "// T.inj/tags"
                                     # _ol

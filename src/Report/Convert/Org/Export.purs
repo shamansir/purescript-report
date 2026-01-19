@@ -24,6 +24,7 @@ import Report.Core as CT
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
+import Report.MbWrapped as MbW
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
@@ -173,7 +174,7 @@ toOrg inclRule =
                             S.SReference path ->
                                 pure $ "Reference" /\ convertPath path
                             S.STags tags ->
-                                pure $ "Tags" /\ DH.joinWith D.space (D.text <$> tagContent <$> unwrap tags)
+                                pure $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> unwrap tags)
                         )
                         modRec.value
 
@@ -227,7 +228,7 @@ toOrg inclRule =
                                 case unwrap tags of
                                     [] -> Nothing
                                     tagArr ->
-                                        Just $ D.text " #" <> (joinWith (D.space <> D.text "#") $ D.text <$> tagContent <$> tagArr)
+                                        Just $ D.text " #" <> (joinWith (D.space <> D.text "#") $ D.text <$> MbW.toString <$> tagContent <$> tagArr)
                         )
                         modRec.value
 

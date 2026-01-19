@@ -33,6 +33,7 @@ import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
 import Report.Convert.Text.Suffix (encodeSuffix) as Suffix
+import Report.Modifiers.Tags (TagAction(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep) as GP
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
@@ -57,13 +58,7 @@ import Report.Web.Suffix (renderSuffixes)
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 
 
-data Process item_tag
-    = Filter item_tag
-    | SortBy item_tag
-    | GroupBy item_tag
-
-
-derive instance Eq item_tag => Eq (Process item_tag)
+type Process item_tag = { action :: TagAction, tag :: item_tag }
 
 
 type State subj_id subj_tag item_tag report =
@@ -467,9 +462,9 @@ component preSelected =
     processStyle = "background-color: rgb(139, 121, 182); color: white; border-radius: 5px; padding: 3px 5px; margin: 0 3px; cursor: pointer;"
 
     processButton = case _ of
-        Filter tag    -> [ HH.text "F", itemTagBadge (flip CancelProcess $ Filter tag) tag ]
-        SortBy tag    -> [ HH.text "S", itemTagBadge (flip CancelProcess $ SortBy tag) tag ]
-        GroupBy tag   -> [ HH.text "G", itemTagBadge (flip CancelProcess $ GroupBy tag) tag ]
+        { action: FilterBy, tag } -> [ HH.text "F", itemTagBadge (flip CancelProcess { action: FilterBy, tag }) tag ]
+        { action: SortBy, tag }   -> [ HH.text "S", itemTagBadge (flip CancelProcess { action: SortBy,   tag }) tag ]
+        { action: GroupBy, tag }  -> [ HH.text "G", itemTagBadge (flip CancelProcess { action: GroupBy,  tag }) tag ]
         >>> HH.span [ HP.style processStyle ]
 
     subjTagIsOn tagFilter tag =
@@ -641,9 +636,9 @@ component preSelected =
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
         TurnSubjectNavNamesOn -> H.modify_ \s -> s { showSubjectNavNames = true }
-        AddToItemsFilter mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (Filter itemTag), readOnlyMode = true }
-        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (SortBy itemTag),  readOnlyMode = true }
-        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (GroupBy itemTag), readOnlyMode = true }
+        AddToItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process { action: FilterBy, tag : itemTag }, readOnlyMode = true }
+        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process { action: SortBy,   tag : itemTag }, readOnlyMode = true }
+        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process { action: GroupBy,  tag : itemTag }, readOnlyMode = true }
         CancelProcess mevt process -> stopPropagation mevt <> H.modify_ (\s ->
                 let filteredProcess = Array.filter (_ /= process) s.process in
                 s { process = filteredProcess, readOnlyMode = if Array.length filteredProcess > 0 then true else s.readOnlyMode }
@@ -831,29 +826,29 @@ postProcess processes report =
     foldl applyProcess report processes
     where
         applyProcess curReport process = case process of
-            Filter itemTag ->
+            { action : FilterBy, tag : itemTag } ->
                 R.filterItemsByTag itemTag curReport
-            SortBy itemTag ->
+            { action : SortBy, tag : itemTag } ->
                 R.sortItemsByTag itemTag curReport
-            GroupBy itemTag ->
+            { action : GroupBy, tag : itemTag } ->
                 R.groupItemsByTag itemTag curReport
 
 
 whichProcess :: forall item_tag. item_tag -> MouseEvent -> Maybe (Process item_tag)
 whichProcess itemTag mevt =
     if ME.shiftKey mevt && not (ME.altKey mevt || ME.metaKey mevt) then
-        Just $ Filter itemTag
+        Just { action: FilterBy, tag: itemTag }
     else if (not $ ME.shiftKey mevt) && (ME.altKey mevt || ME.metaKey mevt) then
-        Just $ SortBy itemTag
+        Just { action: SortBy, tag: itemTag }
     else if (ME.ctrlKey mevt || (ME.shiftKey mevt && (ME.altKey mevt || ME.metaKey mevt))) then
-        Just $ GroupBy itemTag
+        Just { action: GroupBy, tag: itemTag }
     else Nothing
 
 
 makeTagClickEvt :: forall subj_id subj_tag item_tag x. item_tag -> MouseEvent -> Action subj_id subj_tag item_tag x
 makeTagClickEvt tag mevt =
     case whichProcess tag mevt of
-        Just (Filter _) -> AddToItemsFilter mevt tag
-        Just (SortBy _) -> SortItemsBy mevt tag
-        Just (GroupBy _) -> GroupItemsBy mevt tag
+        Just { action: FilterBy, tag: itemTag } -> AddToItemsFilter mevt itemTag
+        Just { action: SortBy, tag: itemTag }   -> SortItemsBy mevt itemTag
+        Just { action: GroupBy, tag: itemTag }  -> GroupItemsBy mevt itemTag
         Nothing -> NoOp

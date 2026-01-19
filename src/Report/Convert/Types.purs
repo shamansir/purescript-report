@@ -12,6 +12,7 @@ import Data.Newtype (class Newtype, unwrap)
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
 import Report.Group (Group)
+import Report.MbWrapped (MbWrapped)
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Progress (DateRec)
 import Report.Tabular (Tabular)

@@ -5,6 +5,7 @@ import Prelude
 import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Report.Class
+import Report.MbWrapped (MbWrapped)
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
 import Report.Modifiers.Stats (Stats)
@@ -93,5 +94,5 @@ from subj =
         }
 
 
-derive newtype instance (ReadForeign subj_id,  ReadForeign subj_tag)  => ReadForeign  (Subject subj_id subj_tag)
-derive newtype instance (WriteForeign subj_id, WriteForeign subj_tag) => WriteForeign (Subject subj_id subj_tag)
+derive newtype instance (ReadForeign subj_id)  => ReadForeign  (Subject subj_id String)
+derive newtype instance (WriteForeign subj_id) => WriteForeign (Subject subj_id String)

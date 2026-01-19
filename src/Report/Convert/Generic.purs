@@ -15,6 +15,7 @@ import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
 import Report (toMap) as Report
+import Report.MbWrapped as MbW
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Prefix (Prefix)
 import Report.Prefix (Key) as Prefix
@@ -103,7 +104,7 @@ toExport inclRule =
         collectSubject subj =
             { id : SubjectId $ encodeKey @subj_id $ s_id subj
             , name  : s_name  @subj_id subj
-            , tags  : i_tags  @subj_tag subj <#> tagContent
+            , tags  : i_tags  @subj_tag subj <#> tagContent <#> MbW.toString
             , stats : i_stats subj
             -- , trackedAt : Nothing -- TODO
             -- , properties : [] -- collectModifiers @subj_tag subj

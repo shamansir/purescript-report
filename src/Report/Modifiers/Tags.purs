@@ -13,6 +13,15 @@ derive newtype instance WriteForeign t => WriteForeign (Tags t)
 derive newtype instance ReadForeign t => ReadForeign (Tags t)
 
 
+data TagAction
+    = SortBy
+    | FilterBy
+    | GroupBy
+
+
+derive instance Eq TagAction
+
+
 toArray :: forall t. Tags t -> Array t
 toArray = unwrap
 

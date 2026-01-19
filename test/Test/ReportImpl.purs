@@ -21,6 +21,7 @@ import Report (Report)
 import Report.Class (class IsTag, tagContent, decodeTag, class IsSortable, class IsGroupable)
 import Report as Report
 
+import Report.MbWrapped (MbWrapped(..))
 import Report.Impl.Group (Group)
 import Report.Impl.Item (Item)
 import Report.Impl.Subject (Subject)
@@ -43,14 +44,14 @@ derive instance Ord ItemTag
 
 instance IsTag SubjectTag where
     tagColors _ = Tag.defaultColors
-    tagContent _ = "subj"
+    tagContent _ = End "subj"
     decodeTag = const $ Just SubjectTag
     allTags = [ SubjectTag ]
 
 
 instance IsTag ItemTag where
     tagColors _ = Tag.defaultColors
-    tagContent _ = "item"
+    tagContent _ = End "item"
     decodeTag = const $ Just ItemTag
     allTags = [ ItemTag ]
 

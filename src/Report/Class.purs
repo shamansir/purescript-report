@@ -10,6 +10,7 @@ import Report.Tabular (Tabular)
 import Report.Modifiers.Tabular.TabularValue (TabularValue)
 import Report.Modifiers.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
+import Report.MbWrapped (MbWrapped(..))
 
 
 class HasPrefixes a where
@@ -62,11 +63,6 @@ type TagColors =
     }
 
 
-data MbWrapped a
-    = End a
-    | More a (MbWrapped a)
-
-
 class IsGroup g <= IsGroupable g t where
     t_group :: t -> Maybe g
 
@@ -79,13 +75,13 @@ class IsSortable t where
 
 class Eq t <= IsTag t where
     tagColors :: t -> TagColors
-    tagContent :: t -> String
+    tagContent :: t -> MbWrapped String
     decodeTag :: String -> Maybe t
     allTags :: Array t
 
 
 instance IsTag Unit where
     tagColors _ = { text: "#000000", background: "#FFFFFF", border: "#CCCCCC" }
-    tagContent _ = ""
+    tagContent _ = End ""
     decodeTag _ = Just unit
     allTags = [unit]
