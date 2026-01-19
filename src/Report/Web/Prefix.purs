@@ -59,6 +59,7 @@ renderPrefix conf =
         currentPrefix = Prefixes.get conf.key conf.parentPrefixes
         selectedStyle = "background-color: #fffdd0ff; border-radius: 5px;"
         usualStyle = "background-color: transparent;"
+        smallerFont inside = HH.span [ HP.style "font-size: 0.6em;" ] $ pure inside
         wrapPrefix content =
             HH.span
                 [ HP.style $ if conf.isSelected then selectedStyle else usualStyle
@@ -71,10 +72,10 @@ renderPrefix conf =
             Just (Prefix.PRating rating) -> HH.span_
                 [ whenNotEditing $
                     let ratingColor' = ratingColor $ Rating.relValue rating
-                    in HH.span_
+                    in HH.span [ HP.style "margin: 0px -4px 0px 7px; opacity: 0.9; position: relative; top: -1px;" ]
                         [ qcolorSpan ratingColor' $ Rating.toStars rating
                         , qthinspacerSpan
-                        , qcolorSpan ratingColor' $ Rating.toString rating
+                        , smallerFont $ qcolorSpan ratingColor' $ Rating.toString rating
                         ]
                 , qspacerSpan
                 ]

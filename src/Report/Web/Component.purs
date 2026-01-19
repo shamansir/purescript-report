@@ -455,7 +455,7 @@ component preSelected =
                     case R.collectItemsTags $ R.leaveOnlyById state.subjects $ state.report of
                         [] -> [ HH.text "" ]
                         tags ->
-                            [ HH.span [ HP.style "display: block; padding: 5px 0;" ] $ (\tag -> itemTagBadge (makeTagClickEvt tag) tag) <$> tags ]
+                            [ HH.span [ HP.style "display: block; padding: 5px 0; max-height: 300px; overflow-y: scroll;" ] $ (\tag -> itemTagBadge (makeTagClickEvt tag) tag) <$> tags ]
                 else []
                 )
             <> (subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.allTags :: Array subj_tag))
