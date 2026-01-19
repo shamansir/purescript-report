@@ -10,6 +10,16 @@ import Report.Prefix (Prefixes)
 import Report.Suffix (Key) as Suffix
 import Report.Suffix (Suffixes)
 
+
+{-
+data TagAction
+    = ToFilterBy
+    | ToSortBy
+    | ToGroupBy
+    | ToDelete
+-}
+
+
 type Events i =
     { onEdit :: CT.EncodedValue -> i
     , onEditItemName :: CT.EncodedValue -> i
@@ -75,6 +85,7 @@ type SuffixRenderConfig i t =
        , parentSuffixes :: Suffixes t
        , parentItemName :: String
        , onTagClick :: t -> MouseEvent -> i
+    --    , onTagMove :: t -> MouseEvent -> TagAction
        )
 
 

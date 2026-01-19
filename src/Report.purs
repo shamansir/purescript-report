@@ -15,6 +15,8 @@ module Report
     , class ToReport, toReport
     , withGroup, withItem
     , findGroup, findItem
+    , leaveOnly, leaveOnlyById
+    , collectSubjectsTags, collectItemsTags
     , filterItemsByTag, sortItemsByTag, groupItemsByTag
     )
     where
@@ -26,7 +28,7 @@ import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
 import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter, values) as Map
 import Data.Map.Extra (lookupByEq, lookupByEq') as Map
-import Data.Array (index, catMaybes, snoc, updateAt, concat, filter, elem, sortWith, find) as Array
+import Data.Array (index, catMaybes, snoc, updateAt, concat, filter, elem, sortWith, find, nub) as Array
 import Data.Array.Extra (groupExtBy) as Array
 import Data.List (toUnfoldable) as List
 import Data.Tuple (fst, snd) as Tuple
@@ -259,6 +261,54 @@ findItem subjId groupPath itemIdx (Report subjMap) =
         <#> Tuple.snd
         >>= Map.lookup groupPath
         >>= flip Array.index itemIdx
+
+
+leaveOnly :: forall subj group item. Ord subj => Array subj -> Report subj group item -> Report subj group item
+leaveOnly toFilter =
+    unwrap
+        >>> Map.filterKeys (flip Array.elem toFilter)
+        >>> Report
+
+
+leaveOnlyById :: forall subj_id subj group item. Ord subj => Ord subj_id => IsSubjectId subj_id subj => Array subj_id -> Report subj group item -> Report subj group item
+leaveOnlyById toFilter =
+    unwrap
+        >>> Map.filterKeys (s_id >>> flip Array.elem toFilter)
+        >>> Report
+
+
+collectSubjectsTags
+    :: forall subj_tag subj group item
+     . Ord subj_tag
+    => HasTags subj_tag subj
+    => Report subj group item
+    -> Array subj_tag
+collectSubjectsTags =
+    unwrap
+        >>> Map.keys
+        >>> Set.toUnfoldable
+        >>> map i_tags
+        >>> Array.concat
+        >>> Array.nub
+
+
+collectItemsTags
+    :: forall item_tag subj group item
+     . Ord item_tag
+    => HasTags item_tag item
+    => Report subj group item
+    -> Array item_tag
+collectItemsTags =
+    unwrap
+        >>> Map.values
+        >>> map Tuple.snd
+        >>> List.toUnfoldable
+        >>> map (Map.values >>> List.toUnfoldable)
+        >>> Array.concat
+        >>> Array.concat
+        >>> map i_tags
+        >>> Array.concat
+        >>> Array.nub
 
 
 filterItemsByTag

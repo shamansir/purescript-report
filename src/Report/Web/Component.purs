@@ -28,7 +28,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-import Report (Report, toMap, findGroup, findItem, withItem, withGroup, filterItemsByTag, sortItemsByTag, groupItemsByTag, TransferMap, class ToReport, toReport) as R
+import Report (Report, toMap, findGroup, findItem, withItem, withGroup, filterItemsByTag, sortItemsByTag, groupItemsByTag, collectItemsTags, leaveOnlyById, TransferMap, class ToReport, toReport) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
@@ -49,7 +49,7 @@ import Report.Convert.Org (toOrg) as Report
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
 import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
-import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap)
+import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Prefix (renderPrefixes)
@@ -72,6 +72,7 @@ type State subj_id subj_tag item_tag report =
     , filter :: Maybe String
     , tagFilter :: Array subj_tag
     , optionsPaneExpanded :: Boolean
+    , showItemsTags :: Boolean
     , sortBy :: SubjectSort
     , readOnlyMode :: Boolean
     , debugEnabled :: Boolean
@@ -97,6 +98,7 @@ data Action subj_id subj_tag item_tag report
     | IncludeTag subj_tag
     | ExcludeTag subj_tag
     | ToggleOptionsPane
+    | ToggleItemsTagsInOptions
     | NextSort
     | ClearNavigation
     | NavigateTo MouseEvent (Location subj_id)
@@ -110,7 +112,7 @@ data Action subj_id subj_tag item_tag report
     | EnableExport ExportTarget
     | DisableExport
     | AddToItemsFilter MouseEvent item_tag
-    | RemoveFromItemsFilter MouseEvent item_tag
+    | CancelProcess MouseEvent (Process item_tag)
     | SortItemsBy MouseEvent item_tag
     | GroupItemsBy MouseEvent item_tag
     | ResetPostProcess
@@ -255,6 +257,7 @@ component preSelected =
         , filter : Nothing
         , tagFilter : []
         , optionsPaneExpanded : true
+        , showItemsTags : true
         , sortBy : ByWeight
         , readOnlyMode : true
         , debugEnabled : false
@@ -269,7 +272,6 @@ component preSelected =
 
     selectionKeyToSubject :: Array subj -> Map subj_id subj
     selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
-
 
     selectedSubjects :: R.TransferMap subj group item -> Map subj_id subj -> Array subj_id -> Array (subj /\ Map group (Array item))
     selectedSubjects report selKeys subjects = Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
@@ -376,18 +378,24 @@ component preSelected =
                     ]
 
     subjectsToc state allSubjects =
-        HH.div
+        let
+            filteredSubjects =
+                applyFilter state.tagFilter state.sortBy state.filter allSubjects
+        in HH.div
             [ HP.style "padding: 9px 9px 0 0; width: 400px;" ]
             $ filterInput state
             : optionsPane state
             : (HH.div
                     [ HP.style $ "overflow-y: scroll; height: 100%; position: absolute;" ]
-                    $ subjTocRow state.subjects <$> (applyFilter state.tagFilter state.sortBy state.filter) allSubjects)
+                    $ subjTocRow state.subjects <$> filteredSubjects)
             : []
 
     makeTagFilter [] _ = true
     makeTagFilter tags subj = Array.any (flip Array.elem tags) (R.i_tags @subj_tag subj :: Array subj_tag)
 
+    processingCount = _.process >>> Array.length
+
+    applyFilter :: Array subj_tag -> SubjectSort -> Maybe String -> Array subj -> Array subj
     applyFilter tagFilter sortBy mbFilter subjects
         = subjects
             # Array.filter (makeTagFilter tagFilter)
@@ -411,6 +419,12 @@ component preSelected =
                 ]
                 [ HH.text $ if state.optionsPaneExpanded then "○" else "●" ]
             , HH.span
+                [ HE.onClick $ const ToggleItemsTagsInOptions
+                , HP.style $ "padding: 1px 3px 0 5px; cursor: pointer;" <> if state.showItemsTags then "" {- }"font-weight: bold;" -} else "opacity: 0.3;"
+                , HP.title $ if state.showItemsTags then "Hide items tags" else "Show items tags"
+                ]
+                [ HH.text $ "I" ]
+            , HH.span
                 [ HE.onClick $ const NextSort
                 , HP.style "padding: 1px 3px; cursor: pointer;"
                 , HP.title $ "Sort " <> (case state.sortBy of
@@ -428,12 +442,35 @@ component preSelected =
             [ HP.style ""
             ] $
         if not state.optionsPaneExpanded then
-            case state.tagFilter of
+            ( case state.tagFilter of
                 [] -> [ HH.text "" ]
                 tags ->
                     subjTagWrap <$> tags
+            )
+            <>
+            [ processingButtons state.process ]
         else
-            subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.allTags :: Array subj_tag)
+            [ processingButtons state.process ]
+            <> (if state.showItemsTags then
+                    case R.collectItemsTags $ R.leaveOnlyById state.subjects $ state.report of
+                        [] -> [ HH.text "" ]
+                        tags ->
+                            [ HH.span [ HP.style "display: block; padding: 5px 0;" ] $ (\tag -> itemTagBadge (makeTagClickEvt tag) tag) <$> tags ]
+                else []
+                )
+            <> (subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.allTags :: Array subj_tag))
+
+    processingButtons = case _ of
+        [] -> HH.text ""
+        procs -> HH.span [ HP.style "display: block; margin: 7px 4px;" ] $ processButton <$> procs
+
+    processStyle = "background-color: rgb(139, 121, 182); color: white; border-radius: 5px; padding: 3px 5px; margin: 0 3px; cursor: pointer;"
+
+    processButton = case _ of
+        Filter tag    -> [ HH.text "F", itemTagBadge (flip CancelProcess $ Filter tag) tag ]
+        SortBy tag    -> [ HH.text "S", itemTagBadge (flip CancelProcess $ SortBy tag) tag ]
+        GroupBy tag   -> [ HH.text "G", itemTagBadge (flip CancelProcess $ GroupBy tag) tag ]
+        >>> HH.span [ HP.style processStyle ]
 
     subjTagIsOn tagFilter tag =
         tag /\ Array.elem tag tagFilter
@@ -506,6 +543,7 @@ component preSelected =
         IncludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.snoc state.tagFilter subjTag }
         ExcludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
+        ToggleItemsTagsInOptions -> H.modify_ \state -> state { showItemsTags = not state.showItemsTags }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ clearCurrentActions
 
@@ -543,11 +581,15 @@ component preSelected =
                                                 =<< R.i_suffixes @item_tag
                                                 <$> R.findItem subjId groupPath itemIdx s.report
                     Nowhere -> s.navigatedTo
+                processedReport s = processingCount s > 0
                 navigateOrEdit s =
                     if Navigation.isEditing s.navigatedTo then s else
                     if s.readOnlyMode || s.navigatedTo /= nextNavigation
                         then s { navigatedTo = nextNavigation }
-                        else s { navigatedTo = editNavigation s }
+                        else
+                            if not (processedReport s)
+                            then s { navigatedTo = editNavigation s }
+                            else s
             in stopPropagation mevt <> H.modify_ navigateOrEdit
 
         EditAt location encval ->
@@ -599,10 +641,13 @@ component preSelected =
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
         TurnSubjectNavNamesOn -> H.modify_ \s -> s { showSubjectNavNames = true }
-        AddToItemsFilter mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (Filter itemTag) }
-        RemoveFromItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ \s -> s { process = Array.filter (_ /= Filter itemTag) s.process }
-        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (SortBy itemTag) }
-        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (GroupBy itemTag) }
+        AddToItemsFilter mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (Filter itemTag), readOnlyMode = true }
+        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (SortBy itemTag),  readOnlyMode = true }
+        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (GroupBy itemTag), readOnlyMode = true }
+        CancelProcess mevt process -> stopPropagation mevt <> H.modify_ (\s ->
+                let filteredProcess = Array.filter (_ /= process) s.process in
+                s { process = filteredProcess, readOnlyMode = if Array.length filteredProcess > 0 then true else s.readOnlyMode }
+            )
         ResetPostProcess -> H.modify_ \s -> s { process = [] }
         NoOp -> pure unit
 
@@ -693,14 +738,6 @@ renderSubject navigatedTo subj itemsMap  =
                     makePrefixEditEvt prefixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.PrefixMod prefixKey
                     makeSuffixClickEvt suffixKey mevt = NavigateTo mevt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
                     makeSuffixEditEvt suffixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
-                    makeTagClickEvt tag mevt =
-                        if ME.shiftKey mevt && not (ME.altKey mevt || ME.metaKey mevt) then
-                            AddToItemsFilter mevt tag
-                        else if (not $ ME.shiftKey mevt) && (ME.altKey mevt || ME.metaKey mevt) then
-                            SortItemsBy mevt tag
-                        else if (ME.ctrlKey mevt || (ME.shiftKey mevt && (ME.altKey mevt || ME.metaKey mevt))) then
-                            GroupItemsBy mevt tag
-                        else NoOp
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                 in HH.div
@@ -800,3 +837,23 @@ postProcess processes report =
                 R.sortItemsByTag itemTag curReport
             GroupBy itemTag ->
                 R.groupItemsByTag itemTag curReport
+
+
+whichProcess :: forall item_tag. item_tag -> MouseEvent -> Maybe (Process item_tag)
+whichProcess itemTag mevt =
+    if ME.shiftKey mevt && not (ME.altKey mevt || ME.metaKey mevt) then
+        Just $ Filter itemTag
+    else if (not $ ME.shiftKey mevt) && (ME.altKey mevt || ME.metaKey mevt) then
+        Just $ SortBy itemTag
+    else if (ME.ctrlKey mevt || (ME.shiftKey mevt && (ME.altKey mevt || ME.metaKey mevt))) then
+        Just $ GroupBy itemTag
+    else Nothing
+
+
+makeTagClickEvt :: forall subj_id subj_tag item_tag x. item_tag -> MouseEvent -> Action subj_id subj_tag item_tag x
+makeTagClickEvt tag mevt =
+    case whichProcess tag mevt of
+        Just (Filter _) -> AddToItemsFilter mevt tag
+        Just (SortBy _) -> SortItemsBy mevt tag
+        Just (GroupBy _) -> GroupItemsBy mevt tag
+        Nothing -> NoOp
