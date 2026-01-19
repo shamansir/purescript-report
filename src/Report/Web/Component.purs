@@ -7,6 +7,7 @@ import Effect.Class (class MonadEffect)
 import Data.Array ((:))
 import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any) as Array
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.Foldable (foldl)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
@@ -27,7 +28,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-import Report (Report, toMap, findGroup, findItem, withItem, withGroup, TransferMap, class ToReport, toReport) as R
+import Report (Report, toMap, findGroup, findItem, withItem, withGroup, filterItemsByTag, sortItemsByTag, groupItemsByTag, TransferMap, class ToReport, toReport) as R
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
@@ -56,7 +57,16 @@ import Report.Web.Suffix (renderSuffixes)
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 
 
-type State subj_id subj_tag report =
+data Process item_tag
+    = Filter item_tag
+    | SortBy item_tag
+    | GroupBy item_tag
+
+
+derive instance Eq item_tag => Eq (Process item_tag)
+
+
+type State subj_id subj_tag item_tag report =
     { subjects :: Array subj_id
     , report :: report
     , filter :: Maybe String
@@ -68,6 +78,7 @@ type State subj_id subj_tag report =
     , showSubjectNavNames :: Boolean
     , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
+    , process :: Array (Process item_tag)
     -- , TODO: collapsed :: Map subj_id (Map GroupPath Boolean)
     }
 
@@ -76,7 +87,7 @@ type Input subj group item =
     R.Report subj group item
 
 
-data Action subj_id subj_tag report
+data Action subj_id subj_tag item_tag report
     = Receive report
     | SelectSubject subj_id
     | AddSubjectToSelection subj_id
@@ -98,6 +109,11 @@ data Action subj_id subj_tag report
     | TurnSubjectNavNamesOff
     | EnableExport ExportTarget
     | DisableExport
+    | AddToFilter MouseEvent item_tag
+    | RemoveFromFilter MouseEvent item_tag
+    | SortItemsBy MouseEvent item_tag
+    | GroupItemsBy MouseEvent item_tag
+    | ResetPostProcess
     | NoOp
 
 
@@ -137,6 +153,8 @@ class
     , R.IsItem item
     , R.IsGroup group
     , R.IsSubject subj_id subj
+    , R.IsSortable item_tag
+    , R.IsGroupable group item_tag
     )
     <= Is subj_id subj_tag item_tag subj group item (x :: Type)
 
@@ -147,6 +165,8 @@ instance
     , R.IsItem item
     , R.IsGroup group
     , R.IsSubject subj_id subj
+    , R.IsSortable item_tag
+    , R.IsGroupable group item_tag
     ) =>
     Is subj_id subj_tag item_tag subj group item (R.Report subj group item)
 
@@ -154,6 +174,7 @@ instance
 class
     ( R.HasPrefixes item
     , R.HasSuffixes item_tag item
+    , R.HasTags item_tag item
     , R.HasTabular item
     , R.HasTags subj_tag subj
     , R.HasStats subj
@@ -161,6 +182,7 @@ class
     -- , R.HasPrefixes subj
     -- , R.HasSuffixes subj_tag subj
     , R.HasStats group
+
     )
     <= Has subj_tag item_tag subj group item (x :: Type)
 
@@ -169,6 +191,7 @@ instance
     ( R.HasPrefixes item
     , R.HasSuffixes item_tag item
     , R.HasTabular item
+    , R.HasTags item_tag item
     , R.HasTags subj_tag subj
     , R.HasStats subj
     , R.HasTabular subj
@@ -205,6 +228,7 @@ component
     => Ord subj
     => Ord subj_id
     => Ord group
+    => Ord item_tag
     => Show subj_id
     => Is subj_id subj_tag item_tag subj group item x
     => Has subj_tag item_tag subj group item x
@@ -224,7 +248,7 @@ component preSelected =
         , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, receive = Just <<< Receive <<< R.toReport }
         }
     where
-    initialState :: x -> State subj_id subj_tag (R.Report subj group item)
+    initialState :: x -> State subj_id subj_tag item_tag (R.Report subj group item)
     initialState x =
         { subjects : preSelected
         , report : R.toReport x
@@ -237,6 +261,7 @@ component preSelected =
         , showSubjectNavNames : false
         , mbExportTo : Nothing
         , navigatedTo : Navigation.init
+        , process : []
         }
 
     s_id :: subj -> subj_id
@@ -249,7 +274,7 @@ component preSelected =
     selectedSubjects :: R.TransferMap subj group item -> Map subj_id subj -> Array subj_id -> Array (subj /\ Map group (Array item))
     selectedSubjects report selKeys subjects = Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
 
-    render :: State subj_id subj_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag (Input subj group item)) () m
+    render :: State subj_id subj_tag item_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag item_tag (Input subj group item)) () m
     render state =
         HH.div
             [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
@@ -282,7 +307,7 @@ component preSelected =
             ]
         where
 
-            report = R.toMap state.report
+            report = R.toMap $ postProcess state.process state.report
             allSubjects = Set.toUnfoldable $ Map.keys report
             selKeys = selectionKeyToSubject allSubjects
 
@@ -463,10 +488,10 @@ component preSelected =
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
 
     handleAction
-        :: Action subj_id subj_tag (Input subj group item)
+        :: Action subj_id subj_tag item_tag (Input subj group item)
         -> H.HalogenM
-            (State subj_id subj_tag (R.Report subj group item))
-            (Action subj_id subj_tag (Input subj group item))
+            (State subj_id subj_tag item_tag (R.Report subj group item))
+            (Action subj_id subj_tag item_tag (Input subj group item))
             ()
             output
             m
@@ -574,6 +599,11 @@ component preSelected =
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
         TurnSubjectNavNamesOn -> H.modify_ \s -> s { showSubjectNavNames = true }
+        AddToFilter mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (Filter itemTag) }
+        RemoveFromFilter mevt itemTag -> stopPropagation mevt <> H.modify_ \s -> s { process = Array.filter (_ /= Filter itemTag) s.process }
+        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (SortBy itemTag) }
+        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process (GroupBy itemTag) }
+        ResetPostProcess -> H.modify_ \s -> s { process = [] }
         NoOp -> pure unit
 
 
@@ -595,7 +625,7 @@ renderSubject
     => NavigatedTo subj_id
     -> subj
     -> Map group (Array item)
-    -> HH.ComponentHTML (Action subj_id subj_tag (R.Report subj group item)) slots m
+    -> HH.ComponentHTML (Action subj_id subj_tag item_tag  (R.Report subj group item)) slots m
 renderSubject navigatedTo subj itemsMap  =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
@@ -739,3 +769,25 @@ navigationHint navigation =
                 , qspacerSpan
                 , hintIfEditing navigation.mbEditing
                 ]
+
+
+postProcess
+    :: forall item_tag subj group item
+     . Eq item_tag
+    => Ord item_tag
+    => R.IsSortable item_tag
+    => R.IsGroupable group item_tag
+    => R.HasTags item_tag item
+    => Array (Process item_tag)
+    -> R.Report subj group item
+    -> R.Report subj group item
+postProcess processes report =
+    foldl applyProcess report processes
+    where
+        applyProcess curReport process = case process of
+            Filter itemTag ->
+                R.filterItemsByTag itemTag curReport
+            SortBy itemTag ->
+                R.sortItemsByTag itemTag curReport
+            GroupBy itemTag ->
+                R.groupItemsByTag itemTag curReport

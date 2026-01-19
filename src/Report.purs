@@ -15,6 +15,7 @@ module Report
     , class ToReport, toReport
     , withGroup, withItem
     , findGroup, findItem
+    , filterItemsByTag, sortItemsByTag, groupItemsByTag
     )
     where
 
@@ -23,22 +24,23 @@ import Prelude
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
-import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter) as Map
+import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter, values) as Map
 import Data.Map.Extra (lookupByEq, lookupByEq') as Map
-import Data.Array ((:))
-import Data.Array (index, catMaybes, snoc, updateAt, concat) as Array
+import Data.Array (index, catMaybes, snoc, updateAt, concat, filter, elem, sortWith, find) as Array
+import Data.Array.Extra (groupExtBy) as Array
+import Data.List (toUnfoldable) as List
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Bifunctor (lmap, rmap)
+import Data.Bifunctor (lmap)
 import Data.Foldable (foldl)
 
+
 import Yoga.Tree (Tree)
-import Yoga.Tree.Extended (break, build, node, leaf) as Tree
+import Yoga.Tree.Extended (break, build) as Tree
 
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
-import Report.Class (class IsGroup, g_path, class IsSubjectId, s_id)
-import Report.Modifiers.Stats.Collect (collectStats)
+import Report.Class
 
 
 type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)
@@ -257,3 +259,69 @@ findItem subjId groupPath itemIdx (Report subjMap) =
         <#> Tuple.snd
         >>= Map.lookup groupPath
         >>= flip Array.index itemIdx
+
+
+filterItemsByTag
+    :: forall item_tag subj group item
+     . Eq item_tag
+    => HasTags item_tag item
+    => item_tag
+    -> Report subj group item
+    -> Report subj group item
+filterItemsByTag itemTag = unwrap >>> map filterGroups >>> Report
+    where
+        filterGroups :: GroupsMap group item -> GroupsMap group item
+        filterGroups (pathToGroup /\ pathToItems) =
+            pathToGroup /\ ((Array.filter $ hasTag itemTag) <$> pathToItems)
+        hasTag :: item_tag -> item -> Boolean
+        hasTag tag = i_tags >>> Array.elem tag
+
+
+sortItemsByTag
+    :: forall item_tag subj group item
+     . Ord item_tag
+    => HasTags item_tag item
+    => IsSortable item_tag
+    => item_tag
+    -> Report subj group item
+    -> Report subj group item
+sortItemsByTag itemTag = unwrap >>> map sortGroups >>> Report
+    where
+        sortGroups :: GroupsMap group item -> GroupsMap group item
+        sortGroups (pathToGroup /\ pathToItems) =
+            pathToGroup /\ ((Array.sortWith $ itemTagSortValue itemTag) <$> pathToItems)
+        itemTagSortValue :: item_tag -> item -> Maybe item_tag
+        itemTagSortValue tag =
+            Array.find (sameKind tag) <<< i_tags
+
+
+groupItemsByTag
+    :: forall item_tag subj group item
+     . Ord item_tag
+    => HasTags item_tag item
+    => IsGroupable group item_tag
+    => IsSortable item_tag
+    => item_tag
+    -> Report subj group item
+    -> Report subj group item
+groupItemsByTag itemTag = unwrap >>> map regroupItems >>> Report
+    where
+        regroupItems :: GroupsMap group item -> GroupsMap group item
+        regroupItems (_ /\ pathToItems) =
+            let
+                groupToItems = regroupToArray pathToItems
+                regroupedItems = Map.fromFoldable $ lmap g_path <$> groupToItems
+            in newPathToGroup (Tuple.fst <$> groupToItems) /\ regroupedItems
+        newPathToGroup :: Array group -> Map GroupPath group
+        newPathToGroup = map (\grp -> g_path grp /\ grp) >>> Map.fromFoldable
+        regroupToArray :: Map GroupPath (Array item) -> Array (group /\ Array item)
+        regroupToArray = Map.values >>> List.toUnfoldable >>> Array.concat >>> regroupItemsArr
+        regroupItemsArr :: Array item -> Array (group /\ Array item)
+        regroupItemsArr =
+            map
+                (\item ->
+                    let mbKeyTag = Array.find (sameKind itemTag) $ i_tags item
+                    in mbKeyTag >>= t_group @group <#> flip (/\) item
+                )
+            >>> Array.catMaybes -- TODO: make group for all others, add method to `IsGroupable`
+            >>> Array.groupExtBy (\ga gb -> compare (g_path ga) (g_path gb)) Tuple.fst Tuple.snd

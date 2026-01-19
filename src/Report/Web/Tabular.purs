@@ -49,7 +49,7 @@ renderItemTabularValues item =
         if Array.length tabularItems > 0 then
             HH.span
                 [ HP.style "display: block; margin: 0 0 0 50px; color: royalblue; font-size: 0.8em;" ]
-                $ tabularItems <#> renderTabularValue
+                $ HH.span [ HP.style "display: block;" ] <$> pure <$> renderTabularValue <$> tabularItems
         else
             HH.span_ []
 

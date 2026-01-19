@@ -33,7 +33,7 @@ toStars (Rating r) =
             halfStar = if r.value - Int.toNumber fullStars >= 0.5 then 1 else 0
             emptyStars = r.max - fullStars - halfStar
         in  (  Array.replicate fullStars "★"
-            <> Array.replicate halfStar "⯨"
+            <> Array.replicate halfStar "✫"
             <> Array.replicate emptyStars "✩"
             ) # String.joinWith ""
     else
@@ -43,7 +43,7 @@ toStars (Rating r) =
             halfStar = if lerpedValue - Int.toNumber fullStars >= 0.5 then 1 else 0
             emptyStars = maxStars - fullStars - halfStar
         in  (  Array.replicate fullStars "★"
-            <> Array.replicate halfStar "⯨"
+            <> Array.replicate halfStar "✫"
             <> Array.replicate emptyStars "✩"
             ) # String.joinWith ""
 

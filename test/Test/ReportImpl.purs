@@ -18,7 +18,7 @@ import Halogen.HTML as HH
 import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)
 
 import Report (Report)
-import Report.Class (class IsTag, tagContent, decodeTag)
+import Report.Class (class IsTag, tagContent, decodeTag, class IsSortable, class IsGroupable)
 import Report as Report
 
 import Report.Impl.Group (Group)
@@ -38,6 +38,7 @@ data ItemTag = ItemTag
 
 derive instance Eq SubjectTag
 derive instance Eq ItemTag
+derive instance Ord ItemTag
 
 
 instance IsTag SubjectTag where
@@ -52,6 +53,14 @@ instance IsTag ItemTag where
     tagContent _ = "item"
     decodeTag = const $ Just ItemTag
     allTags = [ ItemTag ]
+
+
+instance IsSortable ItemTag where
+    sameKind _ _ = true
+
+
+instance IsGroupable Group ItemTag where
+    t_group ItemTag = Nothing
 
 
 instance WriteForeign SubjectTag where

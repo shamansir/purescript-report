@@ -11,8 +11,8 @@ import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
 import Report.Class
-import Report.Group (Group(..))
-import Report.GroupPath (GroupPath)
+import Report.Group (Group(..), mkGroup)
+import Report.GroupPath (GroupPath, PathSegment(..))
 import Report.Modifiers.Task (TaskP(..))
 import Report.Modifiers.Stats (Stats(..))
 import Report.Modifiers.Tags (Tags(..))
@@ -167,6 +167,7 @@ newtype Tag = Tag String
 
 derive instance Newtype Tag _
 derive newtype instance Eq Tag
+derive newtype instance Ord Tag
 derive newtype instance ReadForeign Tag
 derive newtype instance WriteForeign Tag
 
@@ -184,6 +185,14 @@ instance IsTag Tag where
     decodeTag = Just <<< Tag
     allTags :: Array Tag
     allTags = []
+
+
+instance IsSortable Tag where
+    sameKind _ _ = true -- all the tags are the same kind
+
+
+instance IsGroupable Group Tag where
+    t_group (Tag tag) = Just $ mkGroup (pure $ PathSegment tag) $ "#" <> tag
 
 
 loadSuffixes :: Achievement -> Suffixes Tag
@@ -239,6 +248,10 @@ instance HasPrefixes Achievement where
 
 instance HasSuffixes Tag Achievement where
     i_suffixes = loadSuffixes
+
+
+instance HasTags Tag Achievement where
+    i_tags = unwrap >>> _.tags >>> map Tag
 
 
 instance HasTabular Achievement where
