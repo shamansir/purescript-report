@@ -9,7 +9,7 @@ import Yoga.JSON (class WriteForeign, writeImpl)
 
 import Report.Class
 import Report.Core as CT
-import Report.MbWrapped (MbWrapped(..))
+import Report.Chain (Chain(..))
 import Report.Modifiers.Stats (Stats)
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Tabular as Tabular
@@ -91,7 +91,7 @@ derive instance Eq GameTag
 
 
 instance IsTag GameTag where
-    tagContent :: GameTag -> MbWrapped String
+    tagContent :: GameTag -> Chain String
     tagContent = End <<< case _ of
         PlatformTag platform -> show platform
         SourceTag source ->

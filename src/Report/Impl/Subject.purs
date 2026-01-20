@@ -5,7 +5,7 @@ import Prelude
 import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Report.Class
-import Report.MbWrapped (MbWrapped)
+import Report.Chain (Chain)
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
 import Report.Modifiers.Stats (Stats)

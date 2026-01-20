@@ -15,7 +15,7 @@ import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
 import Report (toMap) as Report
-import Report.MbWrapped as MbW
+import Report.Chain as MbW
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Prefix (Prefix)
 import Report.Prefix (Key) as Prefix

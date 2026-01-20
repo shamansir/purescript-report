@@ -10,7 +10,7 @@ import Report.Tabular (Tabular)
 import Report.Modifiers.Tabular.TabularValue (TabularValue)
 import Report.Modifiers.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
-import Report.MbWrapped (MbWrapped(..))
+import Report.Chain (Chain(..))
 
 
 class HasPrefixes a where
@@ -75,7 +75,7 @@ class IsSortable t where
 
 class Eq t <= IsTag t where
     tagColors :: t -> TagColors
-    tagContent :: t -> MbWrapped String
+    tagContent :: t -> Chain String
     decodeTag :: String -> Maybe t
     allTags :: Array t
 

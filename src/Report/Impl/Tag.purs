@@ -10,7 +10,7 @@ import Foreign (F, Foreign, fail, ForeignError(..))
 import Yoga.JSON (readImpl, writeImpl)
 
 import Report.Class (class IsTag, TagColors, decodeTag, tagContent)
-import Report.MbWrapped as MbW
+import Report.Chain as MbW
 
 
 
@@ -30,6 +30,6 @@ defaultWriteImpl = tagContent >>> MbW.toArray >>> String.joinWith "::" >>> write
 defaultReadImpl :: forall tag. IsTag tag => Foreign -> F tag
 defaultReadImpl frgn = do
     str <- readImpl frgn
-    case decodeTag @tag str of -- FIXME: doesn't do MbWrapped reconstruction
+    case decodeTag @tag str of -- FIXME: doesn't do Chain reconstruction
         Just tag -> pure tag
         Nothing  -> fail $ ForeignError $ "failed to decode tag from " <> str

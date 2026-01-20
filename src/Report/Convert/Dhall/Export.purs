@@ -21,8 +21,8 @@ import Yoga.JSON (class WriteForeign, writePrettyJSON, class ReadForeign, readIm
 
 import Report (Report)
 import Report.Core as CT
-import Report.MbWrapped (MbWrapped)
-import Report.MbWrapped as MbW
+import Report.Chain (Chain)
+import Report.Chain as MbW
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)

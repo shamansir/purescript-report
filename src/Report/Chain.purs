@@ -1,4 +1,4 @@
-module Report.MbWrapped where
+module Report.Chain where
 
 import Prelude
 
@@ -11,22 +11,25 @@ import Data.String (joinWith, split, Pattern(..)) as String
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
 
-{- MbWrapped -}
+{- Chain -}
 
 
-data MbWrapped a
+data Chain a
     = End a
-    | More a (MbWrapped a)
+    | More a (Chain a)
 
 
-toArray :: forall a. MbWrapped a -> Array a
+derive instance Functor Chain
+
+
+toArray :: forall a. Chain a -> Array a
 toArray mbw =
     case mbw of
         End a -> [a]
         More a rest -> a : toArray rest
 
 
-fromArray :: forall a. Array a -> Maybe (MbWrapped a)
+fromArray :: forall a. Array a -> Maybe (Chain a)
 fromArray arr =
     case Array.uncons arr of
         Nothing -> Nothing
@@ -36,21 +39,21 @@ fromArray arr =
                 mbwRest -> Just $ maybe (End head) (More head) $ fromArray mbwRest
 
 
-toString :: MbWrapped String -> String
+toString :: Chain String -> String
 toString mbw = String.joinWith "<>" (toArray mbw)
 
 
-fromString :: String -> Maybe (MbWrapped String)
+fromString :: String -> Maybe (Chain String)
 fromString str = fromArray (String.split (String.Pattern "<>") str)
 
 
-instance WriteForeign (MbWrapped String) where
+instance WriteForeign (Chain String) where
     writeImpl = toArray >>> writeImpl
 
 
-instance ReadForeign (MbWrapped String) where
+instance ReadForeign (Chain String) where
     readImpl frg = (readImpl frg :: F (Array String)) >>= \arr ->
         case fromArray arr of
             Just mbw -> pure mbw
-            Nothing  -> fail $ ForeignError "MbWrapped: cannot read from empty array"
+            Nothing  -> fail $ ForeignError "Chain: cannot read from empty array"
 

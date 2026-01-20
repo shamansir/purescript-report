@@ -24,7 +24,7 @@ import Report.Core as CT
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
-import Report.MbWrapped as MbW
+import Report.Chain as MbW
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types

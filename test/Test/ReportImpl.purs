@@ -21,7 +21,7 @@ import Report (Report)
 import Report.Class (class IsTag, tagContent, decodeTag, class IsSortable, class IsGroupable)
 import Report as Report
 
-import Report.MbWrapped (MbWrapped(..))
+import Report.Chain (Chain(..))
 import Report.Impl.Group (Group)
 import Report.Impl.Item (Item)
 import Report.Impl.Subject (Subject)

@@ -11,7 +11,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
 import Report.Class
-import Report.MbWrapped (MbWrapped(..))
+import Report.Chain (Chain(..))
 import Report.Group (Group(..), mkGroup)
 import Report.GroupPath (GroupPath, PathSegment(..))
 import Report.Modifiers.Task (TaskP(..))
@@ -174,7 +174,7 @@ derive newtype instance WriteForeign Tag
 
 
 instance IsTag Tag where
-    tagContent :: Tag -> MbWrapped String
+    tagContent :: Tag -> Chain String
     tagContent = unwrap >>> End
     tagColors :: Tag -> TagColors
     tagColors = const $
