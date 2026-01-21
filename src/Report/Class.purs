@@ -64,7 +64,7 @@ type TagColors =
 
 
 class IsGroup g <= IsGroupable g t where
-    t_group :: t -> Maybe g
+    t_group :: t -> Maybe g -- TODO `Maybe (Chain g)`?
 
 
 -- used for tags, so when we sort items by a tag, we can find the "same kind" tag on each item, i.e. rating or platform

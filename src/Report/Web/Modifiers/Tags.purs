@@ -25,7 +25,7 @@ subjTagWrap tag =
 subjTagBadge :: forall subj_tag w i. S.IsTag subj_tag => subj_tag -> H w i
 subjTagBadge tag =
     HH.span
-        [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px;" ]
+        [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; white-space: nowrap;" ]
         [ renderChain Nothing (S.tagColors tag) (S.tagContent tag) ]
 
 
@@ -33,7 +33,7 @@ subjTagBadge tag =
 itemTagBadge :: forall item_tag w i. S.IsTag item_tag => (MouseEvent -> i) -> item_tag -> H w i
 itemTagBadge onClick tag =
     HH.span
-        [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px;" ]
+        [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; white-space: nowrap;" ]
         [ renderChain (Just onClick) (S.tagColors tag) (S.tagContent tag) ]
 
 
@@ -51,9 +51,9 @@ renderChain mbEvent tagStyle =
                 [ HH.text tagText ]
         S.More wrapText rest ->
             HH.span
-                [ HP.style $ "border-radius: 4px; border: 1px solid " <> tagStyle.border <> ";" ]
-                [ HH.text wrapText
-                , HH.span [ HP.style "margin-left: 4px;" ] [ renderChain mbEvent tagStyle rest ]
+                [ HP.style $ "border-radius: 4px; border-color: " <> tagStyle.border <> "; border-style: solid; border-width: 1px 0px 1px 1px; padding: 1px 0px 1px 4px;" ]
+                [ HH.span [ HP.style "padding-right: 4px;" ] $ pure $ HH.text wrapText
+                , HH.span [] [ renderChain mbEvent tagStyle rest ]
                 ]
 
 

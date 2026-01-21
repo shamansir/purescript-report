@@ -370,8 +370,9 @@ groupItemsByTag itemTag = unwrap >>> map regroupItems >>> Report
         regroupItemsArr =
             map
                 (\item ->
-                    let mbKeyTag = Array.find (sameKind itemTag) $ i_tags item
-                    in mbKeyTag >>= t_group @group <#> flip (/\) item
+                    let sameKindTags = Array.filter (sameKind itemTag) $ i_tags item
+                    in (\itag -> t_group @group itag <#> flip (/\) item) <$> sameKindTags
                 )
-            >>> Array.catMaybes -- TODO: make group for all others, add method to `IsGroupable`
+            >>> Array.concat
+            >>> Array.catMaybes
             >>> Array.groupExtBy (\ga gb -> compare (g_path ga) (g_path gb)) Tuple.fst Tuple.snd
