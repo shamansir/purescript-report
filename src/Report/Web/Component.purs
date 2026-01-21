@@ -61,6 +61,9 @@ import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 type Process item_tag = { action :: TagAction, tag :: item_tag }
 
 
+type CollapseMap subj_id = Map subj_id (Map GroupPath Boolean)
+
+
 type State subj_id subj_tag item_tag report =
     { subjects :: Array subj_id
     , report :: report
@@ -75,7 +78,7 @@ type State subj_id subj_tag item_tag report =
     , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
     , process :: Array (Process item_tag)
-    -- , TODO: collapsed :: Map subj_id (Map GroupPath Boolean)
+    , collapsed :: CollapseMap subj_id
     }
 
 
@@ -111,6 +114,7 @@ data Action subj_id subj_tag item_tag report
     | SortItemsBy MouseEvent item_tag
     | GroupItemsBy MouseEvent item_tag
     | ResetPostProcess
+    | ToggleGroupCollapse subj_id GroupPath
     | NoOp
 
 
@@ -260,6 +264,7 @@ component preSelected =
         , mbExportTo : Nothing
         , navigatedTo : Navigation.init
         , process : []
+        , collapsed : Map.empty
         }
 
     s_id :: subj -> subj_id
@@ -280,7 +285,7 @@ component preSelected =
                 -- , HE.onClick $ const ClearNavigation
                 ]
                 $
-                ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo)
+                ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo state.collapsed)
                     <$> selectedSubjects report selKeys state.subjects
                 )
                 <> pure menuButtons
@@ -450,7 +455,10 @@ component preSelected =
                     case R.collectItemsTags $ R.leaveOnlyById state.subjects $ state.report of
                         [] -> [ HH.text "" ]
                         tags ->
-                            [ HH.span [ HP.style "display: block; padding: 5px 0; max-height: 300px; overflow-y: scroll;" ] $ (\tag -> itemTagBadge (makeTagClickEvt tag) tag) <$> tags ]
+                            [ HH.span
+                                [ HP.style "display: block; padding: 5px 0; max-height: 300px; overflow-y: scroll;" ]
+                                $ (\tag -> HH.span_ [ itemTagBadge (makeTagClickEvt tag) tag, HH.wbr [] ]) <$> tags
+                            ]
                 else []
                 )
             <> (subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.allTags :: Array subj_tag))
@@ -644,12 +652,20 @@ component preSelected =
                 s { process = filteredProcess, readOnlyMode = if Array.length filteredProcess > 0 then true else s.readOnlyMode }
             )
         ResetPostProcess -> H.modify_ \s -> s { process = [] }
+        ToggleGroupCollapse subjId groupPath -> H.modify_ \s ->
+            let
+                subjCollapsed = fromMaybe Map.empty $ Map.lookup subjId $ s.collapsed
+                currentState = fromMaybe false $ Map.lookup groupPath $ subjCollapsed
+                newSubjCollapsed = subjCollapsed # Map.insert groupPath (not currentState)
+                newCollapsed = s.collapsed # Map.insert subjId newSubjCollapsed
+            in s { collapsed = newCollapsed }
         NoOp -> pure unit
 
 
 renderSubject
     :: forall @subj_id @subj_tag @item_tag subj group item slots m
      . Eq subj_id
+    => Ord subj_id
     => R.IsTag item_tag
     => R.IsTag subj_tag
     => R.IsItem item
@@ -663,10 +679,11 @@ renderSubject
     => R.HasStats group
     => R.HasTags subj_tag subj
     => NavigatedTo subj_id
+    -> CollapseMap subj_id
     -> subj
     -> Map group (Array item)
     -> HH.ComponentHTML (Action subj_id subj_tag item_tag  (R.Report subj group item)) slots m
-renderSubject navigatedTo subj itemsMap  =
+renderSubject navigatedTo collapsedMap subj itemsMap =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
         , HP.id $ "subject-" <> subjUniqueId
@@ -695,7 +712,9 @@ renderSubject navigatedTo subj itemsMap  =
                     groupPath = R.g_path group
                     groupStats = R.i_stats group
                     isNavigatedTo = navigatedTo # Navigation.atGroup subjId groupPath
-                in HH.div
+                    subjCollapsed = fromMaybe Map.empty $ Map.lookup subjId collapsedMap
+                    isCollapsed = fromMaybe false $ Map.lookup groupPath subjCollapsed
+               in HH.div
                     [ HP.style $ "padding-bottom: 10px; line-height: "
                         <> show lineHeight <> "em; margin-left: "
                         <> (show $ marginFor groupPath) <> "px;"
@@ -707,15 +726,23 @@ renderSubject navigatedTo subj itemsMap  =
                         [ HP.style $ "font-weight: bold;"
                             <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
                         ]
-                        [ HH.text $ R.g_title group ]
+                        [ HH.span
+                            [ HE.onClick $ const $ ToggleGroupCollapse subjId groupPath
+                            , HP.style $ "cursor: pointer; user-select: none; margin-right: 5px;" <> if isCollapsed then "" else "opacity: 0.25;" -- 0.6?
+                            ]
+                            [ HH.text $ if isCollapsed then "▶" else "▼" ]
+                        , HH.text $ R.g_title group
+                        ]
                     , qspacerSpan
                     , renderPath groupPath
                     -- , HH.text (show group.mbIndexPath)
                     , qspacerSpan
                     , renderGroupStats groupStats
-                    , HH.div
-                        [ HP.style "border-left: 4px solid #eee; padding-left: 5px; margin-top: 10px; margin-bottom: 15px;" ]
-                        $ mapWithIndex (renderGroupItem groupPath) groupItems
+                    , if isCollapsed
+                        then HH.text ""
+                        else HH.div
+                            [ HP.style "border-left: 4px solid #eee; padding-left: 5px; margin-top: 10px; margin-bottom: 15px;" ]
+                            $ mapWithIndex (renderGroupItem groupPath) groupItems
                     ]
 
             renderGroupItem groupPath itemIdx item =
