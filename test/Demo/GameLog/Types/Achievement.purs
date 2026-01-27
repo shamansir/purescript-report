@@ -193,7 +193,7 @@ instance IsSortable Tag where
 
 
 instance IsGroupable Group Tag where
-    t_group (Tag tag) = Just $ mkGroup (pure $ PathSegment tag) $ "#" <> tag
+    t_group (Tag tag) = Just $ End $ mkGroup (pure $ PathSegment tag) $ "#" <> tag
 
 
 loadSuffixes :: Achievement -> Suffixes Tag

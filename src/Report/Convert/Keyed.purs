@@ -62,6 +62,13 @@ encodeKeyed :: forall @k v. EncodableKey k => WriteForeign v => Keyed k v => v -
 encodeKeyed v = JsonTM $ TM { mod_key: encodeKey @k (keyOf v), mod_v: writeImpl v }
 
 
+defaultReadImpl_ :: forall @k. EncodableKey k => Foreign -> F k
+defaultReadImpl_ frgn = readImpl frgn >>= \str ->
+    case decodeKey @k str of
+        Just key -> pure key
+        Nothing  -> F.fail $ F.ForeignError $ "Failed to decode modifier key: " <> str
+
+
 decodeKeyed :: forall @k @v. EncodableKey k => DecodeKeyed k v => ReadForeign v => JsonTM -> F v
 decodeKeyed (JsonTM (TM { mod_key, mod_v })) = do
     case decodeKey @k mod_key of

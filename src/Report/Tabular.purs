@@ -107,6 +107,10 @@ fromRec :: forall rl row v. RL.RowToList row rl => Record.Keys rl => TabularRow 
 fromRec record = toTabularBase (Proxy :: _ v) (Proxy :: _ rl) record empty
 
 
+fromItems :: forall v. Array (Item v) -> Tabular v
+fromItems = Tabular
+
+
 fromArray :: forall v. Array (String /\ v) -> Tabular v
 fromArray arr = Tabular $ (\(k /\ v) -> Item { key: k, label: k, value: v }) <$> arr
 

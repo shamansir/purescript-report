@@ -43,6 +43,7 @@ import Yoga.Tree.Extended (break, build) as Tree
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
 import Report.Class
+import Report.Chain (toArray) as Chain
 
 
 type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)
@@ -371,8 +372,9 @@ groupItemsByTag itemTag = unwrap >>> map regroupItems >>> Report
             map
                 (\item ->
                     let sameKindTags = Array.filter (sameKind itemTag) $ i_tags item
-                    in (\itag -> t_group @group itag <#> flip (/\) item) <$> sameKindTags
+                    in (\itag -> t_group @group itag <#> Chain.toArray <#> map (flip (/\) item)) <$> sameKindTags
                 )
+            >>> map ((map $ fromMaybe []) >>> Array.concat)
             >>> Array.concat
-            >>> Array.catMaybes
+            -- >>> Array.catMaybes
             >>> Array.groupExtBy (\ga gb -> compare (g_path ga) (g_path gb)) Tuple.fst Tuple.snd
