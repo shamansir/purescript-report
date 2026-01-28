@@ -27,6 +27,7 @@ module Report
 import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Either (Either(..))
 import Data.String (joinWith) as String
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
@@ -163,31 +164,22 @@ fromBuilder = case _ of
         Report $ Map.fromFoldable $ mkSubject <$> subjectsArr
     where
         mkSubject = case _ of
-            B.SubjectR subj grpOrItemsArr ->
+            B.Subject subj groupsArr ->
                 subj
-                /\ (Map.fromFoldable $ Array.concat $ mkGroup      <$> grpOrItemsArr)
-                /\ (Map.fromFoldable $ Array.concat $ mkGroupItems <$> grpOrItemsArr)
+                /\ (Map.fromFoldable $ Array.concat $ mkGroup <$> groupsArr)
+                /\ (Map.fromFoldable $ Array.concat $ mkGroupWithItems  <$> groupsArr)
         mkGroup = case _ of
-            B.Group groupC grpOrItemsArr ->
-                ((\g -> g_path g /\ g) <$> Chain.toArray groupC) <> (Array.concat $ mkGroup <$> grpOrItemsArr)
-            B.Item item ->
-                []
-        mkGroupItems = case _ of
-            B.Item item ->
-                [] -- FIXME: seems only groups are allowed on the first level, could be no item without a group
-            B.Group groupC grpOrItemsArr ->
-                foldChain groupC grpOrItemsArr
+            B.Group groupC itemsArr ->
+                ((\g -> g_path g /\ g) <$> Chain.toArray groupC)
+        mkGroupWithItems = case _ of
+            B.Group groupC itemsArr ->
+                foldChain groupC itemsArr
         foldChain groupC items =
             case groupC of
                 Chain.End g ->
-                    [ g_path g /\ (Array.catMaybes $ extractItem <$> items) ]
+                    [ g_path g /\ ((\(B.Item i) -> i) <$> items) ]
                 Chain.More g restC ->
                     [ g_path g /\ [] ] <> foldChain restC items
-        extractItem = case _ of
-            B.Item item ->
-                Just item
-            B.Group groupC grpOrItemsArr ->
-                Nothing
 
 
 toTree :: forall subj group item. Ord subj => Report subj group item -> Tree (TreeNode subj group item)
