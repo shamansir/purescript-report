@@ -45,6 +45,14 @@ pathFromArray :: Array String -> GroupPath
 pathFromArray = map wrap >>> wrap
 
 
+path :: Array String -> GroupPath
+path = pathFromArray
+
+
+ps :: String -> PathSegment
+ps = PathSegment
+
+
 startsWithNotEq :: GroupPath -> GroupPath -> Boolean
 startsWithNotEq possibleStart sample =
     (howDeep possibleStart > 0) &&

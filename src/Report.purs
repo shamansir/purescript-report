@@ -10,8 +10,11 @@ module Report
     , fromMap
     , toTree
     , fromTree
+    , fromTreeC
     , nodeToString
+    , nodeCToString
     , TreeNode(..)
+    , TreeNodeC(..)
     , class ToReport, toReport
     , withGroup, withItem
     , findGroup, findItem
@@ -24,6 +27,7 @@ module Report
 import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.String (joinWith) as String
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
 import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, alter, values) as Map
@@ -33,7 +37,7 @@ import Data.Array.Extra (groupExtBy) as Array
 import Data.List (toUnfoldable) as List
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Bifunctor (lmap)
+import Data.Bifunctor (class Bifunctor, lmap)
 import Data.Foldable (foldl)
 
 
@@ -43,7 +47,9 @@ import Yoga.Tree.Extended (break, build) as Tree
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
 import Report.Class
-import Report.Chain (toArray) as Chain
+import Report.Chain (Chain)
+import Report.Chain (Chain(..), toArray, last) as Chain
+import Report.Builder as B
 
 
 type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)
@@ -78,11 +84,33 @@ unwrap
 unwrap (Report subjsMap) = subjsMap
 
 
-data TreeNode subj group item
+data TreeNode subj group item -- TODO: Leave only TreeNodeC
     = NRoot
     | NSubject subj
     | NGroup group
     | NItem item
+
+
+derive instance Functor (TreeNode subj group)
+derive instance Bifunctor (TreeNode subj)
+
+
+data TreeNodeC subj group item
+    = CNRoot
+    | CNSubject subj
+    | CNGroup (Chain group)
+    | CNItem item
+
+
+{-
+newtype ReportTree s g i = ReportTree (Array (SubjectR s g i))
+
+data SubjectR s g i = SubjectR s (Array (GroupOrItem g i)))
+
+data GroupOrItem g i
+    = Group (Chain g) (Array (GroupOrItem g i))
+    | Item i
+-}
 
 
 data TreeBuildStep subj group item
@@ -124,6 +152,44 @@ fromMap :: forall subj group item. Ord subj => IsGroup group => TransferMap subj
 fromMap = build <<< map (map Map.toUnfoldable) <<< Map.toUnfoldable
 
 
+-- toBuilder :: forall subj group item. Report subj group item -> B.Builder subj group item
+-- toBuilder (Report subjMap) =
+--     B.toBuilder ?wh
+
+
+fromBuilder :: forall subj group item. Ord subj => IsGroup group => B.Builder subj group item -> Report subj group item
+fromBuilder = case _ of
+    B.Builder subjectsArr ->
+        Report $ Map.fromFoldable $ mkSubject <$> subjectsArr
+    where
+        mkSubject = case _ of
+            B.SubjectR subj grpOrItemsArr ->
+                subj
+                /\ (Map.fromFoldable $ Array.concat $ mkGroup      <$> grpOrItemsArr)
+                /\ (Map.fromFoldable $ Array.concat $ mkGroupItems <$> grpOrItemsArr)
+        mkGroup = case _ of
+            B.Group groupC grpOrItemsArr ->
+                ((\g -> g_path g /\ g) <$> Chain.toArray groupC) <> (Array.concat $ mkGroup <$> grpOrItemsArr)
+            B.Item item ->
+                []
+        mkGroupItems = case _ of
+            B.Item item ->
+                [] -- FIXME: seems only groups are allowed on the first level, could be no item without a group
+            B.Group groupC grpOrItemsArr ->
+                foldChain groupC grpOrItemsArr
+        foldChain groupC items =
+            case groupC of
+                Chain.End g ->
+                    [ g_path g /\ (Array.catMaybes $ extractItem <$> items) ]
+                Chain.More g restC ->
+                    [ g_path g /\ [] ] <> foldChain restC items
+        extractItem = case _ of
+            B.Item item ->
+                Just item
+            B.Group groupC grpOrItemsArr ->
+                Nothing
+
+
 toTree :: forall subj group item. Ord subj => Report subj group item -> Tree (TreeNode subj group item)
 toTree (Report subjMap) =
     Tree.build buildF Start
@@ -163,8 +229,25 @@ nodeToString withPrefix = case _ of
     NItem item    -> if withPrefix then "I: " <> show item  else show item
 
 
+nodeCToString :: forall subj group item. Show subj => Show group => Show item => Boolean -> TreeNodeC subj group item -> String
+nodeCToString withPrefix = case _ of
+    CNRoot -> "*"
+    CNSubject subj -> if withPrefix then "S: " <> show subj  else show subj
+    CNGroup groupC -> if withPrefix then "G: " <> (String.joinWith " ... " $ show <$> Chain.toArray groupC) else (String.joinWith " ... " $ show <$> Chain.toArray groupC)
+    CNItem item    -> if withPrefix then "I: " <> show item  else show item
+
+
 fromTree :: forall a subj group item. Ord subj => Ord group => IsGroup group => (a -> TreeNode subj group item) -> Tree a -> Report subj group item
 fromTree toNode =
+    fromTreeC \a -> case toNode a of
+        NSubject subj -> CNSubject subj
+        NGroup grp -> CNGroup (Chain.End grp)
+        NItem item -> CNItem item
+        NRoot -> CNRoot
+
+
+fromTreeC :: forall a subj group item. Ord subj => Ord group => IsGroup group => (a -> TreeNodeC subj group item) -> Tree a -> Report subj group item
+fromTreeC toNode =
     Tree.break
         (\root subjects ->
             Report $ Map.fromFoldable $ Array.catMaybes $ Tree.break breakSubjectF <$> subjects
@@ -172,18 +255,22 @@ fromTree toNode =
     where
         breakSubjectF a children =
             case toNode a of
-                NSubject subj ->
+                CNSubject subj ->
                     Just $
                         subj /\ foldl (foldGroupsF $ GPath.pathFromArray []) (Map.empty /\ Map.empty) children
                 _ -> Nothing
         foldGroupsF curPath (groupsMap /\ itemsMap) =
             Tree.break $ \a children -> case toNode a of
-                NGroup grp ->
-                    foldl
-                        (foldGroupsF $ g_path grp)
-                        (Map.insert (g_path grp) grp groupsMap /\ itemsMap)
+                CNGroup grpChain ->
+                    let
+                        lastGroup = Chain.last grpChain
+                        updatedGroupsMap =
+                            foldl (flip $ \grp -> Map.insert (g_path grp) grp) groupsMap $ Chain.toArray grpChain
+                    in foldl
+                        (foldGroupsF $ g_path lastGroup)
+                        (updatedGroupsMap /\ itemsMap)
                         children
-                NItem item ->
+                CNItem item ->
                     foldl
                         (foldGroupsF curPath)
                         (groupsMap /\ Map.alter (addItem item) curPath itemsMap)
@@ -191,6 +278,7 @@ fromTree toNode =
                 _ -> groupsMap /\ itemsMap
         addItem item (Just arr) = Just $ Array.snoc arr item
         addItem item Nothing = Just $ pure item
+
 
 
 withGroup

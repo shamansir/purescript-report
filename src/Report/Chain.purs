@@ -4,6 +4,7 @@ import Prelude
 
 import Foreign (F, ForeignError(..), fail)
 
+-- import Control.Applicative (class Pure)
 import Data.Array ((:))
 import Data.Array (uncons) as Array
 import Data.Maybe (Maybe(..), maybe)
@@ -20,6 +21,39 @@ data Chain a
 
 
 derive instance Functor Chain
+
+
+last :: forall a. Chain a -> a
+last =
+    case _ of
+        End a -> a
+        More _ rest -> last rest
+
+
+next :: forall a. Chain a -> a
+next =
+    case _ of
+        End a -> a
+        More a _ -> a
+
+
+tail :: forall a. Chain a -> Maybe (Chain a)
+tail =
+    case _ of
+        End _ -> Nothing
+        More _ rest -> Just rest
+
+
+singleton :: forall a. a -> Chain a
+singleton = End
+
+
+end :: forall a. a -> Chain a
+end = singleton
+
+
+more :: forall a. a -> Chain a -> Chain a
+more = More
 
 
 toArray :: forall a. Chain a -> Array a
