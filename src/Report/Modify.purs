@@ -9,7 +9,8 @@ import Data.Array (index, catMaybes, snoc, updateAt, concat) as Array
 import Yoga.Tree (Tree)
 import Yoga.Tree.Extended (break, build, node, leaf) as Tree
 
-import Report (Report, TreeNode(..))
+import Report (Report)
+import Report.Builder (TreeNode(..))
 import Report (withGroup, withItem, toTree, fromTree) as Report
 import Report.Class
 import Report.Core.Logic (EncodedValue(..))

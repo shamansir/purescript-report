@@ -7,6 +7,8 @@ import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (catMaybes) as Array
+import Data.String (joinWith) as String
+import Data.Bifunctor (class Bifunctor)
 
 import Report.Chain (Chain)
 import Report.Chain as Chain
@@ -33,6 +35,14 @@ data TreeNodeC subj group item -- only as a source when converting from `Tree`
     | CNSubject subj
     | CNGroup (Chain group)
     | CNItem item
+
+
+derive instance Functor (TreeNode subj group)
+derive instance Bifunctor (TreeNode subj)
+
+
+derive instance Functor (TreeNodeC subj group)
+derive instance Bifunctor (TreeNodeC subj)
 
 
 toBuilder :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
@@ -68,6 +78,7 @@ toTree (Builder subjects) =
                     Tree.node (NGroup g) $ pure $ foldChain restC subGoiArr
 
 
+{- TODO: remove? -}
 fromTree :: forall subj group item. Tree (TreeNode subj group item) -> Builder subj group item
 fromTree =
     map convertNode >>> fromTreeC
@@ -80,6 +91,7 @@ fromTree =
             NItem item -> CNItem item
 
 
+{- TODO: remove? -}
 fromTreeC :: forall subj group item. Tree (TreeNodeC subj group item) -> Builder subj group item
 fromTreeC =
     Builder <<< fromSubjectTree
@@ -108,3 +120,25 @@ fromTreeC =
                 CNItem item ->
                     Just $ Item item
                 _ -> Nothing
+
+
+instance (Show subj, Show group, Show item) => Show (TreeNode subj group item) where
+    show = nodeToString false
+
+
+nodeToString :: forall subj group item. Show subj => Show group => Show item => Boolean -> TreeNode subj group item -> String
+nodeToString withPrefix = case _ of
+    NRoot -> "*"
+    NSubject subj -> if withPrefix then "S: " <> show subj  else show subj
+    NGroup group  -> if withPrefix then "G: " <> show group else show group
+    NItem item    -> if withPrefix then "I: " <> show item  else show item
+
+
+nodeCToString :: forall subj group item. Show subj => Show group => Show item => Boolean -> TreeNodeC subj group item -> String
+nodeCToString withPrefix = case _ of
+    CNRoot -> "*"
+    CNSubject subj -> if withPrefix then "S: " <> show subj  else show subj
+    CNGroup groupC -> if withPrefix then "G: " <> (String.joinWith " ... " $ show <$> Chain.toArray groupC) else (String.joinWith " ... " $ show <$> Chain.toArray groupC)
+    CNItem item    -> if withPrefix then "I: " <> show item  else show item
+
+
