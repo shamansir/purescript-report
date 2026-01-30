@@ -7,7 +7,10 @@ import Foreign (F, ForeignError(..), fail)
 -- import Control.Applicative (class Pure)
 import Data.Array ((:))
 import Data.Array (uncons, snoc) as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty (cons, uncons) as NEA
 import Data.List (List(..))
+import Data.Tuple (fst) as Tuple
 import Data.FunctorWithIndex (class FunctorWithIndex)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.String (joinWith, split, Pattern(..)) as String
@@ -45,12 +48,28 @@ last =
         More _ rest -> last rest
 
 
---| Get next link, no matter if it's an end or chain continues further
-next :: forall a. Chain a -> a
-next =
+--| Get previous link, if it exists
+previous :: forall a. Chain a -> Maybe a
+previous =
+    case _ of
+        End _ -> Nothing
+        More _ rest -> Just $ current rest
+
+
+--| Get current link
+current :: forall a. Chain a -> a
+current =
     case _ of
         End a -> a
         More a _ -> a
+
+
+--| Get next link, no matter if it's an end or chain continues further
+-- next :: Chain ~> Maybe
+-- next =
+--     case _ of
+--         End _ -> Nothing
+--         More _ rest -> Just a
 
 
 --| Get all elements but the first
@@ -59,6 +78,7 @@ tail =
     case _ of
         End _ -> Nothing
         More _ rest -> Just rest
+
 
 --| Get all items before the last and the last one separately.
 break :: forall a. Chain a -> Array a /\ a
@@ -81,12 +101,12 @@ chain onMore onEnd = case _ of
 -- subchains :: forall a. Chain a -> Array (Chain a)
 
 --| Get all the transformations of chain: `More 1 $ More 2 $ End 3 == [ [ 1, 2, 3 ], [ 1, 2 ], [ 1 ] ]`
--- unwraps :: forall a. Chain a -> Array (Array a)
--- unwraps = foldF []
---     where
---         foldF prev = case _ of
---             End a -> ?wh
---             More a rest -> ?wh
+unwraps :: forall a. Chain a -> NonEmptyArray (NonEmptyArray a)
+unwraps cur = let completeArr = toNEArray cur
+    in break cur # Tuple.fst # \prev ->
+        case fromArray prev of
+            Just prevChain -> NEA.cons completeArr $ unwraps prevChain
+            Nothing -> pure completeArr
 
 
 singleton :: forall a. a -> Chain a
@@ -104,20 +124,35 @@ more = More
 
 
 toArray :: Chain ~> Array
-toArray mbw =
-    case mbw of
+toArray =
+    case _ of
         End a -> [a]
         More a rest -> a : toArray rest
 
 
+toNEArray :: Chain ~> NonEmptyArray
+toNEArray =
+    case _ of
+        End a -> pure a
+        More a rest -> NEA.cons a $ toNEArray rest
+
+
 fromArray :: forall a. Array a -> Maybe (Chain a)
 fromArray arr =
-    case Array.uncons arr of
-        Nothing -> Nothing
-        Just { head, tail } ->
+    Array.uncons arr <#>
+        \{ head, tail } ->
             case tail of
-                [] -> Just $ End head
-                mbwRest -> Just $ maybe (End head) (More head) $ fromArray mbwRest
+                [] -> End head
+                mbwRest -> maybe (End head) (More head) $ fromArray mbwRest
+
+
+fromNEArray :: NonEmptyArray ~> Chain
+fromNEArray nearr =
+    NEA.uncons nearr #
+        \{ head, tail } ->
+            case tail of
+                [] -> End head
+                mbwRest -> maybe (End head) (More head) $ fromArray mbwRest
 
 
 toString :: Chain String -> String

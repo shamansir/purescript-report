@@ -8,7 +8,7 @@ import Data.Foldable (foldl)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy) as Array
+import Data.Array (concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
@@ -200,7 +200,7 @@ sortSubjectsBy = sortSubjectsBy' identity
 
 
 sortSubjectsBy' :: forall subj group item a. (subj -> a) -> (a -> a -> Ordering) -> Builder subj group item -> Builder subj group item
-sortSubjectsBy' toA ordFn =unwrap >>> Array.sortBy sortByFn >>> wrap
+sortSubjectsBy' toA ordFn = unwrap >>> Array.sortBy sortByFn >>> wrap
     where
         sortByFn (Subject sA _) (Subject sB _) = ordFn (toA sA) (toA sB)
 
@@ -211,11 +211,23 @@ allSubjects = unwrap >>> map extractSubj
         extractSubj (Subject s _) = s
 
 
+filterSubjects :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Builder subj group item
+filterSubjects filterF = unwrap >>> Array.filter subjSatisfy >>> wrap
+    where
+        subjSatisfy (Subject s _) = filterF s
+
+
 {- Groups -}
 
 
 mapGroups :: forall subj groupA groupB item. (groupA -> groupB) -> Builder subj groupA item -> Builder subj groupB item
 mapGroups = lmap
+
+
+withGroup :: forall subj groupA groupB item. (subj -> groupA -> groupB) -> Builder subj groupA item -> Builder subj groupB item
+withGroup mapF = unwrap >>> map mapGroupsF >>> wrap
+    where
+        mapGroupsF (Subject s groups) = Subject s $ lmap (mapF s) <$> groups
 
 
 sortGroups :: forall subj group item. Ord group => Builder subj group item -> Builder subj group item
@@ -259,10 +271,30 @@ regroupBy ordFn itemToGroup = unwrap >>> map mapFn >>> wrap
 
 
 allGroups :: forall subj group item. Builder subj group item -> Array group
-allGroups = unwrap >>> map extractGroups >>> map Array.concat >>> Array.concat
+allGroups = allGroupsC >>> map Chain.toArray >>> Array.concat
+
+
+allGroupsC :: forall subj group item. Builder subj group item -> Array (Chain group)
+allGroupsC = unwrap >>> map extractGroups >>> Array.concat
     where
         extractGroups (Subject _ groups) = extractGroupC <$> groups
-        extractGroupC (Group groupC _) = Chain.toArray groupC
+        extractGroupC (Group groupC _) = groupC
+
+
+filterGroups :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Builder subj group item
+filterGroups filterF = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ Array.filter (\(Group g _) -> filterF s g) groups
+
+
+findGroup :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Chain group)
+findGroup findF = findMapGroup (\s gc -> if findF s gc then Just gc else Nothing)
+
+
+findMapGroup :: forall subj group item a. (subj -> Chain group -> Maybe a) -> Builder subj group item -> Maybe a
+findMapGroup findF = unwrap >>> Array.findMap findSubjectF
+    where
+        findSubjectF (Subject s groups) = Array.findMap (\(Group gc _) -> findF s gc) groups
 
 
 {- Items -}
@@ -270,6 +302,13 @@ allGroups = unwrap >>> map extractGroups >>> map Array.concat >>> Array.concat
 
 mapItems :: forall subj group itemA itemB. (itemA -> itemB) -> Builder subj group itemA -> Builder subj group itemB
 mapItems = rmap
+
+
+withItem :: forall subj group itemA itemB. (subj -> Chain group -> itemA -> itemB) -> Builder subj group itemA -> Builder subj group itemB
+withItem imapF = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
+        mapGroupF s (Group gc items) = Group gc $ (unwrap >>> imapF s gc >>> wrap) <$> items
 
 
 sortItems :: forall subj group item. Ord item => Builder subj group item -> Builder subj group item
@@ -303,3 +342,20 @@ allItems = unwrap >>> map extractGroups >>> map Array.concat >>> Array.concat
     where
         extractGroups (Subject _ groups) = extractGroupC <$> groups
         extractGroupC (Group _ items) = unwrap <$> items
+
+
+filterItems :: forall subj group item. (subj -> Chain group -> item -> Boolean) -> Builder subj group item -> Builder subj group item
+filterItems filterF = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
+        mapGroupF s (Group gc items) = Group gc $ Array.filter (unwrap >>> filterF s gc) items
+
+
+findItem :: forall subj group item. (subj -> Chain group -> item -> Boolean) -> Builder subj group item -> Maybe item
+findItem findF = findMapItem \s gc item -> if findF s gc item then Just item else Nothing
+
+
+findMapItem :: forall subj group item a. (subj -> Chain group -> item -> Maybe a) -> Builder subj group item -> Maybe a
+findMapItem findF = unwrap >>> Array.findMap findSubjectF
+    where
+        findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> Array.findMap (unwrap >>> findF s gc) items) groups
