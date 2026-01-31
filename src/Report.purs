@@ -263,7 +263,7 @@ groupItemsByTag
 groupItemsByTag itemTag =
     toBuilder
         >>> B.regroupByMany
-            (\chsA chsB -> ?wh) -- compare (g_path <$> Chain.toArray chA) (g_path <$> Chain.toArray chB))
+            (\chA chB -> compare (g_path <$> Chain.toArray chA) (g_path <$> Chain.toArray chB))
             (\item ->
                 let sameKindTags = Array.filter (sameKind itemTag) $ i_tags item
                 in Array.catMaybes $ (\otherTag -> t_group @group otherTag) <$> sameKindTags

@@ -302,23 +302,25 @@ regroupBy ordFn itemToGroup = unwrap >>> map mapFn >>> wrap
 
 regroupByMany
     :: forall subj groupA groupB item
-     . (Array (Chain groupB) -> Array (Chain groupB) -> Ordering)
+     . (Chain groupB -> Chain groupB -> Ordering)
     -> (item -> Array (Chain groupB))
     -> Builder subj groupA item
     -> Builder subj groupB item
 regroupByMany ordFn itemToGroups = unwrap >>> map mapFn >>> wrap
     where
         mapFn (Subject s groups) =
-            Subject s $ backToGroups $ Array.groupExtBy ordFn Tuple.snd Tuple.fst $ allItemsOf groups
+            Subject s $ backToGroups $ Array.groupExtBy ordFn Tuple.fst Tuple.snd $ allItemsOf groups
 
-        allItemsOf :: Array (Group groupA item) -> Array (Item item /\ Array (Chain groupB))
-        allItemsOf = map (\(Group _ items) -> addGroups <$> items) >>> Array.concat
+        allItemsOf :: Array (Group groupA item) -> Array (Chain groupB /\ Item item)
+        allItemsOf = map (\(Group _ items) -> addGroups <$> items) >>> Array.concatMap concatF
+
+        concatF :: Array (Item item /\ Array (Chain groupB)) -> Array (Chain groupB /\ Item item)
+        concatF = map (\(item /\ chains) -> (flip (/\) item) <$> chains) >>> Array.concat
 
         addGroups (Item i) = Item i /\ itemToGroups i
 
-        backToGroups :: Array (Array (Chain groupB) /\ Array (Item item)) -> Array (Group groupB item)
-        backToGroups =
-            Array.concatMap \(gchains /\ items) -> (\chain -> Group chain items) <$> gchains
+        backToGroups :: Array (Chain groupB /\ Array (Item item)) -> Array (Group groupB item)
+        backToGroups = map \(groupC /\ items) -> Group groupC items
 
 
 allGroups :: forall subj group item. Builder subj group item -> Array group
