@@ -48,6 +48,12 @@ last =
         More _ rest -> last rest
 
 
+beforeLast :: forall a. Chain a -> Array a
+beforeLast = case _ of
+    End _ -> []
+    More a rest -> a : beforeLast rest -- tailrec
+
+
 --| Get previous link, if it exists
 previous :: forall a. Chain a -> Maybe a
 previous =

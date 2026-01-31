@@ -1,13 +1,7 @@
 module Report
     ( Report
-    , ReportMap
-    , TransferMap
-    , GroupsMap
     , empty
-    , toMap
-    , unwrap
     , build
-    , fromMap
     , toTree
     , fromTree
     , fromTreeC
@@ -39,17 +33,9 @@ import Yoga.Tree (Tree)
 
 import Report.GroupPath (GroupPath)
 import Report.Class
-import Report.Chain (Chain(..), toArray) as Chain
+import Report.Chain (Chain)
+import Report.Chain (Chain(..), toArray, last) as Chain
 import Report.Builder as B
-
-
-type GroupsMap group item = Map GroupPath group /\ Map GroupPath (Array item)
-
-
-type ReportMap subj group item = Map subj (GroupsMap group item)
-
-
-type TransferMap subj group item = Map subj (Map group (Array item))
 
 
 class ToReport subj group item a where
@@ -57,7 +43,7 @@ class ToReport subj group item a where
 
 
 newtype Report subj group item =
-    Report (ReportMap subj group item)
+    Report (B.Builder subj group item)
 
 
 instance ToReport subj group item (Report subj group item) where
@@ -65,83 +51,30 @@ instance ToReport subj group item (Report subj group item) where
 
 
 empty :: forall subj group item. Report subj group item
-empty = Report Map.empty
+empty = Report B.empty
 
 
-unwrap
-    :: forall subj group item
-     . Report subj group item
-    -> ReportMap subj group item
-unwrap (Report subjsMap) = subjsMap
+-- unwrap
+--     :: forall subj group item
+--      . Report subj group item
+--     -> ReportMap subj group item
+-- unwrap (Report subjsMap) = subjsMap
 
 
-build :: forall subj group item. Ord subj => IsGroup group => Array (subj /\ Array (group /\ Array item)) -> Report subj group item
-build subjects =
-    Report $ Map.fromFoldable $ map splitGroupsMaps <$> subjects
-    where
-        splitGroupsMaps :: Array (group /\ Array item) -> GroupsMap group item
-        splitGroupsMaps groupsArr =
-            (Map.fromFoldable $ (\grp -> g_path grp /\ grp) <$> Tuple.fst <$> groupsArr)
-            /\
-            (Map.fromFoldable $ lmap g_path <$> groupsArr)
-
-
-toMap
-    :: forall subj group item
-     . Ord group
-    => Report subj group item
-    -> TransferMap subj group item
-toMap (Report subjsMap) =
-    subjGroups <$> subjsMap
-    where
-        findGroup' :: Map GroupPath group -> GroupPath -> Maybe group
-        findGroup' pathToGroup groupPath =
-            Map.lookup groupPath pathToGroup
-        wrapGroup :: Map GroupPath group -> GroupPath /\ Array item -> Maybe (group /\ Array item)
-        wrapGroup pathToGroup (groupPath /\ items) = findGroup' pathToGroup groupPath <#> flip (/\) items
-        subjGroups (pathToGroup /\ pathToGroupItems) =
-            Map.fromFoldable $ Array.catMaybes $ wrapGroup pathToGroup <$> Map.toUnfoldable pathToGroupItems
-
-
-fromMap :: forall subj group item. Ord subj => IsGroup group => TransferMap subj group item -> Report subj group item
-fromMap = build <<< map (map Map.toUnfoldable) <<< Map.toUnfoldable
-
-
-unfold :: forall subj group item. Report subj group item -> Array (subj /\ Array (group /\ Array item))
-unfold (Report subjMap) = map unfoldSubj <$> Map.toUnfoldable subjMap
-    where
-        unfoldSubj (groupsMap /\ itemsMap) = Array.catMaybes $ unfoldGroup groupsMap <$> Map.toUnfoldable itemsMap
-        unfoldGroup groupsMap (groupPath /\ items) =
-            Map.lookup groupPath groupsMap <#> \group -> group /\ items
+build :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> Report subj group item
+build = Report <<< B.build
 
 
 toBuilder :: forall subj group item. Report subj group item -> B.Builder subj group item
-toBuilder =
-    B.toBuilder <<< unfold
+toBuilder (Report builder) = builder
 
 
-fromBuilder :: forall subj group item. Ord subj => IsGroup group => B.Builder subj group item -> Report subj group item
-fromBuilder = case _ of
-    B.Builder subjectsArr ->
-        Report $ Map.fromFoldable $ mkSubject <$> subjectsArr
-    where
-        mkSubject = case _ of
-            B.Subject subj groupsArr ->
-                subj
-                /\ (Map.fromFoldable $ Array.concat $ mkGroup <$> groupsArr)
-                /\ (Map.fromFoldable $ Array.concat $ mkGroupWithItems  <$> groupsArr)
-        mkGroup = case _ of
-            B.Group groupC itemsArr ->
-                ((\g -> g_path g /\ g) <$> Chain.toArray groupC)
-        mkGroupWithItems = case _ of
-            B.Group groupC itemsArr ->
-                foldChain groupC itemsArr
-        foldChain groupC items =
-            case groupC of
-                Chain.End g ->
-                    [ g_path g /\ ((\(B.Item i) -> i) <$> items) ]
-                Chain.More g restC ->
-                    [ g_path g /\ [] ] <> foldChain restC items
+unfold :: forall subj group item. Report subj group item -> Array (subj /\ Array (group /\ Array item))
+unfold = toBuilder >>> B.unfold
+
+
+fromBuilder :: forall subj group item. B.Builder subj group item -> Report subj group item
+fromBuilder = Report
 
 
 toTree :: forall subj group item. Ord subj => Report subj group item -> Tree (B.TreeNode subj group item)
@@ -162,24 +95,35 @@ fromTreeC toNode =
 withGroup
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
+    => IsGroup group
     => Ord subj_id
     => Ord subj
     => subj_id
     -> GroupPath
     -> (group -> group)
     -> Report subj group item
-    -> Maybe (Report subj group item)
-withGroup subjId groupPath f (Report subjMap) = do
+    -> Report subj group item
+withGroup subjId groupPath f =
+    toBuilder
+        >>> B.withGroup
+            (\otherSubj otherGrp ->
+                if ((s_id otherSubj == subjId) && (g_path otherGrp == groupPath)) then f otherGrp
+                else otherGrp
+            )
+        >>> fromBuilder
+    {-
     subj /\ pathToGroup /\ pathToItems <- Map.lookupByEq' s_id subjId subjMap
     curGroup <- Map.lookup groupPath pathToGroup
     let nextPathToGroup = Map.insert groupPath (f curGroup) pathToGroup
     let nextSubjMap = Map.insert subj (nextPathToGroup /\ pathToItems) subjMap
     pure $ Report nextSubjMap
+    -}
 
 
 withItem
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
+    => IsGroup group
     => Ord subj_id
     => Ord subj
     => subj_id
@@ -187,8 +131,20 @@ withItem
     -> Int
     -> (item -> item)
     -> Report subj group item
-    -> Maybe (Report subj group item)
-withItem subjId groupPath itemIdx f (Report subjMap) = do
+    -> Report subj group item
+withItem subjId groupPath itemIdx f =
+    toBuilder
+        >>> B.withItemIdx
+            (\otherSubj groupC otherIdx otherItem ->
+                if (s_id otherSubj == subjId) then
+                    if (g_path (Chain.last groupC) == groupPath) then
+                        if (itemIdx == otherIdx) then f otherItem
+                        else otherItem
+                    else otherItem
+                else otherItem
+            )
+        >>> fromBuilder
+    {- }
     subj /\ pathToGroup /\ pathToItems <- Map.lookupByEq' s_id subjId subjMap
     itemsArr <- Map.lookup groupPath pathToItems
     curItem <- Array.index itemsArr itemIdx
@@ -196,6 +152,7 @@ withItem subjId groupPath itemIdx f (Report subjMap) = do
     let nextPathToItems = Map.insert groupPath nextItemsArr pathToItems
     let nextSubjMap = Map.insert subj (pathToGroup /\ nextPathToItems) subjMap
     pure $ Report nextSubjMap
+    -}
 
 
 findGroup
@@ -208,9 +165,12 @@ findGroup
     -> Report subj group item
     -> Maybe group
 findGroup subjId groupPath (Report subjMap) = do
+    toBuilder >>> B.findMapGroup ?wh
+    {-
     Map.lookupByEq s_id subjId subjMap
         <#> Tuple.fst
         >>= Map.lookup groupPath
+    -}
 
 
 findItem
@@ -218,30 +178,30 @@ findItem
      . IsSubjectId subj_id subj
     => Ord subj_id
     => Ord subj
+    => IsGroup group
     => subj_id
     -> GroupPath
     -> Int
     -> Report subj group item
     -> Maybe item
 findItem subjId groupPath itemIdx (Report subjMap) =
+    toBuilder >>> B.mapGroups g_path >>> B.findMapItem' ?wh
+    {-
     Map.lookupByEq s_id subjId subjMap
         <#> Tuple.snd
         >>= Map.lookup groupPath
         >>= flip Array.index itemIdx
+    -}
 
 
 leaveOnly :: forall subj group item. Ord subj => Array subj -> Report subj group item -> Report subj group item
 leaveOnly toFilter =
-    unwrap
-        >>> Map.filterKeys (flip Array.elem toFilter)
-        >>> Report
+    toBuilder >>> B.filterSubjects (flip Array.elem toFilter) >>> fromBuilder
 
 
 leaveOnlyById :: forall subj_id subj group item. Ord subj => Ord subj_id => IsSubjectId subj_id subj => Array subj_id -> Report subj group item -> Report subj group item
 leaveOnlyById toFilter =
-    unwrap
-        >>> Map.filterKeys (s_id >>> flip Array.elem toFilter)
-        >>> Report
+    toBuilder >>> B.filterSubjects (s_id >>> flip Array.elem toFilter) >>> fromBuilder
 
 
 collectSubjectsTags
@@ -251,12 +211,7 @@ collectSubjectsTags
     => Report subj group item
     -> Array subj_tag
 collectSubjectsTags =
-    unwrap
-        >>> Map.keys
-        >>> Set.toUnfoldable
-        >>> map i_tags
-        >>> Array.concat
-        >>> Array.nub
+    toBuilder >>> B.allSubjects >>> map i_tags >>> Array.concat >>> Array.nub
 
 
 collectItemsTags
@@ -266,16 +221,7 @@ collectItemsTags
     => Report subj group item
     -> Array item_tag
 collectItemsTags =
-    unwrap
-        >>> Map.values
-        >>> map Tuple.snd
-        >>> List.toUnfoldable
-        >>> map (Map.values >>> List.toUnfoldable)
-        >>> Array.concat
-        >>> Array.concat
-        >>> map i_tags
-        >>> Array.concat
-        >>> Array.nub
+    toBuilder >>> B.allItems >>> map i_tags >>> Array.concat >>> Array.nub
 
 
 filterItemsByTag
@@ -285,13 +231,8 @@ filterItemsByTag
     => item_tag
     -> Report subj group item
     -> Report subj group item
-filterItemsByTag itemTag = unwrap >>> map filterGroups >>> Report
-    where
-        filterGroups :: GroupsMap group item -> GroupsMap group item
-        filterGroups (pathToGroup /\ pathToItems) =
-            pathToGroup /\ ((Array.filter $ hasTag itemTag) <$> pathToItems)
-        hasTag :: item_tag -> item -> Boolean
-        hasTag tag = i_tags >>> Array.elem tag
+filterItemsByTag itemTag =
+    toBuilder >>> B.filterItems (const $ const $ i_tags >>> Array.elem itemTag) >>> fromBuilder
 
 
 sortItemsByTag
@@ -302,11 +243,9 @@ sortItemsByTag
     => item_tag
     -> Report subj group item
     -> Report subj group item
-sortItemsByTag itemTag = unwrap >>> map sortGroups >>> Report
+sortItemsByTag itemTag =
+    toBuilder >>> B.sortItemsWith (itemTagSortValue itemTag) >>> Report
     where
-        sortGroups :: GroupsMap group item -> GroupsMap group item
-        sortGroups (pathToGroup /\ pathToItems) =
-            pathToGroup /\ ((Array.sortWith $ itemTagSortValue itemTag) <$> pathToItems)
         itemTagSortValue :: item_tag -> item -> Maybe item_tag
         itemTagSortValue tag =
             Array.find (sameKind tag) <<< i_tags
@@ -321,7 +260,17 @@ groupItemsByTag
     => item_tag
     -> Report subj group item
     -> Report subj group item
-groupItemsByTag itemTag = unwrap >>> map regroupItems >>> Report
+groupItemsByTag itemTag =
+    toBuilder
+        >>> B.regroupByMany
+            (\chsA chsB -> ?wh) -- compare (g_path <$> Chain.toArray chA) (g_path <$> Chain.toArray chB))
+            (\item ->
+                let sameKindTags = Array.filter (sameKind itemTag) $ i_tags item
+                in Array.catMaybes $ (\otherTag -> t_group @group otherTag) <$> sameKindTags
+            )
+        >>> fromBuilder
+    {-
+    unwrap >>> map regroupItems >>> Report
     where
         regroupItems :: GroupsMap group item -> GroupsMap group item
         regroupItems (_ /\ pathToItems) =
@@ -344,3 +293,4 @@ groupItemsByTag itemTag = unwrap >>> map regroupItems >>> Report
             >>> Array.concat
             -- >>> Array.catMaybes
             >>> Array.groupExtBy (\ga gb -> compare (g_path ga) (g_path gb)) Tuple.fst Tuple.snd
+    -}
