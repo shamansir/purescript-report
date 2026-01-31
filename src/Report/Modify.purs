@@ -134,7 +134,7 @@ modifyAt
     => PrefixesModify item
     => Modification subj_id
     -> Report subj group item
-    -> Maybe (Report subj group item)
+    -> Report subj group item
 modifyAt { subjId, what, newValue, path } report = case what of
     GroupName -> do
         Report.withGroup subjId path (setGroupName $ unwrapEditable newValue) report
@@ -177,7 +177,7 @@ recalculate
     => GroupModify group
     => Report subj group item
     -> Report subj group item
-recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity
+recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity -- FIXME: use `Builder` for that
     where
         updateTree :: Tree (TreeNode subj group item) -> Tree (TreeNode subj group item)
         updateTree = Tree.break \node children ->

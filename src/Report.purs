@@ -3,25 +3,28 @@ module Report
     , empty
     , build
     , toTree
-    , fromTree
-    , fromTreeC
+    , toBuilder, fromBuilder
+    , unfold
+    , fromTree -- FIXME: close this
+    -- , fromTreeC
     , class ToReport, toReport
     , withGroup, withItem
     , findGroup, findItem
     , leaveOnly, leaveOnlyById
     , collectSubjectsTags, collectItemsTags
     , filterItemsByTag, sortItemsByTag, groupItemsByTag
+    , module BExport
     )
     where
 
 import Prelude
 
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)
 import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, values) as Map
 import Data.Map.Extra (lookupByEq, lookupByEq') as Map
-import Data.Array (index, catMaybes, updateAt, concat, filter, elem, sortWith, find, nub) as Array
+import Data.Array (index, catMaybes, updateAt, concat, filter, elem, sortWith, find, findMap, nub) as Array
 import Data.Array.Extra (groupExtBy) as Array
 import Data.List (toUnfoldable) as List
 import Data.Tuple (fst, snd) as Tuple
@@ -36,6 +39,37 @@ import Report.Class
 import Report.Chain (Chain)
 import Report.Chain (Chain(..), toArray, last) as Chain
 import Report.Builder as B
+import Report.Builder
+    ( Builder(..)
+    , Subject(..)
+    , Group(..)
+    , Item(..)
+    , TreeNode(..)
+    -- , toBuilder, toBuilderC
+    -- , unfold, unfoldC
+    -- , toTree
+    , nodeToString
+    {- Subjects -}
+    , mapSubjects
+    , allSubjects
+    , filterSubjects
+    , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
+    {- Groups -}
+    , mapGroups
+    , allGroups, allGroupsC
+    , filterGroups
+    -- , withGroup, withGroupIdx
+    -- , findGroup, findMapGroup
+    , sortGroups, sortGroupsWith, sortGroupsBy
+    , regroup, regroupBy, regroupByMany
+    {- Items -}
+    , mapItems
+    , allItems
+    , filterItems
+    -- , withItem, withItemIdx
+    , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
+    -- , findItem, findMapItem, findMapItem'
+    ) as BExport
 
 
 class ToReport subj group item a where
@@ -87,9 +121,11 @@ fromTree toNode =
     map toNode >>> B.fromTree >>> fromBuilder
 
 
+{-
 fromTreeC :: forall a subj group item. Ord subj => Ord group => IsGroup group => (a -> B.TreeNodeC subj group item) -> Tree a -> Report subj group item
 fromTreeC toNode =
     map toNode >>> B.fromTreeC >>> fromBuilder
+-}
 
 
 withGroup
@@ -144,48 +180,43 @@ withItem subjId groupPath itemIdx f =
                 else otherItem
             )
         >>> fromBuilder
-    {- }
-    subj /\ pathToGroup /\ pathToItems <- Map.lookupByEq' s_id subjId subjMap
-    itemsArr <- Map.lookup groupPath pathToItems
-    curItem <- Array.index itemsArr itemIdx
-    nextItemsArr <- Array.updateAt itemIdx (f curItem) itemsArr
-    let nextPathToItems = Map.insert groupPath nextItemsArr pathToItems
-    let nextSubjMap = Map.insert subj (pathToGroup /\ nextPathToItems) subjMap
-    pure $ Report nextSubjMap
-    -}
 
 
 findGroup
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
+    => IsGroup group
     => Ord subj_id
     => Ord subj
     => subj_id
     -> GroupPath
     -> Report subj group item
     -> Maybe group
-findGroup subjId groupPath (Report subjMap) = do
-    toBuilder >>> B.findMapGroup ?wh
-    {-
-    Map.lookupByEq s_id subjId subjMap
-        <#> Tuple.fst
-        >>= Map.lookup groupPath
-    -}
+findGroup subjId groupPath = do
+    toBuilder >>> B.findMapGroup
+        \subj groupC ->
+            if (s_id subj == subjId) then
+                Array.find (g_path >>> (_ == groupPath)) $ Chain.toArray groupC
+            else Nothing
 
 
 findItem
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
+    => IsGroup group
     => Ord subj_id
     => Ord subj
-    => IsGroup group
     => subj_id
     -> GroupPath
     -> Int
     -> Report subj group item
     -> Maybe item
-findItem subjId groupPath itemIdx (Report subjMap) =
-    toBuilder >>> B.mapGroups g_path >>> B.findMapItem' ?wh
+findItem subjId groupPath itemIdx =
+    toBuilder >>> B.mapGroups g_path >>> B.findMapItem'
+        \subj groupC items ->
+            if (s_id subj == subjId) && (Chain.last groupC == groupPath)
+                then Array.index items itemIdx
+                else Nothing
     {-
     Map.lookupByEq s_id subjId subjMap
         <#> Tuple.snd
@@ -269,28 +300,3 @@ groupItemsByTag itemTag =
                 in Array.catMaybes $ (\otherTag -> t_group @group otherTag) <$> sameKindTags
             )
         >>> fromBuilder
-    {-
-    unwrap >>> map regroupItems >>> Report
-    where
-        regroupItems :: GroupsMap group item -> GroupsMap group item
-        regroupItems (_ /\ pathToItems) =
-            let
-                groupToItems = regroupToArray pathToItems
-                regroupedItems = Map.fromFoldable $ lmap g_path <$> groupToItems
-            in newPathToGroup (Tuple.fst <$> groupToItems) /\ regroupedItems
-        newPathToGroup :: Array group -> Map GroupPath group
-        newPathToGroup = map (\grp -> g_path grp /\ grp) >>> Map.fromFoldable
-        regroupToArray :: Map GroupPath (Array item) -> Array (group /\ Array item)
-        regroupToArray = Map.values >>> List.toUnfoldable >>> Array.concat >>> regroupItemsArr
-        regroupItemsArr :: Array item -> Array (group /\ Array item)
-        regroupItemsArr =
-            map
-                (\item ->
-                    let sameKindTags = Array.filter (sameKind itemTag) $ i_tags item
-                    in (\itag -> t_group @group itag <#> Chain.toArray <#> map (flip (/\) item)) <$> sameKindTags
-                )
-            >>> map ((map $ fromMaybe []) >>> Array.concat)
-            >>> Array.concat
-            -- >>> Array.catMaybes
-            >>> Array.groupExtBy (\ga gb -> compare (g_path ga) (g_path gb)) Tuple.fst Tuple.snd
-    -}

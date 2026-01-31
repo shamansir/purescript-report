@@ -1,4 +1,37 @@
-module Report.Builder where
+module Report.Builder
+    ( Builder(..)
+    , Subject(..)
+    , Group(..)
+    , Item(..)
+    , TreeNode(..)
+    , empty
+    , build
+    , toBuilder, toBuilderC
+    , unfold, unfoldC
+    , toTree
+    , fromTree -- FIXME: close this
+    , nodeToString
+    {- Subjects -}
+    , mapSubjects
+    , allSubjects
+    , filterSubjects
+    , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
+    {- Groups -}
+    , mapGroups
+    , allGroups, allGroupsC
+    , filterGroups
+    , withGroup, withGroupIdx
+    , findGroup, findMapGroup
+    , sortGroups, sortGroupsWith, sortGroupsBy
+    , regroup, regroupBy, regroupByMany
+    {- Items -}
+    , mapItems
+    , allItems
+    , filterItems
+    , withItem, withItemIdx
+    , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
+    , findItem, findMapItem, findMapItem'
+    ) where
 
 import Prelude
 
