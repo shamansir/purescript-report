@@ -1,18 +1,52 @@
-module Report.Builder where
+module Report.Builder
+    ( Builder(..)
+    , Subject(..)
+    , Group(..)
+    , Item(..)
+    , TreeNode(..)
+    , empty
+    , build
+    , toBuilder, toBuilderC
+    , unfold, unfoldC
+    , toTree
+    , nodeToString
+    {- Subjects -}
+    , mapSubjects
+    , allSubjects
+    , filterSubjects
+    , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
+    {- Groups -}
+    , mapGroups
+    , allGroups, allGroupsC
+    , filterGroups
+    , withGroup, withGroupIdx
+    , findGroup, findMapGroup
+    , sortGroups, sortGroupsWith, sortGroupsBy
+    , regroup, regroupBy, regroupByMany
+    {- Items -}
+    , mapItems
+    , allItems
+    , filterItems
+    , withItem, withItemIdx
+    , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
+    , findItem, findMapItem, findMapItems
+    , directItemsOf, allSubjectsItems, allSubjectsItems_, allGroupsItems, allGroupsItems_
+    ) where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap) as Array
+import Data.Array (concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Array.NonEmpty (head, toArray) as NEA
+import Data.Array.NonEmpty (head, toArray, fromArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
 import Data.String (joinWith) as String
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Bifunctor (class Bifunctor, rmap, lmap)
 import Data.Newtype (class Newtype, wrap, unwrap)
 
@@ -68,6 +102,14 @@ derive instance Functor (TreeNodeC subj group)
 derive instance Bifunctor (TreeNodeC subj)
 
 
+empty :: forall subj group item. Builder subj group item
+empty = Builder []
+
+
+build :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
+build = toBuilder
+
+
 toBuilder :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
 toBuilder = map (map $ map $ lmap Chain.singleton) >>> toBuilderC
 
@@ -84,8 +126,14 @@ toBuilderC subjects =
             Group group (Item <$> itemsArr)
 
 
-unfold :: forall subj group item. Builder subj group item -> Array (subj /\ Array (Chain group /\ Array item))
-unfold = unwrap >>> map \(Subject subj groups) -> subj /\ (unfoldGroup <$> groups)
+unfold :: forall subj group item. Builder subj group item -> Array (subj /\ Array (group /\ Array item))
+unfold = unfoldC >>> map (map $ foldl unfoldF [])
+    where
+        unfoldF prev (gchain /\ items) = prev <> (flip (/\) [] <$> Chain.beforeLast gchain) <> [ Chain.last gchain /\ items ]
+
+
+unfoldC :: forall subj group item. Builder subj group item -> Array (subj /\ Array (Chain group /\ Array item))
+unfoldC = unwrap >>> map \(Subject subj groups) -> subj /\ (unfoldGroup <$> groups)
     where
         unfoldGroup (Group groupC items) = groupC /\ (unwrap <$> items)
 
@@ -196,11 +244,11 @@ sortSubjectsWith toA = unwrap >>> Array.sortWith sortWithFn >>> wrap
 
 
 sortSubjectsBy :: forall subj group item. (subj -> subj -> Ordering) -> Builder subj group item -> Builder subj group item
-sortSubjectsBy = sortSubjectsBy' identity
+sortSubjectsBy = sortSubjectsByWith identity
 
 
-sortSubjectsBy' :: forall subj group item a. (subj -> a) -> (a -> a -> Ordering) -> Builder subj group item -> Builder subj group item
-sortSubjectsBy' toA ordFn = unwrap >>> Array.sortBy sortByFn >>> wrap
+sortSubjectsByWith :: forall subj group item a. (subj -> a) -> (a -> a -> Ordering) -> Builder subj group item -> Builder subj group item
+sortSubjectsByWith toA ordFn = unwrap >>> Array.sortBy sortByFn >>> wrap
     where
         sortByFn (Subject sA _) (Subject sB _) = ordFn (toA sA) (toA sB)
 
@@ -230,6 +278,12 @@ withGroup mapF = unwrap >>> map mapGroupsF >>> wrap
         mapGroupsF (Subject s groups) = Subject s $ lmap (mapF s) <$> groups
 
 
+withGroupIdx :: forall subj groupA groupB item. (subj -> Int -> groupA -> groupB) -> Builder subj groupA item -> Builder subj groupB item
+withGroupIdx mapF = unwrap >>> map mapGroupsF >>> wrap
+    where
+        mapGroupsF (Subject s groups) = Subject s $ mapWithIndex (lmap <<< mapF s) groups
+
+
 sortGroups :: forall subj group item. Ord group => Builder subj group item -> Builder subj group item
 sortGroups = unwrap >>> map mapFn >>> wrap
     where
@@ -245,11 +299,11 @@ sortGroupsWith toA = unwrap >>> map mapFn >>> wrap
 
 
 sortGroupsBy :: forall subj group item. (Chain group -> Chain group -> Ordering) -> Builder subj group item -> Builder subj group item
-sortGroupsBy = sortGroupsBy' identity
+sortGroupsBy = sortGroupsByWith identity
 
 
-sortGroupsBy' :: forall subj group item a. (group -> a) -> (Chain a -> Chain a -> Ordering) -> Builder subj group item -> Builder subj group item
-sortGroupsBy' toA ordFn = unwrap >>> map mapFn >>> wrap
+sortGroupsByWith :: forall subj group item a. (group -> a) -> (Chain a -> Chain a -> Ordering) -> Builder subj group item -> Builder subj group item
+sortGroupsByWith toA ordFn = unwrap >>> map mapFn >>> wrap
     where
         mapFn (Subject s groups) = Subject s $ Array.sortBy sortByFn groups
         sortByFn (Group gchainA _) (Group gchainB _) = ordFn (toA <$> gchainA) (toA <$> gchainB)
@@ -262,12 +316,44 @@ regroup = regroupBy compare
 regroupBy :: forall subj groupA groupB item. (Chain groupB -> Chain groupB -> Ordering) -> (item -> Chain groupB) -> Builder subj groupA item -> Builder subj groupB item
 regroupBy ordFn itemToGroup = unwrap >>> map mapFn >>> wrap
     where
-        mapFn (Subject s groups) = Subject s $ backToGroups $ Array.groupAllBy groupByFn $ allItemsOf groups
+        mapFn (Subject s groups) =
+            Subject s $ backToGroups $ Array.groupAllBy groupByFn $ allItemsOf groups
+
+        allItemsOf :: Array (Group groupA item) -> Array (Chain groupB /\ Item item)
         allItemsOf = map (\(Group _ items) -> addGroup <$> items) >>> Array.concat
+
         addGroup (Item i) = itemToGroup i /\ Item i
+
+        groupByFn :: (Chain groupB /\ Item item) -> (Chain groupB /\ Item item) -> Ordering
         groupByFn (gchainA /\ _) (gchainB /\ _) = ordFn gchainA gchainB
+
         backToGroups :: Array (NonEmptyArray (Chain groupB /\ Item item)) -> Array (Group groupB item)
-        backToGroups = map (\nea -> (Tuple.fst $ NEA.head nea) /\ (Tuple.snd <$> NEA.toArray nea)) >>> map (\(groupC /\ items) -> Group groupC items)
+        backToGroups =
+            map (\nea -> (Tuple.fst $ NEA.head nea) /\ (Tuple.snd <$> NEA.toArray nea))
+                >>> map (\(groupC /\ items) -> Group groupC items)
+
+
+regroupByMany
+    :: forall subj groupA groupB item
+     . (Chain groupB -> Chain groupB -> Ordering)
+    -> (item -> Array (Chain groupB))
+    -> Builder subj groupA item
+    -> Builder subj groupB item
+regroupByMany ordFn itemToGroups = unwrap >>> map mapFn >>> wrap
+    where
+        mapFn (Subject s groups) =
+            Subject s $ backToGroups $ Array.groupExtBy ordFn Tuple.fst Tuple.snd $ allItemsOf groups
+
+        allItemsOf :: Array (Group groupA item) -> Array (Chain groupB /\ Item item)
+        allItemsOf = map (\(Group _ items) -> addGroups <$> items) >>> Array.concatMap concatF
+
+        concatF :: Array (Item item /\ Array (Chain groupB)) -> Array (Chain groupB /\ Item item)
+        concatF = map (\(item /\ chains) -> (flip (/\) item) <$> chains) >>> Array.concat
+
+        addGroups (Item i) = Item i /\ itemToGroups i
+
+        backToGroups :: Array (Chain groupB /\ Array (Item item)) -> Array (Group groupB item)
+        backToGroups = map \(groupC /\ items) -> Group groupC items
 
 
 allGroups :: forall subj group item. Builder subj group item -> Array group
@@ -311,6 +397,13 @@ withItem imapF = unwrap >>> map mapSubjectF >>> wrap
         mapGroupF s (Group gc items) = Group gc $ (unwrap >>> imapF s gc >>> wrap) <$> items
 
 
+withItemIdx :: forall subj group itemA itemB. (subj -> Chain group -> Int -> itemA -> itemB) -> Builder subj group itemA -> Builder subj group itemB
+withItemIdx imapF = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
+        mapGroupF s (Group gc items) = Group gc $ mapWithIndex (\idx -> wrap <<< imapF s gc idx <<< unwrap) items
+
+
 sortItems :: forall subj group item. Ord item => Builder subj group item -> Builder subj group item
 sortItems = unwrap >>> map mapFn >>> wrap
     where
@@ -326,11 +419,11 @@ sortItemsWith toA = unwrap >>> map mapFn >>> wrap
 
 
 sortItemsBy :: forall subj group item. (item -> item -> Ordering) -> Builder subj group item -> Builder subj group item
-sortItemsBy = sortItemsBy' identity
+sortItemsBy = sortItemsByWith identity
 
 
-sortItemsBy' :: forall subj group item a. (item -> a) -> (a -> a -> Ordering) -> Builder subj group item -> Builder subj group item
-sortItemsBy' toA ordFn = unwrap >>> map mapFn >>> wrap
+sortItemsByWith :: forall subj group item a. (item -> a) -> (a -> a -> Ordering) -> Builder subj group item -> Builder subj group item
+sortItemsByWith toA ordFn = unwrap >>> map mapFn >>> wrap
     where
         mapFn (Subject s groups) = Subject s $ sortGroup <$> groups
         sortGroup (Group gc items) = Group gc $ Array.sortBy sortByFn items
@@ -359,3 +452,61 @@ findMapItem :: forall subj group item a. (subj -> Chain group -> item -> Maybe a
 findMapItem findF = unwrap >>> Array.findMap findSubjectF
     where
         findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> Array.findMap (unwrap >>> findF s gc) items) groups
+
+
+findMapItems :: forall subj group item a. (subj -> Chain group -> Array item -> Maybe a) -> Builder subj group item -> Maybe a
+findMapItems findF = unwrap >>> Array.findMap findSubjectF
+    where
+        findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> findF s gc $ unwrap <$> items) groups
+
+
+directItemsOf :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array item)
+directItemsOf predF = findMapItems $ \subj groupC items -> if predF subj groupC then Just items else Nothing
+
+
+allSubjectsItems :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allSubjectsItems subjPredF =
+    unwrap
+    >>> Array.filter (extractSubj >>> subjPredF)
+    >>> case _ of
+        [] -> Nothing
+        arr -> Just $ extractGroups <$> arr
+    >>> map (map $ map $ map extractGroup)
+    where
+        extractSubj (Subject s _) = s
+        extractGroups (Subject s groups) = s /\ groups
+        extractGroup (Group groupC items) = groupC /\ (unwrap <$> items)
+
+
+allSubjectsItems_ :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Array item
+allSubjectsItems_ subjPredF =
+    allSubjectsItems subjPredF
+    >>> fromMaybe []
+    >>> map (Tuple.snd >>> map Tuple.snd)
+    >>> map Array.concat
+    >>> Array.concat
+
+
+allGroupsItems :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allGroupsItems groupPredF =
+    unwrap
+    >>> map extractGroups
+    >>> map (\(subj /\ groups) -> subj /\ Array.filter (groupPredF subj <<< extractGroupC) groups)
+    >>> case _ of
+        [] -> Nothing
+        arr -> Just $ (map $ map extractGroup) <$> arr
+    where
+        extractGroups (Subject s groups) = s /\ groups
+        extractGroupC (Group groupC _) = groupC
+        extractGroup (Group groupC items) = groupC /\ (unwrap <$> items)
+
+
+allGroupsItems_ :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Array item
+allGroupsItems_ groupPredF =
+    allGroupsItems groupPredF
+    >>> fromMaybe []
+    >>> map (Tuple.snd >>> map Tuple.snd)
+    >>> map Array.concat
+    >>> Array.concat
+
+

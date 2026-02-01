@@ -4,18 +4,23 @@ import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Array ((:))
-import Data.Array (index, catMaybes, snoc, updateAt, concat) as Array
+import Data.Array (index, catMaybes, snoc, updateAt, concat, any, filter, concat) as Array
+import Data.Tuple (fst, snd) as Tuple
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Yoga.Tree (Tree)
 import Yoga.Tree.Extended (break, build, node, leaf) as Tree
 
 import Report (Report)
 import Report.Builder (TreeNode(..))
-import Report (withGroup, withItem, toTree, fromTree) as Report
+import Report.Builder as RBuilder
+import Report (toBuilder, fromBuilder, withGroup, withItem, toTree) as Report
 import Report.Class
+import Report.Chain (Chain)
+import Report.Chain as Chain
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
-import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray) as GPath
+import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith) as GPath
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Class.ValueModify (fromEditable)
 import Report.Modifiers.Stats.Collect (collectStats)
@@ -23,7 +28,6 @@ import Report.Prefix (Key, put) as Prefix
 import Report.Prefix (Prefix, Prefixes)
 import Report.Suffix (Key, put) as Suffix
 import Report.Suffix (Suffix, Suffixes)
-
 
 
 data WhatMod
@@ -120,12 +124,10 @@ loadSuffixKey = case _ of
 
 modifyAt
     :: forall @tag subj_id subj group item
-     . Ord subj
-    => Ord subj_id
+     . Eq subj_id
     => IsSubjectId subj_id subj
     => IsTag tag
     => IsGroup group
-    => IsItem item
     => HasPrefixes item
     => HasSuffixes tag item
     => GroupModify group
@@ -134,7 +136,7 @@ modifyAt
     => PrefixesModify item
     => Modification subj_id
     -> Report subj group item
-    -> Maybe (Report subj group item)
+    -> Report subj group item
 modifyAt { subjId, what, newValue, path } report = case what of
     GroupName -> do
         Report.withGroup subjId path (setGroupName $ unwrapEditable newValue) report
@@ -166,33 +168,45 @@ modifyAt { subjId, what, newValue, path } report = case what of
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable
 
 
+data Recalculate
+    = OnlyDirect
+    | AllNested
+
+
 recalculate
     :: forall @tag subj group item
-     . Ord subj
-    => Ord group
-    => IsItem item
-    => IsGroup group
+     . IsGroup group
     => HasSuffixes tag item
     => StatsModify group
-    => GroupModify group
     => Report subj group item
     -> Report subj group item
-recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity
+recalculate =
+    recalculate_ @tag AllNested
+
+
+recalculate_
+    :: forall @tag subj group item
+     . IsGroup group
+    => HasSuffixes tag item
+    => StatsModify group
+    => Recalculate
+    -> Report subj group item
+    -> Report subj group item
+recalculate_ how =
+    Report.toBuilder >>> RBuilder.unfoldC >>> (map $ map updateGroups) >>> RBuilder.toBuilderC >>> Report.fromBuilder   -- FIXME: TODO!
     where
-        updateTree :: Tree (TreeNode subj group item) -> Tree (TreeNode subj group item)
-        updateTree = Tree.break \node children ->
-            case node of
-                NRoot -> Tree.node NRoot $ map updateTree children
-                NSubject subj -> Tree.node (NSubject subj) $ map updateTree children
-                NGroup group ->
-                    let
-                         -- FIXME: we collect children as deep as we can, but we don't collect stats from subgroups yet
-                        itemsCollected = Array.concat $ Tree.break collectItems <$> children
-                        updatedChildren = map updateTree children
-                        updatedGroup = setStats (collectStats @tag itemsCollected) group
-                    in Tree.node (NGroup updatedGroup) updatedChildren
-                NItem item -> Tree.leaf $ NItem item
-        collectItems :: TreeNode subj group item -> Array (Tree (TreeNode subj group item)) -> Array item
-        collectItems node children = case node of
-            NItem item -> item : (Array.concat $ Tree.break collectItems <$> children)
-            _ -> Array.concat $ Tree.break collectItems <$> children
+        belongsTo :: Chain group -> Chain group -> Boolean
+        belongsTo grpCA grpCB = GPath.startsWith (g_path $ Chain.last grpCA) (g_path $ Chain.last grpCB)
+        collectAllItems :: Chain group -> Array (Chain group /\ Array item) -> Array item
+        collectAllItems grpC = Array.filter (Tuple.fst >>> belongsTo grpC) >>> map Tuple.snd >>> Array.concat
+        updateGroup :: Array item -> group -> group
+        updateGroup itemsCollected group = setStats (collectStats @tag itemsCollected) group
+        updateGroups :: Array (Chain group /\ Array item) -> Array (Chain group /\ Array item)
+        updateGroups groupsArr =
+            groupsArr <#> \(groupC /\ items) ->
+                case how of
+                    AllNested ->
+                        updateGroup (collectAllItems groupC groupsArr) <$> groupC
+                    OnlyDirect ->
+                        updateGroup items <$> groupC
+                /\ items

@@ -7,6 +7,7 @@ import Data.Map (Map)
 import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Tuple (fst, snd, curry, uncurry) as Tuple
+import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (filter, elem) as Array
 
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
@@ -14,7 +15,8 @@ import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
-import Report (toMap) as Report
+import Report as Report
+import Report.Builder as ReportB
 import Report.Chain as MbW
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Prefix (Prefix)
@@ -25,7 +27,7 @@ import Report.Tabular as Tabular
 import Report.Convert.Types
 
 
-exportVersion = ExportVersion 2 :: ExportVersion
+exportVersion = ExportVersion 3 :: ExportVersion
 
 class
     ( Ord group
@@ -93,12 +95,16 @@ toExport inclRule =
     ReportToExport
         <<< (\subjects -> { version : exportVersion, subjects })
         <<< map (Tuple.uncurry subjectToExport)
-        <<< Array.filter (Tuple.fst >>> \subj -> case inclRule of
-            IncludeAll -> true
-            IncludeOnly ids -> Array.elem (s_id subj) ids
-        )
-        <<< Map.toUnfoldable
-        <<< Report.toMap
+        <<< ReportB.unfold
+        <<< ReportB.mapItems collectItem
+        <<< ReportB.mapGroups collectGroup
+        <<< ReportB.mapSubjects collectSubject
+        <<< ReportB.filterSubjects (\subj ->
+                case inclRule of
+                    IncludeAll -> true
+                    IncludeOnly ids -> Array.elem (s_id subj) ids
+                )
+        <<< Report.toBuilder
     where
         collectSubject :: subj -> SubjectRec
         collectSubject subj =
@@ -143,14 +149,11 @@ toExport inclRule =
         collectModifiers a =
             (Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)) <>
             (Tuple.uncurry (collectSuffix @t) <$> (Map.toUnfoldable $ unwrap $ i_suffixes @t a))
-        subjectToExport :: subj -> Map group (Array item) -> SubjectWithGroups
-        subjectToExport subj groupsMap =
+        subjectToExport :: SubjectRec -> Array (Group /\ Array ItemRec) -> SubjectWithGroups
+        subjectToExport subjRec groups =
             SubjectWithGroups
-                { subject : Subject $ collectSubject subj
-                , groups  : groupsMap # Map.toUnfoldable <#> Tuple.uncurry groupToExport
+                { subject : Subject subjRec
+                , groups  : Tuple.uncurry groupToExport <$> groups
                 }
-        groupToExport :: group -> Array item -> { group :: Group, items :: Array ItemRec }
-        groupToExport group items =
-            { group : collectGroup group
-            , items : items <#> collectItem
-            }
+        groupToExport :: Group -> Array ItemRec -> { group :: Group, items :: Array ItemRec }
+        groupToExport group items = { group, items }

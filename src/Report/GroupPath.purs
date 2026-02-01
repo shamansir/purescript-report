@@ -53,6 +53,22 @@ ps :: String -> PathSegment
 ps = PathSegment
 
 
+startsWith :: GroupPath -> GroupPath -> Boolean
+startsWith possibleStart sample =
+    (howDeep possibleStart > 0) &&
+    (howDeep sample > 0) &&
+    (howDeep possibleStart <= howDeep sample) &&
+    ( let
+        sampleArr = pathToArray sample
+        possibleStartArr = pathToArray possibleStart
+    in
+        foldlWithIndex -- use `Array.zip`
+            (\idx prev val -> prev && (Array.index sampleArr idx == Just val))
+            true
+            possibleStartArr
+    )
+
+
 startsWithNotEq :: GroupPath -> GroupPath -> Boolean
 startsWithNotEq possibleStart sample =
     (howDeep possibleStart > 0) &&
@@ -62,7 +78,7 @@ startsWithNotEq possibleStart sample =
         sampleArr = pathToArray sample
         possibleStartArr = pathToArray possibleStart
     in
-        foldlWithIndex
+        foldlWithIndex -- use `Array.zip`
             (\idx prev val -> prev && (Array.index sampleArr idx == Just val))
             true
             possibleStartArr

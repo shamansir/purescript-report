@@ -5,7 +5,7 @@ import Prelude
 import Effect.Class (class MonadEffect)
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any) as Array
+import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index) as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
@@ -28,7 +28,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 
-import Report (Report, toMap, findGroup, findItem, withItem, withGroup, filterItemsByTag, sortItemsByTag, groupItemsByTag, collectItemsTags, leaveOnlyById, TransferMap, class ToReport, toReport) as R
+import Report as R
+import Report.Builder as RB
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
@@ -226,9 +227,7 @@ instance
 component
     :: forall @x @subj_id @subj_tag @item_tag @subj @group @item query output m
      . MonadEffect m
-    => Ord subj
     => Ord subj_id
-    => Ord group
     => Ord item_tag
     => Show subj_id
     => Is subj_id subj_tag item_tag subj group item x
@@ -270,11 +269,13 @@ component preSelected =
     s_id :: subj -> subj_id
     s_id subj = R.s_id subj
 
-    selectionKeyToSubject :: Array subj -> Map subj_id subj
-    selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
+    -- selectionKeyToSubject :: Array subj -> Map subj_id subj
+    -- selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
 
-    selectedSubjects :: R.TransferMap subj group item -> Map subj_id subj -> Array subj_id -> Array (subj /\ Map group (Array item))
-    selectedSubjects report selKeys subjects = Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
+    selectedSubjects :: R.Report subj group item -> Array subj_id -> Array (subj /\ (Array (group /\ Array item)))
+    selectedSubjects report subjects =
+        R.toBuilder report # RB.filterSubjects (s_id >>> flip Array.elem subjects) # RB.unfold
+        --Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
 
     render :: State subj_id subj_tag item_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag item_tag (Input subj group item)) () m
     render state =
@@ -286,7 +287,7 @@ component preSelected =
                 ]
                 $
                 ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo state.collapsed)
-                    <$> selectedSubjects report selKeys state.subjects
+                    <$> selectedSubjects processedReport state.subjects
                 )
                 <> pure menuButtons
                 <> pure subjSelNavigation
@@ -309,9 +310,9 @@ component preSelected =
             ]
         where
 
-            report = R.toMap $ postProcess state.process state.report
-            allSubjects = Set.toUnfoldable $ Map.keys report
-            selKeys = selectionKeyToSubject allSubjects
+            processedReport = postProcess state.process state.report
+            allSubjects = RB.allSubjects $ R.toBuilder processedReport
+            selKeys = Map.fromFoldable $ (\subj -> s_id subj /\ subj) <$> allSubjects
 
             includeRule = Report.includeOnly state.subjects
 
@@ -610,7 +611,6 @@ component preSelected =
                                     , what : Modify.GroupName
                                     , newValue : encval
                                     }
-                                # fromMaybe curReport
                         AtItem subjId groupPath itemIdx ->
                             curReport
                                 # Modify.modifyAt @item_tag
@@ -620,7 +620,6 @@ component preSelected =
                                     , what : Modify.ItemName itemIdx
                                     , newValue : encval
                                     }
-                                # fromMaybe curReport
                         AtModifier subjId groupPath itemIdx modKey ->
                             curReport
                                 # Modify.modifyAt @item_tag
@@ -630,7 +629,6 @@ component preSelected =
                                     , what : Modify.ItemModifier itemIdx modKey
                                     , newValue : encval
                                     }
-                                # fromMaybe curReport
             in
                 H.modify_
                     \s -> s { report = Modify.recalculate @item_tag $ nextReport s.report }
@@ -681,9 +679,9 @@ renderSubject
     => NavigatedTo subj_id
     -> CollapseMap subj_id
     -> subj
-    -> Map group (Array item)
+    -> Array (group /\ Array item)
     -> HH.ComponentHTML (Action subj_id subj_tag item_tag  (R.Report subj group item)) slots m
-renderSubject navigatedTo collapsedMap subj itemsMap =
+renderSubject navigatedTo collapsedMap subj groupsArr =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
         , HP.id $ "subject-" <> subjUniqueId
@@ -696,7 +694,7 @@ renderSubject navigatedTo collapsedMap subj itemsMap =
             , HH.span [ HP.style "font-size: 0.8em; margin-left: 5px;" ] $ pure $ renderSubjTags (R.i_tags @subj_tag subj)
             ]
         : (renderSubjectTabularValues subj)
-        : (renderTree <$> Map.toUnfoldable itemsMap)
+        : (renderTree <$> groupsArr)
         where
             subjId = R.s_id subj
             subjUniqueId = R.s_unique @subj_id @subj subjId
