@@ -9,7 +9,6 @@ module Report.Builder
     , toBuilder, toBuilderC
     , unfold, unfoldC
     , toTree
-    , fromTree -- FIXME: close this
     , nodeToString
     {- Subjects -}
     , mapSubjects
@@ -30,7 +29,8 @@ module Report.Builder
     , filterItems
     , withItem, withItemIdx
     , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
-    , findItem, findMapItem, findMapItem'
+    , findItem, findMapItem, findMapItems
+    , directItemsOf, allSubjectsItems, allSubjectsItems_, allGroupsItems, allGroupsItems_
     ) where
 
 import Prelude
@@ -454,7 +454,59 @@ findMapItem findF = unwrap >>> Array.findMap findSubjectF
         findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> Array.findMap (unwrap >>> findF s gc) items) groups
 
 
-findMapItem' :: forall subj group item a. (subj -> Chain group -> Array item -> Maybe a) -> Builder subj group item -> Maybe a
-findMapItem' findF = unwrap >>> Array.findMap findSubjectF
+findMapItems :: forall subj group item a. (subj -> Chain group -> Array item -> Maybe a) -> Builder subj group item -> Maybe a
+findMapItems findF = unwrap >>> Array.findMap findSubjectF
     where
         findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> findF s gc $ unwrap <$> items) groups
+
+
+directItemsOf :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array item)
+directItemsOf predF = findMapItems $ \subj groupC items -> if predF subj groupC then Just items else Nothing
+
+
+allSubjectsItems :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allSubjectsItems subjPredF =
+    unwrap
+    >>> Array.filter (extractSubj >>> subjPredF)
+    >>> case _ of
+        [] -> Nothing
+        arr -> Just $ extractGroups <$> arr
+    >>> map (map $ map $ map extractGroup)
+    where
+        extractSubj (Subject s _) = s
+        extractGroups (Subject s groups) = s /\ groups
+        extractGroup (Group groupC items) = groupC /\ (unwrap <$> items)
+
+
+allSubjectsItems_ :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Array item
+allSubjectsItems_ subjPredF =
+    allSubjectsItems subjPredF
+    >>> fromMaybe []
+    >>> map (Tuple.snd >>> map Tuple.snd)
+    >>> map Array.concat
+    >>> Array.concat
+
+
+allGroupsItems :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allGroupsItems groupPredF =
+    unwrap
+    >>> map extractGroups
+    >>> map (\(subj /\ groups) -> subj /\ Array.filter (groupPredF subj <<< extractGroupC) groups)
+    >>> case _ of
+        [] -> Nothing
+        arr -> Just $ (map $ map extractGroup) <$> arr
+    where
+        extractGroups (Subject s groups) = s /\ groups
+        extractGroupC (Group groupC _) = groupC
+        extractGroup (Group groupC items) = groupC /\ (unwrap <$> items)
+
+
+allGroupsItems_ :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Array item
+allGroupsItems_ groupPredF =
+    allGroupsItems groupPredF
+    >>> fromMaybe []
+    >>> map (Tuple.snd >>> map Tuple.snd)
+    >>> map Array.concat
+    >>> Array.concat
+
+

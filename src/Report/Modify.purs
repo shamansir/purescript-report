@@ -11,7 +11,7 @@ import Yoga.Tree.Extended (break, build, node, leaf) as Tree
 
 import Report (Report)
 import Report.Builder (TreeNode(..))
-import Report (withGroup, withItem, toTree, fromTree) as Report
+import Report (toBuilder, withGroup, withItem, toTree) as Report
 import Report.Class
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
@@ -23,7 +23,6 @@ import Report.Prefix (Key, put) as Prefix
 import Report.Prefix (Prefix, Prefixes)
 import Report.Suffix (Key, put) as Suffix
 import Report.Suffix (Suffix, Suffixes)
-
 
 
 data WhatMod
@@ -171,7 +170,10 @@ recalculate
     => StatsModify group
     => Report subj group item
     -> Report subj group item
-recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity -- FIXME: use `Builder` for that
+recalculate =
+    identity -- FIXME: TODO!
+    {-
+    Report.toTree >>> updateTree >>> Report.fromTree identity -- FIXME: use `Builder` for that
     where
         updateTree :: Tree (TreeNode subj group item) -> Tree (TreeNode subj group item)
         updateTree = Tree.break \node children ->
@@ -190,3 +192,4 @@ recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity -- FIXME
         collectItems node children = case node of
             NItem item -> item : (Array.concat $ Tree.break collectItems <$> children)
             _ -> Array.concat $ Tree.break collectItems <$> children
+    -}

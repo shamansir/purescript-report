@@ -5,7 +5,6 @@ module Report
     , toTree
     , toBuilder, fromBuilder
     , unfold
-    , fromTree -- FIXME: close this
     -- , fromTreeC
     , class ToReport, toReport
     , withGroup, withItem
@@ -116,9 +115,9 @@ toTree =
     toBuilder >>> B.toTree
 
 
-fromTree :: forall a subj group item. IsGroup group => (a -> B.TreeNode subj group item) -> Tree a -> Report subj group item
-fromTree toNode =
-    map toNode >>> B.fromTree >>> fromBuilder
+-- fromTree :: forall a subj group item. IsGroup group => (a -> B.TreeNode subj group item) -> Tree a -> Report subj group item
+-- fromTree toNode =
+--     map toNode >>> B.fromTree >>> fromBuilder
 
 
 {-
