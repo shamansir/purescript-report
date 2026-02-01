@@ -3,12 +3,12 @@ module GameLog.Types.ManyGamesStats where
 import Prelude
 
 import Data.Map (Map)
-import Data.Map (fromFoldable) as Map
+import Data.Map (fromFoldable, toUnfoldable) as Map
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report (Report, class ToReport)
-import Report (fromMap) as Report
+import Report (build) as Report
 import Report.Group (Group)
 import Report.Convert.Generic (class ToExport)
 import Report.Web.Component as ForWeb
@@ -25,7 +25,7 @@ type GamesReport = Report Game Group Achievement
 
 instance ToReport Game Group Achievement RawAchievements where
     toReport :: RawAchievements -> GamesReport
-    toReport = unwrap >>> map unwrap >>> Report.fromMap
+    toReport = unwrap >>> map unwrap >>> Map.toUnfoldable >>> map (map Map.toUnfoldable) >>> Report.build
 
 
 fromArray :: Array (Game /\ GameAchievements) -> RawAchievements

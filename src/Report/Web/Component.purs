@@ -227,9 +227,7 @@ instance
 component
     :: forall @x @subj_id @subj_tag @item_tag @subj @group @item query output m
      . MonadEffect m
-    => Ord subj
     => Ord subj_id
-    => Ord group
     => Ord item_tag
     => Show subj_id
     => Is subj_id subj_tag item_tag subj group item x

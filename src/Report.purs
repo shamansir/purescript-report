@@ -111,12 +111,12 @@ fromBuilder :: forall subj group item. B.Builder subj group item -> Report subj 
 fromBuilder = Report
 
 
-toTree :: forall subj group item. Ord subj => Report subj group item -> Tree (B.TreeNode subj group item)
+toTree :: forall subj group item. Report subj group item -> Tree (B.TreeNode subj group item)
 toTree =
     toBuilder >>> B.toTree
 
 
-fromTree :: forall a subj group item. Ord subj => Ord group => IsGroup group => (a -> B.TreeNode subj group item) -> Tree a -> Report subj group item
+fromTree :: forall a subj group item. IsGroup group => (a -> B.TreeNode subj group item) -> Tree a -> Report subj group item
 fromTree toNode =
     map toNode >>> B.fromTree >>> fromBuilder
 
@@ -132,8 +132,7 @@ withGroup
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
     => IsGroup group
-    => Ord subj_id
-    => Ord subj
+    => Eq subj_id
     => subj_id
     -> GroupPath
     -> (group -> group)
@@ -160,8 +159,7 @@ withItem
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
     => IsGroup group
-    => Ord subj_id
-    => Ord subj
+    => Eq subj_id
     => subj_id
     -> GroupPath
     -> Int
@@ -186,8 +184,7 @@ findGroup
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
     => IsGroup group
-    => Ord subj_id
-    => Ord subj
+    => Eq subj_id
     => subj_id
     -> GroupPath
     -> Report subj group item
@@ -204,8 +201,7 @@ findItem
     :: forall subj_id subj group item
      . IsSubjectId subj_id subj
     => IsGroup group
-    => Ord subj_id
-    => Ord subj
+    => Eq subj_id
     => subj_id
     -> GroupPath
     -> Int
@@ -225,12 +221,12 @@ findItem subjId groupPath itemIdx =
     -}
 
 
-leaveOnly :: forall subj group item. Ord subj => Array subj -> Report subj group item -> Report subj group item
+leaveOnly :: forall subj group item. Eq subj => Array subj -> Report subj group item -> Report subj group item
 leaveOnly toFilter =
     toBuilder >>> B.filterSubjects (flip Array.elem toFilter) >>> fromBuilder
 
 
-leaveOnlyById :: forall subj_id subj group item. Ord subj => Ord subj_id => IsSubjectId subj_id subj => Array subj_id -> Report subj group item -> Report subj group item
+leaveOnlyById :: forall subj_id subj group item. Eq subj_id => IsSubjectId subj_id subj => Array subj_id -> Report subj group item -> Report subj group item
 leaveOnlyById toFilter =
     toBuilder >>> B.filterSubjects (s_id >>> flip Array.elem toFilter) >>> fromBuilder
 
@@ -284,8 +280,7 @@ sortItemsByTag itemTag =
 
 groupItemsByTag
     :: forall item_tag subj group item
-     . Ord item_tag
-    => HasTags item_tag item
+     . HasTags item_tag item
     => IsGroupable group item_tag
     => IsSortable item_tag
     => item_tag

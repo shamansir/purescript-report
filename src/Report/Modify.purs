@@ -120,12 +120,10 @@ loadSuffixKey = case _ of
 
 modifyAt
     :: forall @tag subj_id subj group item
-     . Ord subj
-    => Ord subj_id
+     . Eq subj_id
     => IsSubjectId subj_id subj
     => IsTag tag
     => IsGroup group
-    => IsItem item
     => HasPrefixes item
     => HasSuffixes tag item
     => GroupModify group
@@ -168,13 +166,9 @@ modifyAt { subjId, what, newValue, path } report = case what of
 
 recalculate
     :: forall @tag subj group item
-     . Ord subj
-    => Ord group
-    => IsItem item
-    => IsGroup group
+     . IsGroup group
     => HasSuffixes tag item
     => StatsModify group
-    => GroupModify group
     => Report subj group item
     -> Report subj group item
 recalculate = Report.toTree >>> updateTree >>> Report.fromTree identity -- FIXME: use `Builder` for that
