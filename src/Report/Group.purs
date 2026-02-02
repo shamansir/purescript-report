@@ -22,6 +22,7 @@ newtype Group =
         , stats :: Stats
         }
 
+
 derive instance Newtype Group _
 
 instance Eq Group where
@@ -62,6 +63,14 @@ rootGroupWith stats =
         [ PathSegment "root" ]
         "All"
         stats
+
+
+unknownGroup :: Group
+unknownGroup =
+    mkGroupWith
+        [ PathSegment "unknown" ]
+        "Unknown"
+        Stats.SYetUnknown
 
 
 isGroupAt :: GroupPath -> Group -> Boolean

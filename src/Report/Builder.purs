@@ -15,6 +15,8 @@ module Report.Builder
     , allSubjects
     , filterSubjects
     , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
+    , redistribute
+    , alignSubjects
     {- Groups -}
     , mapGroups
     , allGroups, allGroupsC
@@ -265,6 +267,22 @@ filterSubjects filterF = unwrap >>> Array.filter subjSatisfy >>> wrap
         subjSatisfy (Subject s _) = filterF s
 
 
+redistribute :: forall subjA subjB group item. Ord subjB => (Chain group -> subjB) -> Builder subjA group item -> Builder subjB group item
+redistribute toNewSubj =
+    allGroupsWithItemsC
+    >>> map (\(grpC /\ items) -> toNewSubj grpC /\ pure (grpC /\ items) )
+    >>> toBuilderC
+    >>> alignSubjects
+
+
+alignSubjects :: forall subj group item. Ord subj => Builder subj group item -> Builder subj group item
+alignSubjects = unwrap >>> Array.groupExt extractSubj extractGroups >>> map (map Array.concat >>> makeSubject) >>> wrap
+    where
+        extractSubj (Subject s _) = s
+        extractGroups (Subject _ groups) = groups
+        makeSubject (s /\ groups) = Subject s groups
+
+
 {- Groups -}
 
 
@@ -365,6 +383,19 @@ allGroupsC = unwrap >>> map extractGroups >>> Array.concat
     where
         extractGroups (Subject _ groups) = extractGroupC <$> groups
         extractGroupC (Group groupC _) = groupC
+
+
+{- TODO
+allGroupsWithItems :: forall subj group item. Builder subj group item -> Array (group /\ Array item)
+allGroupsWithItems = allGroupsWithItemsC >>> map (lmap Chain.toArray) >>> ?wh
+-}
+
+
+allGroupsWithItemsC :: forall subj group item. Builder subj group item -> Array (Chain group /\ Array item)
+allGroupsWithItemsC = unwrap >>> map extractGroups >>> Array.concat
+    where
+        extractGroups (Subject _ groups) = extractGroupC <$> groups
+        extractGroupC (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
 filterGroups :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Builder subj group item

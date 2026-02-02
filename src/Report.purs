@@ -207,7 +207,7 @@ findItem
     -> Report subj group item
     -> Maybe item
 findItem subjId groupPath itemIdx =
-    toBuilder >>> B.mapGroups g_path >>> B.findMapItem'
+    toBuilder >>> B.mapGroups g_path >>> B.findMapItems
         \subj groupC items ->
             if (s_id subj == subjId) && (Chain.last groupC == groupPath)
                 then Array.index items itemIdx
