@@ -15,8 +15,8 @@ module Report.Builder
     , allSubjects
     , filterSubjects
     , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
-    , redistribute
-    , alignSubjects
+    , redistribute, redistributeBy
+    , alignSubjects, alignSubjectsBy
     {- Groups -}
     , mapGroups
     , allGroups, allGroupsC
@@ -268,15 +268,25 @@ filterSubjects filterF = unwrap >>> Array.filter subjSatisfy >>> wrap
 
 
 redistribute :: forall subjA subjB group item. Ord subjB => (Chain group -> subjB) -> Builder subjA group item -> Builder subjB group item
-redistribute toNewSubj =
+redistribute = redistributeBy compare
+
+
+redistributeBy :: forall subjA subjB group item. (subjB -> subjB -> Ordering) -> (Chain group -> subjB) -> Builder subjA group item -> Builder subjB group item
+redistributeBy compareF toNewSubj =
     allGroupsWithItemsC
     >>> map (\(grpC /\ items) -> toNewSubj grpC /\ pure (grpC /\ items) )
     >>> toBuilderC
-    >>> alignSubjects
+    >>> alignSubjectsBy compareF
 
 
+-- FIXME: removes empty subjects due to the way `Array.group` works
+-- TODO: implement the same for Groups
 alignSubjects :: forall subj group item. Ord subj => Builder subj group item -> Builder subj group item
-alignSubjects = unwrap >>> Array.groupExt extractSubj extractGroups >>> map (map Array.concat >>> makeSubject) >>> wrap
+alignSubjects = alignSubjectsBy compare
+
+
+alignSubjectsBy :: forall subj group item. (subj -> subj -> Ordering) -> Builder subj group item -> Builder subj group item
+alignSubjectsBy compareF = unwrap >>> Array.groupExtBy compareF extractSubj extractGroups >>> map (map Array.concat >>> makeSubject) >>> wrap
     where
         extractSubj (Subject s _) = s
         extractGroups (Subject _ groups) = groups

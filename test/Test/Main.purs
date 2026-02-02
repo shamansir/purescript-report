@@ -10,10 +10,12 @@ import Test.Spec.Reporter.Console (consoleReporter)
 import Test.DhallDodo as DhallDodo
 import Test.OrgDodo as OrgDodo
 import Test.ReportImpl as ReportImpl
+import Test.Report as Report
 
 
 main :: Effect Unit
 main = runSpecAndExitProcess [consoleReporter] do
     DhallDodo.spec
     OrgDodo.spec
+    Report.spec
     ReportImpl.spec
