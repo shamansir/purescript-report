@@ -12,7 +12,8 @@ import Data.Tuple (fst, snd, uncurry, curry) as Tuple
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, length, fromArray, catMaybes) as NEA
-import Data.Bifunctor (class Bifunctor, bimap)
+import Data.Array.Ext as ArrayExt
+import Data.Bifunctor (class Bifunctor, bimap, lmap)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Foldable (foldl)
 
@@ -248,3 +249,89 @@ toReportG = unwrap >>> map unwrapGroup >>> (pure <<< (/\) unit) >>> Report.build
     where
         unwrapGroup :: Group idx a -> idx /\ Array a
         unwrapGroup = unwrap >>> map NEA.toArray
+
+
+toReportG' :: forall idxa idxb a. Grouping idxa (Grouping idxb a) -> Report idxa idxb a
+toReportG' =
+    unwrap >>> map (unwrapGroupL1 >>> map (map unwrap >>> Array.concat >>> map unwrapGroupL2)) >>> Report.build
+    where
+        unwrapGroupL1 :: Group idxa (Grouping idxb a) -> idxa /\ Array (Grouping idxb a)
+        unwrapGroupL1 = unwrap >>> map NEA.toArray
+        unwrapGroupL2 :: Group idxb a -> idxb /\ Array a
+        unwrapGroupL2 = unwrap >>> map NEA.toArray
+
+
+{- TODO: fromReport -}
+
+fromArray :: forall idxa idxb a. Array (idxa /\ (Array (idxb /\ (Array a)))) -> Grouping idxa (Group idxb a)
+fromArray = map toGroup >>> Array.catMaybes >>> map toGrouping >>> Array.catMaybes >>> Grouping
+    where
+        toGroup :: forall x z. x /\ Array z -> Maybe (Group x z)
+        toGroup (_ /\ []) = Nothing
+        toGroup (x /\ items) = NEA.fromArray items <#> \is -> Group $ x /\ is
+        toGrouping :: Group idxa (idxb /\ Array a) -> Maybe (Group idxa (Group idxb a))
+        toGrouping (Group (idxa /\ nea)) =
+            let mbItems = NEA.catMaybes $ toGroup <$> nea
+            in  NEA.fromArray mbItems <#> \nea' -> Group $ idxa /\ nea'
+
+
+build :: forall idxa idxb a. Ord idxa => Ord idxb => (a -> idxa) -> (a -> idxb) -> Array a -> Grouping idxa (Group idxb a)
+build aToIdxa aToIdxb = buildWithIndex (const aToIdxa) (const aToIdxb)
+
+
+buildWithIndex :: forall idxa idxb a. Ord idxa => Ord idxb => (Int -> a -> idxa) -> (Int -> a -> idxb) -> Array a -> Grouping idxa (Group idxb a)
+buildWithIndex aToIdxa aToIdxb = buildWithIndex' aToIdxa aToIdxb identity
+
+
+buildWithIndex' :: forall idxa idxb x a. Ord idxa => Ord x => (Int -> a -> idxa) -> (Int -> a -> x) -> (x -> idxb) -> Array a -> Grouping idxa (Group idxb a)
+buildWithIndex' aToIdxa indexToX xToIdxb =
+    -- ArrayExt.groupExt aToIdxa identity
+    mapWithIndex (\idx a -> aToIdxa idx a /\ a)
+    >>> ArrayExt.groupExt Tuple.fst Tuple.snd
+    >>> map (map applyGrouping)
+    >>> fromArray
+    where
+        applyGrouping :: Array a -> Array (idxb /\ Array a)
+        applyGrouping =
+            mapWithIndex executeGF
+            >>> ArrayExt.groupExt Tuple.fst Tuple.snd
+            >>> map (lmap xToIdxb)
+        executeGF :: Int -> a -> x /\ a
+        executeGF n item = indexToX n item /\ item
+
+
+
+
+
+{-
+fromLibrary :: LI.GroupingBy -> Library -> LibraryTreeReportW
+fromLibrary groupingBy =
+    Library.items
+        -- group subjects by generic key first
+        >>> ArrayExt.groupExt (LI.genericKeyOf >>> fromMaybe LI.K_Else) identity
+        -- then build groups using makeGroupingF, LI.Index
+        -- TODO: `LI.SortKey` also supports tags and shelves, it was in `postRegroup` of `LT.group`
+        -- FIXME: use `Report.Utils.Grouping` as mediator?
+        -- FIXME: be able to regroup the report easily by itself
+        >>> map (map applyGrouping)
+        >>> ReportB.toBuilderC
+        >>> Report.fromBuilder
+        >>> LRTW
+    where
+        applyGrouping :: Array LibraryItem -> Array (Chain Report.Group /\ Array LibraryItem)
+        applyGrouping =
+            mapWithIndex (executeGF $ LI.makeGroupingF groupingBy)
+            >>> ArrayExt.groupExt Tuple.fst Tuple.snd
+            >>> map (lmap $ indexToGroup >>> fromMaybe emptyGroup)
+        emptyGroup :: Chain Report.Group
+        emptyGroup = C.End R.unknownGroup
+        executeGF :: LI.GroupingF -> Int -> LibraryItem -> LI.Index /\ LibraryItem
+        executeGF (LI.GroupingF func) n item = func n item /\ item
+        indexToGroup :: LI.Index -> Maybe (Chain Report.Group)
+        indexToGroup = case _ of
+            LI.Lost -> Nothing
+            LI.ByMaybeStr mbStr -> mbStr <#> (\str -> R.mkGroup [ R.ps str ] $ str) <#> C.End
+            LI.ByInt n -> Just $ C.End $ R.mkGroup [ R.ps $ show n ] $ show n
+            LI.ByUKey ukey -> R.t_group ukey
+            LI.ByGKey ukey -> R.t_group ukey
+-}
