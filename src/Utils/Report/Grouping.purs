@@ -12,7 +12,7 @@ import Data.Tuple (fst, snd, uncurry, curry) as Tuple
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, length, fromArray, catMaybes) as NEA
-import Data.Array.Ext as ArrayExt
+import Data.Array.Extra as ArrayExt
 import Data.Bifunctor (class Bifunctor, bimap, lmap)
 import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Foldable (foldl)

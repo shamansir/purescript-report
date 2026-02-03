@@ -56,7 +56,7 @@ import Report.Chain (Chain)
 import Report.Chain as Chain
 
 import Yoga.Tree (Tree)
-import Yoga.Tree.Extended (node, leaf, break, build) as Tree
+import Yoga.Tree.Extended (node, leaf, break, build, regroup) as Tree
 
 
 newtype Builder s g i = Builder (Array (Subject s g i))
@@ -142,7 +142,7 @@ unfoldC = unwrap >>> map \(Subject subj groups) -> subj /\ (unfoldGroup <$> grou
 
 toTree :: forall subj group item. Builder subj group item -> Tree (TreeNode subj group item)
 toTree (Builder subjects) =
-    Tree.node NRoot $ toSubjectTree <$> subjects
+    Tree.regroup needsRegroup regroupToKey $ Tree.node NRoot $ toSubjectTree <$> subjects
     where
         toSubjectTree :: Subject subj group item -> Tree (TreeNode subj group item)
         toSubjectTree (Subject subj groupsArr) =
@@ -159,6 +159,12 @@ toTree (Builder subjects) =
                     Tree.node (NGroup g) $ Tree.leaf <$> (\(Item i) -> NItem i) <$> subGoiArr
                 Chain.More g restC ->
                     Tree.node (NGroup g) $ pure $ foldChain restC subGoiArr
+        needsRegroup :: TreeNode subj group item -> Boolean
+        needsRegroup = case _ of
+            NGroup _ -> true
+            _ -> false
+        regroupToKey :: TreeNode subj group item -> Unit
+        regroupToKey = const unit
 
 
 {- TODO: remove? -}

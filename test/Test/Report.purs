@@ -38,6 +38,8 @@ import Report.Modifiers.Stats (Stats(..)) as ST
 import Yoga.Tree.Extended.Convert (toString) as Tree
 import Yoga.Tree.Extended.Convert (Mode(..)) as Mode
 
+import Test.Utils (shouldEqual) as U
+
 -- jsonFilePath = "./data/games/src/manual/Switch/AstralChain.json" :: String
 
 
@@ -84,7 +86,7 @@ spec = do
     it "properly converts storage to tree" $ do
         (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReport)
         -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
-        `shouldEqual`
+        `U.shouldEqual`
         """*
 ┊S: "subject1"
 ┊┄G: ["group-1"]
