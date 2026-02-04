@@ -37,6 +37,8 @@ module Report.Builder
 
 import Prelude
 
+import Debug as Debug
+
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
@@ -129,9 +131,9 @@ toBuilderC subjects =
 
 
 unfold :: forall subj group item. Builder subj group item -> Array (subj /\ Array (group /\ Array item))
-unfold = unfoldC >>> map (map $ foldl unfoldF [])
+unfold = unfoldC >>> map (map $ map unfoldF)
     where
-        unfoldF prev (gchain /\ items) = prev <> (flip (/\) [] <$> Chain.beforeLast gchain) <> [ Chain.last gchain /\ items ]
+        unfoldF (gchain /\ items) = Chain.last gchain /\ items -- FIXME: only the `Chain.last` is used, is it a proper `unfold`?
 
 
 unfoldC :: forall subj group item. Builder subj group item -> Array (subj /\ Array (Chain group /\ Array item))
@@ -385,7 +387,10 @@ regroupByMany
 regroupByMany ordFn itemToGroups = unwrap >>> map mapFn >>> wrap
     where
         mapFn (Subject s groups) =
-            Subject s $ backToGroups $ Array.groupExtBy ordFn Tuple.fst Tuple.snd $ allItemsOf groups
+            Subject s
+                $ backToGroups
+                $ Array.groupExtBy ordFn Tuple.fst Tuple.snd
+                $ allItemsOf groups
 
         allItemsOf :: Array (Group groupA item) -> Array (Chain groupB /\ Item item)
         allItemsOf = map (\(Group _ items) -> addGroups <$> items) >>> Array.concatMap concatF

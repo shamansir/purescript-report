@@ -18,6 +18,8 @@ module Report
 
 import Prelude
 
+import Debug as Debug
+
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Map (Map)

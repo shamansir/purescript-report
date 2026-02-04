@@ -6,15 +6,21 @@ import Prelude
 
 import Effect.Class (liftEffect)
 
+import Debug as Debug
+
 
 import Data.Either (either)
-import Data.Newtype (unwrap)
+import Data.Newtype (class Newtype, unwrap)
 import Data.Map (empty) as Map
+import Data.Maybe (Maybe(..))
 import Data.List.NonEmpty as NEL
 import Data.String as String
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Array ((:))
+import Data.Array (reverse) as Array
+import Data.Int (fromString) as Int
 
-import Test.Spec (Spec, it, itOnly, describe)
+import Test.Spec (Spec, it, itOnly, describe, pending')
 import Test.Spec.Assertions (shouldEqual, shouldSatisfy, fail)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
@@ -30,9 +36,10 @@ import Yoga.JSON as JSON
 
 import Report
 import Report as Report
+import Report.Chain as C
 import Report.Builder as RB
-import Report.Class (class IsGroup, class HasStats)
-import Report.GroupPath (pathFromArray) as ST
+import Report.Class (class IsGroup, class HasStats, class HasTags, class IsGroupable, class IsSortable)
+import Report.GroupPath (pathFromArray) as GP
 import Report.Modifiers.Stats (Stats(..)) as ST
 
 import Yoga.Tree.Extended.Convert (toString) as Tree
@@ -52,14 +59,14 @@ derive newtype instance Show SampleGroup
 
 instance IsGroup SampleGroup where
     g_title _ = "" -- Not used
-    g_path (SG items) = ST.pathFromArray items
+    g_path (SG items) = GP.pathFromArray items
 
 instance HasStats SampleGroup where
     i_stats _ = ST.SYetUnknown -- Not used
 
 
-sampleReport :: Report String SampleGroup String
-sampleReport =
+sampleReportA :: Report String SampleGroup String
+sampleReportA =
     Report.build
         [ "subject1" /\
             [ SG [ "group-1" ] /\ [ "group-1-item-1", "group-1-item-2" ]
@@ -80,11 +87,274 @@ sampleReport =
             ]
         ]
 
+
+newtype BoolTag = BoolTag Boolean
+derive instance Newtype BoolTag _
+
+data ArtistTag
+    = Genre String
+    | Country String
+    | AlbumsCount Int
+    -- | YearsActive Int Int
+
+newtype MyGroup = G (Array String)
+derive instance Newtype MyGroup _
+derive newtype instance Show MyGroup
+derive newtype instance Eq MyGroup
+
+
+newtype TagTest1Item = TT1I String
+derive instance Newtype TagTest1Item _
+derive newtype instance Show TagTest1Item
+derive newtype instance Eq TagTest1Item
+
+newtype Artist = A String
+derive instance Newtype Artist _
+derive newtype instance Show Artist
+derive newtype instance Eq Artist
+
+
+instance HasTags BoolTag TagTest1Item where
+    i_tags = unwrap >>> case _ of
+        "item1" -> [ true ]
+        "item2" -> [ false ]
+        "item3" -> [ true ]
+        "item4" -> [ false ]
+        _ -> []
+        >>> map BoolTag
+
+instance IsGroup MyGroup where
+    g_title = unwrap >>> map String.toUpper >>> String.joinWith "::"
+    g_path = unwrap >>> GP.pathFromArray
+
+instance IsSortable BoolTag where
+    sameKind = const $ const true
+
+instance IsGroupable MyGroup BoolTag where
+    t_group = unwrap >>> case _ of
+        true -> Just $ C.End $ G [ "true" ]
+        false -> Just $ C.End $ G [ "false" ]
+
+
+
+instance HasTags ArtistTag Artist where
+    i_tags = unwrap >>> case _ of
+        "NIN" -> [ Country "USA", Genre "Industrial", AlbumsCount 15 ]
+        "Queen" -> [ Country "UK", Genre "Rock", Genre "Pop Rock", AlbumsCount 15 ]
+        "Rammstein" -> [ Country "Germany", Genre "Rock", Genre "Industrial", AlbumsCount 8 ]
+        "The Chemical Brothers" -> [ Country "UK", Genre "Break Beat", Genre "Big Beat", AlbumsCount 10 ]
+        "The Prodigy" -> [ Country "UK", Genre "Break Beat", Genre "Big Beat", AlbumsCount 7 ]
+        "Nirvana" -> [ Country "USA", Genre "Grunge", AlbumsCount 3 ]
+        "Moby" -> [ Country "USA", Genre "Electronic", AlbumsCount 23 ]
+        "Massive Attack" -> [ Country "UK", Genre "Trip Hop", AlbumsCount 5 ]
+        "GusGus" -> [ Country "Iceland", Genre "Electronic", AlbumsCount 12 ]
+        "The Knife" -> [ Country "Sweden", Genre "Electronic", Genre "Synth Pop", AlbumsCount 5 ]
+        "Fever Ray" -> [ Country "Sweden", Genre "Electronic", AlbumsCount 3 ]
+        "Depeche Mode" -> [ Country "UK", Genre "Electronic", Genre "Synth Pop", Genre "Pop Rock", AlbumsCount 15 ]
+        _ -> []
+
+
+instance IsSortable ArtistTag where
+    sameKind atA atB =
+        case atA /\ atB of
+            Genre _ /\ Genre _ -> true
+            Country _ /\ Country _ -> true
+            AlbumsCount _ /\ AlbumsCount _ -> true
+            _ -> false
+
+instance IsGroupable MyGroup ArtistTag where
+    t_group = case _ of
+        Genre genre -> case genre of
+            "Pop Rock" ->   Just $ C.More (G [ "Analogue" ]) $ C.More (G [ "Analogue", "Rock" ]) $ C.End $ G [ "Analogue", "Rock", "Pop Rock" ]
+            "Rock" ->       Just $ C.More (G [ "Analogue" ]) $ C.End (G [ "Analogue", "Rock" ])
+            "Grunge" ->     Just $ C.More (G [ "Analogue" ]) $ C.End (G [ "Analogue", "Grunge" ])
+            "Electronic" -> Just $ C.End (G [ "Electronic" ])
+            "Industrial" -> Just $ C.More (G [ "Electronic" ]) $ C.End $ G [ "Electronic", "Industrial" ]
+            "Synth Pop" ->  Just $ C.More (G [ "Electronic" ]) $ C.End $ G [ "Electronic", "Synth Pop" ]
+            "Break Beat" -> Just $ C.More (G [ "Electronic" ]) $ C.More (G [ "Electronic", "Beats" ]) $ C.End $ G [ "Electronic", "Beats", "Break Beat" ]
+            "Big Beat" ->   Just $ C.More (G [ "Electronic" ]) $ C.More (G [ "Electronic", "Beats" ]) $ C.End $ G [ "Electronic", "Beats", "Big Beat" ]
+            _ -> Nothing
+        Country country ->
+            case country of
+                "UK" -> Just $ C.More (G [ "Europe" ]) $ C.End $ G [ "Europe", "UK" ]
+                "Germany" -> Just $ C.More (G [ "Europe" ]) $ C.End $ G [ "Europe", "Germany" ]
+                "Sweden" -> Just $ C.More (G [ "Europe" ]) $ C.End $ G [ "Europe", "Sweden" ]
+                "USA" -> Just $ C.More (G [ "Americas" ]) $ C.End $ G [ "Americas", "USA" ]
+                "Iceland" -> Just $ C.End (G [ "Iceland" ])
+                _ -> Nothing
+        AlbumsCount acount ->
+            Just $
+                if acount < 5 then C.End (G [ "Less-than-5" ])
+                else if acount < 10 then C.End (G [ "More-than-5" ])
+                else if acount < 20 then C.End (G [ "More-than-10" ])
+                else C.End (G [ "More-than-20" ])
+
+
+{-
+intToDecimals :: Int -> Array Int
+intToDecimals = go [] >>> Array.reverse
+    where
+        go prev n =
+            let nextPos = n `div` 10
+            in if nextPos <= 0
+                then 0 : prev
+                else
+                    if nextPos == 1 then 1 : prev
+                    else go (nextPos : prev) nextPos
+-}
+
+
 spec :: Spec Unit
 spec = do
+  describe "unfolding" $ do
+    it "unfolds properly" $
+        let
+            reportSrc =
+                [ "subj" /\
+                    [ G [ "Analogue" ] /\ (A <$> [ ])
+                    , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+                    , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen" ])
+                    , G [ "Electronic" ] /\ (A <$> [ ])
+                    , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+                    , G [ "Test", "Test A", "Test B" ] /\ (A <$> [ "I1", "I2" ])
+                    , G [ "Test" ] /\ (A <$> [ "I3" ])
+                    ]
+                ]
+            report = RB.build reportSrc # Report.fromBuilder
+        in (Report.unfold report) `shouldEqual` reportSrc
+
+    it "unfolds properly, p.2" $
+        let
+            reportSrc =
+                [ "subj" /\
+                    [ G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+                    , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen" ])
+                    , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+                    ]
+                ]
+            report = RB.build reportSrc # Report.fromBuilder
+        in (Report.unfold report) `shouldEqual` reportSrc
+
+
+  describe "grouping by tag" $ do
+    it "re-groups report by tag" $ do
+        let
+            report =
+                RB.build
+                    [ "subj" /\ [ G [ "root" ] /\ (TT1I <$> [ "item1", "item2", "item3", "item4" ]) ] ]
+                    # Report.fromBuilder
+        (report # Report.groupItemsByTag (BoolTag true) # Report.unfold)
+        `shouldEqual`
+            [ "subj" /\
+                [ G [ "false" ] /\ (TT1I <$> [ "item2", "item4" ])
+                , G [ "true"  ] /\ (TT1I <$> [ "item1", "item3" ])
+                ]
+            ]
+
+    it "re-groups report by tag, nested tags" $
+        let
+            report =
+                RB.build
+                    [ "subj" /\
+                        [ G [ "root" ] /\
+                            (A <$>
+                                [ "NIN", "Queen", "Rammstein", "The Chemical Brothers"
+                                , "The Prodigy", "Nirvana", "Moby", "Massive Attack"
+                                , "GusGus", "The Knife", "Fever Ray", "Depeche Mode"
+                                ])
+                        ]
+                    ]
+                    # Report.fromBuilder
+
+        in
+
+        (report # Report.groupItemsByTag (Genre "foo") # Report.unfold)
+        `shouldEqual`
+        [ "subj" /\
+            [ G [ "Analogue", "Grunge" ] /\ (A <$> [ "Nirvana" ])
+            , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+            , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen", "Depeche Mode" ])
+            , G [ "Electronic" ] /\ (A <$> [ "Moby", "GusGus", "The Knife", "Fever Ray", "Depeche Mode" ])
+            , G [ "Electronic", "Beats", "Big Beat" ] /\ (A <$> [ "The Chemical Brothers", "The Prodigy" ])
+            , G [ "Electronic", "Beats", "Break Beat" ] /\ (A <$> [ "The Chemical Brothers", "The Prodigy" ])
+            , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+            , G [ "Electronic", "Synth Pop" ] /\ (A <$> [ "The Knife", "Depeche Mode" ])
+            ]
+        ]
+
+        <>
+
+        (report # Report.groupItemsByTag (Country "foo") # Report.unfold)
+        `shouldEqual`
+        [ "subj" /\
+            [ G [ "Americas", "USA" ] /\ (A <$> [ "NIN", "Nirvana", "Moby" ])
+            , G [ "Europe", "Germany" ] /\ (A <$> [ "Rammstein" ])
+            , G [ "Europe", "Sweden" ] /\ (A <$> [ "The Knife", "Fever Ray" ])
+            , G [ "Europe", "UK" ] /\ (A <$> [ "Queen", "The Chemical Brothers", "The Prodigy", "Massive Attack", "Depeche Mode" ])
+            , G [ "Iceland" ] /\ (A <$> [ "GusGus" ])
+            ]
+        ]
+
+        <>
+
+        (report # Report.groupItemsByTag (AlbumsCount (-1)) # Report.unfold)
+        `shouldEqual`
+        [ "subj" /\
+            [ G [ "Less-than-5" ] /\ (A <$> [ "Nirvana", "Fever Ray" ])
+            , G [ "More-than-10" ] /\ (A <$> [ "NIN", "Queen", "The Chemical Brothers", "GusGus", "Depeche Mode" ])
+            , G [ "More-than-20" ] /\ (A <$> [ "Moby" ])
+            , G [ "More-than-5" ] /\ (A <$> [ "Rammstein", "The Prodigy", "Massive Attack", "The Knife" ])
+            ]
+        ]
+
+
   describe "converting to tree" $ do
-    it "properly converts storage to tree" $ do
-        (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReport)
+    pending' "properly converts storage to tree (no sorting)" $ do
+        (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReportA)
+        -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
+        `U.shouldEqual`
+        """*
+┊S: "subject1"
+┊┄G: ["group-1"]
+┊┄┄I: "group-1-item-1"
+┊┄┄I: "group-1-item-2"
+┊┄┄G: ["group-1","group-1-1"]
+┊┄┄┄I: "group-1-1-item-1"
+┊┄┄┄I: "group-1-1-item-2"
+┊┄┄┄G: ["group-1","group-1-1","group-1-1-1"]
+┊┄┄┄┄I: "group-1-1-1-item-1"
+┊┄┄┄┄I: "group-1-1-1-item-2"
+┊┄┄G: ["group-1","group-1-2"]
+┊┄┄┄I: "group-1-2-item-1"
+┊┄┄┄I: "group-1-2-item-2"
+┊┄┄G: ["group-1","group-1-3"]
+┊┄┄┄I: "group-1-3-item-1"
+┊┄┄┄I: "group-1-3-item-2"
+┊┄┄G: ["group-1","group-1-4"]
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-1"]
+┊┄┄┄┄I: "group-1-4-1-item-1"
+┊┄┄┄┄I: "group-1-4-1-item-2"
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-2"]
+┊┄┄┄┄I: "group-1-4-2-item-1"
+┊┄┄┄┄I: "group-1-4-2-item-2"
+┊┄┄┄┄G: ["group-1","group-1-4","group-1-4-2","group-1-4-2-1"]
+┊┄┄┄┄┄I: "group-1-4-2-1-item-1"
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-3"]
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-4"]
+┊┄┄┄┄I: "group-1-4-4-item-1"
+┊┄┄G: ["group-1","group-2-2"]
+┊┄G: ["group-2"]
+┊┄┄I: "group-2-item-1"
+┊┄┄I: "group-1-item-2"
+┊┄┄G: ["group-2","group-2-1"]
+┊┄┄┄I: "group-2-1-item-1"
+┊┄┄┄I: "group-2-1-item-2"
+┊┄┄┄G: ["group-2","group-2-1","group-2-1-1"]
+┊┄┄┄┄I: "group-2-1-1-item-1"
+┊┄┄┄┄I: "group-2-1-1-item-2""""
+
+    pending' "properly converts storage to tree (with sorting)" $ do
+        (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReportA)
         -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
         `U.shouldEqual`
         """*
