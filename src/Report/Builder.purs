@@ -8,7 +8,7 @@ module Report.Builder
     , build
     , toBuilder, toBuilderC
     , unfold, unfoldC
-    , toTree
+    , toTree, toTree_
     , nodeToString
     {- Subjects -}
     , mapSubjects
@@ -140,32 +140,40 @@ unfoldC = unwrap >>> map \(Subject subj groups) -> subj /\ (unfoldGroup <$> grou
         unfoldGroup (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
-toTree :: forall subj group item. Ord group => Builder subj group item -> Tree (TreeNode subj group item)
-toTree (Builder subjects) =
-    map (either pathToNode identity) <$> Tree.regroupByPath regroupToPath $ Tree.node NRoot $ toSubjectTree <$> subjects
+toTree :: forall subj group item. Builder subj group item -> Tree (TreeNode subj group item)
+toTree =
+    toTree_
+        NRoot
+        (\subj groups -> Tree.node (NSubject subj) groups)
+        foldChain
     where
-        pathToNode :: Array group -> TreeNode subj group item
-        pathToNode [] = NRoot
-        pathToNode groups = fromMaybe NRoot $ NGroup <$> Array.head groups
-        toSubjectTree :: Subject subj group item -> Tree (TreeNode subj group item)
-        toSubjectTree (Subject subj groupsArr) =
-            Tree.node (NSubject subj) $ toGroupTree <$> groupsArr
-        toGroupTree :: Group group item -> Tree (TreeNode subj group item)
-        toGroupTree goi =
-            case goi of
-                Group groupC goiArr ->
-                    foldChain groupC goiArr
-        foldChain :: Chain group -> Array (Item item) -> Tree (TreeNode subj group item)
+        foldChain :: Chain group -> Array item -> Tree (TreeNode subj group item)
         foldChain groupC subGoiArr =
             case groupC of
                 Chain.End g ->
-                    Tree.node (NGroup g) $ Tree.leaf <$> (\(Item i) -> NItem i) <$> subGoiArr
+                    Tree.node (NGroup g) $ Tree.leaf <$> NItem <$> subGoiArr
                 Chain.More g restC ->
                     Tree.node (NGroup g) $ pure $ foldChain restC subGoiArr
-        regroupToPath :: TreeNode subj group item -> Maybe (Array group)
-        regroupToPath = case _ of
-            NGroup group -> Just [ group ]
-            _ -> Nothing
+
+
+toTree_
+    :: forall subj group item c
+     . c
+    -> (subj -> Array (Tree c) -> Tree c)
+    -> (Chain group -> Array item -> Tree c)
+    -> Builder subj group item
+    -> Tree c
+toTree_ root toSubjNode toGroupNode (Builder subjects) =
+    Tree.node root $ toSubjectTree <$> subjects
+    where
+        toSubjectTree :: Subject subj group item -> Tree c
+        toSubjectTree (Subject subj groupsArr) =
+            toSubjNode subj $ toGroupTree <$> groupsArr
+        toGroupTree :: Group group item -> Tree c
+        toGroupTree goi =
+            case goi of
+                Group groupC goiArr ->
+                    toGroupNode groupC $ unwrap <$> goiArr
 
 
 {- TODO: remove? -}
