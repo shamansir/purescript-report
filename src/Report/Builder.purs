@@ -38,12 +38,12 @@ module Report.Builder
 import Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap) as Array
+import Data.Array (head, concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, fromArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
@@ -56,7 +56,7 @@ import Report.Chain (Chain)
 import Report.Chain as Chain
 
 import Yoga.Tree (Tree)
-import Yoga.Tree.Extended (node, leaf, break, build, regroup) as Tree
+import Yoga.Tree.Extended (node, leaf, break, build, regroup, regroupByPath) as Tree
 
 
 newtype Builder s g i = Builder (Array (Subject s g i))
@@ -140,10 +140,13 @@ unfoldC = unwrap >>> map \(Subject subj groups) -> subj /\ (unfoldGroup <$> grou
         unfoldGroup (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
-toTree :: forall subj group item. Builder subj group item -> Tree (TreeNode subj group item)
+toTree :: forall subj group item. Ord group => Builder subj group item -> Tree (TreeNode subj group item)
 toTree (Builder subjects) =
-    Tree.regroup needsRegroup regroupToKey $ Tree.node NRoot $ toSubjectTree <$> subjects
+    map (either pathToNode identity) <$> Tree.regroupByPath regroupToPath $ Tree.node NRoot $ toSubjectTree <$> subjects
     where
+        pathToNode :: Array group -> TreeNode subj group item
+        pathToNode [] = NRoot
+        pathToNode groups = fromMaybe NRoot $ NGroup <$> Array.head groups
         toSubjectTree :: Subject subj group item -> Tree (TreeNode subj group item)
         toSubjectTree (Subject subj groupsArr) =
             Tree.node (NSubject subj) $ toGroupTree <$> groupsArr
@@ -159,12 +162,10 @@ toTree (Builder subjects) =
                     Tree.node (NGroup g) $ Tree.leaf <$> (\(Item i) -> NItem i) <$> subGoiArr
                 Chain.More g restC ->
                     Tree.node (NGroup g) $ pure $ foldChain restC subGoiArr
-        needsRegroup :: TreeNode subj group item -> Boolean
-        needsRegroup = case _ of
-            NGroup _ -> true
-            _ -> false
-        regroupToKey :: TreeNode subj group item -> Unit
-        regroupToKey = const unit
+        regroupToPath :: TreeNode subj group item -> Maybe (Array group)
+        regroupToPath = case _ of
+            NGroup group -> Just [ group ]
+            _ -> Nothing
 
 
 {- TODO: remove? -}

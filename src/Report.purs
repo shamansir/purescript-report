@@ -110,7 +110,7 @@ fromBuilder :: forall subj group item. B.Builder subj group item -> Report subj 
 fromBuilder = Report
 
 
-toTree :: forall subj group item. Report subj group item -> Tree (B.TreeNode subj group item)
+toTree :: forall subj group item. Ord group => Report subj group item -> Tree (B.TreeNode subj group item)
 toTree =
     toBuilder >>> B.toTree
 

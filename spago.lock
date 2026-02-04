@@ -807,7 +807,7 @@
       },
       "yoga-tree-utils": {
         "git": "https://github.com/shamansir/purescript-yoga-tree-utils.git",
-        "ref": "3c4817684ef37498565ef15caffa41643e12f07b"
+        "ref": "201106f76144be0ee48b87c0df6493f46aad214d"
       }
     }
   },
@@ -2458,7 +2458,7 @@
     "yoga-tree-utils": {
       "type": "git",
       "url": "https://github.com/shamansir/purescript-yoga-tree-utils.git",
-      "rev": "3c4817684ef37498565ef15caffa41643e12f07b",
+      "rev": "201106f76144be0ee48b87c0df6493f46aad214d",
       "dependencies": [
         "arrays",
         "bifunctors",
