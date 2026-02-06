@@ -11,7 +11,7 @@ import Halogen.HTML.Properties as HP
 import Report.Core (SDate(..), toLeadingZero) as CT
 import Report.Class as S
 import Report.Tabular as Tabular
-import Report.Modifiers.Tabular.TabularValue (TabularValue(..))
+import Report.Modifiers.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
 
 import Report.Web.Helpers
 
@@ -56,6 +56,16 @@ renderItemTabularValues item =
 
 renderTabularValue :: forall w i. Tabular.Item TabularValue -> H w i
 renderTabularValue = unwrap >>> \{ key, label, value } ->
+    case value of
+        TVAtomic av -> renderTabularAtomicValue $ Tabular.Item { key, label, value : av }
+        TVValues _ -> HH.text ""
+        TVValuesNest _ -> HH.text ""
+        TVTabulars _ -> HH.text ""
+        TVTabularsNest _ -> HH.text ""
+
+
+renderTabularAtomicValue :: forall w i. Tabular.Item TabularAtomicValue -> H w i
+renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
     HH.span_
         [ qcolorSpan tabularLabelColor label
         , qspacerSpan

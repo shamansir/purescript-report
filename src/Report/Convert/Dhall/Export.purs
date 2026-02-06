@@ -64,8 +64,8 @@ toDhall inclRule =
         -- >>> String.joinWith "\n"
     where
         mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
-            TV.TVDate sdate -> Just $ CT.dateToRec sdate
-            TV.TVSuffix (S.SProgress (P.OnDate sdate)) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVSuffix (S.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec

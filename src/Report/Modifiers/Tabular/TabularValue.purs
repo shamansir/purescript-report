@@ -7,6 +7,7 @@ import Foreign (fail, ForeignError(..)) as F
 
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl, readImpl)
 
@@ -15,10 +16,10 @@ import Report.Prefix (Prefix)
 import Report.Suffix (Suffix(..))
 import Report.Modifiers.Progress (Progress) as P
 import Report.Convert.Keyed as B
+import Report.Tabular (Tabular)
 
 
-
-data TabularValue
+data TabularAtomicValue
     = TVString String
     | TVNumber Number
     | TVBoolean Boolean
@@ -31,8 +32,31 @@ data TabularValue
          { from :: { date :: SDate, time :: STimeRec }
          , to   :: { date :: SDate, time :: STimeRec }
          }
-     | TVPrefix Prefix
-     | TVSuffix (Suffix String)
+    | TVPrefix Prefix
+    | TVSuffix (Suffix String)
+
+
+data TabularValue
+    = TVAtomic TabularAtomicValue
+    | TVValues (Array TabularAtomicValue)
+    | TVValuesNest (Array (Array TabularAtomicValue))
+    | TVTabulars (Array (Tabular TabularAtomicValue))
+    | TVTabularsNest
+        { direct :: Array (Tabular TabularAtomicValue)
+        , parts :: Array (TabularAtomicValue /\ Array (Tabular TabularAtomicValue))
+        }
+    -- | TVNest (Array TabularValue)
+
+-- data LIField v
+--     = LIField v
+--     | LISectionTitle v -- an internal hack
+--     | LIValues (Array v)
+--     | LIValuesNest (Array (Array v))
+--     | LITabulars (Array (Tabular (LIField v)))
+--     | LITabularsNest
+--         { direct :: Array (Tabular (LIField v))
+--         , parts :: Array (v /\ Array (Tabular (LIField v)))
+--         }
 
 
 newtype TVTag = TVTag String
@@ -45,17 +69,25 @@ instance B.Keyed TVTag TabularValue where
     keyOf = tagOf
 
 
+instance B.Keyed TVTag TabularAtomicValue where
+    keyOf = tagOfAtomic
+
+
 instance B.EncodableKey TVTag where
     encodeKey (TVTag str) = str
     decodeKey str = Just $ TVTag str
+
+
+instance B.DecodeKeyed TVTag TabularAtomicValue where
+    toValue = decodeAtomicWithKey
 
 
 instance B.DecodeKeyed TVTag TabularValue where
     toValue = decodeWithKey
 
 
-tagOf :: TabularValue -> TVTag
-tagOf = TVTag <<< case _ of
+tagOfAtomic :: TabularAtomicValue -> TVTag
+tagOfAtomic = TVTag <<< case _ of
     TVString _ -> "S"
     TVNumber _ -> "N"
     TVBoolean _ -> "B"
@@ -69,8 +101,35 @@ tagOf = TVTag <<< case _ of
     TVSuffix _ -> "SX"
 
 
+tagOf :: TabularValue -> TVTag
+tagOf = case _ of
+    TVAtomic av -> tagOfAtomic av
+    TVValues _ -> TVTag "TV"
+    TVValuesNest _ -> TVTag "TVN"
+    TVTabulars _ -> TVTag "TVT"
+    TVTabularsNest _ -> TVTag "TVTN"
+    -- TVNest _ -> "NS"
+
+
 decodeWithKey :: TVTag -> Foreign -> F TabularValue
 decodeWithKey key frgn = case key of
+    TVTag "TV" -> TVValues <$> (readImpl frgn :: F (Array TabularAtomicValue))
+    TVTag "TVN" -> TVValuesNest <$> (readImpl frgn :: F (Array (Array TabularAtomicValue)))
+    _          -> TVAtomic <$> decodeAtomicWithKey key frgn
+
+
+instance WriteForeign TabularValue where
+    writeImpl tabular = writeImpl $ B.make tabularKey $ case tabular of
+        TVAtomic av -> writeImpl av
+        TVValues avs -> writeImpl avs
+        TVValuesNest avsn -> writeImpl avsn
+        TVTabulars tbs -> writeImpl tbs
+        TVTabularsNest tbsn -> writeImpl tbsn
+        where
+            tabularKey = B.encodeKey $ tagOf tabular
+
+decodeAtomicWithKey :: TVTag -> Foreign -> F TabularAtomicValue
+decodeAtomicWithKey key frgn = case key of
     TVTag "S"  -> TVString  <$> (readImpl frgn :: F String)
     TVTag "N"  -> TVNumber  <$> (readImpl frgn :: F Number)
     TVTag "B"  -> TVBoolean <$> (readImpl frgn :: F Boolean)
@@ -86,15 +145,18 @@ decodeWithKey key frgn = case key of
         pure $ TVDateTimeRange { from: rec.from, to: rec.to }
     TVTag "PX" -> TVPrefix <$> (readImpl frgn :: F Prefix)
     TVTag "SX" -> TVSuffix <$> (readImpl frgn :: F (Suffix String))
-    _          -> F.fail $ F.ForeignError "Unknown TabularValue tag"
-
+    _          -> F.fail $ F.ForeignError "Unknown TabularAtomicValue tag"
 
 
 instance ReadForeign TabularValue where
     readImpl frgn = B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
 
 
-instance WriteForeign TabularValue where
+instance ReadForeign TabularAtomicValue where
+    readImpl frgn = B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
+
+
+instance WriteForeign TabularAtomicValue where
     -- somehow we cannot use `B.encodeKeyed @Key @(Suffix t) suffix` here, it leads to stack overflow.
     -- writeImpl tabular = -- writeImpl $ encodeKeyed @TVTag tabular
     writeImpl tabular = writeImpl $ B.make tabularKey $ case tabular of
@@ -110,41 +172,41 @@ instance WriteForeign TabularValue where
         TVPrefix pfx -> writeImpl pfx
         TVSuffix sfx -> writeImpl sfx
         where
-            tabularKey = B.encodeKey $ tagOf tabular
+            tabularKey = B.encodeKey $ tagOfAtomic tabular
 
 
 progress :: P.Progress -> TabularValue
-progress = TVSuffix <<< SProgress
+progress = TVAtomic <<< TVSuffix <<< SProgress
 
 
 suf :: Suffix String -> TabularValue
-suf = TVSuffix
+suf = TVAtomic <<< TVSuffix
 
 
 pref :: Prefix -> TabularValue
-pref = TVPrefix
+pref = TVAtomic <<< TVPrefix
 
 
 str :: String -> TabularValue
-str = TVString
+str = TVAtomic <<< TVString
 
 num :: Number -> TabularValue
-num = TVNumber
+num = TVAtomic <<< TVNumber
 
 bool :: Boolean -> TabularValue
-bool = TVBoolean
+bool = TVAtomic <<< TVBoolean
 
 time :: STimeRec -> TabularValue
-time = TVTime
+time = TVAtomic <<< TVTime
 
 date :: SDate -> TabularValue
-date = TVDate
+date = TVAtomic <<< TVDate
 
 dateTime :: SDate -> STimeRec -> TabularValue
-dateTime = TVDateTime
+dateTime d = TVAtomic <<< TVDateTime d
 
 timeRange :: { from :: STimeRec, to :: STimeRec } -> TabularValue
-timeRange = TVTimeRange
+timeRange = TVAtomic <<< TVTimeRange
 
 dateRange :: { from :: SDate, to :: SDate } -> TabularValue
-dateRange = TVDateRange
+dateRange = TVAtomic <<< TVDateRange

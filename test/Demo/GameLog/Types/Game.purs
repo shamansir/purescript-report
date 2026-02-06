@@ -139,7 +139,7 @@ instance HasTabular Game where
             # case gameRec.mbTrackedAt of
                 Nothing -> identity
                 Just trackedAt ->
-                    Tabular.insert "trackedAt" $ TV.TVDate trackedAt
+                    Tabular.insert "trackedAt" $ TV.TVAtomic $ TV.TVDate trackedAt
 
 
 instance WriteForeign GameTag where
