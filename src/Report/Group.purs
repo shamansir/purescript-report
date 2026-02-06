@@ -3,12 +3,18 @@ module Report.Group where
 import Prelude
 
 import Data.Newtype (class Newtype, unwrap, wrap)
+import Data.Tuple (fst, snd) as Tuple
+import Data.Tuple.Nested ((/\), type (/\))
+import Data.Foldable (foldl)
+import Data.String (joinWith) as String
+import Data.Array (snoc) as Array
 
 import Report.Class
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Stats (Stats(..)) as Stats
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Modify (class GroupModify, class StatsModify)
+import Report.Chain (Chain(..))
 
 import Yoga.JSON (class WriteForeign)
 
@@ -83,6 +89,43 @@ pathOf (Group group) = group.path
 
 setStats :: Stats -> Group -> Group
 setStats stats (Group group) = Group $ group { stats = stats }
+
+
+type FoldStep = { prevPath :: Array String, prevNames :: Array String, groupChain :: Chain Group }
+
+
+quickChain :: String -> Array ( String /\ String ) -> ( String /\ String ) -> Chain Group
+quickChain sep = quickChain_ \prev cur -> String.joinWith sep $ Array.snoc prev cur
+
+
+quickChain_ :: (Array String -> String -> String) -> Array ( String /\ String ) -> ( String /\ String ) -> Chain Group
+quickChain_ makeName pathArr ( lastId /\ lastName ) =
+    foldl
+        foldF
+        initStep
+        pathArr
+    # _.groupChain
+    where
+        initStep :: FoldStep
+        initStep =
+            { prevPath : []
+            , prevNames : []
+            , groupChain :
+                End
+                    $ mkGroup (PathSegment <$> (Array.snoc (Tuple.fst <$> pathArr) lastId))
+                    $ makeName (Tuple.snd <$> pathArr) lastName
+            }
+        foldF :: FoldStep -> String /\ String -> FoldStep
+        foldF { prevPath, prevNames, groupChain } (nextId /\ nextName) =
+            let
+                curPath = Array.snoc prevPath nextId
+                curNames = Array.snoc prevNames nextName
+                curChain = More (mkGroup (PathSegment <$> curPath) $ makeName prevNames nextName) groupChain
+            in
+                { prevPath : curPath
+                , prevNames : curNames
+                , groupChain : curChain
+                }
 
 
 {-

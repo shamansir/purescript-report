@@ -4,7 +4,7 @@ module Report
     , build
     , toTree
     , toBuilder, fromBuilder
-    , unfold
+    , unfold, unfoldAll
     -- , fromTreeC
     , class ToReport, toReport
     , withGroup, withItem
@@ -106,6 +106,10 @@ toBuilder (Report builder) = builder
 
 unfold :: forall subj group item. Report subj group item -> Array (subj /\ Array (group /\ Array item))
 unfold = toBuilder >>> B.unfold
+
+
+unfoldAll :: forall subj group item. Ord group => Report subj group item -> Array (subj /\ Array (group /\ Array item))
+unfoldAll = toBuilder >>> B.unfoldAll
 
 
 fromBuilder :: forall subj group item. B.Builder subj group item -> Report subj group item

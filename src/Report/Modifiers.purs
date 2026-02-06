@@ -5,7 +5,7 @@ import Prelude
 import Foreign (F, Foreign)
 
 import Data.Map (Map)
-import Data.Map (empty, lookup, insert, keys, fromFoldable, toUnfoldable) as Map
+import Data.Map (empty, lookup, insert, keys, size, fromFoldable, toUnfoldable) as Map
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Set (toUnfoldable) as Set
 import Data.Tuple.Nested ((/\), type (/\))
@@ -36,6 +36,10 @@ instance (EncodableKey k, WriteForeign v) => WriteForeign (Modifiers k v)
 
 empty :: forall k v. Modifiers k v
 empty = wrap Map.empty
+
+
+size :: forall k v. Modifiers k v -> Int
+size = unwrap >>> Map.size
 
 
 get :: forall k v. Ord k => k -> Modifiers k v -> Maybe v

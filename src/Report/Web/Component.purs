@@ -34,15 +34,16 @@ import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.Convert.Text.Prefix (encodePrefix) as Prefix
 import Report.Convert.Text.Suffix (encodeSuffix) as Suffix
-import Report.Modifiers.Tags (TagAction(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep) as GP
+import Report.Modifiers (size) as Modifiers
+import Report.Modifiers.Tags (TagAction(..))
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
+import Report.Modifiers.Class.ValueModify as VModify
 import Report.Modify (Location(..))
 import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
 import Report.Suffix (get, put, debugNavLabel) as Suffix
-import Report.Modifiers.Class.ValueModify as VModify
 import Report.Convert.Generic (class ToExport, includeOnly) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Dhall (toDhall) as Report
@@ -269,14 +270,6 @@ component preSelected =
     s_id :: subj -> subj_id
     s_id subj = R.s_id subj
 
-    -- selectionKeyToSubject :: Array subj -> Map subj_id subj
-    -- selectionKeyToSubject = map (\subj -> s_id subj /\ subj) >>> Map.fromFoldable
-
-    selectedSubjects :: R.Report subj group item -> Array subj_id -> Array (subj /\ (Array (group /\ Array item)))
-    selectedSubjects report subjects =
-        R.toBuilder report # RB.filterSubjects (s_id >>> flip Array.elem subjects) # RB.unfold
-        --Array.catMaybes $ (\selId -> Map.lookup selId selKeys >>= (\subj -> Map.lookup subj report <#> (/\) subj)) <$> subjects
-
     render :: State subj_id subj_tag item_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag item_tag (Input subj group item)) () m
     render state =
         HH.div
@@ -287,7 +280,7 @@ component preSelected =
                 ]
                 $
                 ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo state.collapsed)
-                    <$> selectedSubjects processedReport state.subjects
+                    <$> selectedSubjects
                 )
                 <> pure menuButtons
                 <> pure subjSelNavigation
@@ -310,8 +303,13 @@ component preSelected =
             ]
         where
 
-            processedReport = postProcess state.process state.report
-            allSubjects = RB.allSubjects $ R.toBuilder processedReport
+            processedReport =
+                R.toBuilder state.report
+                # RB.filterSubjects (s_id >>> flip Array.elem state.subjects)
+                # R.fromBuilder
+                # postProcess state.process
+            selectedSubjects = processedReport # R.unfoldAll
+            allSubjects = RB.allSubjects $ R.toBuilder state.report
             selKeys = Map.fromFoldable $ (\subj -> s_id subj /\ subj) <$> allSubjects
 
             includeRule = Report.includeOnly state.subjects
@@ -760,6 +758,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     makeSuffixEditEvt suffixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
+                    hasPrefixes = Modifiers.size (R.i_prefixes item) > 0
                 in HH.div
                     [ HP.style
                         $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
@@ -778,7 +777,10 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                             item
                         )
                     : case R.i_mbTitle item of
-                        Just title -> HH.text title
+                        Just title ->
+                            if (not hasPrefixes)
+                                then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
+                                else HH.text title
                         Nothing -> HH.text ""
                     : HH.span_ (renderSuffixes
                             @item_tag

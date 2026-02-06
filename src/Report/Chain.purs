@@ -11,6 +11,7 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (cons, uncons) as NEA
 import Data.List (List(..))
 import Data.Tuple (fst) as Tuple
+import Data.Foldable (class Foldable)
 import Data.FunctorWithIndex (class FunctorWithIndex)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.String (joinWith, split, Pattern(..)) as String
@@ -27,6 +28,7 @@ data Chain a
 
 
 derive instance Functor Chain
+derive instance Foldable Chain
 instance FunctorWithIndex Int Chain where
     mapWithIndex :: forall a b. (Int -> a -> b) -> Chain a -> Chain b
     mapWithIndex mapFn = foldF 0

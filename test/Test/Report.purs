@@ -101,6 +101,7 @@ newtype MyGroup = G (Array String)
 derive instance Newtype MyGroup _
 derive newtype instance Show MyGroup
 derive newtype instance Eq MyGroup
+derive newtype instance Ord MyGroup
 
 
 newtype TagTest1Item = TT1I String
@@ -251,24 +252,23 @@ spec = do
                 ]
             ]
 
-    it "re-groups report by tag, nested tags" $
-        let
-            report =
-                RB.build
-                    [ "subj" /\
-                        [ G [ "root" ] /\
-                            (A <$>
-                                [ "NIN", "Queen", "Rammstein", "The Chemical Brothers"
-                                , "The Prodigy", "Nirvana", "Moby", "Massive Attack"
-                                , "GusGus", "The Knife", "Fever Ray", "Depeche Mode"
-                                ])
-                        ]
+    let
+        artistsReport =
+            RB.build
+                [ "subj" /\
+                    [ G [ "root" ] /\
+                        (A <$>
+                            [ "NIN", "Queen", "Rammstein", "The Chemical Brothers"
+                            , "The Prodigy", "Nirvana", "Moby", "Massive Attack"
+                            , "GusGus", "The Knife", "Fever Ray", "Depeche Mode"
+                            ])
                     ]
-                    # Report.fromBuilder
+                ]
+                # Report.fromBuilder
 
-        in
+    it "re-groups report by tag, nested tags" $
 
-        (report # Report.groupItemsByTag (Genre "foo") # Report.unfold)
+        (artistsReport # Report.groupItemsByTag (Genre "foo") # Report.unfold)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Analogue", "Grunge" ] /\ (A <$> [ "Nirvana" ])
@@ -284,7 +284,7 @@ spec = do
 
         <>
 
-        (report # Report.groupItemsByTag (Country "foo") # Report.unfold)
+        (artistsReport # Report.groupItemsByTag (Country "foo") # Report.unfold)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Americas", "USA" ] /\ (A <$> [ "NIN", "Nirvana", "Moby" ])
@@ -297,13 +297,46 @@ spec = do
 
         <>
 
-        (report # Report.groupItemsByTag (AlbumsCount (-1)) # Report.unfold)
+        (artistsReport # Report.groupItemsByTag (AlbumsCount (-1)) # Report.unfold)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Less-than-5" ] /\ (A <$> [ "Nirvana", "Fever Ray" ])
             , G [ "More-than-10" ] /\ (A <$> [ "NIN", "Queen", "The Chemical Brothers", "GusGus", "Depeche Mode" ])
             , G [ "More-than-20" ] /\ (A <$> [ "Moby" ])
             , G [ "More-than-5" ] /\ (A <$> [ "Rammstein", "The Prodigy", "Massive Attack", "The Knife" ])
+            ]
+        ]
+
+    it "re-groups report by tag, nested tags + unfold all" $
+
+        (artistsReport # Report.groupItemsByTag (Genre "foo") # Report.unfoldAll)
+        `shouldEqual`
+        [ "subj" /\
+            [ G [ "Analogue" ] /\ (A <$> [])
+            , G [ "Analogue", "Grunge" ] /\ (A <$> [ "Nirvana" ])
+            , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+            , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen", "Depeche Mode" ])
+            , G [ "Electronic" ] /\ (A <$> [ "Moby", "GusGus", "The Knife", "Fever Ray", "Depeche Mode" ])
+            , G [ "Electronic", "Beats" ] /\ (A <$> [])
+            , G [ "Electronic", "Beats", "Big Beat" ] /\ (A <$> [ "The Chemical Brothers", "The Prodigy" ])
+            , G [ "Electronic", "Beats", "Break Beat" ] /\ (A <$> [ "The Chemical Brothers", "The Prodigy" ])
+            , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+            , G [ "Electronic", "Synth Pop" ] /\ (A <$> [ "The Knife", "Depeche Mode" ])
+            ]
+        ]
+
+        <>
+
+        (artistsReport # Report.groupItemsByTag (Country "foo") # Report.unfoldAll)
+        `shouldEqual`
+        [ "subj" /\
+            [ G [ "Americas" ] /\ (A <$> [])
+            , G [ "Americas", "USA" ] /\ (A <$> [ "NIN", "Nirvana", "Moby" ])
+            , G [ "Europe" ] /\ (A <$> [])
+            , G [ "Europe", "Germany" ] /\ (A <$> [ "Rammstein" ])
+            , G [ "Europe", "Sweden" ] /\ (A <$> [ "The Knife", "Fever Ray" ])
+            , G [ "Europe", "UK" ] /\ (A <$> [ "Queen", "The Chemical Brothers", "The Prodigy", "Massive Attack", "Depeche Mode" ])
+            , G [ "Iceland" ] /\ (A <$> [ "GusGus" ])
             ]
         ]
 

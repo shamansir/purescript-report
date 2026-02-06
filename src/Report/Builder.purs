@@ -7,7 +7,7 @@ module Report.Builder
     , empty
     , build
     , toBuilder, toBuilderC
-    , unfold, unfoldC
+    , unfold, unfoldC, unfoldAll
     , toTree, toTree_
     , nodeToString
     {- Subjects -}
@@ -53,6 +53,8 @@ import Data.String (joinWith) as String
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Bifunctor (class Bifunctor, rmap, lmap)
 import Data.Newtype (class Newtype, wrap, unwrap)
+import Data.Map (Map)
+import Data.Map as Map
 
 import Report.Chain (Chain)
 import Report.Chain as Chain
@@ -134,6 +136,17 @@ unfold :: forall subj group item. Builder subj group item -> Array (subj /\ Arra
 unfold = unfoldC >>> map (map $ map unfoldF)
     where
         unfoldF (gchain /\ items) = Chain.last gchain /\ items -- FIXME: only the `Chain.last` is used, is it a proper `unfold`?
+
+
+unfoldAll :: forall subj group item. Ord group => Builder subj group item -> Array (subj /\ Array (group /\ Array item))
+unfoldAll = unfoldC >>> map (map collectMap) >>> map (map Map.toUnfoldable)
+    where
+        collectMap = foldl fold1F Map.empty
+        alterF items (Just prev) = Just $ prev <> items
+        alterF items Nothing = Just items
+        fold1F theMap (gchain /\ items) =
+            (foldl (flip $ Map.alter $ alterF []) theMap $ Chain.beforeLast gchain)
+                # Map.alter (alterF items) (Chain.last gchain)
 
 
 unfoldC :: forall subj group item. Builder subj group item -> Array (subj /\ Array (Chain group /\ Array item))
