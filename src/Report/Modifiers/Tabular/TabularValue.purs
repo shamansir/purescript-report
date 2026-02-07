@@ -7,6 +7,7 @@ import Foreign (fail, ForeignError(..)) as F
 
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.Tuple (uncurry) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl, readImpl)
@@ -16,11 +17,12 @@ import Report.Prefix (Prefix)
 import Report.Suffix (Suffix(..))
 import Report.Modifiers.Progress (Progress) as P
 import Report.Convert.Keyed as B
-import Report.Tabular (Tabular)
+import Report.Tabular (class ToTabularValue, Tabular)
 
 
 data TabularAtomicValue
     = TVString String
+    | TVInt Int
     | TVNumber Number
     | TVBoolean Boolean
     | TVTime STimeRec
@@ -41,6 +43,7 @@ data TabularValue
     | TVValues (Array TabularAtomicValue)
     | TVValuesNest (Array (Array TabularAtomicValue))
     | TVTabulars (Array (Tabular TabularAtomicValue))
+    | TVPair TabularValue TabularValue
     | TVTabularsNest
         { direct :: Array (Tabular TabularAtomicValue)
         , parts :: Array (TabularAtomicValue /\ Array (Tabular TabularAtomicValue))
@@ -63,6 +66,43 @@ newtype TVTag = TVTag String
 derive instance Newtype TVTag _
 derive newtype instance ReadForeign  TVTag
 derive newtype instance WriteForeign TVTag
+
+
+instance ToTabularValue String TabularValue where toTV = Just <<< TVAtomic <<< TVString
+instance ToTabularValue Int TabularValue where toTV = Just <<< TVAtomic <<< TVInt
+instance ToTabularValue Number TabularValue where toTV = Just <<< TVAtomic <<< TVNumber
+instance ToTabularValue (Maybe Int) TabularValue where toTV = map (TVAtomic <<< TVInt)
+instance ToTabularValue (Maybe Number) TabularValue where toTV = map (TVAtomic <<< TVNumber)
+instance ToTabularValue (Maybe String) TabularValue where toTV = map (TVAtomic <<< TVString)
+
+
+{-
+instance ToTabularValue String (LIField String) where toTV s = if String.length s > 0 then Just $ LIField s else Nothing
+instance ToTabularValue Boolean (LIField String) where toTV bool = if bool then Just $ LIField "" else Nothing
+instance ToTabularValue CSV.QuotedInt (LIField String) where toTV = show >>> LIField >>> Just
+instance ToTabularValue T.Completion (LIField String) where toTV = show >>> LIField >>> Just
+instance ToTabularValue T.Platform (LIField String) where toTV = show >>> LIField >>> Just
+instance ToTabularValue T.PlayStatus (LIField String) where toTV = show >>> LIField >>> Just
+instance ToTabularValue T.AuthorsList (LIField String) where toTV alist = if Authors.howMany alist > 0 then Just $ LIField $ show alist else Nothing
+instance ToTabularValue T.PlusMinus (LIField String) where toTV = show >>> LIField >>> Just
+instance ToTabularValue T.GameRating (LIField String) where toTV = show >>> LIField >>> Just
+instance ToTabularValue (Maybe String) (LIField String) where toTV = flip bind Tab.toTV
+instance ToTabularValue (Maybe Number) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe Int) (LIField String) where toTV = map (Int.toStringAs Int.decimal >>> LIField)
+instance ToTabularValue (Maybe T.YesNo) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe T.Isbn) (LIField String) where toTV = flip bind \(T.Isbn str) -> Tab.toTV str
+instance ToTabularValue (Maybe T.Isbn13) (LIField String) where toTV = flip bind \(T.Isbn13 str) -> Tab.toTV str
+instance ToTabularValue (Maybe T.CompilationAuthor) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe T.Edition) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe T.Part) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe T.Serie) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Array C.Tag) (LIField String) where toTV tags = if Array.length tags > 0 then Just $ LIField $ String.joinWith ", " $ C.tagToCode <$> tags else Nothing
+instance ToTabularValue (Maybe T.PaperFormat) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe T.YearOrTwo) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe CSV.Attributes) (LIField String) where toTV = map (show >>> LIField)
+instance ToTabularValue (Maybe T.DiscFormat) (LIField String) where toTV = map (show >>> LIField)
+-}
+
 
 
 instance B.Keyed TVTag TabularValue where
@@ -89,6 +129,7 @@ instance B.DecodeKeyed TVTag TabularValue where
 tagOfAtomic :: TabularAtomicValue -> TVTag
 tagOfAtomic = TVTag <<< case _ of
     TVString _ -> "S"
+    TVInt _ -> "I"
     TVNumber _ -> "N"
     TVBoolean _ -> "B"
     TVTime _ -> "T"
@@ -108,6 +149,7 @@ tagOf = case _ of
     TVValuesNest _ -> TVTag "TVN"
     TVTabulars _ -> TVTag "TVT"
     TVTabularsNest _ -> TVTag "TVTN"
+    TVPair _ _ -> TVTag "TVP"
     -- TVNest _ -> "NS"
 
 
@@ -115,6 +157,7 @@ decodeWithKey :: TVTag -> Foreign -> F TabularValue
 decodeWithKey key frgn = case key of
     TVTag "TV" -> TVValues <$> (readImpl frgn :: F (Array TabularAtomicValue))
     TVTag "TVN" -> TVValuesNest <$> (readImpl frgn :: F (Array (Array TabularAtomicValue)))
+    TVTag "TVP" -> (Tuple.uncurry TVPair) <$> (readImpl frgn :: F (TabularValue /\ TabularValue))
     _          -> TVAtomic <$> decodeAtomicWithKey key frgn
 
 
@@ -125,6 +168,7 @@ instance WriteForeign TabularValue where
         TVValuesNest avsn -> writeImpl avsn
         TVTabulars tbs -> writeImpl tbs
         TVTabularsNest tbsn -> writeImpl tbsn
+        TVPair tA tB -> writeImpl (tA /\ tB)
         where
             tabularKey = B.encodeKey $ tagOf tabular
 
@@ -132,6 +176,7 @@ decodeAtomicWithKey :: TVTag -> Foreign -> F TabularAtomicValue
 decodeAtomicWithKey key frgn = case key of
     TVTag "S"  -> TVString  <$> (readImpl frgn :: F String)
     TVTag "N"  -> TVNumber  <$> (readImpl frgn :: F Number)
+    TVTag "I"  -> TVInt     <$> (readImpl frgn :: F Int)
     TVTag "B"  -> TVBoolean <$> (readImpl frgn :: F Boolean)
     TVTag "T"  -> TVTime    <$> (readImpl frgn :: F STimeRec)
     TVTag "D"  -> TVDate    <$> (readImpl frgn :: F SDate)
@@ -162,6 +207,7 @@ instance WriteForeign TabularAtomicValue where
     writeImpl tabular = writeImpl $ B.make tabularKey $ case tabular of
         TVString s -> writeImpl s
         TVNumber n -> writeImpl n
+        TVInt n -> writeImpl n
         TVBoolean b -> writeImpl b
         TVTime t -> writeImpl t
         TVDate d -> writeImpl d

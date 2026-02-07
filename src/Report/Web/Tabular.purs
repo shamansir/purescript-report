@@ -62,6 +62,7 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
         TVValuesNest _ -> HH.text ""
         TVTabulars _ -> HH.text ""
         TVTabularsNest _ -> HH.text ""
+        TVPair _ _ -> HH.text ""
 
 
 renderTabularAtomicValue :: forall w i. Tabular.Item TabularAtomicValue -> H w i
@@ -80,6 +81,8 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                     qcolorSpan textColor text
                 TVNumber num ->
                     qcolorSpan numColor $ formatNum num
+                TVInt int ->
+                    qcolorSpan numColor $ formatInt int
                 TVBoolean bool ->
                     qcompleteCheckbox bool
                 TVTime ({ hrs, min, sec }) ->
