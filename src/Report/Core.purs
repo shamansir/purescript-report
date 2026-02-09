@@ -157,6 +157,10 @@ newtype Year = Year Int -- TODO: replace with Year from Data.Date
 
 derive instance Newtype Year _
 derive newtype instance Show Year
+derive newtype instance Eq Year
+derive newtype instance Ord Year
+derive newtype instance ReadForeign Year
+derive newtype instance WriteForeign Year
 
 
 type MDate = SMonth /\ Year

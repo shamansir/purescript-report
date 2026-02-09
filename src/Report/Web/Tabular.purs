@@ -119,6 +119,10 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                     qcolorSpan numColor $ formatNum num
                 TVInt int ->
                     qcolorSpan numColor $ formatInt int
+                TVYear int ->
+                    qcolorSpan numColor $ show int
+                TVID int ->
+                    qcolorSpan numColor $ show int
                 TVBoolean bool ->
                     qcompleteCheckbox bool
                 TVTime ({ hrs, min, sec }) ->

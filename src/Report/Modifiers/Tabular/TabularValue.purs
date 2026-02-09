@@ -12,7 +12,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl, readImpl)
 
-import Report.Core (SDate, SDateRec, STimeRec)
+import Report.Core (Year, SDate, SDateRec, STimeRec)
 import Report.Prefix (Prefix)
 import Report.Suffix (Suffix(..))
 import Report.Modifiers.Progress (Progress) as P
@@ -23,6 +23,8 @@ import Report.Tabular (class ToTabularValue, Tabular)
 data TabularAtomicValue
     = TVString String
     | TVInt Int
+    | TVID Int
+    | TVYear Int
     | TVNumber Number
     | TVBoolean Boolean
     | TVTime STimeRec
@@ -70,10 +72,13 @@ derive newtype instance WriteForeign TVTag
 
 instance ToTabularValue String TabularValue where toTV = Just <<< TVAtomic <<< TVString
 instance ToTabularValue Int TabularValue where toTV = Just <<< TVAtomic <<< TVInt
+instance ToTabularValue Year TabularValue where toTV = Just <<< TVAtomic <<< TVYear <<< unwrap
 instance ToTabularValue Number TabularValue where toTV = Just <<< TVAtomic <<< TVNumber
 instance ToTabularValue (Maybe Int) TabularValue where toTV = map (TVAtomic <<< TVInt)
 instance ToTabularValue (Maybe Number) TabularValue where toTV = map (TVAtomic <<< TVNumber)
 instance ToTabularValue (Maybe String) TabularValue where toTV = map (TVAtomic <<< TVString)
+instance ToTabularValue (Maybe Year) TabularValue where toTV = map (TVAtomic <<< TVInt <<< unwrap)
+
 
 
 {-
@@ -130,6 +135,8 @@ tagOfAtomic :: TabularAtomicValue -> TVTag
 tagOfAtomic = TVTag <<< case _ of
     TVString _ -> "S"
     TVInt _ -> "I"
+    TVID _ -> "ID"
+    TVYear _ -> "Y"
     TVNumber _ -> "N"
     TVBoolean _ -> "B"
     TVTime _ -> "T"
@@ -177,6 +184,8 @@ decodeAtomicWithKey key frgn = case key of
     TVTag "S"  -> TVString  <$> (readImpl frgn :: F String)
     TVTag "N"  -> TVNumber  <$> (readImpl frgn :: F Number)
     TVTag "I"  -> TVInt     <$> (readImpl frgn :: F Int)
+    TVTag "Y"  -> TVYear    <$> (readImpl frgn :: F Int)
+    TVTag "ID" -> TVID      <$> (readImpl frgn :: F Int)
     TVTag "B"  -> TVBoolean <$> (readImpl frgn :: F Boolean)
     TVTag "T"  -> TVTime    <$> (readImpl frgn :: F STimeRec)
     TVTag "D"  -> TVDate    <$> (readImpl frgn :: F SDate)
@@ -208,6 +217,8 @@ instance WriteForeign TabularAtomicValue where
         TVString s -> writeImpl s
         TVNumber n -> writeImpl n
         TVInt n -> writeImpl n
+        TVID n -> writeImpl n
+        TVYear n -> writeImpl n
         TVBoolean b -> writeImpl b
         TVTime t -> writeImpl t
         TVDate d -> writeImpl d
