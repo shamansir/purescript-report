@@ -678,7 +678,7 @@ renderSubject
     -> CollapseMap subj_id
     -> subj
     -> Array (group /\ Array item)
-    -> HH.ComponentHTML (Action subj_id subj_tag item_tag  (R.Report subj group item)) slots m
+    -> HH.ComponentHTML (Action subj_id subj_tag item_tag (R.Report subj group item)) slots m
 renderSubject navigatedTo collapsedMap subj groupsArr =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
@@ -691,7 +691,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
             [ HH.text $ R.s_name @subj_id subj
             , HH.span [ HP.style "font-size: 0.8em; margin-left: 5px;" ] $ pure $ renderSubjTags (R.i_tags @subj_tag subj)
             ]
-        : (renderSubjectTabularValues subj)
+        : (const NoOp <$> renderSubjectTabularValues subj)
         : (renderTree <$> groupsArr)
         where
             subjId = R.s_id subj
@@ -797,7 +797,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                             }
                             item
                         )
-                    : pure (renderItemTabularValues item)
+                    : pure (const NoOp <$> renderItemTabularValues item)
 
 
 -- TODO: remove

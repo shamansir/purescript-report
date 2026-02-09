@@ -5,6 +5,7 @@ import Prelude
 import Data.Newtype (unwrap)
 import Data.Array (length, intersperse) as Array
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Maybe (Maybe(..))
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -13,17 +14,22 @@ import Report.Core (SDate(..), toLeadingZero) as CT
 import Report.Class as S
 import Report.Tabular (Tabular)
 import Report.Tabular as Tabular
+import Report.Modifiers (empty) as Modifiers
 import Report.Modifiers.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
 
 import Report.Web.Helpers
+import Report.Web.Prefix
+import Report.Web.Suffix
+
+import Report.Convert.Keyed (keyOf)
 
 
 renderSubjectTabularValues
-    :: forall item w i
+    :: forall item w
      . S.HasTabular item
     -- => SuffixesRenderConfig i
     => item
-    -> H w i
+    -> H w Unit
 renderSubjectTabularValues item =
     let
         i_tabular = S.i_tabular item
@@ -38,16 +44,16 @@ renderSubjectTabularValues item =
 
 
 renderItemTabularValues
-    :: forall item w i
+    :: forall item w
      . S.HasTabular item
     -- => SuffixesRenderConfig i
     => item
-    -> H w i
+    -> H w Unit
 renderItemTabularValues =
     S.i_tabular >>> renderTabular
 
 
-renderTabular :: forall w i. Tabular TabularValue -> H w i
+renderTabular :: forall w. Tabular TabularValue -> H w Unit
 renderTabular = Tabular.items >>> \tabularItems ->
     if Array.length tabularItems > 0 then
             HH.span
@@ -57,7 +63,7 @@ renderTabular = Tabular.items >>> \tabularItems ->
             HH.span_ []
 
 
-renderTabularValue :: forall w i. Tabular.Item TabularValue -> H w i
+renderTabularValue :: forall w. Tabular.Item TabularValue -> H w Unit
 renderTabularValue = unwrap >>> \{ key, label, value } ->
     case value of
         TVAtomic av -> renderTabularAtomicValue $ mkItem key label av
@@ -79,12 +85,12 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
         where
             mkItem :: forall a. String -> String -> a -> Tabular.Item a
             mkItem key label v = Tabular.Item { key, label, value : v }
-            nestValues :: forall a. (a -> H w i) -> Array a -> H w i
+            nestValues :: forall a. (a -> H w Unit) -> Array a -> H w Unit
             nestValues renderF valuesArr =
                 HH.div
                     [ HP.style "border-left: 1px solid royalblue; padding-left: 5px;" ]
                     $ pure $ HH.div_ $ renderF <$> valuesArr
-            nestValues_ :: forall a. String -> (Tabular.Item a -> H w i) -> Array a -> H w i
+            nestValues_ :: forall a. String -> (Tabular.Item a -> H w Unit) -> Array a -> H w Unit
             nestValues_ key renderF =
                 nestValues (mkItem key "" >>> renderF)
             renderParts key (tabAV /\ subParts) =
@@ -95,7 +101,7 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                     ]
 
 
-renderTabularAtomicValue :: forall w i. Tabular.Item TabularAtomicValue -> H w i
+renderTabularAtomicValue :: forall w. Tabular.Item TabularAtomicValue -> H w Unit
 renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
     HH.span_
         [ qcolorSpan tabularLabelColor label
@@ -163,5 +169,16 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , qspacerSpan
                         , valueSpan (TVTime to.time)
                         ]
-                TVPrefix prefix -> HH.text "" -- TODO: implement
-                TVSuffix suffix -> HH.text "" -- TODO: implement
+                TVPrefix prefix ->
+                    renderPrefix
+                        { isEditingPrefix : Nothing
+                        , isSelected : false
+                        , key : keyOf prefix
+                        , noop : unit
+                        , onCancelEditing : unit
+                        , onClick : const unit
+                        , onEdit : const unit
+                        , onStartEditing : const unit
+                        , parentPrefixes : Modifiers.empty
+                        }
+                TVSuffix suffix -> HH.text "" -- renderSuffix ?wh
