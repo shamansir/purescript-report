@@ -20,7 +20,7 @@ import Report.Chain (Chain)
 import Report.Chain as Chain
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
-import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith) as GPath
+import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith, encode) as GPath
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Class.ValueModify (fromEditable)
 import Report.Modifiers.Stats.Collect (collectStats, CollectWhat(..))
@@ -80,8 +80,6 @@ type Modification subj_id =
     , what :: What
     , newValue :: EncodedValue
     }
-
-
 
 
 class GroupModify group where
@@ -203,7 +201,8 @@ type RecalculateConfig =
     }
 
 
-recalculate
+{-
+recalculateAlt
     :: forall @tag subj group item
      . IsGroup group
     => HasSuffixes tag item
@@ -211,15 +210,19 @@ recalculate
     => RecalculateConfig
     -> Report subj group item
     -> Report subj group item
-recalculate cfg =
+recalculateAlt cfg =
     Report.toBuilder >>> RBuilder.unfoldC >>> (map $ map updateGroups) >>> RBuilder.toBuilderC >>> Report.fromBuilder   -- FIXME: TODO!
     where
         belongsTo :: Chain group -> Chain group -> Boolean
-        belongsTo grpCA grpCB = GPath.startsWith (g_path $ Chain.last grpCA) (g_path $ Chain.last grpCB)
+        belongsTo grpCA grpCB = Debug.spy "startsWith" $ GPath.startsWith (g_path $ Chain.last $ spyGroupC "grpCA" $ grpCA) (g_path $ Chain.last $ spyGroupC "grpCB" $ grpCB)
         collectAllItems :: Chain group -> Array (Chain group /\ Array item) -> Array item
         collectAllItems grpC = Array.filter (Tuple.fst >>> belongsTo grpC) >>> map Tuple.snd >>> Array.concat
+        spyGroup :: String -> group -> group
+        spyGroup label = Debug.spyWith label (g_path >>> GPath.encode)
+        spyGroupC :: String -> Chain group -> Chain group
+        spyGroupC label = Debug.spyWith label (map (g_path >>> GPath.encode) >>> Chain.toString)
         updateGroup :: Array item -> group -> group
-        updateGroup itemsCollected group = setStats (collectStats @tag cfg.collect itemsCollected) group
+        updateGroup itemsCollected group = setStats (collectStats @tag cfg.collect itemsCollected # Debug.spy "stats") $ spyGroup "group" group
         updateGroups :: Array (Chain group /\ Array item) -> Array (Chain group /\ Array item)
         updateGroups groupsArr =
             groupsArr <#> \(groupC /\ items) ->
@@ -228,4 +231,35 @@ recalculate cfg =
                         updateGroup (collectAllItems groupC groupsArr) <$> groupC
                     OnlyDirect ->
                         updateGroup items <$> groupC
+                /\ items
+-}
+
+recalculate
+    :: forall @tag subj group item
+     . Ord group
+    => IsGroup group
+    => HasSuffixes tag item
+    => StatsModify group
+    => RecalculateConfig
+    -> Report subj group item
+    -> Report subj group item
+recalculate cfg =
+    Report.toBuilder >>> RBuilder.unfoldAll >>> (map $ map updateGroups) >>> RBuilder.toBuilder >>> Report.fromBuilder   -- FIXME: TODO!
+    where
+        belongsTo :: group -> group -> Boolean
+        belongsTo grpA grpB = GPath.startsWith (g_path grpA) (g_path grpB)
+        collectAllItems :: group -> Array (group /\ Array item) -> Array item
+        collectAllItems grp = Array.filter (Tuple.fst >>> belongsTo grp) >>> map Tuple.snd >>> Array.concat
+        -- spyGroup :: String -> group -> group
+        -- spyGroup label = Debug.spyWith label (g_path >>> GPath.encode)
+        updateGroup :: Array item -> group -> group
+        updateGroup itemsCollected group = setStats (collectStats @tag cfg.collect itemsCollected) group
+        updateGroups :: Array (group /\ Array item) -> Array (group /\ Array item)
+        updateGroups groupsArr =
+            groupsArr <#> \(group /\ items) ->
+                case cfg.include of
+                    AllNested ->
+                        updateGroup (collectAllItems group groupsArr) group
+                    OnlyDirect ->
+                        updateGroup items group
                 /\ items

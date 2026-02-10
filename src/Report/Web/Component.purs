@@ -151,7 +151,8 @@ derive instance Eq ExportTarget
 
 
 type RecalcBehavior =
-    { onEdit    :: Maybe Modify.RecalculateConfig
+    { onEmpty   :: Maybe Modify.RecalculateConfig
+    , onEdit    :: Maybe Modify.RecalculateConfig
     , onRegroup :: Maybe Modify.RecalculateConfig
     , onFilter  :: Maybe Modify.RecalculateConfig
     }
@@ -167,9 +168,10 @@ defaultConfig :: forall subj_id. Config subj_id
 defaultConfig =
     { preSelected : []
     , recalculate :
-        { onEdit : Nothing
+        { onEmpty   : Nothing
+        , onEdit    : Nothing
         , onRegroup : Nothing
-        , onFilter : Nothing
+        , onFilter  : Nothing
         }
     }
 
@@ -872,6 +874,7 @@ postProcess
     :: forall item_tag subj group item
      . Eq item_tag
     => Ord item_tag
+    => Ord group
     => R.IsSortable item_tag
     => R.IsGroupable group item_tag
     => R.HasTags item_tag item
@@ -882,7 +885,11 @@ postProcess
     -> R.Report subj group item
     -> R.Report subj group item
 postProcess recalc processes report =
-    foldl applyProcess report processes
+    case processes of
+        [] -> case recalc.onEmpty of
+                Just config -> Modify.recalculate @item_tag config report
+                Nothing -> report
+        _  -> foldl applyProcess report processes
     where
         applyProcess curReport process = case process of
             { action : FilterBy, tag : itemTag } ->

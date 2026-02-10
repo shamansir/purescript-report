@@ -78,25 +78,35 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
         TVTabularsNest { direct, parts } ->
             HH.div
                 []
-                [ nestValues (map TVAtomic >>> renderTabular) direct
+                [ {- HH.text "TabularsNest"
+                , -} nestValues (map TVAtomic >>> renderTabular) direct
                 , nestValues (renderParts key) parts
                 ]
-        TVPair _ _ -> HH.text ""
+        TVPair tabValA tabValB ->
+            HH.div
+                []
+                [ {- HH.text "Pair"
+                    , -} renderTabularValue $ mkItem key "left"  tabValA
+                , renderTabularValue $ mkItem key "right" tabValB
+                ]
         where
             mkItem :: forall a. String -> String -> a -> Tabular.Item a
             mkItem key label v = Tabular.Item { key, label, value : v }
             nestValues :: forall a. (a -> H w Unit) -> Array a -> H w Unit
             nestValues renderF valuesArr =
                 HH.div
-                    [ HP.style "border-left: 1px solid royalblue; padding-left: 5px;" ]
-                    $ pure $ HH.div_ $ renderF <$> valuesArr
+                    [ HP.style "border-left: 2px solid royalblue; padding-left: 5px;" ]
+                    [ {- HH.text "Nest"
+                    , -} HH.div_ $ renderF <$> valuesArr
+                    ]
             nestValues_ :: forall a. String -> (Tabular.Item a -> H w Unit) -> Array a -> H w Unit
             nestValues_ key renderF =
                 nestValues (mkItem key "" >>> renderF)
             renderParts key (tabAV /\ subParts) =
                 HH.div
                     []
-                    [ renderTabularAtomicValue $ mkItem key "" tabAV
+                    [ {- HH.text "Parts"
+                    , -} renderTabularAtomicValue $ mkItem key "" tabAV
                     , nestValues (map TVAtomic >>> renderTabular) subParts
                     ]
 
