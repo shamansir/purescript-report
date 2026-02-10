@@ -22,6 +22,7 @@ data Stats
     | SWithProgress { total :: Int, got :: Int, onTheWay :: Int }
     -- | SCompletionStatus GLT.Completion
     | SFromProgress Progress
+    | SCount { count :: Int }
     | SNotRelevant -- means everything is just values
     | SYetUnknown
 
@@ -51,6 +52,7 @@ derive instance Ord GotTotal
 weightOf :: Stats -> Number
 weightOf = case _ of
     SGotTotal { got } -> Int.toNumber got -- total can be 0
+    SCount { count } -> Int.toNumber count
     SWithProgress { got, onTheWay } -> Int.toNumber got + (Int.toNumber onTheWay * 0.2)  -- total can be 0
     SFromProgress progress ->
         case gotTotalFrom progress of
@@ -70,6 +72,7 @@ gotTotalFromStats = case _ of
     SWithProgress { got, total } -> Defined { got, total }
     SFromProgress progress -> gotTotalFrom progress
     -- SCompletionStatus _ -> Undefined
+    SCount { count } -> Defined { got : count, total : count }
     SNotRelevant -> GTStatsValue
     SYetUnknown -> Undefined
 
@@ -139,6 +142,8 @@ instance ReadForeign Stats where
                 ( readImpl stats :: F { got :: Int, total :: Int, onTheWay :: Int } ) <#> SWithProgress
             "FromProgress" -> do
                 ( readImpl stats :: F Progress ) <#> SFromProgress
+            "Count" -> do
+                ( readImpl stats :: F { count :: Int } ) <#> SCount
             "NotRelevant" ->
                 pure SNotRelevant
             "YetUnknown" ->
@@ -155,6 +160,8 @@ instance WriteForeign Stats where
             writeImpl { kind: "WithProgress", stats : writeImpl { got: got, total: total, onTheWay: onTheWay } }
         SFromProgress progress ->
             writeImpl { kind: "FromProgress", stats : writeImpl progress }
+        SCount { count } ->
+            writeImpl { type: "Count", stats : writeImpl { count : count } }
         SNotRelevant ->
             writeImpl { type: "NotRelevant", stats : writeImpl "" }
         SYetUnknown ->

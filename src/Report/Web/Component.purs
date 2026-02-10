@@ -855,10 +855,14 @@ postProcess processes report =
         applyProcess curReport process = case process of
             { action : FilterBy, tag : itemTag } ->
                 R.filterItemsByTag itemTag curReport
+                    -- # R.recalulateGroupsStats -- TODO
+                    -- Modify.recalculate @item_tag $ nextReport s.report
             { action : SortBy, tag : itemTag } ->
                 R.sortItemsByTag itemTag curReport
             { action : GroupBy, tag : itemTag } ->
                 R.groupItemsByTag itemTag curReport
+                    -- # R.recalulateGroupsStats -- TODO
+                    -- Modify.recalculate @item_tag $ nextReport s.report
 
 
 whichProcess :: forall item_tag. item_tag -> MouseEvent -> Maybe (Process item_tag)

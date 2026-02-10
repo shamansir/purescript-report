@@ -19,6 +19,7 @@ encodeStats stats = case stats of
     SGotTotal { got, total } -> Nothing /\ (CT.EncodedValue $ show got <> "/" <> show total)
     SWithProgress { got, total, onTheWay } -> Nothing /\ (CT.EncodedValue $ show got <> "/" <> show onTheWay <> "/" <> show total)
     SFromProgress progress -> lmap pure $ encodeProgress progress
+    SCount { count } -> Nothing /\ (CT.EncodedValue $ show count)
     SNotRelevant -> Nothing /\ CT.EncodedValue "SNR"
     SYetUnknown -> Nothing /\ CT.EncodedValue "SUNK"
 
@@ -40,6 +41,8 @@ decodeStats mbPTag (CT.EncodedValue evStr) =
                     <*> Int.fromString onTheWayStr
                     <*> Int.fromString totalStr
                 _ ->
-                    mbPTag
-                        >>= \pTag -> decodeProgress pTag (CT.EncodedValue evStr)
-                        <#> SFromProgress
+                    case mbPTag of
+                        Nothing ->
+                            Int.fromString evStr <#> (\count -> SCount { count })
+                        Just pTag ->
+                            decodeProgress pTag (CT.EncodedValue evStr) <#> SFromProgress

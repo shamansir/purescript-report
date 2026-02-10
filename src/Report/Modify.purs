@@ -23,7 +23,7 @@ import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith) as GPath
 import Report.Modifiers.Stats (Stats)
 import Report.Modifiers.Class.ValueModify (fromEditable)
-import Report.Modifiers.Stats.Collect (collectStats)
+import Report.Modifiers.Stats.Collect (collectStats, CollectWhat(..))
 import Report.Prefix (Key, put) as Prefix
 import Report.Prefix (Prefix, Prefixes)
 import Report.Suffix (Key, put) as Suffix
@@ -168,7 +168,7 @@ modifyAt { subjId, what, newValue, path } report = case what of
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable
 
 
-data Recalculate
+data RecalculateInclude
     = OnlyDirect
     | AllNested
 
@@ -181,7 +181,18 @@ recalculate
     => Report subj group item
     -> Report subj group item
 recalculate =
-    recalculate_ @tag AllNested
+    recalculate_ @tag AllNested ItemsProgress
+
+
+recalculateDirect
+    :: forall @tag subj group item
+     . IsGroup group
+    => HasSuffixes tag item
+    => StatsModify group
+    => Report subj group item
+    -> Report subj group item
+recalculateDirect =
+    recalculate_ @tag OnlyDirect ItemsProgress
 
 
 recalculate_
@@ -189,10 +200,11 @@ recalculate_
      . IsGroup group
     => HasSuffixes tag item
     => StatsModify group
-    => Recalculate
+    => RecalculateInclude
+    -> CollectWhat
     -> Report subj group item
     -> Report subj group item
-recalculate_ how =
+recalculate_ include colwhat =
     Report.toBuilder >>> RBuilder.unfoldC >>> (map $ map updateGroups) >>> RBuilder.toBuilderC >>> Report.fromBuilder   -- FIXME: TODO!
     where
         belongsTo :: Chain group -> Chain group -> Boolean
@@ -200,11 +212,11 @@ recalculate_ how =
         collectAllItems :: Chain group -> Array (Chain group /\ Array item) -> Array item
         collectAllItems grpC = Array.filter (Tuple.fst >>> belongsTo grpC) >>> map Tuple.snd >>> Array.concat
         updateGroup :: Array item -> group -> group
-        updateGroup itemsCollected group = setStats (collectStats @tag itemsCollected) group
+        updateGroup itemsCollected group = setStats (collectStats @tag colwhat itemsCollected) group
         updateGroups :: Array (Chain group /\ Array item) -> Array (Chain group /\ Array item)
         updateGroups groupsArr =
             groupsArr <#> \(groupC /\ items) ->
-                case how of
+                case include of
                     AllNested ->
                         updateGroup (collectAllItems groupC groupsArr) <$> groupC
                     OnlyDirect ->
