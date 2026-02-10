@@ -173,6 +173,7 @@ data RecalculateInclude
     | AllNested
 
 
+{-
 recalculate
     :: forall @tag subj group item
      . IsGroup group
@@ -193,18 +194,24 @@ recalculateDirect
     -> Report subj group item
 recalculateDirect =
     recalculate_ @tag OnlyDirect ItemsProgress
+-}
 
 
-recalculate_
+type RecalculateConfig =
+    { include :: RecalculateInclude
+    , collect :: CollectWhat
+    }
+
+
+recalculate
     :: forall @tag subj group item
      . IsGroup group
     => HasSuffixes tag item
     => StatsModify group
-    => RecalculateInclude
-    -> CollectWhat
+    => RecalculateConfig
     -> Report subj group item
     -> Report subj group item
-recalculate_ include colwhat =
+recalculate cfg =
     Report.toBuilder >>> RBuilder.unfoldC >>> (map $ map updateGroups) >>> RBuilder.toBuilderC >>> Report.fromBuilder   -- FIXME: TODO!
     where
         belongsTo :: Chain group -> Chain group -> Boolean
@@ -212,11 +219,11 @@ recalculate_ include colwhat =
         collectAllItems :: Chain group -> Array (Chain group /\ Array item) -> Array item
         collectAllItems grpC = Array.filter (Tuple.fst >>> belongsTo grpC) >>> map Tuple.snd >>> Array.concat
         updateGroup :: Array item -> group -> group
-        updateGroup itemsCollected group = setStats (collectStats @tag colwhat itemsCollected) group
+        updateGroup itemsCollected group = setStats (collectStats @tag cfg.collect itemsCollected) group
         updateGroups :: Array (Chain group /\ Array item) -> Array (Chain group /\ Array item)
         updateGroups groupsArr =
             groupsArr <#> \(groupC /\ items) ->
-                case include of
+                case cfg.include of
                     AllNested ->
                         updateGroup (collectAllItems groupC groupsArr) <$> groupC
                     OnlyDirect ->

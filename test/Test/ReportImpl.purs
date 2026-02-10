@@ -28,6 +28,7 @@ import Report.Impl.Subject (Subject)
 import Report.Impl.Tag (defaultColors, defaultWriteImpl, defaultReadImpl) as Tag
 import Report.Convert.Generic (class ToExport) as Report
 import Report.Web.Component as Report
+import Report.Web.Component (defaultConfig) as RepComponent
 
 
 
@@ -100,6 +101,6 @@ spec =
         let myReport :: MyReport
             myReport = MyReport Report.empty
             component :: H.Component _ MyReport _ Effect
-            component = Report.component @MyReport @String @SubjectTag @ItemTag @MySubject @MyGroup @MyItem []
+            component = Report.component @MyReport @String @SubjectTag @ItemTag @MySubject @MyGroup @MyItem RepComponent.defaultConfig
             slot = HH.slot_ _report unit component myReport
         true `shouldEqual` true

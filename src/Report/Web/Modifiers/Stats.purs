@@ -29,6 +29,8 @@ renderGroupStats = S.gotTotalFromStats >>> case _ of
         -- HH.span
         --     [ HP.style "font-size: 0.8em; opacity: 0.8; margin: 5px 0;" ]
         --     [ HH.text $ " (" <> show got <> "/" <> show total <> ")" ]
+    S.JustCount { count } ->
+        HH.div [] [ qcolorSpan completeColor $ "(" <> formatInt count <> ")" ]
     S.GTStatsValue -> HH.text ""
     S.Undefined -> HH.text ""
 

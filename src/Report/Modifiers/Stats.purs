@@ -41,6 +41,7 @@ defaultStats = SYetUnknown
 
 data GotTotal
     = Defined { got :: Int, total :: Int }
+    | JustCount { count :: Int }
     | GTStatsValue
     | Undefined
 
@@ -72,7 +73,7 @@ gotTotalFromStats = case _ of
     SWithProgress { got, total } -> Defined { got, total }
     SFromProgress progress -> gotTotalFrom progress
     -- SCompletionStatus _ -> Undefined
-    SCount { count } -> Defined { got : count, total : count }
+    SCount { count } -> JustCount { count } -- Defined { got : count, total : count }
     SNotRelevant -> GTStatsValue
     SYetUnknown -> Undefined
 

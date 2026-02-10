@@ -105,4 +105,5 @@ component = H.mkComponent
 
 reportComponent :: forall query output m. MonadEffect m => H.Component query GL.RawAchievements output m
 reportComponent =
-    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag @GL.Game @Report.Group @GL.Achievement [ GL.DHL "astral-chain" ]
+    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag @GL.Game @Report.Group @GL.Achievement $
+        StatsReport.defaultConfig { preSelected = [ GL.DHL "astral-chain" ] }

@@ -40,6 +40,7 @@ import Report.Modifiers (size) as Modifiers
 import Report.Modifiers.Tags (TagAction(..))
 import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Modifiers.Class.ValueModify as VModify
+import Report.Modifiers.Stats.Collect as Collect
 import Report.Modify (Location(..))
 import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix
@@ -149,6 +150,29 @@ data ExportTarget
 derive instance Eq ExportTarget
 
 
+type RecalcBehavior =
+    { onEdit    :: Maybe Modify.RecalculateConfig
+    , onRegroup :: Maybe Modify.RecalculateConfig
+    , onFilter  :: Maybe Modify.RecalculateConfig
+    }
+
+
+type Config subj_id =
+    { preSelected :: Array subj_id
+    , recalculate :: RecalcBehavior
+    }
+
+
+defaultConfig :: forall subj_id. Config subj_id
+defaultConfig =
+    { preSelected : []
+    , recalculate :
+        { onEdit : Nothing
+        , onRegroup : Nothing
+        , onFilter : Nothing
+        }
+    }
+
 
 class
     ( R.IsTag subj_tag
@@ -240,9 +264,9 @@ component
     -- => WriteForeign subj_tag
     => Report.ToExport subj_id subj_tag item_tag subj group item x
     => R.ToReport subj group item x
-    => Array subj_id
+    => Config subj_id
     -> H.Component query x output m
-component preSelected =
+component cfg =
     H.mkComponent
         { initialState
         , render
@@ -251,7 +275,7 @@ component preSelected =
     where
     initialState :: x -> State subj_id subj_tag item_tag (R.Report subj group item)
     initialState x =
-        { subjects : preSelected
+        { subjects : cfg.preSelected
         , report : R.toReport x
         , filter : Nothing
         , tagFilter : []
@@ -307,7 +331,7 @@ component preSelected =
                 R.toBuilder state.report
                 # RB.filterSubjects (s_id >>> flip Array.elem state.subjects)
                 # R.fromBuilder
-                # postProcess state.process
+                # postProcess cfg.recalculate state.process
             selectedSubjects = processedReport # R.unfoldAll
             allSubjects = RB.allSubjects $ R.toBuilder state.report
             selKeys = Map.fromFoldable $ (\subj -> s_id subj /\ subj) <$> allSubjects
@@ -628,8 +652,13 @@ component preSelected =
                                     , newValue : encval
                                     }
             in
-                H.modify_
-                    \s -> s { report = Modify.recalculate @item_tag $ nextReport s.report }
+                case cfg.recalculate.onEdit of
+                    Just recCfg ->
+                        H.modify_
+                            \s -> s { report = Modify.recalculate @item_tag recCfg $ nextReport s.report }
+                    Nothing ->
+                        H.modify_
+                            \s -> s { report = nextReport s.report }
 
         StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
@@ -846,22 +875,28 @@ postProcess
     => R.IsSortable item_tag
     => R.IsGroupable group item_tag
     => R.HasTags item_tag item
-    => Array (Process item_tag)
+    => R.HasSuffixes item_tag item -- FIXME: `HasSuffixes` & `HasTags` are sometimes interchangable
+    => Modify.StatsModify group
+    => RecalcBehavior
+    -> Array (Process item_tag)
     -> R.Report subj group item
     -> R.Report subj group item
-postProcess processes report =
+postProcess recalc processes report =
     foldl applyProcess report processes
     where
         applyProcess curReport process = case process of
             { action : FilterBy, tag : itemTag } ->
                 R.filterItemsByTag itemTag curReport
-                    -- # R.recalulateGroupsStats -- TODO
-                    -- Modify.recalculate @item_tag $ nextReport s.report
+                    # case recalc.onFilter of
+                        Just config -> Modify.recalculate @item_tag config
+                        Nothing -> identity
             { action : SortBy, tag : itemTag } ->
                 R.sortItemsByTag itemTag curReport
             { action : GroupBy, tag : itemTag } ->
                 R.groupItemsByTag itemTag curReport
-                    -- # R.recalulateGroupsStats -- TODO
+                    # case recalc.onRegroup of
+                        Just config -> Modify.recalculate @item_tag config
+                        Nothing -> identity
                     -- Modify.recalculate @item_tag $ nextReport s.report
 
 
