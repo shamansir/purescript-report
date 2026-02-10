@@ -8,7 +8,7 @@ import Foreign (F, ForeignError(..), fail)
 import Data.Array ((:))
 import Data.Array (uncons, snoc) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Array.NonEmpty (cons, uncons) as NEA
+import Data.Array.NonEmpty (cons, uncons, snoc') as NEA
 import Data.List (List(..))
 import Data.Tuple (fst) as Tuple
 import Data.Foldable (class Foldable)
@@ -50,6 +50,7 @@ last =
         More _ rest -> last rest
 
 
+--| All links except the last one
 beforeLast :: forall a. Chain a -> Array a
 beforeLast = case _ of
     End _ -> []
@@ -95,6 +96,10 @@ break = foldF []
         foldF prev = case _ of
             End a -> prev /\ a
             More a rest -> foldF (Array.snoc prev a) rest
+
+
+make :: forall a. Array a -> a -> Chain a
+make beforeLast_ last_ = fromNEArray $ NEA.snoc' beforeLast_ last_
 
 
 --| Call one function for when there are more links further and another function when it's an end of the chain

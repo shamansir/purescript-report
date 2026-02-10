@@ -708,8 +708,8 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     groupPath = R.g_path group
                     groupStats = R.i_stats group
                     isNavigatedTo = navigatedTo # Navigation.atGroup subjId groupPath
-                    subjCollapsed = fromMaybe Map.empty $ Map.lookup subjId collapsedMap
-                    isCollapsed = fromMaybe false $ Map.lookup groupPath subjCollapsed
+                    groupCollapsed = fromMaybe Map.empty $ Map.lookup subjId collapsedMap
+                    isCollapsed = fromMaybe false $ Map.lookup groupPath groupCollapsed
                in HH.div
                     [ HP.style $ "padding-bottom: 10px; line-height: "
                         <> show lineHeight <> "em; margin-left: "

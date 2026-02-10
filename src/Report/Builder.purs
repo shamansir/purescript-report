@@ -25,6 +25,7 @@ module Report.Builder
     , findGroup, findMapGroup
     , sortGroups, sortGroupsWith, sortGroupsBy
     , regroup, regroupBy, regroupByMany
+    , mapGroupsWithItems, mapGroupsWithItemsE, mapGroupsWithItemsC
     {- Items -}
     , mapItems
     , allItems
@@ -328,6 +329,27 @@ alignSubjectsBy compareF = unwrap >>> Array.groupExtBy compareF extractSubj extr
 
 mapGroups :: forall subj groupA groupB item. (groupA -> groupB) -> Builder subj groupA item -> Builder subj groupB item
 mapGroups = lmap
+
+
+--| Map groups with knowning their sub-items. The complete `Chain group` is updated using the mapping function.
+mapGroupsWithItems :: forall subj groupA groupB item. (subj -> groupA -> Array item -> groupB) -> Builder subj groupA item -> Builder subj groupB item
+mapGroupsWithItems mapFn = mapGroupsWithItemsC \subj groupC items -> flip (mapFn subj) items <$> groupC
+
+
+--| Changes only the last group in the chain, that's why it is impossible to change group type
+mapGroupsWithItemsE :: forall subj groupA group item. (subj -> group -> Array item -> group) -> Builder subj group item -> Builder subj group item
+mapGroupsWithItemsE mapFn = mapGroupsWithItemsC \subj groupC items ->
+    let
+        before /\ end = Chain.break groupC
+    in Chain.make before $ mapFn subj end items
+
+
+--| Map groups with knowning their sub-items.
+mapGroupsWithItemsC :: forall subj groupA groupB item. (subj -> Chain groupA -> Array item -> Chain groupB) -> Builder subj groupA item -> Builder subj groupB item
+mapGroupsWithItemsC mapF = unwrap >>> map mapGroupsF >>> wrap
+    where
+        mapGroupsF (Subject s groups) = Subject s $ mapGroupF s  <$> groups
+        mapGroupF s (Group groupC items) = Group (mapF s groupC $ unwrap <$> items) items
 
 
 withGroup :: forall subj groupA groupB item. (subj -> groupA -> groupB) -> Builder subj groupA item -> Builder subj groupB item
