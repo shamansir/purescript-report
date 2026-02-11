@@ -53,11 +53,16 @@ renderItemTabularValues =
     S.i_tabular >>> renderTabular
 
 
+tabularStyle = "display: block; margin: 0 0 0 50px; color: royalblue; font-size: 0.8em;" :: String
+nestStyle = "border-left: 2px solid color-mix(in srgb, royalblue 20%, transparent); padding-left: 5px;" :: String
+innerTabularStyle = "border-left: 2px solid color-mix(in srgb, darkgreen 20%, transparent); padding-left: 5px; margin: 10px 0;" :: String
+
+
 renderTabular :: forall w. Tabular TabularValue -> H w Unit
 renderTabular = Tabular.items >>> \tabularItems ->
     if Array.length tabularItems > 0 then
             HH.span
-                [ HP.style "display: block; margin: 0 0 0 50px; color: royalblue; font-size: 0.8em;" ]
+                [ HP.style tabularStyle ]
                 $ HH.span [ HP.style "display: block;" ] <$> pure <$> renderTabularValue <$> tabularItems
         else
             HH.span_ []
@@ -79,23 +84,24 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
             HH.div
                 []
                 [ {- HH.text "TabularsNest"
-                , -} nestValues (map TVAtomic >>> renderTabular) direct
+                , -} nestValues (map TVAtomic >>> renderTabular >>> pure >>> wrapInnerTabular) direct
                 , nestValues (renderParts key) parts
                 ]
         TVPair tabValA tabValB ->
             HH.div
                 []
                 [ {- HH.text "Pair"
-                    , -} renderTabularValue $ mkItem key "left"  tabValA
-                , renderTabularValue $ mkItem key "right" tabValB
+                    , -} renderTabularValue $ mkItem key ""  tabValA
+                , renderTabularValue $ mkItem key "" tabValB
                 ]
         where
+            wrapInnerTabular = HH.div [ HP.style innerTabularStyle ]
             mkItem :: forall a. String -> String -> a -> Tabular.Item a
             mkItem key label v = Tabular.Item { key, label, value : v }
             nestValues :: forall a. (a -> H w Unit) -> Array a -> H w Unit
             nestValues renderF valuesArr =
                 HH.div
-                    [ HP.style "border-left: 2px solid royalblue; padding-left: 5px;" ]
+                    [ HP.style nestStyle ]
                     [ {- HH.text "Nest"
                     , -} HH.div_ $ renderF <$> valuesArr
                     ]
@@ -107,7 +113,7 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                     []
                     [ {- HH.text "Parts"
                     , -} renderTabularAtomicValue $ mkItem key "" tabAV
-                    , nestValues (map TVAtomic >>> renderTabular) subParts
+                    , nestValues (map TVAtomic >>> renderTabular >>> pure >>> wrapInnerTabular) subParts
                     ]
 
 
