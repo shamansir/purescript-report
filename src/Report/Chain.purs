@@ -8,7 +8,7 @@ import Foreign (F, ForeignError(..), fail)
 import Data.Array ((:))
 import Data.Array (uncons, snoc) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Array.NonEmpty (cons, uncons, snoc') as NEA
+import Data.Array.NonEmpty (cons, uncons, snoc, snoc') as NEA
 import Data.List (List(..))
 import Data.Tuple (fst) as Tuple
 import Data.Foldable (class Foldable)

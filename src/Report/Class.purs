@@ -63,6 +63,9 @@ type TagColors =
     }
 
 
+-- newtype GChain g = GChain (Chain g)
+
+
 class IsGroup g <= IsGroupable g t where
     t_group :: t -> Maybe (Chain g) -- TODO `Maybe (Chain g)`?
 

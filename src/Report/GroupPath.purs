@@ -7,6 +7,7 @@ import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.String (split, joinWith, Pattern(..)) as String
 import Data.Array (length, index) as Array
 import Data.FoldableWithIndex (foldlWithIndex)
+
 import Yoga.JSON (class ReadForeign, class WriteForeign)
 
 
@@ -16,6 +17,8 @@ import Yoga.JSON (class ReadForeign, class WriteForeign)
 newtype PathSegment = PathSegment String
 derive newtype instance ReadForeign PathSegment
 derive newtype instance WriteForeign PathSegment
+derive newtype instance Show PathSegment
+derive newtype instance Eq PathSegment
 
 newtype GroupPath = GroupPath (Array PathSegment)
 

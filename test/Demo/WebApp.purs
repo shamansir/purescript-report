@@ -70,11 +70,6 @@ component = H.mkComponent
         render :: State -> H.ComponentHTML Action Slots m
         render s =
             HH.div_
-                -- [ HH.h1_ [ HH.text "Hello, Halogen!" ]
-                -- , HH.button
-                --     [ HE.onClick \_ -> Skip
-                --     ]
-                --     [ HH.text "Click me" ]
                 [ case s.report of
                     Just report ->
                         HH.slot_ _report unit reportComponent report

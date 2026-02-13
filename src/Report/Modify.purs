@@ -251,8 +251,6 @@ recalculate cfg =
         belongsTo grpA grpB = GPath.startsWith (g_path grpA) (g_path grpB)
         collectAllItems :: group -> Array (group /\ Array item) -> Array item
         collectAllItems grp = Array.filter (Tuple.fst >>> belongsTo grp) >>> map Tuple.snd >>> Array.concat
-        -- spyGroup :: String -> group -> group
-        -- spyGroup label = Debug.spyWith label (g_path >>> GPath.encode)
         updateGroup :: Array item -> group -> group
         updateGroup itemsCollected group = setStats (collectStats @tag cfg.collect itemsCollected) group
         updateGroups :: Array (group /\ Array item) -> Array (group /\ Array item)

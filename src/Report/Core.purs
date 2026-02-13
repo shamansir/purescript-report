@@ -38,6 +38,7 @@ data Language
     | Es
     | De
     | Uk
+    | Fr
     | Jp
 
 
@@ -50,6 +51,7 @@ langToCode = case _ of
     En -> "en"
     De -> "de"
     Es -> "es"
+    Fr -> "fr"
     Ru -> "ru"
     Uk -> "uk"
     Jp -> "jp"
@@ -69,6 +71,7 @@ langToName = case _ of
     En -> "English"
     De -> "German"
     Es -> "Spanish"
+    Fr -> "French"
     Ru -> "Russian"
     Uk -> "Ukrainian"
     Jp -> "Japanese"
