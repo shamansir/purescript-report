@@ -53,7 +53,7 @@ renderItemTabularValues =
     S.i_tabular >>> renderTabular
 
 
-tabularStyle = "display: block; margin: 0 0 0 50px; color: royalblue; font-size: 0.8em;" :: String
+tabularStyle = "display: block; margin: 0 0 0 25px; color: royalblue; font-size: 0.8em;" :: String
 nestStyle = "border-left: 2px solid color-mix(in srgb, royalblue 20%, transparent); padding-left: 5px;" :: String
 innerTabularStyle = "border-left: 2px solid color-mix(in srgb, darkgreen 20%, transparent); padding-left: 5px; margin: 10px 0;" :: String
 

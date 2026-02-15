@@ -12,6 +12,7 @@ import Test.OrgDodo as OrgDodo
 import Test.ReportImpl as ReportImpl
 import Test.Report as Report
 import Test.Groups as Groups
+import Test.ParseTree as ParseTree
 
 
 main :: Effect Unit
@@ -21,3 +22,4 @@ main = runSpecAndExitProcess [consoleReporter] do
     Report.spec
     ReportImpl.spec
     Groups.spec
+    ParseTree.spec
