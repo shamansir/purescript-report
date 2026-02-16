@@ -2,28 +2,20 @@ module Test.ParseTree where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
-import Data.Map (Map)
-import Data.Map as Map
 import Data.Array as Array
 import Data.String as String
-import Data.Foldable (foldl)
-import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.String.CodePoints as CP
-import Data.String.CodeUnits as CU
-import Data.CodePoint.Unicode as CPU
 
 import Test.Spec (Spec, it, itOnly, describe, pending')
 import Test.Spec.Assertions (shouldEqual, shouldSatisfy, fail)
-import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (runSpec)
 
-import Report (Report)
-import Report as Report
-import Report.Class
+-- import Report (Report)
+-- import Report as Report
+import Report.Class (class HasStats, class IsGroup)
 import Report.GroupPath as GP
 import Report.Modifiers.Stats as ST
+
+import Report.Convert.TreeCommand.Import (parseTree) as RI
 
 newtype SampleGroup = SG (Array String)
 
@@ -39,55 +31,6 @@ instance IsGroup SampleGroup where
 instance HasStats SampleGroup where
     i_stats _ = ST.SYetUnknown -- Not used
 
-
-
-type ParseState group =
-    { theMap :: Map group (Array String)
-    , lastSameLevelPath :: Array String
-    }
-
-
-initState :: forall group. ParseState group
-initState =
-    { theMap : Map.empty
-    , lastSameLevelPath : [ ]
-    }
-
-
-parseTree :: forall group. Ord group => (Array String -> group) -> String -> String /\ Array (group /\ Array String)
-parseTree toGroup sourceStr =
-    let
-        splitLines = sourceStr # String.split (String.Pattern "\n") # Array.filter (not <<< String.null)
-        mbRootDir = Array.take 1 splitLines # Array.head
-    in
-        case mbRootDir of
-            Just rootDir ->
-                rootDir /\
-                parseLines (Array.drop 1 splitLines)
-            Nothing ->
-                "" /\
-                []
-
-    where
-        parseLines :: Array String -> Array (group /\ Array String)
-        parseLines = foldl foldF initState >>> _.theMap >>> Map.toUnfoldable
-        foldF :: ParseState group -> String -> ParseState group
-        foldF { theMap, lastSameLevelPath } line =
-            let
-                checkCP cp = not (CPU.isAlphaNum cp || (CP.singleton cp == "_")) || CPU.isSpace cp
-                name = String.dropWhile checkCP line
-                depth = (String.length line - String.length name) `div` 4
-                curLocation = Array.take (depth - 1) lastSameLevelPath
-                nextSameLevelPath =
-                    if (depth == 0) then [ name ]
-                    else if (depth > Array.length curLocation) then Array.snoc curLocation name
-                    else curLocation
-                group = toGroup $ if curLocation == [] then [ "." ] else curLocation
-                newMap = Map.insertWith ((<>)) group (Array.singleton name) theMap
-            in
-                { theMap : newMap
-                , lastSameLevelPath : nextSameLevelPath
-                }
 
 
 isSampleDirectory :: String -> Boolean
@@ -252,9 +195,9 @@ treeSourceE = """/Users/shamansir/.config/nvim
     ├── lspconfig.lua
     └── shamansir
         ├── core
-        │   ├── init.lua
-        │   ├── keymaps.lua
-        │   └── options.lua
+        │   ├── init.lua
+        │   ├── keymaps.lua
+        │   └── options.lua
         ├── lazy.lua
         └── plugins
             ├── _oil.lua
@@ -284,89 +227,89 @@ treeSourceE = """/Users/shamansir/.config/nvim
 
 treeSourceF = """./src
 ├── Report
-│   ├── Builder.purs
-│   ├── Chain.purs
-│   ├── Class.purs
-│   ├── Convert
-│   │   ├── Dhall
-│   │   │   ├── Export.purs
-│   │   │   └── Import.purs
-│   │   ├── Dhall.purs
-│   │   ├── Generic.purs
-│   │   ├── Json.purs
-│   │   ├── Keyed.purs
-│   │   ├── Org
-│   │   │   ├── Export.purs
-│   │   │   └── Import.purs
-│   │   ├── Org.purs
-│   │   ├── Text
-│   │   │   ├── Modifiers
-│   │   │   │   ├── Priority.purs
-│   │   │   │   ├── Progress.purs
-│   │   │   │   ├── Rating.purs
-│   │   │   │   ├── Stats.purs
-│   │   │   │   ├── Tags.purs
-│   │   │   │   └── Task.purs
-│   │   │   ├── Prefix.purs
-│   │   │   └── Suffix.purs
-│   │   └── Types.purs
-│   ├── Core
-│   │   └── Logic.purs
-│   ├── Core.purs
-│   ├── Group.purs
-│   ├── GroupPath.purs
-│   ├── Impl
-│   │   ├── Group.purs
-│   │   ├── Item.purs
-│   │   ├── Subject.purs
-│   │   └── Tag.purs
-│   ├── Modifiers
-│   │   ├── Class
-│   │   │   └── ValueModify.purs
-│   │   ├── Priority.purs
-│   │   ├── Progress.purs
-│   │   ├── Q
-│   │   │   ├── Prefix.purs
-│   │   │   ├── Suffix.purs
-│   │   │   └── Tabular.purs
-│   │   ├── Rating.purs
-│   │   ├── Stats
-│   │   │   └── Collect.purs
-│   │   ├── Stats.purs
-│   │   ├── Tabular
-│   │   │   ├── ExtField.purs
-│   │   │   └── TabularValue.purs
-│   │   ├── Tags.purs
-│   │   └── Task.purs
-│   ├── Modifiers.purs
-│   ├── Modify.purs
-│   ├── Prefix.purs
-│   ├── Suffix.purs
-│   ├── Tabular.purs
-│   ├── Types.purs
-│   └── Web
-│       ├── Component.purs
-│       ├── GroupPath.purs
-│       ├── Helpers.purs
-│       ├── Modifiers
-│       │   ├── Progress.purs
-│       │   ├── Stats.purs
-│       │   ├── Tags
-│       │   │   └── Colors.purs
-│       │   ├── Tags.purs
-│       │   └── Task.purs
-│       ├── Modifiers.purs
-│       ├── Navigation.purs
-│       ├── Prefix.purs
-│       ├── Suffix.purs
-│       └── Tabular.purs
+│   ├── Builder.purs
+│   ├── Chain.purs
+│   ├── Class.purs
+│   ├── Convert
+│   │   ├── Dhall
+│   │   │   ├── Export.purs
+│   │   │   └── Import.purs
+│   │   ├── Dhall.purs
+│   │   ├── Generic.purs
+│   │   ├── Json.purs
+│   │   ├── Keyed.purs
+│   │   ├── Org
+│   │   │   ├── Export.purs
+│   │   │   └── Import.purs
+│   │   ├── Org.purs
+│   │   ├── Text
+│   │   │   ├── Modifiers
+│   │   │   │   ├── Priority.purs
+│   │   │   │   ├── Progress.purs
+│   │   │   │   ├── Rating.purs
+│   │   │   │   ├── Stats.purs
+│   │   │   │   ├── Tags.purs
+│   │   │   │   └── Task.purs
+│   │   │   ├── Prefix.purs
+│   │   │   └── Suffix.purs
+│   │   └── Types.purs
+│   ├── Core
+│   │   └── Logic.purs
+│   ├── Core.purs
+│   ├── Group.purs
+│   ├── GroupPath.purs
+│   ├── Impl
+│   │   ├── Group.purs
+│   │   ├── Item.purs
+│   │   ├── Subject.purs
+│   │   └── Tag.purs
+│   ├── Modifiers
+│   │   ├── Class
+│   │   │   └── ValueModify.purs
+│   │   ├── Priority.purs
+│   │   ├── Progress.purs
+│   │   ├── Q
+│   │   │   ├── Prefix.purs
+│   │   │   ├── Suffix.purs
+│   │   │   └── Tabular.purs
+│   │   ├── Rating.purs
+│   │   ├── Stats
+│   │   │   └── Collect.purs
+│   │   ├── Stats.purs
+│   │   ├── Tabular
+│   │   │   ├── ExtField.purs
+│   │   │   └── TabularValue.purs
+│   │   ├── Tags.purs
+│   │   └── Task.purs
+│   ├── Modifiers.purs
+│   ├── Modify.purs
+│   ├── Prefix.purs
+│   ├── Suffix.purs
+│   ├── Tabular.purs
+│   ├── Types.purs
+│   └── Web
+│       ├── Component.purs
+│       ├── GroupPath.purs
+│       ├── Helpers.purs
+│       ├── Modifiers
+│       │   ├── Progress.purs
+│       │   ├── Stats.purs
+│       │   ├── Tags
+│       │   │   └── Colors.purs
+│       │   ├── Tags.purs
+│       │   └── Task.purs
+│       ├── Modifiers.purs
+│       ├── Navigation.purs
+│       ├── Prefix.purs
+│       ├── Suffix.purs
+│       └── Tabular.purs
 ├── Report.purs
 └── Utils
     ├── Data
-    │   ├── Array
-    │   │   └── Extra.purs
-    │   └── Map
-    │       └── Extra.purs
+    │   ├── Array
+    │   │   └── Extra.purs
+    │   └── Map
+    │       └── Extra.purs
     └── Report
         ├── Grouping.purs
         ├── Pages.purs
@@ -516,11 +459,11 @@ sampleResultF' =
 
 
 parseAndFilter :: (String -> Boolean) -> String -> Array (String /\ Array (SampleGroup /\ Array String))
-parseAndFilter filterF = parseTree SG >>> map (map $ map $ Array.filter filterF) >>> pure
+parseAndFilter filterF = RI.parseTree SG >>> map (map $ map $ Array.filter filterF) >>> pure
 
 
 justParse :: String -> Array (String /\ Array (SampleGroup /\ Array String))
-justParse = parseTree SG >>> pure
+justParse = RI.parseTree SG >>> pure
 
 
 spec :: Spec Unit
