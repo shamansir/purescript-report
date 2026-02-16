@@ -2,8 +2,6 @@ module Test.ParseTree where
 
 import Prelude
 
-import Debug as Debug
-
 import Data.Maybe (Maybe(..))
 import Data.Map (Map)
 import Data.Map as Map
@@ -13,6 +11,7 @@ import Data.Foldable (foldl)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.String.CodePoints as CP
+import Data.String.CodeUnits as CU
 import Data.CodePoint.Unicode as CPU
 
 import Test.Spec (Spec, it, itOnly, describe, pending')
@@ -44,16 +43,14 @@ instance HasStats SampleGroup where
 
 type ParseState group =
     { theMap :: Map group (Array String)
-    , location :: Array String
-    , lastDepth :: Int
+    , lastSameLevelPath :: Array String
     }
 
 
 initState :: forall group. ParseState group
 initState =
     { theMap : Map.empty
-    , location : [ ]
-    , lastDepth : 0
+    , lastSameLevelPath : [ ]
     }
 
 
@@ -75,37 +72,30 @@ parseTree toGroup sourceStr =
         parseLines :: Array String -> Array (group /\ Array String)
         parseLines = foldl foldF initState >>> _.theMap >>> Map.toUnfoldable
         foldF :: ParseState group -> String -> ParseState group
-        foldF { theMap, location, lastDepth } line =
+        foldF { theMap, lastSameLevelPath } line =
             let
-                -- _ = Debug.spy "line" line
-                _ = Debug.spy "____" "____"
-                checkCP cp = not (CPU.isAlphaNum cp) || CPU.isSpace cp
-                name = Debug.spy "name" $ String.dropWhile checkCP line
-                _ = Debug.spy "lastDepth" lastDepth
-                depth = Debug.spy "depth" $ ((String.length line - String.length name) `div` 4)
-                prevLocation = Debug.spy "prevLocation" $ location
-                curLocation = Debug.spy "curLocation" $ Array.take (depth - 1) location
-                nextLocation = Debug.spy "nextLocation" $
+                checkCP cp = not (CPU.isAlphaNum cp || (CP.singleton cp == "_")) || CPU.isSpace cp
+                name = String.dropWhile checkCP line
+                depth = (String.length line - String.length name) `div` 4
+                curLocation = Array.take (depth - 1) lastSameLevelPath
+                nextSameLevelPath =
                     if (depth == 0) then [ name ]
                     else if (depth > Array.length curLocation) then Array.snoc curLocation name
                     else curLocation
-                    -- else prevLocation
-                -- nextLocation = Debug.spy "nextLocation" $
-                --     if (lastDepth == 0) then [ name ]
-                --     else if (depth /= lastDepth) then Array.snoc curLocation name
-                --     else if (depth <  lastDepth) then curLocation
-                --     else prevLocation
                 group = toGroup $ if curLocation == [] then [ "." ] else curLocation
                 newMap = Map.insertWith ((<>)) group (Array.singleton name) theMap
             in
                 { theMap : newMap
-                , location : nextLocation
-                , lastDepth : depth
+                , lastSameLevelPath : nextSameLevelPath
                 }
 
 
-filterDirectories :: Array String -> Array String
-filterDirectories = Array.filter \s -> (s # String.drop (String.length s - 2) # String.take 1) /= "d"
+isSampleDirectory :: String -> Boolean
+isSampleDirectory s = (s # String.drop (String.length s - 2) # String.take 1) /= "d"
+
+
+isPursFile :: String -> Boolean
+isPursFile s = (s # String.drop (String.length s - 5)) == ".purs"
 
 
 treeSourceA = """/Some/Directory/
@@ -253,6 +243,136 @@ treeSourceD = """/Some/Directory/
 """ :: String
 
 
+treeSourceE = """/Users/shamansir/.config/nvim
+├── init.lua
+├── lazy-lock.json
+├── lazyvim.json
+└── lua
+    ├── current-theme.lua
+    ├── lspconfig.lua
+    └── shamansir
+        ├── core
+        │   ├── init.lua
+        │   ├── keymaps.lua
+        │   └── options.lua
+        ├── lazy.lua
+        └── plugins
+            ├── _oil.lua
+            ├── _wilder.lua
+            ├── colorscheme.lua
+            ├── lualine.lua
+            ├── mason.lua
+            ├── mini.lua
+            ├── neo-tree.lua
+            ├── neominimap.lua
+            ├── nui.lua
+            ├── nvim-cmp.lua
+            ├── orgmode.lua
+            ├── purescript.lua
+            ├── showkeys.lua
+            ├── snacks.lua
+            ├── strudel.lua
+            ├── telescope.lua
+            ├── todo-comments.lua
+            ├── treesitter.lua
+            ├── trouble.lua
+            ├── undotree.lua
+            ├── whichkey.lua
+            └── whitespace.lua
+""" :: String
+
+
+treeSourceF = """./src
+├── Report
+│   ├── Builder.purs
+│   ├── Chain.purs
+│   ├── Class.purs
+│   ├── Convert
+│   │   ├── Dhall
+│   │   │   ├── Export.purs
+│   │   │   └── Import.purs
+│   │   ├── Dhall.purs
+│   │   ├── Generic.purs
+│   │   ├── Json.purs
+│   │   ├── Keyed.purs
+│   │   ├── Org
+│   │   │   ├── Export.purs
+│   │   │   └── Import.purs
+│   │   ├── Org.purs
+│   │   ├── Text
+│   │   │   ├── Modifiers
+│   │   │   │   ├── Priority.purs
+│   │   │   │   ├── Progress.purs
+│   │   │   │   ├── Rating.purs
+│   │   │   │   ├── Stats.purs
+│   │   │   │   ├── Tags.purs
+│   │   │   │   └── Task.purs
+│   │   │   ├── Prefix.purs
+│   │   │   └── Suffix.purs
+│   │   └── Types.purs
+│   ├── Core
+│   │   └── Logic.purs
+│   ├── Core.purs
+│   ├── Group.purs
+│   ├── GroupPath.purs
+│   ├── Impl
+│   │   ├── Group.purs
+│   │   ├── Item.purs
+│   │   ├── Subject.purs
+│   │   └── Tag.purs
+│   ├── Modifiers
+│   │   ├── Class
+│   │   │   └── ValueModify.purs
+│   │   ├── Priority.purs
+│   │   ├── Progress.purs
+│   │   ├── Q
+│   │   │   ├── Prefix.purs
+│   │   │   ├── Suffix.purs
+│   │   │   └── Tabular.purs
+│   │   ├── Rating.purs
+│   │   ├── Stats
+│   │   │   └── Collect.purs
+│   │   ├── Stats.purs
+│   │   ├── Tabular
+│   │   │   ├── ExtField.purs
+│   │   │   └── TabularValue.purs
+│   │   ├── Tags.purs
+│   │   └── Task.purs
+│   ├── Modifiers.purs
+│   ├── Modify.purs
+│   ├── Prefix.purs
+│   ├── Suffix.purs
+│   ├── Tabular.purs
+│   ├── Types.purs
+│   └── Web
+│       ├── Component.purs
+│       ├── GroupPath.purs
+│       ├── Helpers.purs
+│       ├── Modifiers
+│       │   ├── Progress.purs
+│       │   ├── Stats.purs
+│       │   ├── Tags
+│       │   │   └── Colors.purs
+│       │   ├── Tags.purs
+│       │   └── Task.purs
+│       ├── Modifiers.purs
+│       ├── Navigation.purs
+│       ├── Prefix.purs
+│       ├── Suffix.purs
+│       └── Tabular.purs
+├── Report.purs
+└── Utils
+    ├── Data
+    │   ├── Array
+    │   │   └── Extra.purs
+    │   └── Map
+    │       └── Extra.purs
+    └── Report
+        ├── Grouping.purs
+        ├── Pages.purs
+        └── Pagination.purs""" :: String
+
+
 sampleResultA :: Array (String /\ Array (SampleGroup /\ Array String))
 sampleResultA =
     [ "/Some/Directory/" /\
@@ -325,18 +445,98 @@ sampleResultD =
     ]
 
 
-makeSample :: String -> Array (String /\ Array (SampleGroup /\ Array String))
-makeSample = parseTree SG >>> map (map $ map filterDirectories) >>> pure
+sampleResultE :: Array (String /\ Array (SampleGroup /\ Array String))
+sampleResultE =
+    [  "/Users/shamansir/.config/nvim" /\
+        [ SG [ "." ] /\ [ "init.lua", "lazy-lock.json", "lazyvim.json", "lua" ]
+        , SG [ "lua" ] /\ [ "current-theme.lua", "lspconfig.lua", "shamansir" ]
+        , SG [ "lua", "shamansir" ] /\ [ "core", "lazy.lua", "plugins" ]
+        , SG [ "lua", "shamansir", "core" ] /\ [ "init.lua", "keymaps.lua", "options.lua" ]
+        , SG [ "lua", "shamansir", "plugins" ] /\ [ "_oil.lua", "_wilder.lua", "colorscheme.lua", "lualine.lua", "mason.lua", "mini.lua", "neo-tree.lua", "neominimap.lua", "nui.lua", "nvim-cmp.lua", "orgmode.lua", "purescript.lua", "showkeys.lua", "snacks.lua", "strudel.lua", "telescope.lua", "todo-comments.lua", "treesitter.lua", "trouble.lua", "undotree.lua", "whichkey.lua", "whitespace.lua" ]
+        ]
+    ]
+
+
+sampleResultF :: Array (String /\ Array (SampleGroup /\ Array String))
+sampleResultF =
+    [  "./src" /\
+        [ SG [ "." ] /\ [ "Report", "Report.purs", "Utils" ]
+        , SG [ "Report" ] /\ [ "Builder.purs", "Chain.purs", "Class.purs", "Convert", "Core", "Core.purs", "Group.purs", "GroupPath.purs", "Impl", "Modifiers", "Modifiers.purs", "Modify.purs", "Prefix.purs", "Suffix.purs", "Tabular.purs", "Types.purs", "Web" ]
+        , SG [ "Report", "Convert" ] /\ [ "Dhall", "Dhall.purs", "Generic.purs", "Json.purs", "Keyed.purs", "Org", "Org.purs", "Text", "Types.purs" ]
+        , SG [ "Report", "Convert", "Dhall" ] /\ [ "Export.purs", "Import.purs" ]
+        , SG [ "Report", "Convert", "Org" ] /\ [ "Export.purs", "Import.purs" ]
+        , SG [ "Report", "Convert", "Text" ] /\ [ "Modifiers", "Prefix.purs", "Suffix.purs" ]
+        , SG [ "Report", "Convert", "Text", "Modifiers" ] /\ [ "Priority.purs", "Progress.purs", "Rating.purs", "Stats.purs", "Tags.purs", "Task.purs" ]
+        , SG [ "Report", "Core" ] /\ [ "Logic.purs" ]
+        , SG [ "Report", "Impl" ] /\ [ "Group.purs", "Item.purs", "Subject.purs", "Tag.purs" ]
+        , SG [ "Report", "Modifiers" ] /\ [ "Class", "Priority.purs", "Progress.purs", "Q", "Rating.purs", "Stats", "Stats.purs", "Tabular", "Tags.purs", "Task.purs" ]
+        , SG [ "Report", "Modifiers", "Class" ] /\ [ "ValueModify.purs" ]
+        , SG [ "Report", "Modifiers", "Q" ] /\ [ "Prefix.purs", "Suffix.purs", "Tabular.purs" ]
+        , SG [ "Report", "Modifiers", "Stats" ] /\ [ "Collect.purs" ]
+        , SG [ "Report", "Modifiers", "Tabular" ] /\ [ "ExtField.purs", "TabularValue.purs" ]
+        , SG [ "Report", "Web" ] /\ [ "Component.purs", "GroupPath.purs", "Helpers.purs", "Modifiers", "Modifiers.purs", "Navigation.purs", "Prefix.purs", "Suffix.purs", "Tabular.purs" ]
+        , SG [ "Report", "Web", "Modifiers" ] /\ [ "Progress.purs", "Stats.purs", "Tags", "Tags.purs", "Task.purs" ]
+        , SG [ "Report", "Web", "Modifiers", "Tags" ] /\ [ "Colors.purs" ]
+        , SG [ "Utils" ] /\ [ "Data", "Report" ]
+        , SG [ "Utils", "Data" ] /\ [ "Array", "Map" ]
+        , SG [ "Utils", "Data", "Array" ] /\ [ "Extra.purs" ]
+        , SG [ "Utils", "Data", "Map" ] /\ [ "Extra.purs" ]
+        , SG [ "Utils", "Report" ] /\ [ "Grouping.purs", "Pages.purs", "Pagination.purs" ]
+        ]
+    ]
+
+
+sampleResultF' :: Array (String /\ Array (SampleGroup /\ Array String))
+sampleResultF' =
+    [  "./src" /\
+        [ SG [ "." ] /\ [ "Report.purs" ]
+        , SG [ "Report" ] /\ [ "Builder.purs", "Chain.purs", "Class.purs", "Core.purs", "Group.purs", "GroupPath.purs", "Modifiers.purs", "Modify.purs", "Prefix.purs", "Suffix.purs", "Tabular.purs", "Types.purs" ]
+        , SG [ "Report", "Convert" ] /\ [ "Dhall.purs", "Generic.purs", "Json.purs", "Keyed.purs", "Org.purs", "Types.purs" ]
+        , SG [ "Report", "Convert", "Dhall" ] /\ [ "Export.purs", "Import.purs" ]
+        , SG [ "Report", "Convert", "Org" ] /\ [ "Export.purs", "Import.purs" ]
+        , SG [ "Report", "Convert", "Text" ] /\ [ "Prefix.purs", "Suffix.purs" ]
+        , SG [ "Report", "Convert", "Text", "Modifiers" ] /\ [ "Priority.purs", "Progress.purs", "Rating.purs", "Stats.purs", "Tags.purs", "Task.purs" ]
+        , SG [ "Report", "Core" ] /\ [ "Logic.purs" ]
+        , SG [ "Report", "Impl" ] /\ [ "Group.purs", "Item.purs", "Subject.purs", "Tag.purs" ]
+        , SG [ "Report", "Modifiers" ] /\ [ "Priority.purs", "Progress.purs", "Rating.purs", "Stats.purs", "Tags.purs", "Task.purs" ]
+        , SG [ "Report", "Modifiers", "Class" ] /\ [ "ValueModify.purs" ]
+        , SG [ "Report", "Modifiers", "Q" ] /\ [ "Prefix.purs", "Suffix.purs", "Tabular.purs" ]
+        , SG [ "Report", "Modifiers", "Stats" ] /\ [ "Collect.purs" ]
+        , SG [ "Report", "Modifiers", "Tabular" ] /\ [ "ExtField.purs", "TabularValue.purs" ]
+        , SG [ "Report", "Web" ] /\ [ "Component.purs", "GroupPath.purs", "Helpers.purs", "Modifiers.purs", "Navigation.purs", "Prefix.purs", "Suffix.purs", "Tabular.purs" ]
+        , SG [ "Report", "Web", "Modifiers" ] /\ [ "Progress.purs", "Stats.purs", "Tags.purs", "Task.purs" ]
+        , SG [ "Report", "Web", "Modifiers", "Tags" ] /\ [ "Colors.purs" ]
+        , SG [ "Utils" ] /\ [ ]
+        , SG [ "Utils", "Data" ] /\ [ ]
+        , SG [ "Utils", "Data", "Array" ] /\ [ "Extra.purs" ]
+        , SG [ "Utils", "Data", "Map" ] /\ [ "Extra.purs" ]
+        , SG [ "Utils", "Report" ] /\ [ "Grouping.purs", "Pages.purs", "Pagination.purs" ]
+        ]
+    ]
+
+
+parseAndFilter :: (String -> Boolean) -> String -> Array (String /\ Array (SampleGroup /\ Array String))
+parseAndFilter filterF = parseTree SG >>> map (map $ map $ Array.filter filterF) >>> pure
+
+
+justParse :: String -> Array (String /\ Array (SampleGroup /\ Array String))
+justParse = parseTree SG >>> pure
 
 
 spec :: Spec Unit
 spec = do
   describe "parsing tree" $ do
     it "parses tree properly: A" $
-        makeSample treeSourceA `shouldEqual` sampleResultA
+        parseAndFilter isSampleDirectory treeSourceA `shouldEqual` sampleResultA
     it "parses tree properly: B" $
-        makeSample treeSourceB `shouldEqual` sampleResultB
+        parseAndFilter isSampleDirectory treeSourceB `shouldEqual` sampleResultB
     it "parses tree properly: C" $
-       makeSample treeSourceC `shouldEqual` sampleResultC
+       parseAndFilter isSampleDirectory treeSourceC `shouldEqual` sampleResultC
     it "parses tree properly: D" $
-       makeSample treeSourceD `shouldEqual` sampleResultD
+       parseAndFilter isSampleDirectory treeSourceD `shouldEqual` sampleResultD
+    it "parses tree properly: E" $
+       justParse treeSourceE `shouldEqual` sampleResultE
+    it "parses tree properly: F" $
+       justParse treeSourceF `shouldEqual` sampleResultF
+    it "parses tree properly: F'" $
+       parseAndFilter isPursFile treeSourceF `shouldEqual` sampleResultF'
