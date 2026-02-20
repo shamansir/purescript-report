@@ -1,4 +1,4 @@
-module Report.Joined where
+module Report.Decorator where
 
 import Prelude
 
@@ -7,10 +7,10 @@ import Foreign (Foreign, F)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Set as Set
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Array (catMaybes) as Array
+import Data.Array (catMaybes, elemIndex) as Array
 import Data.String (Pattern(..), stripPrefix) as String
 
 import Report.Prefix (Prefix)
@@ -19,7 +19,7 @@ import Report.Suffix (Suffix)
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
 import Report.Modifiers (Modifiers) as R
-import Report.Modifiers.Progress (Progress, PValueTag(..)) as P
+import Report.Modifiers.Progress as P
 import Report.Modifiers.Priority (Priority)
 import Report.Modifiers.Rating (Rating)
 import Report.Modifiers.Task (TaskP)
@@ -30,7 +30,7 @@ import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
 
 
 
-data AnyOf t
+data Decorator t
     = PRating Rating
     | PPriority Priority
     | PTask TaskP
@@ -42,15 +42,14 @@ data AnyOf t
 
 
 
--- derive instance Eq (AnyOf t)
--- instance Ord t => Ord (AnyOf t) where
+-- derive instance Eq (Decorator t)
+-- instance Ord t => Ord (Decorator t) where
 --     compare a b = CK.keyOf @Key a `compare` CK.keyOf @Key b
 
 derive instance Eq Key
-derive instance Ord Key
 
--- instance Ord Key where
---     compare a b = orderIndex a `compare` orderIndex b
+instance Ord Key where
+    compare a b = orderOf a `compare` orderOf b
 
 
 data Key
@@ -64,7 +63,7 @@ data Key
     | KTags
 
 
-instance CK.Keyed Key (AnyOf a) where
+instance CK.Keyed Key (Decorator t) where
     keyOf = case _ of
         PRating _ -> KRating
         PPriority _ -> KPriority
@@ -77,48 +76,48 @@ instance CK.Keyed Key (AnyOf a) where
 
 
 
-newtype TheModifiers t = TheModifiers (Map Key (AnyOf t))
-derive instance Newtype (TheModifiers t) _
+newtype Decorators t = Decorators (Map Key (Decorator t)) -- other names: `Adornments`, `Markers`, `Attributes, `Modifiers`
+derive instance Newtype (Decorators t) _
 
 
-instance ReadForeign (TheModifiers String)
+instance ReadForeign (Decorators String)
     where
         readImpl frgn = do
-            recArr <- (readImpl frgn :: F (Array { key :: String, value :: AnyOf String }))
+            recArr <- (readImpl frgn :: F (Array { key :: String, value :: Decorator String }))
             let tupleArr = recArr <#> (\{ key, value } -> decodeKey key <#> \k -> k /\ value)
             pure $ fromArray $ Array.catMaybes tupleArr
-instance WriteForeign (TheModifiers String)
+instance WriteForeign (Decorators String)
     where
         writeImpl modifiers =
             let recArr = toArray modifiers <#> \(k /\ v) -> { key: encodeKey k, value: v }
             in  writeImpl recArr
 
 
-empty :: forall tag. TheModifiers tag
+empty :: forall tag. Decorators tag
 empty = wrap Map.empty
 
 
-size :: forall tag. TheModifiers tag -> Int
+size :: forall tag. Decorators tag -> Int
 size = unwrap >>> Map.size
 
 
-get :: forall tag. Key -> TheModifiers tag -> Maybe (AnyOf tag)
+get :: forall tag. Key -> Decorators tag -> Maybe (Decorator tag)
 get key = unwrap >>> Map.lookup key
 
 
-keys :: forall tag. TheModifiers tag -> Array Key
+keys :: forall tag. Decorators tag -> Array Key
 keys = unwrap >>> Map.keys >>> Set.toUnfoldable
 
 
-put :: forall tag. AnyOf tag -> TheModifiers tag -> TheModifiers tag
+put :: forall tag. Decorator tag -> Decorators tag -> Decorators tag
 put modifier = unwrap >>> Map.insert (CK.keyOf modifier) modifier >>> wrap
 
 
-toArray :: forall tag. TheModifiers tag -> Array (Key /\ AnyOf tag)
+toArray :: forall tag. Decorators tag -> Array (Key /\ Decorator tag)
 toArray = unwrap >>> Map.toUnfoldable
 
 
-fromArray :: forall tag. Ord Key => Array (Key /\ AnyOf tag) -> TheModifiers tag
+fromArray :: forall tag. Ord Key => Array (Key /\ Decorator tag) -> Decorators tag
 fromArray = wrap <<< Map.fromFoldable
 
 
@@ -150,7 +149,7 @@ decodeKey str =
             _      -> Nothing
 
 
-decodeWithKey :: forall tag. ReadForeign tag => Key -> Foreign -> F (AnyOf tag)
+decodeWithKey :: forall tag. ReadForeign tag => Key -> Foreign -> F (Decorator tag)
 decodeWithKey key f = case key of
     KRating   -> PRating   <$> readImpl f
     KPriority -> PPriority <$> readImpl f
@@ -171,25 +170,93 @@ instance CK.EncodableKey Key where
     decodeKey = decodeKey
 
 
-instance CK.DecodeKeyed Key (AnyOf String) where
+instance CK.DecodeKeyed Key (Decorator String) where
     toValue = decodeWithKey
 
 
-instance ReadForeign (AnyOf String) where
+instance ReadForeign (Decorator String) where
     readImpl frgn = CK.decodeKeyed @Key =<< (readImpl frgn :: F CK.JsonTM)
 
 
-instance WriteForeign (AnyOf String) where
+instance WriteForeign (Decorator String) where
     writeImpl anyOf = writeImpl $ CK.encodeKeyed @Key anyOf
 
 
-orderIndex :: Key -> Int
-orderIndex = case _ of
+isPrefix :: Key -> Boolean
+isPrefix = case _ of
+    KRating -> true
+    KPriority -> true
+    KTask -> true
+    _ -> false
+
+
+
+isSuffix :: Key -> Boolean
+isSuffix = case _ of
+    KProgress _ -> true
+    KEarnedAt -> true
+    KDescription -> true
+    KReference -> true
+    KTags -> true
+    _ -> false
+
+
+prefixesInOrder :: Array Key
+prefixesInOrder = [ KRating, KPriority, KTask ]
+
+
+suffixesInOrder :: Array Key
+suffixesInOrder = (P.inlineProgress <#> KProgress) <> [ KEarnedAt, KDescription, KReference, KTags ] <> (P.leveledProgress <#> KProgress)
+
+
+orderOf :: Key -> Int
+orderOf = case _ of
     KRating -> -3
     KPriority -> -2
     KTask -> -1
-    KProgress _ -> 0
-    KEarnedAt -> 1
-    KDescription -> 2
-    KReference -> 3
-    KTags -> 4
+    KProgress (P.PValueTag pvt) ->
+        case pvt of
+            "I" -> 0
+            "N" -> 1
+            "T" -> 2
+            "D" -> 3
+            "PCTI" -> 4
+            "PCT" -> 5
+            "PCTX" -> 6
+            "PI" -> 7
+            "PD" -> 8
+            "TIME" -> 9
+            "DATE" -> 10
+            "PERI" -> 11
+            "PERD" -> 12
+            "MESI" -> 13
+            "MESD" -> 14
+            "MESX" -> 15
+            "RNGI" -> 16
+            "RNGD" -> 17
+            "PROC" -> 18
+            "RELT" -> 19
+            "X" -> 20
+
+            "LVLI" -> levelShift + 0
+            "LVLD" -> levelShift + 1
+            "LVLO" -> levelShift + 2
+            "LVLS" -> levelShift + 3
+            "LVLP" -> levelShift + 4
+            "LVLC" -> levelShift + 5
+            "LVLE" -> levelShift + 6
+
+            _ -> 1001
+
+    KEarnedAt -> 21
+    KDescription -> 22
+    KReference -> 23
+    KTags -> 24
+    where
+        levelShift = 25
+
+
+
+allKeys :: Array Key
+allKeys =
+    suffixesInOrder <> suffixesInOrder

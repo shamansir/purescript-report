@@ -211,7 +211,7 @@ newtype PValueTag = PValueTag String
 type ProgressJsonRec = { t :: PValueTag, v :: Foreign }
 newtype ProgressJson = ProgressJson ProgressJsonRec
 derive newtype instance Eq PValueTag
-derive newtype instance Ord PValueTag
+-- derive newtype instance Ord PValueTag
 derive newtype instance Show PValueTag
 derive newtype instance ReadForeign PValueTag
 derive newtype instance WriteForeign PValueTag
@@ -404,6 +404,88 @@ valueTagOf = case _ of
     LevelsE _ -> PValueTag "LVLE"
     RelTime _ _ -> PValueTag "RELT"
     Error _ -> PValueTag "X"
+
+
+orderOf :: PValueTag -> Int
+orderOf (PValueTag pvt) = case pvt of
+    "I" -> 0
+    "N" -> 1
+    "T" -> 2
+    "D" -> 3
+    "PCTI" -> 4
+    "PCT" -> 5
+    "PCTX" -> 6
+    "PI" -> 7
+    "PD" -> 8
+    "TIME" -> 9
+    "DATE" -> 10
+    "PERI" -> 11
+    "PERD" -> 12
+    "MESI" -> 13
+    "MESD" -> 14
+    "MESX" -> 15
+    "RNGI" -> 16
+    "RNGD" -> 17
+    "PROC" -> 18
+    "LVLI" -> 19
+    "LVLD" -> 20
+    "LVLO" -> 21
+    "LVLS" -> 22
+    "LVLP" -> 23
+    "LVLC" -> 24
+    "LVLE" -> 25
+    "RELT" -> 26
+    "X" -> 27
+    _ -> 1000
+
+
+inlineProgress :: Array PValueTag
+inlineProgress =
+    [ PValueTag "E"
+    , PValueTag "UNK"
+    , PValueTag "I"
+    , PValueTag "N"
+    , PValueTag "T"
+    , PValueTag "D"
+    , PValueTag "PCTI"
+    , PValueTag "PCT"
+    , PValueTag "PCTX"
+    , PValueTag "PI"
+    , PValueTag "PD"
+    , PValueTag "TIME"
+    , PValueTag "DATE"
+    , PValueTag "PERI"
+    , PValueTag "PERD"
+    , PValueTag "MESI"
+    , PValueTag "MESD"
+    , PValueTag "MESX"
+    , PValueTag "RNGI"
+    , PValueTag "RNGD"
+    , PValueTag "PROC"
+    , PValueTag "RELT"
+    , PValueTag "X"
+    ]
+
+
+leveledProgress :: Array PValueTag
+leveledProgress =
+    [ PValueTag "LVLI"
+    , PValueTag "LVLD"
+    , PValueTag "LVLO"
+    , PValueTag "LVLS"
+    , PValueTag "LVLP"
+    , PValueTag "LVLC"
+    , PValueTag "LVLE"
+    ]
+
+
+allValueTags :: Array PValueTag
+allValueTags =
+    inlineProgress <> leveledProgress
+
+
+allValueTagsCount :: Int
+allValueTagsCount = Array.length allValueTags
 
 
 unwrapValueTag :: PValueTag -> String

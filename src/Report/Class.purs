@@ -11,17 +11,11 @@ import Report.Modifiers.Tabular.TabularValue (TabularValue)
 import Report.Modifiers.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 import Report.Chain (Chain(..))
+import Report.Decorator (Decorators)
 
 
-class HasPrefixes a where
-    i_prefixes :: a -> Prefixes
-
-
-class HasSuffixes t a where
-    i_suffixes :: a -> Suffixes t
-
-
-class (HasPrefixes a, HasSuffixes t a) <= HasModifiers t a
+class HasDecorators t a where
+    i_decorators :: a -> Decorators t
 
 
 class HasTabular a where
@@ -67,7 +61,7 @@ type TagColors =
 
 
 class IsGroup g <= IsGroupable g t where
-    t_group :: t -> Maybe (Chain g) -- TODO `Maybe (Chain g)`?
+    t_group :: t -> Maybe (Chain g)
 
 
 -- used for tags, so when we sort items by a tag, we can find the "same kind" tag on each item, i.e. rating or platform

@@ -3,6 +3,7 @@ module Report.Web.Prefix where
 import Prelude
 
 import Data.Maybe (Maybe(..))
+import Data.Array as Array
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -11,8 +12,9 @@ import Halogen.HTML.Events as HE
 import Report.Core (SDate(..), toLeadingZero) as CT
 import Report.Core.Logic (EncodedValue(..)) as CT
 import Report.Class as S
-import Report.Prefix as Prefixes
-import Report.Prefix (Key(..), Prefix(..)) as Prefix
+-- import Report.Prefix as Prefixes
+-- import Report.Prefix (Key(..), Prefix(..)) as Prefix
+import Report.Decorator as Decorators
 import Report.Modifiers.Rating (toNumber, maxValue, relValue, toStars, toString) as Rating
 import Report.Modifiers.Priority (priorityChar) as Priority
 import Report.Modifiers.Task (taskPToString) as Task
@@ -23,14 +25,14 @@ import Report.Web.Modifiers (PrefixesRenderConfig, PrefixRenderConfig)
 
 renderPrefixes
     :: forall item w i
-     . S.HasPrefixes item
+     . S.HasDecorators item
     => PrefixesRenderConfig i
     -> item
     -> Array (H w i)
 renderPrefixes conf item =
     let
-        i_prefixes = S.i_prefixes item
-        prefixesKeys = Prefixes.keys i_prefixes
+        i_decorators = S.i_decorators item
+        prefixesKeys = Decorators.keys i_decorators >>> Array.filter Decorators.isPrefix >>> Array.sortBy Decorators.orderOf -- FIXME: should be already sorted
         isSelected prefixKey =
             case conf.mbSelectedPrefix of
                 Just selectedKey -> selectedKey == prefixKey
@@ -43,7 +45,7 @@ renderPrefixes conf item =
                             , isEditingPrefix : conf.isEditingPrefix key
                             , onClick : conf.onClick key
                             , onEdit : conf.onEdit key
-                            , parentPrefixes : i_prefixes
+                            , parentPrefixes : i_decorators
                             , onStartEditing : conf.onStartEditing
                             , onCancelEditing : conf.onCancelEditing
                             , noop : conf.noop
@@ -56,7 +58,7 @@ renderPrefix
     -> H w i
 renderPrefix conf =
     let
-        currentPrefix = Prefixes.get conf.key conf.parentPrefixes
+        currentPrefix = Decorators.get conf.key conf.parentPrefixes -- FIXME: we could just filter key / value pairs out of map
         selectedStyle = "background-color: #fffdd0ff; border-radius: 5px;"
         usualStyle = "background-color: transparent;"
         smallerFont inside = HH.span [ HP.style "font-size: 0.6em;" ] $ pure inside

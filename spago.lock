@@ -10,6 +10,7 @@
             "dotlang",
             "effect",
             "either",
+            "exists",
             "halogen",
             "maybe",
             "newtype",
