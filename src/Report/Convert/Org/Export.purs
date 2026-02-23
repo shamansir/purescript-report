@@ -30,18 +30,18 @@ import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 
-import Report.Modifiers.Progress (Progress(..), PValueTag(..), Relation(..))
-import Report.Modifiers.Task (TaskP(..))
-import Report.Modifiers.Tags (Tags)
+import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
+import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Tags (Tags)
 import Report.Prefix (Key(..), Prefix(..)) as P
 import Report.Suffix (Key(..), Suffix(..)) as S
-import Report.Modifiers.Progress (Progress(..)) as P
+import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
-import Report.Modifiers.Rating as Rating
-import Report.Modifiers.Priority as Priority
-import Report.Modifiers.Task as Task
-import Report.Modifiers.Tabular.TabularValue as TV
+import Report.Decorators.Rating as Rating
+import Report.Decorators.Priority as Priority
+import Report.Decorators.Task as Task
+import Report.Decorators.Tabular.TabularValue as TV
 
 import Report.Convert.Dhall.Export as DH
 

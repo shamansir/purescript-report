@@ -8,9 +8,9 @@ import Report.Class
 import Report.Chain (Chain)
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
-import Report.Modifiers.Stats (Stats)
-import Report.Modifiers.Stats (Stats(..)) as Stats
-import Report.Modifiers.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Stats (Stats)
+import Report.Decorators.Stats (Stats(..)) as Stats
+import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)

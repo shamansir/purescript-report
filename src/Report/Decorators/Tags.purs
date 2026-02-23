@@ -1,4 +1,4 @@
-module Report.Modifiers.Tags where
+module Report.Decorators.Tags where
 
 import Prelude
 

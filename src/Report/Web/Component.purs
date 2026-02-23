@@ -36,11 +36,11 @@ import Report.Convert.Text.Prefix (encodePrefix) as Prefix
 import Report.Convert.Text.Suffix (encodeSuffix) as Suffix
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep) as GP
-import Report.Modifiers (size) as Modifiers
-import Report.Modifiers.Tags (TagAction(..))
-import Report.Modifiers.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
-import Report.Modifiers.Class.ValueModify as VModify
-import Report.Modifiers.Stats.Collect as Collect
+import Report.Decorators (size) as Modifiers
+import Report.Decorators.Tags (TagAction(..))
+import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
+import Report.Decorators.Class.ValueModify as VModify
+import Report.Decorators.Stats.Collect as Collect
 import Report.Modify (Location(..))
 import Report.Modify as Modify
 import Report.Prefix (get, put, debugNavLabel) as Prefix

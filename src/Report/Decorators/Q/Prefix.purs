@@ -1,13 +1,13 @@
-module Report.Modifiers.Q.Prefix where
+module Report.Decorators.Q.Prefix where
 
 import Prelude
 
 import Report.Core as CT
-import Report.Modifiers.Task (TaskP(..)) as T
-import Report.Modifiers.Tags (Tags(..))
-import Report.Modifiers.Rating (Rating)
-import Report.Modifiers.Rating (from) as Rating
-import Report.Modifiers.Priority (Priority(..))
+import Report.Decorators.Task (TaskP(..)) as T
+import Report.Decorators.Tags (Tags(..))
+import Report.Decorators.Rating (Rating)
+import Report.Decorators.Rating (from) as Rating
+import Report.Decorators.Priority (Priority(..))
 import Report.GroupPath (GroupPath)
 import Report.Prefix (Prefix(..), Key(..))
 

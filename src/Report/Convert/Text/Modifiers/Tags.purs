@@ -10,7 +10,7 @@ import Data.Newtype (unwrap)
 import Report.Core.Logic as CT
 import Report.Chain as MbW
 import Report.Class (class IsTag, tagContent, decodeTag)
-import Report.Modifiers.Tags (Tags(..))
+import Report.Decorators.Tags (Tags(..))
 
 
 encodeTags :: forall t. IsTag t => Tags t -> CT.EncodedValue

@@ -1,4 +1,4 @@
-module Report.Modifiers.Stats where
+module Report.Decorators.Stats where
 
 import Prelude
 
@@ -11,8 +11,8 @@ import Data.Array (length) as Array
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
-import Report.Modifiers.Task (TaskP(..))
-import Report.Modifiers.Progress (Progress(..))
+import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Progress (Progress(..))
 
 {- Stats -}
 

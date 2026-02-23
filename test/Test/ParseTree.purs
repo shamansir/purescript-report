@@ -13,7 +13,7 @@ import Test.Spec.Assertions (shouldEqual, shouldSatisfy, fail)
 -- import Report as Report
 import Report.Class (class HasStats, class IsGroup)
 import Report.GroupPath as GP
-import Report.Modifiers.Stats as ST
+import Report.Decorators.Stats as ST
 
 import Report.Convert.TreeCommand.Import (parseTree) as RI
 

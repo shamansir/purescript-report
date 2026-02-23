@@ -1,16 +1,16 @@
-module Report.Web.Modifiers.Stats where
+module Report.Web.Decorators.Stats where
 
 import Prelude
 
 import Data.Int (toNumber) as Int
 
-import Report.Modifiers.Stats (Stats, GotTotal(..), gotTotalFromStats) as S
+import Report.Decorators.Stats (Stats, GotTotal(..), gotTotalFromStats) as S
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 
 import Report.Web.Helpers
-import Report.Web.Modifiers.Progress (percentage')
+import Report.Web.Decorators.Progress (percentage')
 
 
 renderGroupStats :: forall w i. S.Stats -> H w i

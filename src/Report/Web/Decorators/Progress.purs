@@ -1,4 +1,4 @@
-module Report.Web.Modifiers.Progress where
+module Report.Web.Decorators.Progress where
 
 import Prelude
 
@@ -15,8 +15,8 @@ import Web.UIEvent.KeyboardEvent as KE
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Suffix (Key) as Suffix
-import Report.Modifiers.Task (TaskP(..)) as S
-import Report.Modifiers.Progress (Progress(..), Relation(..)) as Prog
+import Report.Decorators.Task (TaskP(..)) as S
+import Report.Decorators.Progress (Progress(..), Relation(..)) as Prog
 import Report.Convert.Keyed
 
 import Halogen.HTML as HH
@@ -24,8 +24,8 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
 import Report.Web.Helpers
-import Report.Web.Modifiers (ProgressRenderConfig)
-import Report.Web.Modifiers.Task (qtaskCheckbox, taskTextColor)
+import Report.Web.Decorators.Types (ProgressRenderConfig)
+import Report.Web.Decorators.Task (qtaskCheckbox, taskTextColor)
 
 
 renderProgress :: forall w i. ProgressRenderConfig i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> H w i

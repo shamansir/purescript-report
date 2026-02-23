@@ -13,17 +13,13 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (catMaybes, elemIndex) as Array
 import Data.String (Pattern(..), stripPrefix) as String
 
-import Report.Prefix (Prefix)
-import Report.Suffix (Suffix)
-
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
-import Report.Modifiers (Modifiers) as R
-import Report.Modifiers.Progress as P
-import Report.Modifiers.Priority (Priority)
-import Report.Modifiers.Rating (Rating)
-import Report.Modifiers.Task (TaskP)
-import Report.Modifiers.Tags (Tags)
+import Report.Decorators.Progress as P
+import Report.Decorators.Priority (Priority)
+import Report.Decorators.Rating (Rating)
+import Report.Decorators.Task (TaskP)
+import Report.Decorators.Tags (Tags)
 import Report.Convert.Keyed as CK
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)

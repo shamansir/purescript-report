@@ -16,7 +16,7 @@ import Data.CodePoint.Unicode as CPU
 -- import Report as Report
 -- import Report.Class
 -- import Report.GroupPath as GP
--- import Report.Modifiers.Stats as ST
+-- import Report.Decorators.Stats as ST
 
 
 type ParseState group =

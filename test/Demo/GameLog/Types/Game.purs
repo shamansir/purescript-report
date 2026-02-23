@@ -10,10 +10,10 @@ import Yoga.JSON (class WriteForeign, writeImpl)
 import Report.Class
 import Report.Core as CT
 import Report.Chain (Chain(..))
-import Report.Modifiers.Stats (Stats)
+import Report.Decorators.Stats (Stats)
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Tabular as Tabular
-import Report.Modifiers.Tabular.TabularValue as TV
+import Report.Decorators.Tabular.TabularValue as TV
 
 import GameLog.Types as GLT
 

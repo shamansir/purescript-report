@@ -11,11 +11,11 @@ import Data.Array (catMaybes) as Array
 
 import Report.Core as CT
 import Report.GroupPath (GroupPath) as GP
-import Report.Modifiers (Modifiers)
-import Report.Modifiers (empty, get, put, keys, toArray) as Mod
--- import Report.Modifiers.Class.ValueModify (decodeKey)
-import Report.Modifiers.Progress (Progress, PValueTag(..)) as P
-import Report.Modifiers.Tags (Tags)
+import Report.Decorators (Modifiers)
+import Report.Decorators (empty, get, put, keys, toArray) as Mod
+-- import Report.Decorators.Class.ValueModify (decodeKey)
+import Report.Decorators.Progress (Progress, PValueTag(..)) as P
+import Report.Decorators.Tags (Tags)
 import Report.Convert.Keyed as B
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, writeImpl, readImpl)

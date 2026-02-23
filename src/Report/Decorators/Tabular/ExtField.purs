@@ -1,4 +1,4 @@
-module Report.Modifiers.Tabular.ExtField where
+module Report.Decorators.Tabular.ExtField where
 
 import Data.Tuple.Nested (type (/\))
 

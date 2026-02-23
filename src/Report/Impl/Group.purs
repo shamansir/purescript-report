@@ -7,7 +7,7 @@ import Report.Group as Core
 
 import Data.Newtype (class Newtype, unwrap, wrap)
 
-import Report.Modifiers.Stats (Stats)
+import Report.Decorators.Stats (Stats)
 import Report.GroupPath (GroupPath, PathSegment)
 
 

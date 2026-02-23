@@ -40,7 +40,7 @@ import Report.Chain as C
 import Report.Builder as RB
 import Report.Class (class IsGroup, class HasStats, class HasTags, class IsGroupable, class IsSortable)
 import Report.GroupPath (pathFromArray) as GP
-import Report.Modifiers.Stats (Stats(..)) as ST
+import Report.Decorators.Stats (Stats(..)) as ST
 
 import Yoga.Tree.Extended.Convert (toString) as Tree
 import Yoga.Tree.Extended.Convert (Mode(..)) as Mode

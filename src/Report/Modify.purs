@@ -21,9 +21,9 @@ import Report.Chain as Chain
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith, encode) as GPath
-import Report.Modifiers.Stats (Stats)
-import Report.Modifiers.Class.ValueModify (fromEditable)
-import Report.Modifiers.Stats.Collect (collectStats, CollectWhat(..))
+import Report.Decorators.Stats (Stats)
+import Report.Decorators.Class.ValueModify (fromEditable)
+import Report.Decorators.Stats.Collect (collectStats, CollectWhat(..))
 import Report.Prefix (Key, put) as Prefix
 import Report.Prefix (Prefix, Prefixes)
 import Report.Suffix (Key, put) as Suffix

@@ -1,14 +1,18 @@
-module Report.Web.Modifiers where
+module Report.Web.Decorators.Types where
 
 import Data.Maybe (Maybe)
 
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 import Report.Core.Logic as CT
+import Report.Decorator (Key) as Decorator
+import Report.Decorator (Decorators)
+{-
 import Report.Prefix (Key) as Prefix
 import Report.Prefix (Prefixes)
 import Report.Suffix (Key) as Suffix
 import Report.Suffix (Suffixes)
+-}
 
 
 {-
@@ -29,7 +33,7 @@ type Events i =
     }
 
 
-type ModifiersEventConfig k i r =
+type DecoratorsEventConfig k i r =
     { onClick :: k -> MouseEvent -> i
     , onEdit :: k -> CT.EncodedValue -> i
     , onStartEditing :: MouseEvent -> i
@@ -39,7 +43,7 @@ type ModifiersEventConfig k i r =
     }
 
 
-type ModifierEventConfig i r =
+type DecoratorEventConfig i r =
     { onEdit :: CT.EncodedValue -> i
     , onClick :: MouseEvent -> i
     , onCancelEditing :: i
@@ -49,15 +53,16 @@ type ModifierEventConfig i r =
     }
 
 
+{-
 type PrefixesRenderConfig i =
-    ModifiersEventConfig Prefix.Key i
+    DecoratorsEventConfig Prefix.Key i
        ( mbSelectedPrefix :: Maybe Prefix.Key
        , isEditingPrefix :: Prefix.Key -> Maybe CT.EncodedValue
        )
 
 
 type PrefixRenderConfig i =
-    ModifierEventConfig i
+    DecoratorEventConfig i
        ( key :: Prefix.Key
        , isSelected :: Boolean
        , isEditingPrefix :: Maybe CT.EncodedValue
@@ -66,7 +71,7 @@ type PrefixRenderConfig i =
 
 
 type SuffixesRenderConfig i t =
-    ModifiersEventConfig Suffix.Key i
+    DecoratorsEventConfig Suffix.Key i
        ( mbSelectedSuffix :: Maybe Suffix.Key
        , isEditingSuffix :: Suffix.Key -> Maybe CT.EncodedValue
        , isEditingItemName :: Maybe CT.EncodedValue
@@ -76,7 +81,7 @@ type SuffixesRenderConfig i t =
 
 
 type SuffixRenderConfig i t =
-    ModifierEventConfig i
+    DecoratorEventConfig i
        ( key :: Suffix.Key
        , isSelected :: Boolean
        , isEditingSuffix :: Maybe CT.EncodedValue
@@ -87,9 +92,39 @@ type SuffixRenderConfig i t =
        , onTagClick :: t -> MouseEvent -> i
     --    , onTagMove :: t -> MouseEvent -> TagAction
        )
+-}
+
+
+type DecoratorsRenderConfig i t =
+    DecoratorsEventConfig Decorator.Key i
+       ( mbSelectedDecorator :: Maybe Decorator.Key
+       , isEditingDecorator :: Decorator.Key -> Maybe CT.EncodedValue
+       , isEditingItemName :: Maybe CT.EncodedValue
+       , onEditItemName :: CT.EncodedValue -> i
+       , onTagClick :: t -> MouseEvent -> i
+       )
+
+
+type DecoratorRenderConfig i t =
+    DecoratorEventConfig i
+       ( key :: Decorator.Key
+       , isSelected :: Boolean
+       , isEditingDecorator :: Maybe CT.EncodedValue
+       , isEditingItemName :: Maybe CT.EncodedValue
+       , onEditItemName :: CT.EncodedValue -> i
+       , allDecorators :: Decorators t
+       , parentItemName :: String
+       , onTagClick :: t -> MouseEvent -> i
+    --    , onTagMove :: t -> MouseEvent -> TagAction
+
+    --     key :: Prefix.Key
+    --    , isSelected :: Boolean
+    --    , isEditingPrefix :: Maybe CT.EncodedValue
+    --    , parentPrefixes :: Prefixes
+       )
 
 
 type ProgressRenderConfig i =
-    ModifierEventConfig i
+    DecoratorEventConfig i
        ( onEditItemName :: CT.EncodedValue -> i
        )

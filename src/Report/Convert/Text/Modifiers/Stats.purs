@@ -9,8 +9,8 @@ import Data.Bifunctor (lmap)
 import Data.String (split, Pattern(..)) as String
 
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Modifiers.Stats (Stats(..))
-import Report.Modifiers.Progress (PValueTag)
+import Report.Decorators.Stats (Stats(..))
+import Report.Decorators.Progress (PValueTag)
 import Report.Convert.Text.Modifiers.Progress (decodeProgress, encodeProgress)
 
 

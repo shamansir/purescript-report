@@ -13,8 +13,8 @@ import Report.Suffix (empty, getTags) as Suffix
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
 import Report.Modify
-import Report.Modifiers.Tags (toArray) as Tags
-import Report.Modifiers.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Tags (toArray) as Tags
+import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
 

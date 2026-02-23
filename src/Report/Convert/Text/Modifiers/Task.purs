@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Modifiers.Task (TaskP, taskPFromString, taskPToString)
+import Report.Decorators.Task (TaskP, taskPFromString, taskPToString)
 
 
 encodeTask :: TaskP -> CT.EncodedValue

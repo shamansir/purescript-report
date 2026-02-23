@@ -1,8 +1,8 @@
-module Report.Web.Modifiers.Task where
+module Report.Web.Decorators.Task where
 
 import Prelude
 
-import Report.Modifiers.Task (TaskP(..)) as S
+import Report.Decorators.Task (TaskP(..)) as S
 
 import Report.Web.Helpers
 

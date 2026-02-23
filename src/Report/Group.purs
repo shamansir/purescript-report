@@ -13,8 +13,8 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 
 import Report.Class
-import Report.Modifiers.Stats (Stats)
-import Report.Modifiers.Stats (Stats(..)) as Stats
+import Report.Decorators.Stats (Stats)
+import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.GroupPath as GP
 import Report.Modify (class GroupModify, class StatsModify)

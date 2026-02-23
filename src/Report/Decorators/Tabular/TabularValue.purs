@@ -1,4 +1,4 @@
-module Report.Modifiers.Tabular.TabularValue where
+module Report.Decorators.Tabular.TabularValue where
 
 import Prelude
 
@@ -13,9 +13,10 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl, readImpl)
 
 import Report.Core (Year, SDate, SDateRec, STimeRec)
-import Report.Prefix (Prefix)
-import Report.Suffix (Suffix(..))
-import Report.Modifiers.Progress (Progress) as P
+-- import Report.Prefix (Prefix)
+-- import Report.Suffix (Suffix(..))
+import Report.Decorator (Decorator(..))
+import Report.Decorators.Progress (Progress) as P
 import Report.Convert.Keyed as B
 import Report.Tabular (class ToTabularValue, Tabular)
 
@@ -36,8 +37,7 @@ data TabularAtomicValue
          { from :: { date :: SDate, time :: STimeRec }
          , to   :: { date :: SDate, time :: STimeRec }
          }
-    | TVPrefix Prefix
-    | TVSuffix (Suffix String)
+    | TVDecorator (Decorator String)
 
 
 data TabularValue
@@ -145,8 +145,7 @@ tagOfAtomic = TVTag <<< case _ of
     TVTimeRange _ -> "TR"
     TVDateRange _ -> "DR"
     TVDateTimeRange _ -> "DTR"
-    TVPrefix _ -> "PX"
-    TVSuffix _ -> "SX"
+    TVDecorator _ -> "DX"
 
 
 tagOf :: TabularValue -> TVTag
@@ -197,8 +196,7 @@ decodeAtomicWithKey key frgn = case key of
     TVTag "DTR" -> do
         rec <- readImpl frgn :: F { from :: { date :: SDate, time :: STimeRec }, to :: { date :: SDate, time :: STimeRec } }
         pure $ TVDateTimeRange { from: rec.from, to: rec.to }
-    TVTag "PX" -> TVPrefix <$> (readImpl frgn :: F Prefix)
-    TVTag "SX" -> TVSuffix <$> (readImpl frgn :: F (Suffix String))
+    TVTag "DX" -> TVDecorator <$> (readImpl frgn :: F (Decorator String))
     _          -> F.fail $ F.ForeignError "Unknown TabularAtomicValue tag"
 
 
@@ -226,22 +224,17 @@ instance WriteForeign TabularAtomicValue where
         TVTimeRange tr -> writeImpl tr
         TVDateRange dr -> writeImpl dr
         TVDateTimeRange dtr -> writeImpl dtr
-        TVPrefix pfx -> writeImpl pfx
-        TVSuffix sfx -> writeImpl sfx
+        TVDecorator decx -> writeImpl decx
         where
             tabularKey = B.encodeKey $ tagOfAtomic tabular
 
 
 progress :: P.Progress -> TabularValue
-progress = TVAtomic <<< TVSuffix <<< SProgress
+progress = TVAtomic <<< TVDecorator <<< SProgress
 
 
-suf :: Suffix String -> TabularValue
-suf = TVAtomic <<< TVSuffix
-
-
-pref :: Prefix -> TabularValue
-pref = TVAtomic <<< TVPrefix
+dec :: Decorator String -> TabularValue
+dec = TVAtomic <<< TVDecorator
 
 
 str :: String -> TabularValue

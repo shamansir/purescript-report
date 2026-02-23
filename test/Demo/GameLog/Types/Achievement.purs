@@ -14,10 +14,10 @@ import Report.Class
 import Report.Chain (Chain(..))
 import Report.Group (Group(..), mkGroup)
 import Report.GroupPath (GroupPath, PathSegment(..))
-import Report.Modifiers.Task (TaskP(..))
-import Report.Modifiers.Stats (Stats(..))
-import Report.Modifiers.Tags (Tags(..))
-import Report.Modifiers.Progress (Progress(..), NProgress(..), loadNProgress)
+import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Stats (Stats(..))
+import Report.Decorators.Tags (Tags(..))
+import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
 import Report.Modify
 import Report.Suffix (Suffix, Suffixes)
 import Report.Suffix as Suffixes

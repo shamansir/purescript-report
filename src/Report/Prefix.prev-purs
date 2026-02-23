@@ -7,11 +7,11 @@ import Foreign (Foreign, F)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 
-import Report.Modifiers (Modifiers)
-import Report.Modifiers (empty, get, put, keys, toArray) as Mod
-import Report.Modifiers.Priority (Priority)
-import Report.Modifiers.Rating (Rating)
-import Report.Modifiers.Task (TaskP)
+import Report.Decorators (Modifiers)
+import Report.Decorators (empty, get, put, keys, toArray) as Mod
+import Report.Decorators.Priority (Priority)
+import Report.Decorators.Rating (Rating)
+import Report.Decorators.Task (TaskP)
 import Report.Convert.Keyed
 
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)

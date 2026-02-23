@@ -1,4 +1,4 @@
-module Report.Modifiers.Progress where
+module Report.Decorators.Progress where
 
 import Prelude
 
@@ -16,7 +16,7 @@ import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Convert.Keyed
-import Report.Modifiers.Task (TaskP(..))
+import Report.Decorators.Task (TaskP(..))
 
 type DateRec = CT.SDateRec
 type TimeRec = CT.STimeRec

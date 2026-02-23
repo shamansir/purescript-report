@@ -14,8 +14,8 @@ import Report.Core (SDate(..), toLeadingZero) as CT
 import Report.Class as S
 import Report.Tabular (Tabular)
 import Report.Tabular as Tabular
-import Report.Modifiers (empty) as Modifiers
-import Report.Modifiers.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
+import Report.Decorators (empty) as Modifiers
+import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
 
 import Report.Web.Helpers
 import Report.Web.Prefix

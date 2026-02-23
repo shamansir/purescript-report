@@ -1,4 +1,4 @@
-module Report.Web.Modifiers.Tags.Colors where
+module Report.Web.Decorators.Tags.Colors where
 
 import Report.Class (TagColors)
 

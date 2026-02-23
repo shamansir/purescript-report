@@ -7,8 +7,8 @@ import Data.Maybe (Maybe(..))
 import Report.Suffix (Suffixes)
 import Report.Prefix (Prefixes)
 import Report.Tabular (Tabular)
-import Report.Modifiers.Tabular.TabularValue (TabularValue)
-import Report.Modifiers.Stats (Stats) as S
+import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 import Report.Chain (Chain(..))
 import Report.Decorator (Decorators)

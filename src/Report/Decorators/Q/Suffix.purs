@@ -1,11 +1,11 @@
-module Report.Modifiers.Q.Suffix where
+module Report.Decorators.Q.Suffix where
 
 import Prelude
 
 import Report.Core as CT
-import Report.Modifiers.Task (TaskP(..)) as T
-import Report.Modifiers.Progress as P
-import Report.Modifiers.Tags (Tags(..))
+import Report.Decorators.Task (TaskP(..)) as T
+import Report.Decorators.Progress as P
+import Report.Decorators.Tags (Tags(..))
 import Report.GroupPath (GroupPath)
 import Report.Suffix (Suffix(..))
 

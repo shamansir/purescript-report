@@ -10,7 +10,7 @@ import Data.Foldable (foldl)
 import Data.List (toUnfoldable) as List
 
 import Report.Group (Group)
-import Report.Modifiers.Stats (Stats)
+import Report.Decorators.Stats (Stats)
 
 import GameLog.Types.Achievement (Achievement, collectStatsRaw)
 

@@ -9,8 +9,8 @@ import Data.String (split, Pattern(..)) as String
 import Data.Tuple.Nested ((/\), type (/\))
 import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt, toLeadingZero) as CT
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Modifiers.Progress (PValueTag(..), Progress(..), Relation(..), unwrapValueTag, valueTagOf, encodeRel, decodeRel)
-import Report.Modifiers.Task (taskPFromString, taskPToString)
+import Report.Decorators.Progress (PValueTag(..), Progress(..), Relation(..), unwrapValueTag, valueTagOf, encodeRel, decodeRel)
+import Report.Decorators.Task (taskPFromString, taskPToString)
 
 
 encodeValueTag :: PValueTag -> String

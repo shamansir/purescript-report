@@ -1,4 +1,4 @@
-module Report.Web.Modifiers.Tags where
+module Report.Web.Decorators.Tags where
 
 import Prelude
 
@@ -13,7 +13,7 @@ import Web.UIEvent.MouseEvent (MouseEvent)
 
 import Report.Chain (Chain(..)) as S
 import Report.Class (class IsTag, TagColors, tagColors, tagContent) as S
-import Report.Modifiers.Tags (TagAction)
+import Report.Decorators.Tags (TagAction)
 import Report.Web.Helpers (H)
 
 

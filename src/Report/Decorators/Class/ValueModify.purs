@@ -1,4 +1,4 @@
-module Report.Modifiers.Class.ValueModify where
+module Report.Decorators.Class.ValueModify where
 
 import Prelude
 
@@ -10,11 +10,11 @@ import Report.Core.Logic (EncodedValue)
 import Report.Class (class IsTag)
 
 import Report.Convert.Keyed (keyOf)
-import Report.Modifiers.Progress (PValueTag, Progress, valueTagOf)
-import Report.Modifiers.Progress (PValueTag(..)) as P
-import Report.Modifiers.Stats (Stats)
-import Report.Modifiers.Task (TaskP)
-import Report.Modifiers.Tags (Tags)
+import Report.Decorators.Progress (PValueTag, Progress, valueTagOf)
+import Report.Decorators.Progress (PValueTag(..)) as P
+import Report.Decorators.Stats (Stats)
+import Report.Decorators.Task (TaskP)
+import Report.Decorators.Tags (Tags)
 import Report.Convert.Text.Modifiers.Progress as PEnc
 import Report.Convert.Text.Modifiers.Task as TEnc
 import Report.Convert.Text.Modifiers.Stats as SEnc

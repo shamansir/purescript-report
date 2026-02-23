@@ -1,4 +1,4 @@
-module Report.Modifiers.Priority where
+module Report.Decorators.Priority where
 
 import Prelude
 

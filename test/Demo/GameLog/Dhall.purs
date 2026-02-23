@@ -21,13 +21,13 @@ import Foreign (Foreign, F, fail, ForeignError(..), renderForeignError)
 
 
 -- import Input.CV.Key (w)
-import Report.Modifiers.Task (TaskP(..))
-import Report.Modifiers.Stats (Stats(..))
-import Report.Modifiers.Progress (DateRec, PValueTag(..), Progress(..), ProgressJson(..))
-import Report.Modifiers.Progress (fromJson, _readProgress, rawToProgressJson) as Progress
+import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Stats (Stats(..))
+import Report.Decorators.Progress (DateRec, PValueTag(..), Progress(..), ProgressJson(..))
+import Report.Decorators.Progress (fromJson, _readProgress, rawToProgressJson) as Progress
 import Report.Tabular (Tabular)
 import Report.Tabular (findV, fromArray) as Tabular
-import Report.Modifiers.Tabular.TabularValue as TV
+import Report.Decorators.Tabular.TabularValue as TV
 import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Suffix (Suffix(..), Key(..)) as S

@@ -6,8 +6,8 @@ import Data.Maybe (Maybe)
 import Data.Number (fromString) as Number
 
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Modifiers.Rating (Rating)
-import Report.Modifiers.Rating (toString, fromString) as Rating
+import Report.Decorators.Rating (Rating)
+import Report.Decorators.Rating (toString, fromString) as Rating
 
 
 encodeRating :: Rating -> CT.EncodedValue

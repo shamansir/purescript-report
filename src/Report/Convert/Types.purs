@@ -13,10 +13,10 @@ import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
 import Report.Group (Group)
 import Report.Chain (Chain)
-import Report.Modifiers.Stats (Stats)
-import Report.Modifiers.Progress (DateRec)
+import Report.Decorators.Stats (Stats)
+import Report.Decorators.Progress (DateRec)
 import Report.Tabular (Tabular)
-import Report.Modifiers.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 
 data MKind

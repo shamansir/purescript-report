@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe)
 
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Modifiers.Priority (Priority, priorityChar, fromString)
+import Report.Decorators.Priority (Priority, priorityChar, fromString)
 
 
 encodePriority :: Priority -> CT.EncodedValue

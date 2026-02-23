@@ -1,4 +1,4 @@
-module Report.Modifiers.Stats.Collect where
+module Report.Decorators.Stats.Collect where
 
 import Prelude
 
@@ -7,8 +7,8 @@ import Data.Maybe (fromMaybe)
 import Data.Array (filter, length, head) as Array
 
 import Report.Class (class HasSuffixes, i_suffixes)
-import Report.Modifiers.Stats (Stats(..))
-import Report.Modifiers.Progress (Progress(..), NProgress(..), loadNProgress)
+import Report.Decorators.Stats (Stats(..))
+import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
 import Report.Suffix (collectProgress) as Suffix
 
 
