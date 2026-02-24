@@ -255,4 +255,63 @@ orderOf = case _ of
 
 allKeys :: Array Key
 allKeys =
-    suffixesInOrder <> suffixesInOrder
+    prefixesInOrder <> suffixesInOrder
+
+
+getProgress :: forall t. P.PValueTag -> Decorators t -> Maybe P.Progress
+getProgress pvtag sfx = get (KProgress pvtag) sfx >>= case _ of
+    SProgress p -> Just p
+    _ -> Nothing
+
+
+collectProgress :: forall t. Decorators t -> Array (Maybe P.PValueTag /\ P.Progress)
+collectProgress sfx =
+    toArray sfx
+        <#> (\(key /\ suffix) -> case key /\ suffix of
+                KProgress pvtag /\ SProgress p -> Just $ Just pvtag /\ p
+                _ /\ SProgress p -> Just $ Nothing /\ p
+                _ -> Nothing
+            )
+         # Array.catMaybes
+
+
+getEarnedAt :: forall t. Decorators t -> Maybe CT.SDate
+getEarnedAt sfx = get KEarnedAt sfx >>= case _ of
+    SEarnedAt d -> Just d
+    _ -> Nothing
+
+
+getDescription :: forall t. Decorators t -> Maybe String
+getDescription sfx = get KDescription sfx >>= case _ of
+    SDescription desc -> Just desc
+    _ -> Nothing
+
+
+getReference :: forall t. Decorators t -> Maybe GP.GroupPath
+getReference sfx = get KReference sfx >>= case _ of
+    SReference path -> Just path
+    _ -> Nothing
+
+
+getTags :: forall t. Decorators t -> Maybe (Tags t)
+getTags sfx = get KTags sfx >>= case _ of
+    STags tags -> Just tags
+    _ -> Nothing
+
+
+getRating :: forall t. Decorators t -> Maybe Rating
+getRating pfx = get KRating pfx >>= case _ of
+    PRating r -> Just r
+    _ -> Nothing
+
+
+getPriotity :: forall t. Decorators t -> Maybe Priority
+getPriotity pfx = get KPriority pfx >>= case _ of
+    PPriority p -> Just p
+    _ -> Nothing
+
+
+getTask :: forall t. Decorators t ->  Maybe TaskP
+getTask pfx = get KTask pfx >>= case _ of
+    PTask t -> Just t
+    _ -> Nothing

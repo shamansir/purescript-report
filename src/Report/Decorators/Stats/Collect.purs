@@ -6,10 +6,10 @@ import Data.Tuple (snd) as Tuple
 import Data.Maybe (fromMaybe)
 import Data.Array (filter, length, head) as Array
 
-import Report.Class (class HasSuffixes, i_suffixes)
+import Report.Class (class HasDecorators, i_decorators)
 import Report.Decorators.Stats (Stats(..))
 import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
-import Report.Suffix (collectProgress) as Suffix
+import Report.Decorator (collectProgress) as Decorator
 
 
 data CollectWhat
@@ -17,14 +17,14 @@ data CollectWhat
     | ItemsProgress -- from suffixes
 
 
-collectStats :: forall @tag item. HasSuffixes tag item => CollectWhat -> Array item -> Stats
+collectStats :: forall @tag item. HasDecorators tag item => CollectWhat -> Array item -> Stats
 collectStats what flattened =
     case what of
         ItemsProgress ->
             let
                 allProgressN = loadNProgress <$> getProgress <$> flattened
                 getProgress :: item -> Progress -- FIXME: we only take one progress per item, need to aggregate all tagged progresses
-                getProgress = fromMaybe None <<< map Tuple.snd <<< Array.head <<< Suffix.collectProgress <<< i_suffixes @tag
+                getProgress = fromMaybe None <<< map Tuple.snd <<< Array.head <<< Decorator.collectProgress <<< i_decorators @tag
                 nonValue = Array.filter (\i -> i /= Skip && i /= StatsValue) allProgressN
                 total = Array.length nonValue
                 got = Array.length $ Array.filter (_ == Achieved) nonValue

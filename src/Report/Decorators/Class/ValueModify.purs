@@ -10,21 +10,19 @@ import Report.Core.Logic (EncodedValue)
 import Report.Class (class IsTag)
 
 import Report.Convert.Keyed (keyOf)
+import Report.Decorator (Decorator)
+import Report.Decorator as Dec
 import Report.Decorators.Progress (PValueTag, Progress, valueTagOf)
 import Report.Decorators.Progress (PValueTag(..)) as P
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Task (TaskP)
 import Report.Decorators.Tags (Tags)
-import Report.Convert.Text.Modifiers.Progress as PEnc
-import Report.Convert.Text.Modifiers.Task as TEnc
-import Report.Convert.Text.Modifiers.Stats as SEnc
-import Report.Convert.Text.Modifiers.Tags as Tags
-import Report.Convert.Text.Prefix as PxEnc
-import Report.Convert.Text.Suffix as SxEnc
+import Report.Convert.Text.Decorators.Progress as PEnc
+import Report.Convert.Text.Decorators.Task as TEnc
+import Report.Convert.Text.Decorators.Stats as SEnc
+import Report.Convert.Text.Decorators.Tags as Tags
+import Report.Convert.Text.Decorator as DecEnc
 import Report.Convert.Keyed (class EncodableKey)
-
-import Report.Prefix as Px
-import Report.Suffix as Sx
 
 
 class {- Keyed k a <= -} ValueModify k a where
@@ -48,10 +46,6 @@ instance (IsTag t) => ValueModify Unit (Tags t) where
     toEditable   = Tags.encodeTags >>> pure
     fromEditable = const $ Just <<< Tags.decodeTags
 
-instance (IsTag t) => ValueModify Sx.Key (Sx.Suffix t) where
-    toEditable   = SxEnc.encodeSuffix
-    fromEditable = SxEnc.decodeSuffix
-
-instance ValueModify Px.Key Px.Prefix where
-    toEditable   = PxEnc.encodePrefix
-    fromEditable = PxEnc.decodePrefix
+instance (IsTag t) => ValueModify Dec.Key (Decorator t) where
+    toEditable   = DecEnc.encodeDecorator
+    fromEditable = DecEnc.decodeDecorator

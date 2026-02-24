@@ -14,7 +14,6 @@ import Web.UIEvent.KeyboardEvent as KE
 
 import Report.Core as CT
 import Report.Core.Logic as CT
-import Report.Suffix (Key) as Suffix
 import Report.Decorators.Task (TaskP(..)) as S
 import Report.Decorators.Progress (Progress(..), Relation(..)) as Prog
 import Report.Convert.Keyed

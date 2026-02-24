@@ -1,4 +1,4 @@
-module Report.Convert.Text.Modifiers.Rating where
+module Report.Convert.Text.Decorators.Rating where
 
 import Prelude
 

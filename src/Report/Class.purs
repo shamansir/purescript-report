@@ -4,14 +4,12 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 
-import Report.Suffix (Suffixes)
-import Report.Prefix (Prefixes)
 import Report.Tabular (Tabular)
+import Report.Decorator (Decorators)
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 import Report.Decorators.Stats (Stats) as S
 import Report.GroupPath (GroupPath) as S
 import Report.Chain (Chain(..))
-import Report.Decorator (Decorators)
 
 
 class HasDecorators t a where

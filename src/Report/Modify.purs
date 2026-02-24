@@ -24,10 +24,11 @@ import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith, en
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Class.ValueModify (fromEditable)
 import Report.Decorators.Stats.Collect (collectStats, CollectWhat(..))
-import Report.Prefix (Key, put) as Prefix
-import Report.Prefix (Prefix, Prefixes)
-import Report.Suffix (Key, put) as Suffix
-import Report.Suffix (Suffix, Suffixes)
+-- import Report.Prefix (Key, put) as Prefix
+-- import Report.Prefix (Prefix, Prefixes)
+-- import Report.Suffix (Key, put) as Suffix
+-- import Report.Suffix (Suffix, Suffixes)
+import Report.Decorator as Decorator
 
 
 data WhatMod

@@ -1,4 +1,4 @@
-module Report.Convert.Text.Modifiers.Task where
+module Report.Convert.Text.Decorators.Task where
 
 import Prelude
 
