@@ -2,15 +2,18 @@ module Report.Class where
 
 import Prelude
 
-import Data.Functor.Variant (default)
 import Data.Maybe (Maybe(..))
+import Data.String (split, Pattern(..)) as String
+import Data.Array.NonEmpty (fromArray) as NEA
+
 import Report.Chain (Chain(..))
+import Report.Chain (fromNEArray, toNEArray) as Chain
+import Report.GroupPath (GroupPath) as S
+import Report.Tabular (Tabular)
 import Report.Decorator (Decorators)
 import Report.Decorators.Stats (Stats) as S
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 import Report.Decorators.Tags (RawTag(..))
-import Report.GroupPath (GroupPath) as S
-import Report.Tabular (Tabular)
 
 
 class HasDecorators t a where
@@ -90,6 +93,10 @@ instance IsTag Unit where
 
 instance IsTag RawTag where
     tagColors _ = defaultTagColors
-    tagContent (RawTag rtag) = End rtag
-    decodeTag = RawTag >>> Just
+    tagContent (RawTag rtags) = Chain.fromNEArray rtags
+    decodeTag = String.split (String.Pattern "::") >>> NEA.fromArray >>> map RawTag
     allTags = []
+
+
+rawifyTag :: forall @t. IsTag t => t -> RawTag
+rawifyTag = tagContent >>> Chain.toNEArray >>> RawTag

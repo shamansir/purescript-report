@@ -6,7 +6,7 @@ module Report.Decorators.Q.Tabular
 
 import Prelude
 
-import Report.Decorators.Tabular.TabularValue (str, num, bool, time, date, timeRange, dateRange, suf, pref, progress) as TV
+import Report.Decorators.Tabular.TabularValue (str, num, bool, time, date, timeRange, dateRange, dec, progress) as TV
 
 
 time_rng = TV.timeRange

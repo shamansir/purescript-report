@@ -2,24 +2,23 @@ module Report.Convert.Generic where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
-import Data.Map (Map)
 import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
-import Data.Tuple (fst, snd, curry, uncurry) as Tuple
+import Data.Tuple (curry, uncurry) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (filter, elem) as Array
 
-import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
+import Yoga.JSON (writeImpl)
 
 import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
 import Report as Report
 import Report.Builder as ReportB
-import Report.Chain as MbW
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
-import Report.Decorator (Decorator, Key)
+import Report.Decorator (Decorator)
+import Report.Decorator (Key, mapTags) as Decorator
+import Report.Decorators.Tags (RawTag)
 import Report.Tabular as Tabular
 import Report.Convert.Types
 
@@ -30,6 +29,7 @@ class
     ( Ord group
     , Eq subj_id
     , IsTag subj_tag
+    , IsTag item_tag
     , IsItem item
     , IsGroup group
     , IsSubject subj_id subj
@@ -39,9 +39,6 @@ class
     , HasStats subj
     , HasStats group
     , EncodableKey subj_id
-    , WriteForeign item_tag
-    , ReadForeign item_tag
-    , WriteForeign subj_tag
     -- => WriteForeign subj_tag
     , ToReport subj group item x
     )
@@ -53,6 +50,7 @@ instance
     ( Ord group
     , Eq subj_id
     , IsTag subj_tag
+    , IsTag item_tag
     , IsItem item
     , IsGroup group
     , IsSubject subj_id subj
@@ -62,9 +60,6 @@ instance
     , HasStats subj
     , HasStats group
     , EncodableKey subj_id
-    , WriteForeign item_tag
-    , ReadForeign item_tag
-    , WriteForeign subj_tag
     -- => WriteForeign subj_tag
     , ToReport subj group item x
     )
@@ -105,7 +100,7 @@ toExport inclRule =
         collectSubject subj =
             { id : SubjectId $ encodeKey @subj_id $ s_id subj
             , name  : s_name  @subj_id subj
-            , tags  : i_tags  @subj_tag subj <#> tagContent <#> MbW.toString
+            , tags  : i_tags  @subj_tag subj <#> rawifyTag
             , stats : i_stats subj
             -- , trackedAt : Nothing -- TODO
             -- , properties : [] -- collectModifiers @subj_tag subj
@@ -122,28 +117,20 @@ toExport inclRule =
         collectItem :: item -> ItemRec
         collectItem item =
             { name : i_name item
-            , modifiers : collectModifiers @item_tag item
+            , decorators : collectDecorators @item_tag item
             , mbTitle : i_mbTitle item
             , locked  : i_locked  item
             }
-        collectPrefix :: Prefix.Key -> Prefix -> ModifierRec
-        collectPrefix pkey prefix =
-            { mkey  : encodeKey pkey
-            , mkind : P
-            , value : writeImpl prefix -- ValueModify.toEditable
+        collectDecorator :: Decorator.Key -> Decorator RawTag -> DecoratorRec
+        collectDecorator dkey decorator =
+            { mkey  : encodeKey dkey
+            , value : writeImpl decorator -- ValueModify.toEditable
             }
-        collectSuffix :: forall @t. WriteForeign t => Suffix.Key -> Suffix t -> ModifierRec
-        collectSuffix skey suffix =
-            { mkey  : encodeKey skey
-            , mkind : S
-            , value : writeImpl suffix -- ValueModify.toEditable
-            }
-        collectModifiers :: forall @t a. WriteForeign t => HasDecorators t a => a -> Array ModifierRec
-        -- collectModifiers a = []
-        -- collectModifiers a = Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)
-        collectModifiers a =
-            (Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)) <>
-            (Tuple.uncurry (collectSuffix @t) <$> (Map.toUnfoldable $ unwrap $ i_suffixes @t a))
+        collectDecorators :: forall @t a. IsTag t => HasDecorators t a => a -> Array DecoratorRec
+        collectDecorators a =
+            (Tuple.uncurry collectDecorator <$> map (rawifyDecorator @t) <$> (Map.toUnfoldable $ unwrap $ i_decorators @t a))
+        rawifyDecorator :: forall @t. IsTag t => Decorator t -> Decorator RawTag
+        rawifyDecorator = Decorator.mapTags (rawifyTag @t)
         subjectToExport :: SubjectRec -> Array (Group /\ Array ItemRec) -> SubjectWithGroups
         subjectToExport subjRec groups =
             SubjectWithGroups

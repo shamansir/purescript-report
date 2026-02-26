@@ -33,7 +33,7 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (Tags)
+import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
@@ -46,7 +46,6 @@ import Dodo as D
 toDhall
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToExport subj_id subj_tag item_tag subj group item x
-    => ReadForeign item_tag
     => IsTag item_tag
     => Report.IncludeRule subj_id
     -> Report subj group item
@@ -64,7 +63,7 @@ toDhall inclRule =
     where
         mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVSuffix (S.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
@@ -106,57 +105,50 @@ toDhall inclRule =
 
         convertItem :: ItemRec -> Doc Unit
         convertItem itemRec =
-            D.text "T.kv_" <> D.space <> quote itemRec.name <> (alignModifiers $ convertModifier <$> itemRec.modifiers)
+            D.text "T.kv_" <> D.space <> quote itemRec.name <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
 
 
-        convertModifier :: ModifierRec -> RenderedAs (Doc Unit)
-        convertModifier modRec =
-            case modRec.mkind of
-                P ->
-                    withImplRA @P.Prefix
-                        (case _ of
-                            P.PRating rating ->
-                                _ol $ D.text "p_rating " -- <> quote (modRec.value)
-                            P.PPriority priority ->
-                                _ol $ D.text "p_priority " -- <> quote (modRec.value)
-                            P.PTask task ->
-                                _ol $ D.text "p_task " -- <> quote (modRec.value)
-                        )
-                        modRec.value
-                S ->
-                    withImplRA @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
-                        (case _ of
-                            S.SProgress p ->
-                                _progressToDhall p
-                            S.SEarnedAt ea ->
-                                ea # sdaterec # prefixD "// T.inj/date" # _ol
-                            S.SDescription desc ->
-                                desc # quote # prefixD "// T.inj/det" # _ol
-                            S.SReference path ->
-                                unwrap path
-                                    # map (unwrap >>> quote)
-                                    # ilarrayD
-                                    # prefixD "// T.inj/self"
-                                    # _ol
-                            S.STags tags ->
-                                unwrap tags
-                                    # map (tagContent >>> MbW.toString >>> quote)
-                                    # ilarrayD
-                                    # prefixD "// T.inj/tags"
-                                    # _ol
-                        )
-                        modRec.value
+        convertDecorator :: DecoratorRec -> RenderedAs (Doc Unit)
+        convertDecorator decRec =
+            withImplRA @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+                (case _ of
+                    D.PRating rating ->
+                        _ol $ D.text "p_rating " -- <> quote (decRec.value)
+                    D.PPriority priority ->
+                        _ol $ D.text "p_priority " -- <> quote (decRec.value)
+                    D.PTask task ->
+                        _ol $ D.text "p_task " -- <> quote (decRec.value)
+                    D.SProgress p ->
+                        _progressToDhall p
+                    D.SEarnedAt ea ->
+                        ea # sdaterec # prefixD "// T.inj/date" # _ol
+                    D.SDescription desc ->
+                        desc # quote # prefixD "// T.inj/det" # _ol
+                    D.SReference path ->
+                        unwrap path
+                            # map (unwrap >>> quote)
+                            # ilarrayD
+                            # prefixD "// T.inj/self"
+                            # _ol
+                    D.STags tags ->
+                        unwrap tags
+                            # map (tagContent >>> MbW.toString >>> quote)
+                            # ilarrayD
+                            # prefixD "// T.inj/tags"
+                            # _ol
+                )
+                decRec.value
 
 
-        alignModifiers :: Array (RenderedAs (Doc Unit)) -> Doc Unit
-        alignModifiers renderedAs =
+        alignDecorators :: Array (RenderedAs (Doc Unit)) -> Doc Unit
+        alignDecorators renderedAs =
             case Array.uncons renderedAs of
                 Just { head, tail } ->
                     case head of
                         OneLine dhead ->
-                            D.space <> dhead <> alignModifiers tail
+                            D.space <> dhead <> alignDecorators tail
                         MutliLine dhead ->
-                            (fromnl $ D.indent $ joinWith D.break $ dhead) <> alignModifiers tail
+                            (fromnl $ D.indent $ joinWith D.break $ dhead) <> alignDecorators tail
                 Nothing ->
                     mempty
 

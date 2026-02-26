@@ -324,3 +324,20 @@ getTask :: forall t. Decorators t ->  Maybe TaskP
 getTask pfx = get KTask pfx >>= case _ of
     PTask t -> Just t
     _ -> Nothing
+
+
+mapTags :: forall t t'. (t -> t') -> Decorator t -> Decorator t'
+mapTags f = case _ of
+    STags tags -> STags $ f <$> tags
+    -- unsafeCoerce
+    PRating r -> PRating r
+    PPriority p -> PPriority p
+    PTask t -> PTask t
+    SProgress prog -> SProgress prog
+    SEarnedAt d -> SEarnedAt d
+    SDescription desc -> SDescription desc
+    SReference path -> SReference path
+
+
+allMapTags :: forall t u. (t -> u) -> Decorators t -> Decorators u
+allMapTags f = unwrap >>> map (mapTags f) >>> wrap
