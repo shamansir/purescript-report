@@ -26,8 +26,8 @@ import Report.Decorators.Tags (Tags(..))
 
 import Report.Web.Helpers
 import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfig)
-import Report.Web.Modifiers.Progress (renderProgress)
-import Report.Web.Modifiers.Tags (itemTagBadge)
+import Report.Web.Decorators.Progress (renderProgress)
+import Report.Web.Decorators.Tags (itemTagBadge)
 import Report.Web.GroupPath (renderGroupRef)
 
 

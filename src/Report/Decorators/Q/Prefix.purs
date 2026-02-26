@@ -9,50 +9,50 @@ import Report.Decorators.Rating (Rating)
 import Report.Decorators.Rating (from) as Rating
 import Report.Decorators.Priority (Priority(..))
 import Report.GroupPath (GroupPath)
-import Report.Prefix (Prefix(..), Key(..))
+import Report.Decorator (Decorator(..), Key(..))
 
 
-task_todo :: Prefix
+task_todo :: forall t. Decorator t
 task_todo = PTask T.TTodo
 
 
-task_done :: Prefix
+task_done :: forall t. Decorator t
 task_done = PTask T.TDone
 
 
-task_doing :: Prefix
+task_doing :: forall t. Decorator t
 task_doing = PTask T.TDoing
 
 
-task_wait :: Prefix
+task_wait :: forall t. Decorator t
 task_wait = PTask T.TWait
 
 
-task_canceled :: Prefix
+task_canceled :: forall t. Decorator t
 task_canceled = PTask T.TCanceled
 
 
-qrating :: { max :: Int, value :: Number } -> Prefix
+qrating :: forall t. { max :: Int, value :: Number } -> Decorator t
 qrating = PRating <<< Rating.from
 
 
-rating :: Rating -> Prefix
+rating :: forall t. Rating -> Decorator t
 rating = PRating
 
 
-priotity :: Priority -> Prefix
+priotity :: forall t. Priority -> Decorator t
 priotity = PPriority
 
 
-r0of5 :: Prefix
+r0of5 :: forall t. Decorator t
 r0of5 = qrating { max: 5, value: 0.0 }
-r1of5 :: Prefix
+r1of5 :: forall t. Decorator t
 r1of5 = qrating { max: 5, value: 1.0 }
-r2of5 :: Prefix
+r2of5 :: forall t. Decorator t
 r2of5 = qrating { max: 5, value: 2.0 }
-r3of5 :: Prefix
+r3of5 :: forall t. Decorator t
 r3of5 = qrating { max: 5, value: 3.0 }
-r4of5 :: Prefix
+r4of5 :: forall t. Decorator t
 r4of5 = qrating { max: 5, value: 4.0 }
-r5of5 :: Prefix
+r5of5 :: forall t. Decorator t
 r5of5 = qrating { max: 5, value: 5.0 }

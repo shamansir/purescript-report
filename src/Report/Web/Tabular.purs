@@ -14,12 +14,11 @@ import Report.Core (SDate(..), toLeadingZero) as CT
 import Report.Class as S
 import Report.Tabular (Tabular)
 import Report.Tabular as Tabular
-import Report.Decorators (empty) as Modifiers
+import Report.Decorator (empty) as Decorators
 import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
 
 import Report.Web.Helpers
-import Report.Web.Prefix
-import Report.Web.Suffix
+import Report.Web.Decorators
 
 import Report.Convert.Keyed (keyOf)
 
@@ -189,16 +188,19 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , qspacerSpan
                         , valueSpan (TVTime to.time)
                         ]
-                TVPrefix prefix ->
-                    renderPrefix
-                        { isEditingPrefix : Nothing
+                TVDecorator decorator ->
+                    renderDecorator
+                        { isEditingDecorator : Nothing
+                        , isEditingItemName : Nothing
                         , isSelected : false
-                        , key : keyOf prefix
+                        , key : keyOf decorator
                         , noop : unit
                         , onCancelEditing : unit
                         , onClick : const unit
                         , onEdit : const unit
                         , onStartEditing : const unit
-                        , parentPrefixes : Modifiers.empty
+                        , onEditItemName : const unit
+                        , onTagClick : const $ const unit
+                        , parentItemName : ""
+                        , allDecorators : Decorators.empty
                         }
-                TVSuffix suffix -> HH.text "" -- renderSuffix ?wh
