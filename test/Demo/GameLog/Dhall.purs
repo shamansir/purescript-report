@@ -30,7 +30,7 @@ import Report.Tabular (findV, fromArray) as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
-import Report.Suffix (Suffix(..), Key(..)) as S
+import Report.Decorator (Decorator(..), Key(..)) as D
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Convert.Dhall.Import (DhallItemRec)

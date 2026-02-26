@@ -19,10 +19,8 @@ import Report.Decorators.Stats (Stats(..))
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
 import Report.Modify
-import Report.Suffix (Suffix, Suffixes)
-import Report.Suffix as Suffixes
-import Report.Prefix (Prefixes)
-import Report.Prefix as Prefixes
+import Report.Decorator (Decorator, Decorators)
+import Report.Decorator as Decorators
 import Report.Tabular as Tabular
 
 import GameLog.Types as GLT
@@ -196,44 +194,41 @@ instance IsGroupable Group Tag where
     t_group (Tag tag) = Just $ End $ mkGroup (pure $ PathSegment tag) $ "#" <> tag
 
 
-loadSuffixes :: Achievement -> Suffixes Tag
-loadSuffixes = unwrap >>> \achRec ->
-    Suffixes.empty
-    # (Suffixes.put $ Suffixes.SProgress achRec.progress)
+loadDecorators :: Achievement -> Decorators Tag
+loadDecorators = unwrap >>> \achRec ->
+    Decorators.empty
+    # (Decorators.put $ Decorators.SProgress achRec.progress)
     # (case achRec.mbReference of
-        Just groupPath -> Suffixes.put $ Suffixes.SReference groupPath
+        Just groupPath -> Decorators.put $ Decorators.SReference groupPath
         Nothing -> identity
        )
     # (case achRec.mbEarnedAt of
-        Just dateEarned -> Suffixes.put $ Suffixes.SEarnedAt dateEarned
+        Just dateEarned -> Decorators.put $ Decorators.SEarnedAt dateEarned
         Nothing -> identity
        )
     # (case achRec.mbDescription of
-        Just descr -> Suffixes.put $ Suffixes.SDescription descr
+        Just descr -> Decorators.put $ Decorators.SDescription descr
         Nothing -> identity
        )
     # (case achRec.tags of
         []  -> identity
-        arr ->  Suffixes.put $ Suffixes.STags $ Tags $ Tag <$> arr
+        arr ->  Decorators.put $ Decorators.STags $ Tags $ Tag <$> arr
        )
 
 
-applySuffixes :: Suffixes Tag -> Achievement -> Achievement
-applySuffixes suffixes = with \achRec ->
-    Suffixes.toArray suffixes
+applyDecorators :: Decorators Tag -> Achievement -> Achievement
+applyDecorators suffixes = with \achRec ->
+    Decorators.toArray suffixes
         # foldl applySuffix achRec
     where
-        applySuffix :: AchievementRec -> (Suffixes.Key /\ Suffix Tag) -> AchievementRec
+        applySuffix :: AchievementRec -> (Decorators.Key /\ Decorator Tag) -> AchievementRec
         applySuffix acc (key /\ suffix) = case suffix of
-            Suffixes.SProgress prog -> acc { progress = prog }
-            Suffixes.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
-            Suffixes.SDescription descr -> acc { mbDescription = Just descr }
-            Suffixes.SReference gpath -> acc { mbReference = Just gpath }
-            Suffixes.STags (Tags tagsArr) -> acc { tags = unwrap <$> tagsArr }
-
-
-loadPrefixes :: Achievement -> Prefixes
-loadPrefixes = const Prefixes.empty
+            Decorators.SProgress prog -> acc { progress = prog }
+            Decorators.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
+            Decorators.SDescription descr -> acc { mbDescription = Just descr }
+            Decorators.SReference gpath -> acc { mbReference = Just gpath }
+            Decorators.STags (Tags tagsArr) -> acc { tags = unwrap <$> tagsArr }
+            _ -> acc
 
 
 instance IsItem Achievement where
@@ -243,12 +238,8 @@ instance IsItem Achievement where
     -- i_tags = unwrap >>> _.tags >>> map Tag
 
 
-instance HasPrefixes Achievement where
-    i_prefixes = loadPrefixes
-
-
-instance HasSuffixes Tag Achievement where
-    i_suffixes = loadSuffixes
+instance HasDecorators Tag Achievement where
+    i_decorators = loadDecorators
 
 
 instance HasTags Tag Achievement where
@@ -263,12 +254,8 @@ instance ItemModify Achievement where
     setItemName newName = with \achRec -> achRec { name = newName }
 
 
-instance SuffixesModify Tag Achievement where
-    updateSuffixes newSuffixes = applySuffixes newSuffixes
-
-
-instance PrefixesModify Achievement where
-    updatePrefixes _ = identity
+instance DecoratorsModify Tag Achievement where
+    updateDecorators = applyDecorators
 
 
 bindToAchievement :: Achievement -> Group -> Group
