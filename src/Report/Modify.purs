@@ -38,22 +38,16 @@ data What
     -- | AddGroup -- TODO
 
 
-data WhatModKey
-    = WKPrefix
-    | WKSuffix
-
-
 data WhatKey
     = WKGroupName
     -- | WKGroupStat -- TODO
     | WKItemName
-    | WKItemDecorator Decorator.Key
+    | WKItemDecorator
     -- | WKAddDecorator -- TODO
     -- | WKAddItem -- TODO
     -- | WKAddGroup -- TODO
 
 
-derive instance Eq WhatModKey
 derive instance Eq WhatKey
 
 
@@ -226,3 +220,9 @@ recalculate cfg =
                     OnlyDirect ->
                         updateGroup items group
                 /\ items
+
+
+-- loadDecoratorKey :: What -> Maybe Decorator.Key
+-- loadDecoratorKey = case _ of
+--     ItemDecorator _ deckey -> Just deckey
+--     _ -> Nothing

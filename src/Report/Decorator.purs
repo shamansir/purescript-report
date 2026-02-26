@@ -9,8 +9,9 @@ import Data.Map as Map
 import Data.Set as Set
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
+import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Array (catMaybes, elemIndex) as Array
+import Data.Array (catMaybes, elemIndex, filter) as Array
 import Data.String (Pattern(..), stripPrefix) as String
 
 import Report.Core as CT
@@ -115,6 +116,14 @@ toArray = unwrap >>> Map.toUnfoldable
 
 fromArray :: forall tag. Ord Key => Array (Key /\ Decorator tag) -> Decorators tag
 fromArray = wrap <<< Map.fromFoldable
+
+
+prefixes :: forall tag. Decorators tag -> Array (Key /\ Decorator tag)
+prefixes = unwrap >>> Map.toUnfoldable >>> Array.filter (isPrefix <<< Tuple.fst)
+
+
+suffixes :: forall tag. Decorators tag -> Array (Key /\ Decorator tag)
+suffixes = unwrap >>> Map.toUnfoldable >>> Array.filter (isSuffix <<< Tuple.fst)
 
 
 encodeKey :: Key -> String

@@ -32,19 +32,17 @@ import Report as R
 import Report.Builder as RB
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
-import Report.Convert.Text.Prefix (encodePrefix) as Prefix
-import Report.Convert.Text.Suffix (encodeSuffix) as Suffix
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep) as GP
-import Report.Decorators (size) as Modifiers
+import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
+import Report.Decorator (size) as Decorators
 import Report.Decorators.Tags (TagAction(..))
 import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Decorators.Class.ValueModify as VModify
 import Report.Decorators.Stats.Collect as Collect
 import Report.Modify (Location(..))
 import Report.Modify as Modify
-import Report.Prefix (get, put, debugNavLabel) as Prefix
-import Report.Suffix (get, put, debugNavLabel) as Suffix
+import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
 import Report.Convert.Generic (class ToExport, includeOnly) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Dhall (toDhall) as Report
@@ -52,12 +50,11 @@ import Report.Convert.Org (toOrg) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
-import Report.Web.Modifiers.Stats (renderGroupStats, gotTotalBadge)
-import Report.Web.Modifiers.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
+import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
+import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
-import Report.Web.Prefix (renderPrefixes)
-import Report.Web.Suffix (renderSuffixes)
+import Report.Web.Decorators (renderPrefixes, renderSuffixes)
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 
 
@@ -201,8 +198,7 @@ instance
 
 
 class
-    ( R.HasPrefixes item
-    , R.HasSuffixes item_tag item
+    ( R.HasDecorators item_tag item
     , R.HasTags item_tag item
     , R.HasTabular item
     , R.HasTags subj_tag subj
@@ -217,15 +213,12 @@ class
 
 
 instance
-    ( R.HasPrefixes item
-    , R.HasSuffixes item_tag item
-    , R.HasTabular item
-    , R.HasTags item_tag item
+    ( R.HasTags item_tag item
     , R.HasTags subj_tag subj
     , R.HasStats subj
+    , R.HasDecorators item_tag item
+    , R.HasTabular item
     , R.HasTabular subj
-    -- , R.HasPrefixes subj
-    -- , R.HasSuffixes subj_tag subj
     , R.HasStats group
     ) =>
     Has subj_tag item_tag subj group item (R.Report subj group item)
@@ -234,8 +227,7 @@ instance
 class
     ( Modify.GroupModify group
     , Modify.StatsModify group
-    , Modify.SuffixesModify item_tag item
-    , Modify.PrefixesModify item
+    , Modify.DecoratorsModify item_tag item
     , Modify.ItemModify item
     )
     <= Modify item_tag group item (x :: Type)
@@ -244,8 +236,7 @@ class
 instance
     ( Modify.GroupModify group
     , Modify.StatsModify group
-    , Modify.SuffixesModify item_tag item
-    , Modify.PrefixesModify item
+    , Modify.DecoratorsModify item_tag item
     , Modify.ItemModify item
     ) =>
     Modify item_tag group item (R.Report subj group item)
@@ -582,10 +573,8 @@ component cfg =
                                                 Navigation.toGroup subjId groupPath
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.toItem subjId groupPath itemIdx
-                    AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
-                                                Navigation.toPrefix subjId groupPath itemIdx prefixKey
-                    AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
-                                                Navigation.toSuffix subjId groupPath itemIdx suffixKey
+                    AtDecorator subjId groupPath itemIdx decoratorKey ->
+                                                Navigation.toDecorator subjId groupPath itemIdx decoratorKey
                     Nowhere ->
                                                 Navigation.clear
                 editNavigation s = case location of
@@ -596,17 +585,11 @@ component cfg =
                                                 Navigation.editItemName subjId groupPath itemIdx
                                                 $ maybe (EncodedValue "") (R.i_name >>> EncodedValue)
                                                 $ R.findItem subjId groupPath itemIdx s.report
-                    AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
-                                                Navigation.editPrefix subjId groupPath itemIdx prefixKey
-                                                $ maybe (EncodedValue "") (Prefix.encodePrefix >>> Tuple.snd)
-                                                $ Prefix.get prefixKey
-                                                =<< R.i_prefixes
-                                                <$> R.findItem subjId groupPath itemIdx s.report
-                    AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
-                                                Navigation.editSuffix subjId groupPath itemIdx suffixKey
-                                                $ maybe (EncodedValue "") (Suffix.encodeSuffix >>> Tuple.snd)
-                                                $ Suffix.get suffixKey
-                                                =<< R.i_suffixes @item_tag
+                    AtDecorator subjId groupPath itemIdx decoratorKey ->
+                                                Navigation.editDecorator subjId groupPath itemIdx decoratorKey
+                                                $ maybe (EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
+                                                $ Decorator.get decoratorKey
+                                                =<< R.i_decorators @item_tag
                                                 <$> R.findItem subjId groupPath itemIdx s.report
                     Nowhere -> s.navigatedTo
                 processedReport s = processingCount s > 0
@@ -644,13 +627,13 @@ component cfg =
                                     , what : Modify.ItemName itemIdx
                                     , newValue : encval
                                     }
-                        AtModifier subjId groupPath itemIdx modKey ->
+                        AtDecorator subjId groupPath itemIdx decoratorKey ->
                             curReport
                                 # Modify.modifyAt @item_tag
-                                    -- ( Debug.spy "edit at prefix"
+                                    -- ( Debug.spy "edit at decorator"
                                     { subjId
                                     , path : groupPath
-                                    , what : Modify.ItemModifier itemIdx modKey
+                                    , what : Modify.ItemDecorator itemIdx decoratorKey
                                     , newValue : encval
                                     }
             in
@@ -699,8 +682,7 @@ renderSubject
     => R.IsGroup group
     => R.IsSubjectId subj_id subj
     => R.IsSubject subj_id subj
-    => R.HasPrefixes item
-    => R.HasSuffixes item_tag item
+    => R.HasDecorators item_tag item
     => R.HasTabular item
     => R.HasTabular subj
     => R.HasStats group
@@ -776,20 +758,28 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                 let
                     isNavigatedToItem = navigatedTo # Navigation.atItem subjId groupPath itemIdx
                     isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
-                    isEditingPrefix prefix = navigatedTo # Navigation.editingAtPrefix subjId groupPath itemIdx prefix
-                    isEditingSuffix suffix = navigatedTo # Navigation.editingAtSuffix subjId groupPath itemIdx suffix
-                    mbCurrentPrefix = if isNavigatedToItem then navigatedTo.mbModifier >>= Modify.loadPrefixKey else Nothing
-                    mbCurrentSuffix = if isNavigatedToItem then navigatedTo.mbModifier >>= Modify.loadSuffixKey else Nothing
+                    isEditingDecorator decorator = navigatedTo # Navigation.editingAtDecorator subjId groupPath itemIdx decorator
+                    mbCurrentDecorator = if isNavigatedToItem then navigatedTo.mbDecorator else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
                     makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
-                    makePrefixClickEvt prefixKey mevt = NavigateTo mevt $ AtModifier subjId groupPath itemIdx $ Modify.PrefixMod prefixKey
-                    makePrefixEditEvt prefixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.PrefixMod prefixKey
-                    makeSuffixClickEvt suffixKey mevt = NavigateTo mevt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
-                    makeSuffixEditEvt suffixKey = EditAt $ AtModifier subjId groupPath itemIdx $ Modify.SuffixMod suffixKey
+                    makeDecoratorClickEvt decoratorKey mevt = NavigateTo mevt $ AtDecorator subjId groupPath itemIdx decoratorKey
+                    makeDecoratorEditEvt decoratorKey = EditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
-                    hasPrefixes = Modifiers.size (R.i_prefixes item) > 0
+                    hasPrefixes = Array.length (Decorator.prefixes (R.i_decorators @item_tag item)) > 0
+                    renderDecoratorsConfig =
+                        { mbSelectedDecorator : mbCurrentDecorator
+                        , isEditingDecorator
+                        , isEditingItemName
+                        , onClick : makeDecoratorClickEvt
+                        , onEdit : makeDecoratorEditEvt
+                        , onEditItemName : makeItemNameEditEvt
+                        , onTagClick : makeTagClickEvt
+                        , onStartEditing  : StartEditing
+                        , onCancelEditing : CancelEditing
+                        , noop : NoOp
+                        }
                 in HH.div
                     [ HP.style
                         $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
@@ -797,14 +787,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     ]
                     $ HH.span_
                         (renderPrefixes
-                            { mbSelectedPrefix : mbCurrentPrefix
-                            , isEditingPrefix
-                            , onClick : makePrefixClickEvt
-                            , onEdit : makePrefixEditEvt
-                            , onStartEditing  : StartEditing
-                            , onCancelEditing : CancelEditing
-                            , noop : NoOp
-                            }
+                            renderDecoratorsConfig
                             item
                         )
                     : case R.i_mbTitle item of
@@ -815,17 +798,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         Nothing -> HH.text ""
                     : HH.span_ (renderSuffixes
                             @item_tag
-                            { mbSelectedSuffix : mbCurrentSuffix
-                            , isEditingSuffix
-                            , isEditingItemName
-                            , onClick : makeSuffixClickEvt
-                            , onEdit : makeSuffixEditEvt
-                            , onEditItemName : makeItemNameEditEvt
-                            , onTagClick : makeTagClickEvt
-                            , onStartEditing  : StartEditing
-                            , onCancelEditing : CancelEditing
-                            , noop : NoOp
-                            }
+                            renderDecoratorsConfig
                             item
                         )
                     : pure (const NoOp <$> renderItemTabularValues item)
@@ -854,17 +827,10 @@ navigationHint navigation =
                 , qspacerSpan
                 , hintIfEditing navigation.mbEditing
                 ]
-        AtModifier subjId groupPath itemIdx (Modify.PrefixMod prefixKey) ->
+        AtDecorator subjId groupPath itemIdx decoratorKey ->
             HH.div
                 [ HP.style navigationHintStyle ]
-                [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Prefix.debugNavLabel prefixKey
-                , qspacerSpan
-                , hintIfEditing navigation.mbEditing
-                ]
-        AtModifier subjId groupPath itemIdx (Modify.SuffixMod suffixKey) ->
-            HH.div
-                [ HP.style navigationHintStyle ]
-                [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Suffix.debugNavLabel suffixKey
+                [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Decorator.debugNavLabel decoratorKey
                 , qspacerSpan
                 , hintIfEditing navigation.mbEditing
                 ]
@@ -878,7 +844,7 @@ postProcess
     => R.IsSortable item_tag
     => R.IsGroupable group item_tag
     => R.HasTags item_tag item
-    => R.HasSuffixes item_tag item -- FIXME: `HasSuffixes` & `HasTags` are sometimes interchangable
+    => R.HasDecorators item_tag item -- FIXME: `HasDecorators` & `HasTags` are sometimes interchangable
     => Modify.StatsModify group
     => RecalcBehavior
     -> Array (Process item_tag)
