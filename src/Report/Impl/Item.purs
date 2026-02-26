@@ -6,10 +6,8 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Report.Class
-import Report.Prefix (Prefixes)
-import Report.Prefix (empty) as Prefix
-import Report.Suffix (Suffixes)
-import Report.Suffix (empty, getTags) as Suffix
+import Report.Decorator (Decorator, Key)
+import Report.Decorator (empty, getTags) as Decorator
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
 import Report.Modify
@@ -21,8 +19,7 @@ import Yoga.JSON (class WriteForeign, class ReadForeign)
 
 type ItemRec item_tag =
     { title :: String
-    , prefixes :: Prefixes
-    , suffixes :: Suffixes item_tag
+    , decorators :: Decorator item_tag
     , tabular :: Tabular TabularValue
     , locked :: Boolean
     }
@@ -40,12 +37,8 @@ instance IsItem (Item item_tag) where
     i_locked = _.locked <<< unwrap
 
 
-instance HasPrefixes (Item item_tag) where
-    i_prefixes = _.prefixes <<< unwrap
-
-
-instance HasSuffixes item_tag (Item item_tag) where
-    i_suffixes = _.suffixes <<< unwrap
+instance HasDecorators item_tag (Item item_tag) where
+    i_decorators = _.decorators <<< unwrap
 
 
 instance HasTabular (Item item_tag) where
@@ -56,7 +49,7 @@ instance HasModifiers item_tag (Item item_tag)
 
 
 instance HasTags item_tag (Item item_tag) where
-    i_tags = unwrap >>> _.suffixes >>> Suffix.getTags >>> maybe [] Tags.toArray
+    i_tags = unwrap >>> _.decorators >>> Decorator.getTags >>> maybe [] Tags.toArray
 
 
 instance ItemModify (Item item_tag) where

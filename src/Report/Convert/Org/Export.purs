@@ -30,11 +30,10 @@ import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 
+import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags)
-import Report.Prefix (Key(..), Prefix(..)) as P
-import Report.Suffix (Key(..), Suffix(..)) as S
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular

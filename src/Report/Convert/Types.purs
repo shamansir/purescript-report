@@ -16,25 +16,19 @@ import Report.Chain (Chain)
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Progress (DateRec)
 import Report.Tabular (Tabular)
+import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 
-data MKind
-    = P -- Prefix
-    | S -- Suffix
-    -- | X -- Unknown
-
-
-type ModifierRec =
+type DecoratorRec =
     { mkey :: String
-    , mkind :: MKind
     , value :: Foreign
     }
 
 
 type ItemRec =
     { name :: String
-    , modifiers :: Array ModifierRec
+    , decorators :: Array DecoratorRec
     , mbTitle :: Maybe String
     , locked :: Boolean
     -- TODO: , tabular :: Array ({ key :: String, label :: String, value :: Foreign })
@@ -52,8 +46,8 @@ type SubjectRec =
     , id :: SubjectId
     , stats :: Stats
     -- , trackedAt :: Maybe DateRec -- TODO
-    -- , properties :: Array ModifierRec
-    , tags :: Array String
+    -- , properties :: Array DecoratorRec
+    , tags :: Array RawTag
     , tabular :: Tabular TabularValue
     }
 
@@ -77,17 +71,3 @@ derive newtype instance WriteForeign ExportVersion
 newtype ReportToExport = ReportToExport { version :: ExportVersion, subjects :: Array SubjectWithGroups }
 derive instance Newtype ReportToExport _
 derive newtype instance WriteForeign ReportToExport
-
-
-instance ReadForeign MKind where
-    readImpl frgn = do
-        str <- readImpl frgn
-        case str of
-            "P" -> pure P
-            "S" -> pure S
-            _   -> fail $ F.ForeignError $ "Unknown MKind: " <> str
-
-
-instance WriteForeign MKind where
-    writeImpl P = writeImpl "P"
-    writeImpl S = writeImpl "S"

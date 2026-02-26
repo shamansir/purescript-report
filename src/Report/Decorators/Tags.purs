@@ -28,3 +28,11 @@ toArray = unwrap
 
 fromArray :: forall t. Array t -> Tags t
 fromArray = wrap
+
+
+newtype RawTag = RawTag String
+derive instance Newtype RawTag _
+derive newtype instance Eq RawTag
+derive newtype instance Ord RawTag
+derive newtype instance WriteForeign RawTag
+derive newtype instance ReadForeign  RawTag

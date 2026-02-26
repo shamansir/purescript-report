@@ -19,10 +19,7 @@ import Report as Report
 import Report.Builder as ReportB
 import Report.Chain as MbW
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
-import Report.Prefix (Prefix)
-import Report.Prefix (Key) as Prefix
-import Report.Suffix (Suffix)
-import Report.Suffix (Key) as Suffix
+import Report.Decorator (Decorator, Key)
 import Report.Tabular as Tabular
 import Report.Convert.Types
 
@@ -37,8 +34,7 @@ class
     , IsGroup group
     , IsSubject subj_id subj
     , HasTags subj_tag subj
-    , HasPrefixes item
-    , HasSuffixes item_tag item
+    , HasDecorators item_tag item
     , HasTabular subj
     , HasStats subj
     , HasStats group
@@ -61,8 +57,7 @@ instance
     , IsGroup group
     , IsSubject subj_id subj
     , HasTags subj_tag subj
-    , HasPrefixes item
-    , HasSuffixes item_tag item
+    , HasDecorators item_tag item
     , HasTabular subj
     , HasStats subj
     , HasStats group
@@ -143,7 +138,7 @@ toExport inclRule =
             , mkind : S
             , value : writeImpl suffix -- ValueModify.toEditable
             }
-        collectModifiers :: forall @t a. WriteForeign t => HasPrefixes a => HasSuffixes t a => a -> Array ModifierRec
+        collectModifiers :: forall @t a. WriteForeign t => HasDecorators t a => a -> Array ModifierRec
         -- collectModifiers a = []
         -- collectModifiers a = Tuple.uncurry collectPrefix      <$> (Map.toUnfoldable $ unwrap $ i_prefixes a)
         collectModifiers a =

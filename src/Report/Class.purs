@@ -2,14 +2,15 @@ module Report.Class where
 
 import Prelude
 
+import Data.Functor.Variant (default)
 import Data.Maybe (Maybe(..))
-
-import Report.Tabular (Tabular)
-import Report.Decorator (Decorators)
-import Report.Decorators.Tabular.TabularValue (TabularValue)
-import Report.Decorators.Stats (Stats) as S
-import Report.GroupPath (GroupPath) as S
 import Report.Chain (Chain(..))
+import Report.Decorator (Decorators)
+import Report.Decorators.Stats (Stats) as S
+import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Tags (RawTag(..))
+import Report.GroupPath (GroupPath) as S
+import Report.Tabular (Tabular)
 
 
 class HasDecorators t a where
@@ -75,8 +76,20 @@ class Eq t <= IsTag t where
     allTags :: Array t
 
 
+defaultTagColors :: TagColors
+defaultTagColors =
+    { text: "#000000", background: "#FFFFFF", border: "#CCCCCC" }
+
+
 instance IsTag Unit where
-    tagColors _ = { text: "#000000", background: "#FFFFFF", border: "#CCCCCC" }
+    tagColors _ = defaultTagColors
     tagContent _ = End ""
     decodeTag _ = Just unit
     allTags = [unit]
+
+
+instance IsTag RawTag where
+    tagColors _ = defaultTagColors
+    tagContent (RawTag rtag) = End rtag
+    decodeTag = RawTag >>> Just
+    allTags = []

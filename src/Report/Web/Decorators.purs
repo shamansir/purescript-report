@@ -102,7 +102,7 @@ renderDecorators_ conf itemName allDecorators decoratorsKeys =
 
 
 renderDecorator
-    :: forall t w i
+    :: forall @t w i
      . S.IsTag t
     => DecoratorRenderConfig i t
     -> H w i

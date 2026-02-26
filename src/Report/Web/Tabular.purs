@@ -16,9 +16,10 @@ import Report.Tabular (Tabular)
 import Report.Tabular as Tabular
 import Report.Decorator (empty) as Decorators
 import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
+import Report.Decorators.Tags (RawTag)
 
 import Report.Web.Helpers
-import Report.Web.Decorators
+import Report.Web.Decorators (renderDecorator)
 
 import Report.Convert.Keyed (keyOf)
 
@@ -189,7 +190,7 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , valueSpan (TVTime to.time)
                         ]
                 TVDecorator decorator ->
-                    renderDecorator
+                    renderDecorator @RawTag
                         { isEditingDecorator : Nothing
                         , isEditingItemName : Nothing
                         , isSelected : false

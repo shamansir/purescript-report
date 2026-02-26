@@ -19,7 +19,7 @@ import Report.Decorators.Progress as P
 import Report.Decorators.Priority (Priority)
 import Report.Decorators.Rating (Rating)
 import Report.Decorators.Task (TaskP)
-import Report.Decorators.Tags (Tags)
+import Report.Decorators.Tags (Tags, RawTag(..))
 import Report.Convert.Keyed as CK
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
@@ -76,13 +76,13 @@ newtype Decorators t = Decorators (Map Key (Decorator t)) -- other names: `Adorn
 derive instance Newtype (Decorators t) _
 
 
-instance ReadForeign (Decorators String)
+instance ReadForeign (Decorators RawTag)
     where
         readImpl frgn = do
-            recArr <- (readImpl frgn :: F (Array { key :: String, value :: Decorator String }))
+            recArr <- (readImpl frgn :: F (Array { key :: String, value :: Decorator RawTag }))
             let tupleArr = recArr <#> (\{ key, value } -> decodeKey key <#> \k -> k /\ value)
             pure $ fromArray $ Array.catMaybes tupleArr
-instance WriteForeign (Decorators String)
+instance WriteForeign (Decorators RawTag)
     where
         writeImpl modifiers =
             let recArr = toArray modifiers <#> \(k /\ v) -> { key: encodeKey k, value: v }
@@ -166,15 +166,15 @@ instance CK.EncodableKey Key where
     decodeKey = decodeKey
 
 
-instance CK.DecodeKeyed Key (Decorator String) where
+instance CK.DecodeKeyed Key (Decorator RawTag) where
     toValue = decodeWithKey
 
 
-instance ReadForeign (Decorator String) where
+instance ReadForeign (Decorator RawTag) where
     readImpl frgn = CK.decodeKeyed @Key =<< (readImpl frgn :: F CK.JsonTM)
 
 
-instance WriteForeign (Decorator String) where
+instance WriteForeign (Decorator RawTag) where
     writeImpl anyOf = writeImpl $ CK.encodeKeyed @Key anyOf
 
 
