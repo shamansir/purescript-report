@@ -12,7 +12,6 @@ import Report.Convert.Org.Export as Export
 toOrg
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToExport subj_id subj_tag item_tag subj group item x
-    => ReadForeign item_tag
     => IsTag item_tag
     => Report.IncludeRule subj_id
     -> Report subj group item

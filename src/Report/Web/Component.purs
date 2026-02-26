@@ -752,7 +752,8 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         else HH.div
                             [ HP.style "border-left: 4px solid #eee; padding-left: 5px; margin-top: 10px; margin-bottom: 15px;" ]
                             $ mapWithIndex (renderGroupItem groupPath) groupItems
-                    ]
+
+                  ]
 
             renderGroupItem groupPath itemIdx item =
                 let

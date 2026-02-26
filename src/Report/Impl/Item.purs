@@ -6,12 +6,12 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Report.Class
-import Report.Decorator (Decorator, Key)
-import Report.Decorator (empty, getTags) as Decorator
+import Report.Decorator (Decorators, Decorator, Key)
+import Report.Decorator (empty, getTags) as Decorators
 import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
 import Report.Modify
-import Report.Decorators.Tags (toArray) as Tags
+import Report.Decorators.Tags (toArray, RawTag) as Tags
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
@@ -19,7 +19,7 @@ import Yoga.JSON (class WriteForeign, class ReadForeign)
 
 type ItemRec item_tag =
     { title :: String
-    , decorators :: Decorator item_tag
+    , decorators :: Decorators item_tag
     , tabular :: Tabular TabularValue
     , locked :: Boolean
     }
@@ -38,18 +38,15 @@ instance IsItem (Item item_tag) where
 
 
 instance HasDecorators item_tag (Item item_tag) where
-    i_decorators = _.decorators <<< unwrap
+    i_decorators = unwrap >>> _.decorators
 
 
 instance HasTabular (Item item_tag) where
     i_tabular = _.tabular <<< unwrap
 
 
-instance HasModifiers item_tag (Item item_tag)
-
-
 instance HasTags item_tag (Item item_tag) where
-    i_tags = unwrap >>> _.decorators >>> Decorator.getTags >>> maybe [] Tags.toArray
+    i_tags = unwrap >>> _.decorators >>> Decorators.getTags >>> maybe [] Tags.toArray
 
 
 instance ItemModify (Item item_tag) where
@@ -57,22 +54,16 @@ instance ItemModify (Item item_tag) where
         unwrap >>> _ { title = newName } >>> wrap
 
 
-instance SuffixesModify item_tag (Item item_tag) where
-    updateSuffixes nextSuffixes =
-        unwrap >>> _ { suffixes = nextSuffixes } >>> wrap
-
-
-instance PrefixesModify (Item item_tag) where
-    updatePrefixes nextPrefixes =
-        unwrap >>> _ { prefixes = nextPrefixes } >>> wrap
+instance DecoratorsModify item_tag (Item item_tag) where
+    updateDecorators nextDecorators =
+        unwrap >>> _ { decorators = nextDecorators } >>> wrap
 
 
 init :: forall item_tag. String -> Item item_tag
 init name =
     Item
         { title: name
-        , prefixes: Prefix.empty
-        , suffixes: Suffix.empty
+        , decorators: Decorators.empty
         , tabular: Tabular.empty
         , locked: false
         }
@@ -80,20 +71,18 @@ init name =
 
 from :: forall item item_tag.
     IsItem item =>
-    HasPrefixes item =>
-    HasSuffixes item_tag item =>
+    HasDecorators item_tag item =>
     HasTabular item =>
     item ->
     Item item_tag
 from item =
     Item
         { title: i_name item
-        , prefixes: i_prefixes item
-        , suffixes: i_suffixes item
+        , decorators: i_decorators item
         , tabular: i_tabular item
         , locked: i_locked item
         }
 
 
-derive newtype instance (ReadForeign item_tag)  => ReadForeign  (Item item_tag)
-derive newtype instance (WriteForeign item_tag) => WriteForeign (Item item_tag)
+derive newtype instance ReadForeign  (Item Tags.RawTag)
+derive newtype instance WriteForeign (Item Tags.RawTag)

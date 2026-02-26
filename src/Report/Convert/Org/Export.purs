@@ -33,7 +33,7 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (Tags)
+import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
@@ -51,7 +51,6 @@ import Dodo as D
 toOrg
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToExport subj_id subj_tag item_tag subj group item x
-    => ReadForeign item_tag
     => IsTag item_tag
     => Report.IncludeRule subj_id
     -> Report subj group item
@@ -69,7 +68,7 @@ toOrg inclRule =
     where
         mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVSuffix (S.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
@@ -126,110 +125,92 @@ toOrg inclRule =
         convertItem grpPath itemRec =
             let
                 itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2
-                modifiersPrefixes   = Array.catMaybes $ convertModifierToPrefix   <$> itemRec.modifiers
-                modifiersSuffixes   = Array.catMaybes $ convertModifierToSuffix   <$> itemRec.modifiers
-                modifiersProperties = Array.concat    $ convertModifierToProperty <$> itemRec.modifiers
-                modifiersPrefixesDoc =
-                    case modifiersPrefixes of
+                decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
+                decoratorsSuffixes   = Array.catMaybes $ convertDecoratorToSuffix   <$> itemRec.decorators
+                decoratorsProperties = Array.concat    $ convertDecoratorToProperty <$> itemRec.decorators
+                decoratorsPrefixesDoc =
+                    case decoratorsPrefixes of
                         [] -> mempty
                         prefixes -> joinWith D.space prefixes <> D.space
-                modifiersSuffixesDoc =
-                    case modifiersSuffixes of
+                decoratorsSuffixesDoc =
+                    case decoratorsSuffixes of
                         [] -> mempty
-                        prefixes -> D.space <> joinWith D.space prefixes
+                        suffixes -> D.space <> joinWith D.space suffixes
                 propertiesBlockDoc =
-                    case modifiersProperties of
+                    case decoratorsProperties of
                         [] -> mempty
                         props -> D.break <> propertiesBlock ( ("Name" /\ D.text itemRec.name) : props )
             in
-            itemHeadingPrefix <+> modifiersPrefixesDoc <> D.text itemRec.name <> modifiersSuffixesDoc
+            itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.name <> decoratorsSuffixesDoc
             <> propertiesBlockDoc
 
-        convertModifierToProperty :: ModifierRec -> Array (String /\ Doc Unit)
-        convertModifierToProperty modRec =
-            case modRec.mkind of
-                P ->
-                    DH.withImpl @P.Prefix
-                        []
-                        (case _ of
-                            P.PRating rating ->
-                                pure $ "Rating" /\ (D.text $ show $ Rating.toNumber rating)
-                            P.PPriority priority ->
-                                pure $ "Priority" /\ (D.text $ Priority.priorityChar priority)
-                            P.PTask task ->
-                                pure $ "Task" /\ (D.text $ Task.taskPToString task)
-                        )
-                        modRec.value
-                _ ->
-                    DH.withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
-                        []
-                        (case _ of
-                            S.SProgress p ->
-                                _progressProperties p
-                            S.SEarnedAt ea ->
-                                pure $ "EarnedAt" /\ orgDate (CT.dateToRec ea)
-                            S.SDescription desc ->
-                                pure $ "Description" /\ D.text desc
-                            S.SReference path ->
-                                pure $ "Reference" /\ convertPath path
-                            S.STags tags ->
-                                pure $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> unwrap tags)
-                        )
-                        modRec.value
+        convertDecoratorToProperty :: DecoratorRec -> Array (String /\ Doc Unit)
+        convertDecoratorToProperty modRec =
+            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+                []
+                (case _ of
+                    D.PRating rating ->
+                        pure $ "Rating" /\ (D.text $ show $ Rating.toNumber rating)
+                    D.PPriority priority ->
+                        pure $ "Priority" /\ (D.text $ Priority.priorityChar priority)
+                    D.PTask task ->
+                        pure $ "Task" /\ (D.text $ Task.taskPToString task)
+                    D.SProgress p ->
+                        _progressProperties p
+                    D.SEarnedAt ea ->
+                        pure $ "EarnedAt" /\ orgDate (CT.dateToRec ea)
+                    D.SDescription desc ->
+                        pure $ "Description" /\ D.text desc
+                    D.SReference path ->
+                        pure $ "Reference" /\ convertPath path
+                    D.STags tags ->
+                        pure $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> unwrap tags)
+                )
+                modRec.value
 
-        convertModifierToPrefix :: ModifierRec -> Maybe (Doc Unit)
-        convertModifierToPrefix modRec =
-            case modRec.mkind of
-                P ->
-                    DH.withImpl @P.Prefix
+        convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
+        convertDecoratorToPrefix modRec =
+            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+                mempty
+                (case _ of
+                    D.PRating rating ->
+                        Just $ D.text $ show $ Rating.toStars rating
+                    D.PPriority priority ->
+                        Just $ D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
+                    D.PTask task ->
+                        Just $ D.text $ Task.taskPToString task
+                    D.SProgress p ->
+                        case p of
+                            ToComplete { done } -> pure $ D.text $ if done then "[X]" else "[ ]"
+                            Task taskP -> pure $ D.text $ Task.taskPToString taskP
+                            _ -> mempty
+                    _ ->
+                        mempty
+                )
+                modRec.value
+
+        convertDecoratorToSuffix :: DecoratorRec -> Maybe (Doc Unit)
+        convertDecoratorToSuffix modRec =
+            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+                mempty
+                (case _ of
+                    D.SProgress p ->
+                        _progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
+                    D.SEarnedAt ea ->
+                        Just $ D.text " at " <> orgDate (CT.dateToRec ea)
+                    D.SDescription desc ->
+                        Just $ D.text "/ " <> D.text desc <> D.text " /"
+                    D.SReference _ ->
                         Nothing
-                        (case _ of
-                            P.PRating rating ->
-                                Just $ D.text $ show $ Rating.toStars rating
-                            P.PPriority priority ->
-                                Just $ D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
-                            P.PTask task ->
-                                Just $ D.text $ Task.taskPToString task
-                        )
-                        modRec.value
-                S ->
-                    DH.withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
-                        mempty
-                        (case _ of
-                            S.SProgress p ->
-                                case p of
-                                    ToComplete { done } -> pure $ D.text $ if done then "[X]" else "[ ]"
-                                    Task taskP -> pure $ D.text $ Task.taskPToString taskP
-                                    _ -> mempty
-                            _ ->
-                                mempty
-                        )
-                        modRec.value
+                    D.STags tags ->
+                        case unwrap tags of
+                            [] -> Nothing
+                            tagArr ->
+                                Just $ D.text " #" <> (joinWith (D.space <> D.text "#") $ D.text <$> MbW.toString <$> tagContent <$> tagArr)
+                    _ -> mempty
+                )
+                modRec.value
 
-        convertModifierToSuffix :: ModifierRec -> Maybe (Doc Unit)
-        convertModifierToSuffix modRec =
-            case modRec.mkind of
-                P ->
-                    Nothing
-                S ->
-                    DH.withImpl @(S.Suffix item_tag) -- TODO: export tags to strings beforehand
-                        mempty
-                        (case _ of
-                            S.SProgress p ->
-                                _progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
-                            S.SEarnedAt ea ->
-                                Just $ D.text " at " <> orgDate (CT.dateToRec ea)
-                            S.SDescription desc ->
-                                Just $ D.text "/ " <> D.text desc <> D.text " /"
-                            S.SReference _ ->
-                                Nothing
-                            S.STags tags ->
-                                case unwrap tags of
-                                    [] -> Nothing
-                                    tagArr ->
-                                        Just $ D.text " #" <> (joinWith (D.space <> D.text "#") $ D.text <$> MbW.toString <$> tagContent <$> tagArr)
-                        )
-                        modRec.value
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
 joinWith sep =
