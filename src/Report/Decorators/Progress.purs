@@ -15,7 +15,7 @@ import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Core as CT
 import Report.Core.Logic as CT
-import Report.Convert.Keyed
+import Report.Convert.Keyed as CK
 import Report.Decorators.Task (TaskP(..))
 
 type DateRec = CT.SDateRec
@@ -238,14 +238,14 @@ $ ME.runExcept $ _readProgress (PValueTag t) v
 -}
 
 
-instance EncodableKey PValueTag where
+instance CK.EncodableKey PValueTag where
     encodeKey (PValueTag str) = str
     decodeKey str = Just $ PValueTag str
     -- default = PValueTag "UNK"
 
 
-instance DecodeKeyed PValueTag Progress where
-    toValue = _readProgress
+instance CK.KeyedReadForeign PValueTag Progress where
+    keyedReadImpl = _readProgress
 
 
 rawToProgressJson :: { t :: String, v :: Foreign } -> ProgressJson
@@ -492,7 +492,7 @@ unwrapValueTag :: PValueTag -> String
 unwrapValueTag (PValueTag t) = t
 
 
-instance Keyed PValueTag Progress where
+instance CK.Keyed PValueTag Progress where
     keyOf = valueTagOf
 
 

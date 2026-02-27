@@ -18,7 +18,7 @@ import Report.Core (Year, SDate, SDateRec, STimeRec)
 import Report.Decorator (Decorator(..))
 import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Progress (Progress) as P
-import Report.Convert.Keyed as B
+import Report.Convert.Keyed as CK
 import Report.Tabular (class ToTabularValue, Tabular)
 
 
@@ -111,25 +111,25 @@ instance ToTabularValue (Maybe T.DiscFormat) (LIField String) where toTV = map (
 
 
 
-instance B.Keyed TVTag TabularValue where
+instance CK.Keyed TVTag TabularValue where
     keyOf = tagOf
 
 
-instance B.Keyed TVTag TabularAtomicValue where
+instance CK.Keyed TVTag TabularAtomicValue where
     keyOf = tagOfAtomic
 
 
-instance B.EncodableKey TVTag where
+instance CK.EncodableKey TVTag where
     encodeKey (TVTag str) = str
     decodeKey str = Just $ TVTag str
 
 
-instance B.DecodeKeyed TVTag TabularAtomicValue where
-    toValue = decodeAtomicWithKey
+instance CK.KeyedReadForeign TVTag TabularAtomicValue where
+    keyedReadImpl = decodeAtomicWithKey
 
 
-instance B.DecodeKeyed TVTag TabularValue where
-    toValue = decodeWithKey
+instance CK.KeyedReadForeign TVTag TabularValue where
+    keyedReadImpl = decodeWithKey
 
 
 tagOfAtomic :: TabularAtomicValue -> TVTag
@@ -169,7 +169,7 @@ decodeWithKey key frgn = case key of
 
 
 instance WriteForeign TabularValue where
-    writeImpl tabular = writeImpl $ B.make tabularKey $ case tabular of
+    writeImpl tabular = CK.writeImpl' $ CK.make tabularKey $ case tabular of
         TVAtomic av -> writeImpl av
         TVValues avs -> writeImpl avs
         TVValuesNest avsn -> writeImpl avsn
@@ -177,7 +177,7 @@ instance WriteForeign TabularValue where
         TVTabularsNest tbsn -> writeImpl tbsn
         TVPair tA tB -> writeImpl (tA /\ tB)
         where
-            tabularKey = B.encodeKey $ tagOf tabular
+            tabularKey = CK.encodeKey $ tagOf tabular
 
 decodeAtomicWithKey :: TVTag -> Foreign -> F TabularAtomicValue
 decodeAtomicWithKey key frgn = case key of
@@ -202,17 +202,23 @@ decodeAtomicWithKey key frgn = case key of
 
 
 instance ReadForeign TabularValue where
-    readImpl frgn = B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
+    readImpl frgn =
+        (CK.readImpl' frgn :: F (CK.KeyedValue TVTag Foreign))
+            >>= \kv -> decodeWithKey (CK.key kv) (CK.value kv)
+        -- B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
 
 
 instance ReadForeign TabularAtomicValue where
-    readImpl frgn = B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
+    readImpl frgn =
+        (CK.readImpl' frgn :: F (CK.KeyedValue TVTag Foreign))
+            >>= \kv -> decodeAtomicWithKey (CK.key kv) (CK.value kv)
+    -- readImpl frgn = B.decodeKeyed @TVTag =<< (readImpl frgn :: F B.JsonTM)
 
 
 instance WriteForeign TabularAtomicValue where
     -- somehow we cannot use `B.encodeKeyed @Key @(Suffix t) suffix` here, it leads to stack overflow.
     -- writeImpl tabular = -- writeImpl $ encodeKeyed @TVTag tabular
-    writeImpl tabular = writeImpl $ B.make tabularKey $ case tabular of
+    writeImpl tabular = CK.writeImpl' $ CK.make tabularKey $ case tabular of
         TVString s -> writeImpl s
         TVNumber n -> writeImpl n
         TVInt n -> writeImpl n
@@ -227,7 +233,7 @@ instance WriteForeign TabularAtomicValue where
         TVDateTimeRange dtr -> writeImpl dtr
         TVDecorator decx -> writeImpl decx
         where
-            tabularKey = B.encodeKey $ tagOfAtomic tabular
+            tabularKey = CK.encodeKey $ tagOfAtomic tabular
 
 
 progress :: P.Progress -> TabularValue

@@ -166,6 +166,18 @@ decodeWithKey key f = case key of
     KTags -> STags <$> readImpl f
 
 
+writeValue :: forall tag. WriteForeign tag => Decorator tag -> Foreign
+writeValue = case _ of
+    PRating r -> writeImpl r
+    PPriority p -> writeImpl p
+    PTask t -> writeImpl t
+    SProgress prog -> writeImpl prog
+    SEarnedAt d -> writeImpl d
+    SDescription desc -> writeImpl desc
+    SReference path -> writeImpl path
+    STags tags -> writeImpl tags
+
+
 debugNavLabel :: Key -> String
 debugNavLabel = encodeKey
 
@@ -175,16 +187,19 @@ instance CK.EncodableKey Key where
     decodeKey = decodeKey
 
 
-instance CK.DecodeKeyed Key (Decorator RawTag) where
-    toValue = decodeWithKey
+instance CK.KeyedReadForeign Key (Decorator RawTag) where
+    keyedReadImpl = decodeWithKey
 
 
 instance ReadForeign (Decorator RawTag) where
-    readImpl frgn = CK.decodeKeyed @Key =<< (readImpl frgn :: F CK.JsonTM)
+    readImpl frgn =
+        (CK.readImpl' frgn :: F (CK.KeyedValue Key Foreign))
+            >>= \kv -> decodeWithKey (CK.key kv) (CK.value kv)
 
 
 instance WriteForeign (Decorator RawTag) where
-    writeImpl anyOf = writeImpl $ CK.encodeKeyed @Key anyOf
+    writeImpl decorator =
+        CK.writeImpl' $ CK.make (CK.keyOf @Key decorator) $ writeValue decorator
 
 
 isPrefix :: Key -> Boolean

@@ -128,6 +128,7 @@ toExport inclRule =
             }
         collectDecorators :: forall @t a. IsTag t => HasDecorators t a => a -> Array DecoratorRec
         collectDecorators a =
+            -- []
             (Tuple.uncurry collectDecorator <$> map (rawifyDecorator @t) <$> (Map.toUnfoldable $ unwrap $ i_decorators @t a))
         rawifyDecorator :: forall @t. IsTag t => Decorator t -> Decorator RawTag
         rawifyDecorator = Decorator.mapTags (rawifyTag @t)
