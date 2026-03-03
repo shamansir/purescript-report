@@ -33,8 +33,7 @@ class HasStats a where
 
 
 class IsItem a where
-    i_name :: a -> String
-    i_mbTitle :: a -> Maybe String
+    i_title :: a -> String
     i_locked :: a -> Boolean
 
 

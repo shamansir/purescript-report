@@ -5,13 +5,14 @@ import Prelude
 import Effect.Class (class MonadEffect)
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index) as Array
+import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find) as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (isJust) as Maybe
 import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
@@ -35,7 +36,7 @@ import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq) as GP
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
-import Report.Decorator (size) as Decorators
+import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
 import Report.Decorators.Tags (TagAction(..))
 import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
 import Report.Decorators.Class.ValueModify as VModify
@@ -130,6 +131,12 @@ derive instance Eq SubjectSort
 data SortKey
     = SN Number
     | SS String
+
+
+data ItemTitlePosition
+    = InsideProgress
+    | Normal
+
 
 
 derive instance Eq SortKey
@@ -571,7 +578,7 @@ component cfg =
                                                 $ R.findGroup subjId groupPath s.report
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.editItemName subjId groupPath itemIdx
-                                                $ maybe (EncodedValue "") (R.i_name >>> EncodedValue)
+                                                $ maybe (EncodedValue "") (R.i_title >>> EncodedValue)
                                                 $ R.findItem subjId groupPath itemIdx s.report
                     AtDecorator subjId groupPath itemIdx decoratorKey ->
                                                 Navigation.editDecorator subjId groupPath itemIdx decoratorKey
@@ -771,7 +778,9 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     makeDecoratorEditEvt decoratorKey = EditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
-                    hasPrefixes = Array.length (Decorator.prefixes (R.i_decorators @item_tag item)) > 0
+                    itemDecorators = R.i_decorators @item_tag item
+                    hasPrefixes = Array.length (Decorator.prefixes itemDecorators) > 0
+                    titlePosition = if Decorators.hasProgress itemDecorators # Maybe.isJust then InsideProgress else Normal
                     renderDecoratorsConfig =
                         { mbSelectedDecorator : mbCurrentDecorator
                         , isEditingDecorator
@@ -794,12 +803,16 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                             renderDecoratorsConfig
                             item
                         )
-                    : case R.i_mbTitle item of
-                        Just title ->
-                            if (not hasPrefixes)
-                                then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
-                                else HH.text title
-                        Nothing -> HH.text ""
+                    : case titlePosition of
+                        InsideProgress ->
+                            HH.text ""
+                        Normal ->
+                            case R.i_title item of
+                                "" -> HH.text ""
+                                title ->
+                                    if (not hasPrefixes)
+                                        then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
+                                        else HH.text title
                     : HH.span_ (renderSuffixes
                             @item_tag
                             renderDecoratorsConfig

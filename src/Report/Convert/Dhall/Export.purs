@@ -105,7 +105,7 @@ toDhall inclRule =
 
         convertItem :: ItemRec -> Doc Unit
         convertItem itemRec =
-            D.text "T.kv_" <> D.space <> quote itemRec.name <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
+            D.text "T.kv_" <> D.space <> quote itemRec.title <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
 
 
         convertDecorator :: DecoratorRec -> RenderedAs (Doc Unit)

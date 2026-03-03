@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Array (catMaybes, elemIndex, filter) as Array
+import Data.Array (catMaybes, elemIndex, filter, findMap) as Array
 import Data.String (Pattern(..), stripPrefix) as String
 
 import Report.Core as CT
@@ -283,9 +283,17 @@ allKeys =
 
 
 getProgress :: forall t. P.PValueTag -> Decorators t -> Maybe P.Progress
-getProgress pvtag sfx = get (KProgress pvtag) sfx >>= case _ of
+getProgress pvtag dcrts = get (KProgress pvtag) dcrts >>= case _ of
     SProgress p -> Just p
     _ -> Nothing
+
+
+hasProgress :: forall t. Decorators t -> Maybe P.PValueTag
+hasProgress = keys >>> Array.findMap
+    ( case _ of
+        KProgress p -> Just p
+        _ -> Nothing
+    )
 
 
 collectProgress :: forall t. Decorators t -> Array (Maybe P.PValueTag /\ P.Progress)

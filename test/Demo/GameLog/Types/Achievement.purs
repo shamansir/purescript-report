@@ -234,8 +234,9 @@ applyDecorators decorators = with \achRec ->
 
 
 instance IsItem Achievement where
-    i_name = unwrap >>> _.name
-    i_mbTitle = unwrap >>> _.mbTitle
+    i_title = unwrap >>> \achRec -> case achRec.mbTitle of
+        Just title -> if achRec.name == "" then title else achRec.name <> " : " <> title
+        Nothing -> achRec.name
     i_locked =  unwrap >>> _.locked
     -- i_tags = unwrap >>> _.tags >>> map Tag
 

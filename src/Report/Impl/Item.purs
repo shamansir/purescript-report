@@ -30,10 +30,7 @@ derive instance Newtype (Item item_tag) _
 
 
 instance IsItem (Item item_tag) where
-    i_name = _.title <<< unwrap
-    i_mbTitle item =
-        let title = i_name item
-        in  if title == "" then Nothing else Just title
+    i_title = _.title <<< unwrap
     i_locked = _.locked <<< unwrap
 
 
@@ -77,7 +74,7 @@ from :: forall item item_tag.
     Item item_tag
 from item =
     Item
-        { title: i_name item
+        { title: i_title item
         , decorators: i_decorators item
         , tabular: i_tabular item
         , locked: i_locked item

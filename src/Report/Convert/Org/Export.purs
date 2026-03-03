@@ -139,9 +139,9 @@ toOrg inclRule =
                 propertiesBlockDoc =
                     case decoratorsProperties of
                         [] -> mempty
-                        props -> D.break <> propertiesBlock ( ("Name" /\ D.text itemRec.name) : props )
+                        props -> D.break <> propertiesBlock ( ("Title" /\ D.text itemRec.title) : props )
             in
-            itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.name <> decoratorsSuffixesDoc
+            itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc
             <> propertiesBlockDoc
 
         convertDecoratorToProperty :: DecoratorRec -> Array (String /\ Doc Unit)

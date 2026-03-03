@@ -27,9 +27,8 @@ type DecoratorRec =
 
 
 type ItemRec =
-    { name :: String
+    { title :: String
     , decorators :: Array DecoratorRec
-    , mbTitle :: Maybe String
     , locked :: Boolean
     -- TODO: , tabular :: Array ({ key :: String, label :: String, value :: Foreign })
     }

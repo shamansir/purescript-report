@@ -42,10 +42,10 @@ renderPrefixes
 renderPrefixes conf item =
     let
         i_decorators = S.i_decorators @item_tag item
-        i_name = S.i_name item
+        i_title = S.i_title item
         decoratorsKeys = Decorators.keys i_decorators # Array.filter Decorators.isPrefix # Array.sortWith Decorators.orderOf -- FIXME: should be already sorted
     in
-    renderDecorators_ @item_tag conf i_name i_decorators decoratorsKeys
+    renderDecorators_ @item_tag conf i_title i_decorators decoratorsKeys
 
 
 renderSuffixes
@@ -59,10 +59,10 @@ renderSuffixes
 renderSuffixes conf item =
     let
         i_decorators = S.i_decorators @item_tag item
-        i_name = S.i_name item
+        i_title = S.i_title item
         decoratorsKeys = Decorators.keys i_decorators # Array.filter Decorators.isSuffix # Array.sortWith Decorators.orderOf -- FIXME: should be already sorted
     in
-    renderDecorators_ @item_tag conf i_name i_decorators decoratorsKeys
+    renderDecorators_ @item_tag conf i_title i_decorators decoratorsKeys
 
 
 renderDecorators_
