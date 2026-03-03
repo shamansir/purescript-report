@@ -29,7 +29,10 @@ import GameLog.Types.Achievement (Achievement, Tag) as GL
 
 import Report (toReport)
 import Report.Group (Group) as Report
+import Report.Modify (RecalculateInclude(..))
+import Report.Decorators.Stats.Collect (CollectWhat(..))
 import Report.Web.Component as StatsReport
+import Report.Web.Component.RecalcBehavior
 
 
 main :: Effect Unit
@@ -101,4 +104,7 @@ component = H.mkComponent
 reportComponent :: forall query output m. MonadEffect m => H.Component query GL.RawAchievements output m
 reportComponent =
     StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag @GL.Game @Report.Group @GL.Achievement $
-        StatsReport.defaultConfig { preSelected = [ GL.DHL "astral-chain" ] }
+        StatsReport.defaultConfig
+            { preSelected = [ GL.DHL "astral-chain" ]
+            , recalculate = onAnyAction { collect : ItemsProgress, include : OnlyDirect }
+            }

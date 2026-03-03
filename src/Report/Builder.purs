@@ -20,6 +20,7 @@ module Report.Builder
     {- Groups -}
     , mapGroups
     , allGroups, allGroupsC
+    , allGroupsOf, allGroupsOfC
     , filterGroups
     , withGroup, withGroupIdx
     , findGroup, findMapGroup
@@ -57,6 +58,7 @@ import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Map (Map)
 import Data.Map as Map
 
+import Report.Class as RC
 import Report.Chain (Chain)
 import Report.Chain as Chain
 
@@ -447,6 +449,18 @@ allGroupsC :: forall subj group item. Builder subj group item -> Array (Chain gr
 allGroupsC = unwrap >>> map extractGroups >>> Array.concat
     where
         extractGroups (Subject _ groups) = extractGroupC <$> groups
+        extractGroupC (Group groupC _) = groupC
+
+
+allGroupsOf :: forall subj_id subj group item. Eq subj_id => RC.IsSubjectId subj_id subj => subj_id -> Builder subj group item -> Array group
+allGroupsOf subjId = allGroupsOfC subjId >>> map Chain.toArray >>> Array.concat
+
+
+allGroupsOfC :: forall subj_id subj group item. Eq subj_id => RC.IsSubjectId subj_id subj => subj_id -> Builder subj group item -> Array (Chain group)
+allGroupsOfC subjId = unwrap >>> map extractGroups >>> Array.concat
+    where
+        extractGroups (Subject otherSubj groups) | RC.s_id otherSubj == subjId = extractGroupC <$> groups
+        extractGroups (Subject otherSubj groups) | otherwise = []
         extractGroupC (Group groupC _) = groupC
 
 

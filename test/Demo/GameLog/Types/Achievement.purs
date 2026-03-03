@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
-import Data.Array (length, filter, all) as Array
+import Data.Array (length, filter, all, unsnoc) as Array
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
@@ -18,9 +18,11 @@ import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Stats (Stats(..))
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
+import Report.Web.Decorators.Tags.Colors as TC
 import Report.Modify
 import Report.Decorator (Decorator, Decorators)
 import Report.Decorator as Decorators
+import Report.Decorator (Decorator(..)) as Dec
 import Report.Tabular as Tabular
 
 import GameLog.Types as GLT
@@ -175,11 +177,7 @@ instance IsTag Tag where
     tagContent :: Tag -> Chain String
     tagContent = unwrap >>> End
     tagColors :: Tag -> TagColors
-    tagColors = const $
-            { background : "transparent"
-            , text : "black"
-            , border : "blue"
-            }
+    tagColors = const $ TC.tagVar10
     decodeTag :: String -> Maybe Tag
     decodeTag = Just <<< Tag
     allTags :: Array Tag
@@ -187,48 +185,52 @@ instance IsTag Tag where
 
 
 instance IsSortable Tag where
-    sameKind _ _ = true -- all the tags are the same kind
+    sameKind :: Tag -> Tag -> Boolean
+    sameKind = const $ const true -- all the tags are the same kind
 
 
 instance IsGroupable Group Tag where
-    t_group (Tag tag) = Just $ End $ mkGroup (pure $ PathSegment tag) $ "#" <> tag
+    t_group :: Tag -> Maybe (Chain Group)
+    t_group = tagContent >>> map (\tag -> mkGroup [ PathSegment tag ] $ "#" <> tag) >>> Just -- TODO: use Group.cg constructors?
 
 
 loadDecorators :: Achievement -> Decorators Tag
 loadDecorators = unwrap >>> \achRec ->
     Decorators.empty
-    # (Decorators.put $ Decorators.SProgress achRec.progress)
+    # (Decorators.put $ Dec.SProgress achRec.progress)
     # (case achRec.mbReference of
-        Just groupPath -> Decorators.put $ Decorators.SReference groupPath
+        Just groupPath -> Decorators.put $ Dec.SReference groupPath
         Nothing -> identity
        )
     # (case achRec.mbEarnedAt of
-        Just dateEarned -> Decorators.put $ Decorators.SEarnedAt dateEarned
+        Just dateEarned -> Decorators.put $ Dec.SEarnedAt dateEarned
         Nothing -> identity
        )
     # (case achRec.mbDescription of
-        Just descr -> Decorators.put $ Decorators.SDescription descr
+        Just descr -> Decorators.put $ Dec.SDescription descr
         Nothing -> identity
        )
     # (case achRec.tags of
         []  -> identity
-        arr ->  Decorators.put $ Decorators.STags $ Tags $ Tag <$> arr
+        arr ->  Decorators.put $ Dec.STags $ Tags $ Tag <$> arr
        )
 
 
 applyDecorators :: Decorators Tag -> Achievement -> Achievement
-applyDecorators suffixes = with \achRec ->
-    Decorators.toArray suffixes
-        # foldl applySuffix achRec
+applyDecorators decorators = with \achRec ->
+    Decorators.toArray decorators
+        # foldl applyDecorator achRec
     where
-        applySuffix :: AchievementRec -> (Decorators.Key /\ Decorator Tag) -> AchievementRec
-        applySuffix acc (key /\ suffix) = case suffix of
-            Decorators.SProgress prog -> acc { progress = prog }
-            Decorators.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
-            Decorators.SDescription descr -> acc { mbDescription = Just descr }
-            Decorators.SReference gpath -> acc { mbReference = Just gpath }
-            Decorators.STags (Tags tagsArr) -> acc { tags = unwrap <$> tagsArr }
-            _ -> acc
+        applyDecorator :: AchievementRec -> (Decorators.Key /\ Decorator Tag) -> AchievementRec
+        applyDecorator acc (key /\ decorator) = case decorator of
+            Dec.SProgress prog -> acc { progress = prog }
+            Dec.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
+            Dec.SDescription descr -> acc { mbDescription = Just descr }
+            Dec.SReference gpath -> acc { mbReference = Just gpath }
+            Dec.STags (Tags tagsArr) -> acc { tags = unwrap <$> tagsArr }
+            Dec.PRating _ -> acc
+            Dec.PPriority _ -> acc
+            Dec.PTask _ -> acc
 
 
 instance IsItem Achievement where

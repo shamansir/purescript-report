@@ -33,7 +33,7 @@ import Report.Builder as RB
 import Report.Class as R
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
-import Report.GroupPath (howDeep) as GP
+import Report.GroupPath (howDeep, startsWithNotEq) as GP
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
 import Report.Decorator (size) as Decorators
 import Report.Decorators.Tags (TagAction(..))
@@ -56,6 +56,7 @@ import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Decorators (renderPrefixes, renderSuffixes)
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
+import Report.Web.Component.RecalcBehavior as CRB
 
 
 type Process item_tag = { action :: TagAction, tag :: item_tag }
@@ -114,7 +115,7 @@ data Action subj_id subj_tag item_tag report
     | SortItemsBy MouseEvent item_tag
     | GroupItemsBy MouseEvent item_tag
     | ResetPostProcess
-    | ToggleGroupCollapse subj_id GroupPath
+    | ToggleGroupCollapse MouseEvent subj_id GroupPath
     | NoOp
 
 
@@ -147,29 +148,16 @@ data ExportTarget
 derive instance Eq ExportTarget
 
 
-type RecalcBehavior =
-    { onEmpty   :: Maybe Modify.RecalculateConfig
-    , onEdit    :: Maybe Modify.RecalculateConfig
-    , onRegroup :: Maybe Modify.RecalculateConfig
-    , onFilter  :: Maybe Modify.RecalculateConfig
-    }
-
-
 type Config subj_id =
     { preSelected :: Array subj_id
-    , recalculate :: RecalcBehavior
+    , recalculate :: CRB.RecalcBehavior
     }
 
 
 defaultConfig :: forall subj_id. Config subj_id
 defaultConfig =
     { preSelected : []
-    , recalculate :
-        { onEmpty   : Nothing
-        , onEdit    : Nothing
-        , onRegroup : Nothing
-        , onFilter  : Nothing
-        }
+    , recalculate : CRB.noUpdate
     }
 
 
@@ -662,13 +650,28 @@ component cfg =
                 s { process = filteredProcess, readOnlyMode = if Array.length filteredProcess > 0 then true else s.readOnlyMode }
             )
         ResetPostProcess -> H.modify_ \s -> s { process = [] }
-        ToggleGroupCollapse subjId groupPath -> H.modify_ \s ->
+        ToggleGroupCollapse mevt subjId groupPath -> H.modify_ \s ->
             let
-                subjCollapsed = fromMaybe Map.empty $ Map.lookup subjId $ s.collapsed
-                currentState = fromMaybe false $ Map.lookup groupPath $ subjCollapsed
-                newSubjCollapsed = subjCollapsed # Map.insert groupPath (not currentState)
-                newCollapsed = s.collapsed # Map.insert subjId newSubjCollapsed
-            in s { collapsed = newCollapsed }
+                prevCollapsedStateOfThisSubj = fromMaybe Map.empty $ Map.lookup subjId $ s.collapsed
+                groupWasCollapsedBefore = fromMaybe false $ Map.lookup groupPath $ prevCollapsedStateOfThisSubj
+                groupShouldBeCollapsed = not groupWasCollapsedBefore
+                probablyCollapseSubGroupsAsWell subjCollapseMap =
+                    if ME.shiftKey mevt && groupShouldBeCollapsed then
+                        foldl
+                            (\theMap group ->
+                                if GP.startsWithNotEq groupPath $ R.g_path group
+                                    then Map.insert (R.g_path group) true theMap
+                                    else theMap)
+                            subjCollapseMap
+                            $ RB.allGroupsOf subjId
+                            $ R.toBuilder s.report
+                    else subjCollapseMap
+                newCollapsedStateOfThisSubj =
+                    prevCollapsedStateOfThisSubj
+                        # Map.insert groupPath groupShouldBeCollapsed
+                        # probablyCollapseSubGroupsAsWell
+                newCollapsedState = s.collapsed # Map.insert subjId newCollapsedStateOfThisSubj
+            in s { collapsed = newCollapsedState }
         NoOp -> pure unit
 
 
@@ -736,7 +739,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                             <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
                         ]
                         [ HH.span
-                            [ HE.onClick $ const $ ToggleGroupCollapse subjId groupPath
+                            [ HE.onClick \mevt -> ToggleGroupCollapse mevt subjId groupPath
                             , HP.style $ "cursor: pointer; user-select: none; margin-right: 5px;" <> if isCollapsed then "" else "opacity: 0.25;" -- 0.6?
                             ]
                             [ HH.text $ if isCollapsed then "▶" else "▼" ]
@@ -847,7 +850,7 @@ postProcess
     => R.HasTags item_tag item
     => R.HasDecorators item_tag item -- FIXME: `HasDecorators` & `HasTags` are sometimes interchangable
     => Modify.StatsModify group
-    => RecalcBehavior
+    => CRB.RecalcBehavior
     -> Array (Process item_tag)
     -> R.Report subj group item
     -> R.Report subj group item
