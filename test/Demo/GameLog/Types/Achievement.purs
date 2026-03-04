@@ -237,7 +237,6 @@ instance IsItem Achievement where
     i_title = unwrap >>> \achRec -> case achRec.mbTitle of
         Just title -> if achRec.name == "" then title else achRec.name <> " : " <> title
         Nothing -> achRec.name
-    i_locked =  unwrap >>> _.locked
     -- i_tags = unwrap >>> _.tags >>> map Tag
 
 

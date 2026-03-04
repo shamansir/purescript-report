@@ -34,7 +34,6 @@ class HasStats a where
 
 class IsItem a where
     i_title :: a -> String
-    i_locked :: a -> Boolean
 
 
 class IsGroup a where

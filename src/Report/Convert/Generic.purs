@@ -118,7 +118,6 @@ toExport inclRule =
         collectItem item =
             { title : i_title item
             , decorators : collectDecorators @item_tag item
-            , locked  : i_locked  item
             }
         collectDecorator :: Decorator.Key -> Decorator RawTag -> DecoratorRec
         collectDecorator dkey decorator =

@@ -29,7 +29,6 @@ type DecoratorRec =
 type ItemRec =
     { title :: String
     , decorators :: Array DecoratorRec
-    , locked :: Boolean
     -- TODO: , tabular :: Array ({ key :: String, label :: String, value :: Foreign })
     }
 

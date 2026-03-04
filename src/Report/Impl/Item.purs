@@ -21,7 +21,6 @@ type ItemRec item_tag =
     { title :: String
     , decorators :: Decorators item_tag
     , tabular :: Tabular TabularValue
-    , locked :: Boolean
     }
 
 
@@ -31,7 +30,6 @@ derive instance Newtype (Item item_tag) _
 
 instance IsItem (Item item_tag) where
     i_title = _.title <<< unwrap
-    i_locked = _.locked <<< unwrap
 
 
 instance HasDecorators item_tag (Item item_tag) where
@@ -62,7 +60,6 @@ init name =
         { title: name
         , decorators: Decorators.empty
         , tabular: Tabular.empty
-        , locked: false
         }
 
 
@@ -77,7 +74,6 @@ from item =
         { title: i_title item
         , decorators: i_decorators item
         , tabular: i_tabular item
-        , locked: i_locked item
         }
 
 
