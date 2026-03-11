@@ -137,7 +137,7 @@ toDhall inclRule =
                             # prefixD "// T.inj/tags"
                             # _ol
                 )
-                decRec.value
+                decRec.fvalue
 
 
         alignDecorators :: Array (RenderedAs (Doc Unit)) -> Doc Unit

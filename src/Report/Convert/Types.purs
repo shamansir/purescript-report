@@ -22,14 +22,21 @@ import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 type DecoratorRec =
     { mkey :: String
-    , value :: Foreign
+    , fvalue :: Foreign
+    }
+
+
+type TabularRec =
+    { tkey :: String
+    , tlabel :: String
+    , value :: TabularValue
     }
 
 
 type ItemRec =
     { title :: String
     , decorators :: Array DecoratorRec
-    -- TODO: , tabular :: Array ({ key :: String, label :: String, value :: Foreign })
+    , tabulars :: Array TabularRec
     }
 
 

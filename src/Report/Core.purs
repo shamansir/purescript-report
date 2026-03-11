@@ -125,18 +125,39 @@ derive instance Eq SMonth
 
 
 instance showMonth :: Show SMonth where
-  show Jan = "January"
-  show Feb = "February"
-  show Mar = "March"
-  show Apr = "April"
-  show May = "May"
-  show Jun = "June"
-  show Jul = "July"
-  show Aug = "August"
-  show Sep = "September"
-  show Oct = "October"
-  show Nov = "November"
-  show Dec = "December"
+  show = monthFullName
+
+
+monthFullName :: SMonth -> String
+monthFullName = case _ of
+  Jan -> "January"
+  Feb -> "February"
+  Mar -> "March"
+  Apr -> "April"
+  May -> "May"
+  Jun -> "June"
+  Jul -> "July"
+  Aug -> "August"
+  Sep -> "September"
+  Oct -> "October"
+  Nov -> "November"
+  Dec -> "December"
+
+
+monthThreeLetter :: SMonth -> String
+monthThreeLetter = case _ of
+  Jan -> "Jan"
+  Feb -> "Feb"
+  Mar -> "Mar"
+  Apr -> "Apr"
+  May -> "May"
+  Jun -> "Jun"
+  Jul -> "Jul"
+  Aug -> "Aug"
+  Sep -> "Sep"
+  Oct -> "Oct"
+  Nov -> "Nov"
+  Dec -> "Dec"
 
 
 toNativeMonth :: SMonth -> N.Month
@@ -331,6 +352,10 @@ parseTZDate = String.take 10 >>> String.split (String.Pattern "-") >>> case _ of
             <*> (monthFromInt <$> Int.fromString monS)
             <*> Int.fromString yearS
     _ -> Nothing
+
+
+encodeMonth :: SMonth -> String
+encodeMonth = monthThreeLetter
 
 
 parseMonth :: String -> Maybe SMonth

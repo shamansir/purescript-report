@@ -20,6 +20,8 @@ import Report.Decorator (Decorator)
 import Report.Decorator (Key, mapTags) as Decorator
 import Report.Decorators.Tags (RawTag)
 import Report.Tabular as Tabular
+import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Tabular.TabularValue as TabV
 import Report.Convert.Types
 
 
@@ -38,6 +40,7 @@ class
     , HasTabular subj
     , HasStats subj
     , HasStats group
+    , HasTabular item
     , EncodableKey subj_id
     -- => WriteForeign subj_tag
     , ToReport subj group item x
@@ -60,6 +63,7 @@ instance
     , HasStats subj
     , HasStats group
     , EncodableKey subj_id
+    , HasTabular item
     -- => WriteForeign subj_tag
     , ToReport subj group item x
     )
@@ -118,16 +122,28 @@ toExport inclRule =
         collectItem item =
             { title : i_title item
             , decorators : collectDecorators @item_tag item
+            , tabulars : collectTabulars item
             }
         collectDecorator :: Decorator.Key -> Decorator RawTag -> DecoratorRec
         collectDecorator dkey decorator =
             { mkey  : encodeKey dkey
-            , value : writeImpl decorator -- ValueModify.toEditable
+            , fvalue : writeImpl decorator -- ValueModify.toEditable
             }
         collectDecorators :: forall @t a. IsTag t => HasDecorators t a => a -> Array DecoratorRec
         collectDecorators a =
             -- []
             (Tuple.uncurry collectDecorator <$> map (rawifyDecorator @t) <$> (Map.toUnfoldable $ unwrap $ i_decorators @t a))
+        collectTabular :: Tabular.Item TabularValue -> TabularRec
+        collectTabular = case _ of
+            Tabular.Item { key, label, value } ->
+                { tkey  : key
+                , tlabel : label
+                , value : value -- ValueModify.toEditable
+                }
+        collectTabulars :: forall a. HasTabular a => a -> Array TabularRec
+        collectTabulars a =
+            -- []
+            collectTabular <$> (Tabular.items $ i_tabular a)
         rawifyDecorator :: forall @t. IsTag t => Decorator t -> Decorator RawTag
         rawifyDecorator = Decorator.mapTags (rawifyTag @t)
         subjectToExport :: SubjectRec -> Array (Group /\ Array ItemRec) -> SubjectWithGroups

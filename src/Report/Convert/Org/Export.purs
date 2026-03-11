@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Either (either)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Tuple (uncurry) as Tuple
-import Data.String (joinWith) as String
+import Data.String (joinWith, replaceAll, Pattern(..), Replacement(..)) as String
 import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Array ((:))
@@ -41,6 +41,7 @@ import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Convert.Text.Export as TextExport
 
 import Report.Convert.Dhall.Export as DH
 
@@ -83,8 +84,7 @@ toOrg inclRule =
                     [ Just $ "Id" /\ D.text (unwrap subjectRec.id)
                     , Just $ "Platform" /\ D.text "TODO"
                     , Just $ "Playtime" /\ D.text "TODO"
-                    , mbTrackedAt subjectRec.tabular >>= \dateRec ->
-                        Just $ "TrackedAt" /\ orgDate dateRec
+                    , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ orgDate dateRec
                     ]
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
@@ -166,7 +166,7 @@ toOrg inclRule =
                     D.STags tags ->
                         pure $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> unwrap tags)
                 )
-                modRec.value
+                modRec.fvalue
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
@@ -187,7 +187,7 @@ toOrg inclRule =
                     _ ->
                         mempty
                 )
-                modRec.value
+                modRec.fvalue
 
         convertDecoratorToSuffix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToSuffix modRec =
@@ -195,7 +195,7 @@ toOrg inclRule =
                 mempty
                 (case _ of
                     D.SProgress p ->
-                        _progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
+                        TextExport._progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
                     D.SEarnedAt ea ->
                         Just $ D.text " at " <> orgDate (CT.dateToRec ea)
                     D.SDescription desc ->
@@ -206,10 +206,17 @@ toOrg inclRule =
                         case unwrap tags of
                             [] -> Nothing
                             tagArr ->
-                                Just $ D.text " #" <> (joinWith (D.space <> D.text "#") $ D.text <$> MbW.toString <$> tagContent <$> tagArr)
+                                Just $ D.text " #" <>
+                                ( joinWith (D.space <> D.text "#")
+                                     $ D.text
+                                    <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
+                                    <$> MbW.toString
+                                    <$> tagContent
+                                    <$> tagArr
+                                )
                     _ -> mempty
                 )
-                modRec.value
+                modRec.fvalue
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
@@ -299,6 +306,7 @@ _progressProperties = case _ of
         mempty
 
 
+{-
 _progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
 _progressSuffixOneLiner = case _ of
     None -> mempty
@@ -360,7 +368,7 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty
-
+-}
 
 
 {-
