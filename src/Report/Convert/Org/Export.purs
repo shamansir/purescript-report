@@ -41,7 +41,7 @@ import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
 import Report.Decorators.Tabular.TabularValue as TV
-import Report.Convert.Text.Export as TextExport
+-- import Report.Convert.Text.Export as TextExport
 
 import Report.Convert.Dhall.Export as DH
 
@@ -195,7 +195,7 @@ toOrg inclRule =
                 mempty
                 (case _ of
                     D.SProgress p ->
-                        TextExport._progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
+                        _progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
                     D.SEarnedAt ea ->
                         Just $ D.text " at " <> orgDate (CT.dateToRec ea)
                     D.SDescription desc ->
@@ -306,7 +306,7 @@ _progressProperties = case _ of
         mempty
 
 
-{-
+
 _progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
 _progressSuffixOneLiner = case _ of
     None -> mempty
@@ -368,7 +368,6 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty
--}
 
 
 {-

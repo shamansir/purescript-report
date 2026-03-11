@@ -91,8 +91,8 @@ toText inclRule =
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
             D.text "#" <> D.space <> D.text subjectRec.name
-            <> D.break <> tabularsBlock
-                (Array.catMaybes
+            <> D.break <> D.indent (tabularsBlock
+                $ Array.catMaybes
                     [ {- Just $ "Id" /\ D.text (unwrap subjectRec.id)
                     , -} mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ textDate dateRec
                     ]
@@ -102,26 +102,27 @@ toText inclRule =
         tabularsBlock :: Array (String /\ Doc Unit) -> Doc Unit
         tabularsBlock [] = mempty
         tabularsBlock fields =
-            D.indent $ (joinWith D.break $ tabularLine <$> fields) <> D.break
+            (joinWith D.break $ tabularLine <$> fields) <> D.break
 
         tabularLine :: (String /\ Doc Unit) -> Doc Unit
         tabularLine (name /\ value) = D.text "-" <> D.space <> D.text name <> D.text ": " <> value
 
-        makeHeading :: Int -> Doc Unit
-        makeHeading level =
-            if level == 0 then mempty else D.indent $ makeHeading $ level - 1
+        addIndent :: Int -> Doc Unit -> Doc Unit
+        addIndent level toWhat =
+            if level == 0 then toWhat else D.indent $ addIndent (level - 1) toWhat
 
         convertPath :: GroupPath -> Doc Unit
         convertPath path =
-            joinWith D.space $ D.text <$> (unwrap <$> unwrap path)
+            joinWith (D.text "::") $ D.text <$> (unwrap <$> unwrap path)
 
         convertGroup :: Int -> { group :: Group, items :: Array ItemRec } -> Doc Unit
         convertGroup index { group, items } =
             let
                 groupRec = unwrap group
-                groupHeadingPrefix = makeHeading $ GroupPath.howDeep groupRec.path + 1
+                groupDeepLevel = GroupPath.howDeep groupRec.path
+                groupIndent = addIndent groupDeepLevel
             in
-            groupHeadingPrefix <+> D.text (show index) <> D.text "." <+> D.text groupRec.title <+> convertPath groupRec.path
+            groupIndent (D.text (show index) <> D.text "." <+> D.text groupRec.title <+> convertPath groupRec.path)
             <> D.break
             <> (joinWith D.break $ convertItem groupRec.path <$> items)
             <> D.break
@@ -129,7 +130,9 @@ toText inclRule =
         convertItem :: GroupPath -> ItemRec -> Doc Unit
         convertItem grpPath itemRec =
             let
-                itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2
+                -- groupDeepLevel = GroupPath.howDeep groupRec.path
+                groupDeepLevel = GroupPath.howDeep grpPath
+                itemIndent = addIndent $ groupDeepLevel + 1
                 decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
                 decoratorsSuffixes   = Array.catMaybes $ convertDecoratorToSuffix   <$> itemRec.decorators
                 tabulars             = Array.catMaybes $ convertTabularToDoc        <$> itemRec.tabulars
@@ -146,7 +149,7 @@ toText inclRule =
                         [] -> mempty
                         _ -> D.break <> tabularsBlock tabulars
             in
-            itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc
+            itemIndent (decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc)
             <> tabularsBlockDoc
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
@@ -210,9 +213,9 @@ joinWith sep =
 
 textDate :: CT.SDateRec -> Doc Unit
 textDate dateRec
-    =  D.text "-" <> D.text (CT.toLeadingZero dateRec.day)
+    =  D.text (CT.toLeadingZero dateRec.day)
     <> D.text "-" <> D.text (CT.monthThreeLetter $ CT.monthFromInt dateRec.mon)
-    <> D.text (show dateRec.year)
+    <> D.text "-" <> D.text (show dateRec.year)
 
 
 textTime :: CT.STimeRec -> Doc Unit
@@ -222,7 +225,7 @@ textTime timeRec
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
 
 
-_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit) -- FIXME: reuse in `Org`
+_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
 _progressSuffixOneLiner = case _ of
     None -> mempty
     Unknown -> mempty

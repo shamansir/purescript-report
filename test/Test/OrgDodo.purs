@@ -71,42 +71,42 @@ expectedDhall = """* Astral Chain
 :END:
 *** Time : 07:54:00
 :PROPERTIES:
-:Name: Time
+:Title: Time
 :ONTIME: 07:54:00
 :END:
 *** Duration : 36:48:56
 :PROPERTIES:
-:Name: Duration
+:Title: Duration
 :ONTIME: 36:48:56
 :END:
 *** Date : <2001-01-11>
 :PROPERTIES:
-:Name: Date
+:Title: Date
 :ONDATE: <2001-01-11>
 :END:
 *** Name : File 11
 :PROPERTIES:
-:Name: Name
+:Title: Name
 :TEXTVAL: File 11
 :END:
 *** Chapter : Reckoning
 :PROPERTIES:
-:Name: Chapter
+:Title: Chapter
 :TEXTVAL: Reckoning
 :END:
 *** Rank : Riotsu
 :PROPERTIES:
-:Name: Rank
+:Title: Rank
 :TEXTVAL: Riotsu
 :END:
 *** Grade : Expert
 :PROPERTIES:
-:Name: Grade
+:Title: Grade
 :TEXTVAL: Expert
 :END:
 *** Play Style : Pt Standard
 :PROPERTIES:
-:Name: Play Style
+:Title: Play Style
 :TEXTVAL: Pt Standard
 :END:
 ** Stats
@@ -116,7 +116,7 @@ expectedDhall = """* Astral Chain
 :END:
 *** Order Completion : 67/185
 :PROPERTIES:
-:Name: Order Completion
+:Title: Order Completion
 :TOGETI: 67 185
 :END:
 *** Hero
@@ -126,37 +126,37 @@ expectedDhall = """* Astral Chain
 :END:
 **** Health : 1200--1200
 :PROPERTIES:
-:Name: Health
+:Title: Health
 :RANGEI: 1200 1200
 :END:
 **** Resonance : 1.0%
 :PROPERTIES:
-:Name: Resonance
+:Title: Resonance
 :PERCENTN: 1.0
 :END:
 **** ATK : 50
 :PROPERTIES:
-:Name: ATK
+:Title: ATK
 :INTVAL: 50
 :END:
 **** Money : 628G
 :PROPERTIES:
-:Name: Money
+:Title: Money
 :MESI: 628 G
 :END:
 **** Gene Codes : 514
 :PROPERTIES:
-:Name: Gene Codes
+:Title: Gene Codes
 :INTVAL: 514
 :END:
 **** Duty Evaluation : 41832
 :PROPERTIES:
-:Name: Duty Evaluation
+:Title: Duty Evaluation
 :INTVAL: 41832
 :END:
 **** Order Completion : 0.36%
 :PROPERTIES:
-:Name: Order Completion
+:Title: Order Completion
 :PERCENTN: 0.36
 :END:
 *** Weapons
@@ -166,57 +166,57 @@ expectedDhall = """* Astral Chain
 :END:
 **** X-Baton Level : 6
 :PROPERTIES:
-:Name: X-Baton Level
+:Title: X-Baton Level
 :INTVAL: 6
 :END:
 **** Baton Atk : 130
 :PROPERTIES:
-:Name: Baton Atk
+:Title: Baton Atk
 :INTVAL: 130
 :END:
 **** Blaster Atk : 58
 :PROPERTIES:
-:Name: Blaster Atk
+:Title: Blaster Atk
 :INTVAL: 58
 :END:
 **** Gladius Atk : 282
 :PROPERTIES:
-:Name: Gladius Atk
+:Title: Gladius Atk
 :INTVAL: 282
 :END:
 **** Limiter Refill : 1.1%
 :PROPERTIES:
-:Name: Limiter Refill
+:Title: Limiter Refill
 :PERCENTN: 1.1
 :END:
 **** Command Skills Unlocked : 5
 :PROPERTIES:
-:Name: Command Skills Unlocked
+:Title: Command Skills Unlocked
 :INTVAL: 5
 :END:
 **** Legatus Level : 4
 :PROPERTIES:
-:Name: Legatus Level
+:Title: Legatus Level
 :INTVAL: 4
 :END:
 **** AED Recovery : 1.0%
 :PROPERTIES:
-:Name: AED Recovery
+:Title: AED Recovery
 :PERCENTN: 1.0
 :END:
 **** AED Speed : 7sec
 :PROPERTIES:
-:Name: AED Speed
+:Title: AED Speed
 :MESI: 7 sec
 :END:
 **** Limiter Max : 130
 :PROPERTIES:
-:Name: Limiter Max
+:Title: Limiter Max
 :INTVAL: 130
 :END:
 **** Additional AED Batteries : 1
 :PROPERTIES:
-:Name: Additional AED Batteries
+:Title: Additional AED Batteries
 :INTVAL: 1
 :END:
 *** Basic
@@ -226,74 +226,74 @@ expectedDhall = """* Astral Chain
 :END:
 **** All Pure Platinum : 0/1
 :PROPERTIES:
-:Name: All Pure Platinum
+:Title: All Pure Platinum
 :TOGETI: 0 1
 :END:
 **** Red Cases Closed
 **** Blue Cases Closed
 **** Sword Scholar : 0/1
 :PROPERTIES:
-:Name: Sword Scholar
+:Title: Sword Scholar
 :TOGETI: 0 1
 :END:
 **** Sword Master : 0/1
 :PROPERTIES:
-:Name: Sword Master
+:Title: Sword Master
 :TOGETI: 0 1
 :END:
 **** Arrow Scholar : 1/1
 :PROPERTIES:
-:Name: Arrow Scholar
+:Title: Arrow Scholar
 :TOGETI: 1 1
 :END:
 **** Arrow Master : 0/1
 :PROPERTIES:
-:Name: Arrow Master
+:Title: Arrow Master
 :TOGETI: 0 1
 :END:
 **** Arm Scholar : 1/1
 :PROPERTIES:
-:Name: Arm Scholar
+:Title: Arm Scholar
 :TOGETI: 1 1
 :END:
 **** Arm Master : 0/1
 :PROPERTIES:
-:Name: Arm Master
+:Title: Arm Master
 :TOGETI: 0 1
 :END:
 **** Beast Scholar : 1/1
 :PROPERTIES:
-:Name: Beast Scholar
+:Title: Beast Scholar
 :TOGETI: 1 1
 :END:
 **** Beast Master : 0/1
 :PROPERTIES:
-:Name: Beast Master
+:Title: Beast Master
 :TOGETI: 0 1
 :END:
 **** Axe Scholar : 0/1
 :PROPERTIES:
-:Name: Axe Scholar
+:Title: Axe Scholar
 :TOGETI: 0 1
 :END:
 **** Axe Master : 0/1
 :PROPERTIES:
-:Name: Axe Master
+:Title: Axe Master
 :TOGETI: 0 1
 :END:
 **** Legionis Dominus : 0/0
 :PROPERTIES:
-:Name: Legionis Dominus
+:Title: Legionis Dominus
 :TOGETI: 0 0
 :END:
 **** X-Baton Master : 0/0
 :PROPERTIES:
-:Name: X-Baton Master
+:Title: X-Baton Master
 :TOGETI: 0 0
 :END:
 **** Legatus Master : 0/0
 :PROPERTIES:
-:Name: Legatus Master
+:Title: Legatus Master
 :TOGETI: 0 0
 :END:
 **** Chapters
@@ -303,57 +303,57 @@ expectedDhall = """* Astral Chain
 :END:
 ***** Startup : 1/1
 :PROPERTIES:
-:Name: Startup
+:Title: Startup
 :TOGETI: 1 1
 :END:
 ***** Awake : 1/1
 :PROPERTIES:
-:Name: Awake
+:Title: Awake
 :TOGETI: 1 1
 :END:
 ***** Link : 1/1
 :PROPERTIES:
-:Name: Link
+:Title: Link
 :TOGETI: 1 1
 :END:
 ***** Siedge : 1/1
 :PROPERTIES:
-:Name: Siedge
+:Title: Siedge
 :TOGETI: 1 1
 :END:
 ***** Accord : 1/1
 :PROPERTIES:
-:Name: Accord
+:Title: Accord
 :TOGETI: 1 1
 :END:
 ***** Complicit : 1/1
 :PROPERTIES:
-:Name: Complicit
+:Title: Complicit
 :TOGETI: 1 1
 :END:
 ***** Wild : 1/1
 :PROPERTIES:
-:Name: Wild
+:Title: Wild
 :TOGETI: 1 1
 :END:
 ***** Peace : 1/1
 :PROPERTIES:
-:Name: Peace
+:Title: Peace
 :TOGETI: 1 1
 :END:
 ***** Salvation : 1/1
 :PROPERTIES:
-:Name: Salvation
+:Title: Salvation
 :TOGETI: 1 1
 :END:
 ***** Madness : 1/1
 :PROPERTIES:
-:Name: Madness
+:Title: Madness
 :TOGETI: 1 1
 :END:
 ***** Reckoning : 1/1
 :PROPERTIES:
-:Name: Reckoning
+:Title: Reckoning
 :TOGETI: 1 1
 :END:
 **** S+
@@ -363,57 +363,57 @@ expectedDhall = """* Astral Chain
 :END:
 ***** Startup : 0/1
 :PROPERTIES:
-:Name: Startup
+:Title: Startup
 :TOGETI: 0 1
 :END:
 ***** Awake : 0/1
 :PROPERTIES:
-:Name: Awake
+:Title: Awake
 :TOGETI: 0 1
 :END:
 ***** Link : 0/1
 :PROPERTIES:
-:Name: Link
+:Title: Link
 :TOGETI: 0 1
 :END:
 ***** Siedge : 0/1
 :PROPERTIES:
-:Name: Siedge
+:Title: Siedge
 :TOGETI: 0 1
 :END:
 ***** Accord : 0/1
 :PROPERTIES:
-:Name: Accord
+:Title: Accord
 :TOGETI: 0 1
 :END:
 ***** Complicit : 0/1
 :PROPERTIES:
-:Name: Complicit
+:Title: Complicit
 :TOGETI: 0 1
 :END:
 ***** Wild : 0/1
 :PROPERTIES:
-:Name: Wild
+:Title: Wild
 :TOGETI: 0 1
 :END:
 ***** Peace : 0/1
 :PROPERTIES:
-:Name: Peace
+:Title: Peace
 :TOGETI: 0 1
 :END:
 ***** Salvation : 0/1
 :PROPERTIES:
-:Name: Salvation
+:Title: Salvation
 :TOGETI: 0 1
 :END:
 ***** Madness : 0/1
 :PROPERTIES:
-:Name: Madness
+:Title: Madness
 :TOGETI: 0 1
 :END:
 ***** Reckoning : 0/1
 :PROPERTIES:
-:Name: Reckoning
+:Title: Reckoning
 :TOGETI: 0 1
 :END:
 **** Rank
@@ -423,22 +423,22 @@ expectedDhall = """* Astral Chain
 :END:
 ***** Silver : 0/0
 :PROPERTIES:
-:Name: Silver
+:Title: Silver
 :TOGETI: 0 0
 :END:
 ***** Gold : 0/0
 :PROPERTIES:
-:Name: Gold
+:Title: Gold
 :TOGETI: 0 0
 :END:
 ***** Platinum : 0/0
 :PROPERTIES:
-:Name: Platinum
+:Title: Platinum
 :TOGETI: 0 0
 :END:
 ***** Pure Platinum : 0/0
 :PROPERTIES:
-:Name: Pure Platinum
+:Title: Pure Platinum
 :TOGETI: 0 0
 :END:
 *** Combat
@@ -450,152 +450,152 @@ expectedDhall = """* Astral Chain
 **** Itemanical
 **** Round Sword Master : 5/30
 :PROPERTIES:
-:Name: Round Sword Master
+:Title: Round Sword Master
 :TOGETI: 5 30
 :END:
 **** Triple Sword Master : 0/30
 :PROPERTIES:
-:Name: Triple Sword Master
+:Title: Triple Sword Master
 :TOGETI: 0 30
 :END:
 **** Slow Shot Master : 7/30
 :PROPERTIES:
-:Name: Slow Shot Master
+:Title: Slow Shot Master
 :TOGETI: 7 30
 :END:
 **** Air Shot Master : 30/30
 :PROPERTIES:
-:Name: Air Shot Master
+:Title: Air Shot Master
 :TOGETI: 30 30
 :END:
 **** Gravity Storm Master : 0/30
 :PROPERTIES:
-:Name: Gravity Storm Master
+:Title: Gravity Storm Master
 :TOGETI: 0 30
 :END:
 **** Round Bullet Master : 0/30
 :PROPERTIES:
-:Name: Round Bullet Master
+:Title: Round Bullet Master
 :TOGETI: 0 30
 :END:
 **** Howl Master : 7/30
 :PROPERTIES:
-:Name: Howl Master
+:Title: Howl Master
 :TOGETI: 7 30
 :END:
 **** Chain Drive Master : 7/30
 :PROPERTIES:
-:Name: Chain Drive Master
+:Title: Chain Drive Master
 :TOGETI: 7 30
 :END:
 **** Crash Bomb Master : 0/30
 :PROPERTIES:
-:Name: Crash Bomb Master
+:Title: Crash Bomb Master
 :TOGETI: 0 30
 :END:
 **** Blue Shield Master : 0/30
 :PROPERTIES:
-:Name: Blue Shield Master
+:Title: Blue Shield Master
 :TOGETI: 0 30
 :END:
 **** Hit Rush Master : 9/30
 :PROPERTIES:
-:Name: Hit Rush Master
+:Title: Hit Rush Master
 :TOGETI: 9 30
 :END:
 **** Auto-Bind Master : 4/30
 :PROPERTIES:
-:Name: Auto-Bind Master
+:Title: Auto-Bind Master
 :TOGETI: 4 30
 :END:
 **** Speed Start Master : 0/30
 :PROPERTIES:
-:Name: Speed Start Master
+:Title: Speed Start Master
 :TOGETI: 0 30
 :END:
 **** Sync Keep Master : 0/30
 :PROPERTIES:
-:Name: Sync Keep Master
+:Title: Sync Keep Master
 :TOGETI: 0 30
 :END:
 **** Power Charge Master : 30/30
 :PROPERTIES:
-:Name: Power Charge Master
+:Title: Power Charge Master
 :TOGETI: 30 30
 :END:
 **** Sync Attack Master : 30/30
 :PROPERTIES:
-:Name: Sync Attack Master
+:Title: Sync Attack Master
 :TOGETI: 30 30
 :END:
 **** Chain Jump Attack Master : 30/30
 :PROPERTIES:
-:Name: Chain Jump Attack Master
+:Title: Chain Jump Attack Master
 :TOGETI: 30 30
 :END:
 **** Chain Counter Attack Master : 18/30
 :PROPERTIES:
-:Name: Chain Counter Attack Master
+:Title: Chain Counter Attack Master
 :TOGETI: 18 30
 :END:
 **** Finishing Move Master : 30/30
 :PROPERTIES:
-:Name: Finishing Move Master
+:Title: Finishing Move Master
 :TOGETI: 30 30
 :END:
 **** Fusion Master : 2/10
 :PROPERTIES:
-:Name: Fusion Master
+:Title: Fusion Master
 :TOGETI: 2 10
 :END:
 **** Stealth Bind Master : 27/30
 :PROPERTIES:
-:Name: Stealth Bind Master
+:Title: Stealth Bind Master
 :TOGETI: 27 30
 :END:
 **** Simply Stunning : 30/30
 :PROPERTIES:
-:Name: Simply Stunning
+:Title: Simply Stunning
 :TOGETI: 30 30
 :END:
 **** Baton Maniac : 50000/50000
 :PROPERTIES:
-:Name: Baton Maniac
+:Title: Baton Maniac
 :TOGETI: 50000 50000
 :END:
 **** Blaster Maniac : 40354/50000
 :PROPERTIES:
-:Name: Blaster Maniac
+:Title: Blaster Maniac
 :TOGETI: 40354 50000
 :END:
 **** Gladius Maniac : 50000/50000
 :PROPERTIES:
-:Name: Gladius Maniac
+:Title: Gladius Maniac
 :TOGETI: 50000 50000
 :END:
 **** Sharpshooter : 10/10
 :PROPERTIES:
-:Name: Sharpshooter
+:Title: Sharpshooter
 :TOGETI: 10 10
 :END:
 **** Absolute K-9 Unit : 3/10
 :PROPERTIES:
-:Name: Absolute K-9 Unit
+:Title: Absolute K-9 Unit
 :TOGETI: 3 10
 :END:
 **** Armed & Dangerous : 5/10
 :PROPERTIES:
-:Name: Armed & Dangerous
+:Title: Armed & Dangerous
 :TOGETI: 5 10
 :END:
 **** Parry Professional : 0/10
 :PROPERTIES:
-:Name: Parry Professional
+:Title: Parry Professional
 :TOGETI: 0 10
 :END:
 **** Ted's Best Customer : 0/5
 :PROPERTIES:
-:Name: Ted's Best Customer
+:Title: Ted's Best Customer
 :TOGETI: 0 5
 :END:
 *** Collection
@@ -607,7 +607,7 @@ expectedDhall = """* Astral Chain
 **** Finders Keepers
 **** Red Matter Reducer : 1000/1000
 :PROPERTIES:
-:Name: Red Matter Reducer
+:Title: Red Matter Reducer
 :TOGETI: 1000 1000
 :END:
 **** ???
@@ -615,17 +615,17 @@ expectedDhall = """* Astral Chain
 **** Know Your Enemy
 **** People Watcher : 1/20
 :PROPERTIES:
-:Name: People Watcher
+:Title: People Watcher
 :TOGETI: 1 20
 :END:
 **** It's Who You Know : 1/40
 :PROPERTIES:
-:Name: It's Who You Know
+:Title: It's Who You Know
 :TOGETI: 1 40
 :END:
 **** Ask Tourist : 2/28
 :PROPERTIES:
-:Name: Ask Tourist
+:Title: Ask Tourist
 :TOGETI: 2 28
 :END:
 **** Blueshifter
@@ -633,29 +633,29 @@ expectedDhall = """* Astral Chain
 **** Gene Code Glutton
 **** Hard Worker : 100000/100000
 :PROPERTIES:
-:Name: Hard Worker
+:Title: Hard Worker
 :TOGETI: 100000 100000
 :END:
 **** Model Officer : 465057/500000
 :PROPERTIES:
-:Name: Model Officer
+:Title: Model Officer
 :TOGETI: 465057 500000
 :END:
 **** Long Arm of the Law : 465057/2000000
 :PROPERTIES:
-:Name: Long Arm of the Law
+:Title: Long Arm of the Law
 :TOGETI: 465057 2000000
 :END:
 **** Ark Beautification Society : 10/10
 :PROPERTIES:
-:Name: Ark Beautification Society
+:Title: Ark Beautification Society
 :TOGETI: 10 10
 :END:
 **** ???
 **** ???
 **** Fashionista : 13/39
 :PROPERTIES:
-:Name: Fashionista
+:Title: Fashionista
 :TOGETI: 13 39
 :END:
 **** Red Matter Remover
@@ -665,57 +665,57 @@ expectedDhall = """* Astral Chain
 :END:
 ***** File 01 : 0/1
 :PROPERTIES:
-:Name: File 01
+:Title: File 01
 :TOGETI: 0 1
 :END:
 ***** File 02 : 0/1
 :PROPERTIES:
-:Name: File 02
+:Title: File 02
 :TOGETI: 0 1
 :END:
 ***** File 03 : 1/1
 :PROPERTIES:
-:Name: File 03
+:Title: File 03
 :TOGETI: 1 1
 :END:
 ***** File 04 : 1/1
 :PROPERTIES:
-:Name: File 04
+:Title: File 04
 :TOGETI: 1 1
 :END:
 ***** File 05 : 0/1
 :PROPERTIES:
-:Name: File 05
+:Title: File 05
 :TOGETI: 0 1
 :END:
 ***** File 06 : 1/1
 :PROPERTIES:
-:Name: File 06
+:Title: File 06
 :TOGETI: 1 1
 :END:
 ***** File 07 : 1/1
 :PROPERTIES:
-:Name: File 07
+:Title: File 07
 :TOGETI: 1 1
 :END:
 ***** File 08 : 0/1
 :PROPERTIES:
-:Name: File 08
+:Title: File 08
 :TOGETI: 0 1
 :END:
 ***** File 09 : 1/1
 :PROPERTIES:
-:Name: File 09
+:Title: File 09
 :TOGETI: 1 1
 :END:
 ***** File 10 : 1/1
 :PROPERTIES:
-:Name: File 10
+:Title: File 10
 :TOGETI: 1 1
 :END:
 ***** File 11 : 0/1
 :PROPERTIES:
-:Name: File 11
+:Title: File 11
 :TOGETI: 0 1
 :END:
 **** Slime Splatter
@@ -725,57 +725,57 @@ expectedDhall = """* Astral Chain
 :END:
 ***** File 01 : 0/1
 :PROPERTIES:
-:Name: File 01
+:Title: File 01
 :TOGETI: 0 1
 :END:
 ***** File 02 : 0/1
 :PROPERTIES:
-:Name: File 02
+:Title: File 02
 :TOGETI: 0 1
 :END:
 ***** File 03 : 0/1
 :PROPERTIES:
-:Name: File 03
+:Title: File 03
 :TOGETI: 0 1
 :END:
 ***** File 04 : 0/1
 :PROPERTIES:
-:Name: File 04
+:Title: File 04
 :TOGETI: 0 1
 :END:
 ***** File 05 : 0/1
 :PROPERTIES:
-:Name: File 05
+:Title: File 05
 :TOGETI: 0 1
 :END:
 ***** File 06 : 0/1
 :PROPERTIES:
-:Name: File 06
+:Title: File 06
 :TOGETI: 0 1
 :END:
 ***** File 07 : 0/1
 :PROPERTIES:
-:Name: File 07
+:Title: File 07
 :TOGETI: 0 1
 :END:
 ***** File 08 : 0/1
 :PROPERTIES:
-:Name: File 08
+:Title: File 08
 :TOGETI: 0 1
 :END:
 ***** File 09 : 0/1
 :PROPERTIES:
-:Name: File 09
+:Title: File 09
 :TOGETI: 0 1
 :END:
 ***** File 10 : 0/1
 :PROPERTIES:
-:Name: File 10
+:Title: File 10
 :TOGETI: 0 1
 :END:
 ***** File 11 : 0/1
 :PROPERTIES:
-:Name: File 11
+:Title: File 11
 :TOGETI: 0 1
 :END:
 **** Feline Friend
@@ -785,57 +785,57 @@ expectedDhall = """* Astral Chain
 :END:
 ***** File 01 : 0/1
 :PROPERTIES:
-:Name: File 01
+:Title: File 01
 :TOGETI: 0 1
 :END:
 ***** File 02 : 0/1
 :PROPERTIES:
-:Name: File 02
+:Title: File 02
 :TOGETI: 0 1
 :END:
 ***** File 03 : 0/1
 :PROPERTIES:
-:Name: File 03
+:Title: File 03
 :TOGETI: 0 1
 :END:
 ***** File 04 : 1/1
 :PROPERTIES:
-:Name: File 04
+:Title: File 04
 :TOGETI: 1 1
 :END:
 ***** File 05 : 0/1
 :PROPERTIES:
-:Name: File 05
+:Title: File 05
 :TOGETI: 0 1
 :END:
 ***** File 06 : 1/1
 :PROPERTIES:
-:Name: File 06
+:Title: File 06
 :TOGETI: 1 1
 :END:
 ***** File 07 : 1/1
 :PROPERTIES:
-:Name: File 07
+:Title: File 07
 :TOGETI: 1 1
 :END:
 ***** File 08 : 1/1
 :PROPERTIES:
-:Name: File 08
+:Title: File 08
 :TOGETI: 1 1
 :END:
 ***** File 09 : 0/1
 :PROPERTIES:
-:Name: File 09
+:Title: File 09
 :TOGETI: 0 1
 :END:
 ***** File 10 : 0/1
 :PROPERTIES:
-:Name: File 10
+:Title: File 10
 :TOGETI: 0 1
 :END:
 ***** File 11 : 0/1
 :PROPERTIES:
-:Name: File 11
+:Title: File 11
 :TOGETI: 0 1
 :END:
 **** Nature Calls
@@ -845,62 +845,62 @@ expectedDhall = """* Astral Chain
 :END:
 ***** [ ] HQ
 :PROPERTIES:
-:Name: HQ
+:Title: HQ
 :TOCOMPLETE: false
 :END:
 ***** File 01 : 0/1
 :PROPERTIES:
-:Name: File 01
+:Title: File 01
 :TOGETI: 0 1
 :END:
 ***** File 02 : 0/1
 :PROPERTIES:
-:Name: File 02
+:Title: File 02
 :TOGETI: 0 1
 :END:
 ***** File 03 : 1/1
 :PROPERTIES:
-:Name: File 03
+:Title: File 03
 :TOGETI: 1 1
 :END:
 ***** File 04 : 1/1
 :PROPERTIES:
-:Name: File 04
+:Title: File 04
 :TOGETI: 1 1
 :END:
 ***** File 05 : 1/1
 :PROPERTIES:
-:Name: File 05
+:Title: File 05
 :TOGETI: 1 1
 :END:
 ***** File 06 : 0/1
 :PROPERTIES:
-:Name: File 06
+:Title: File 06
 :TOGETI: 0 1
 :END:
 ***** File 07 : 1/1
 :PROPERTIES:
-:Name: File 07
+:Title: File 07
 :TOGETI: 1 1
 :END:
 ***** File 08 : 0/1
 :PROPERTIES:
-:Name: File 08
+:Title: File 08
 :TOGETI: 0 1
 :END:
 ***** File 09 : 1/1
 :PROPERTIES:
-:Name: File 09
+:Title: File 09
 :TOGETI: 1 1
 :END:
 ***** File 10 : 1/1
 :PROPERTIES:
-:Name: File 10
+:Title: File 10
 :TOGETI: 1 1
 :END:
 ***** File 11 : 1/1
 :PROPERTIES:
-:Name: File 11
+:Title: File 11
 :TOGETI: 1 1
 :END:
 *** Unique
@@ -910,42 +910,42 @@ expectedDhall = """* Astral Chain
 :END:
 **** A Who's Who of Hermits : 0/0
 :PROPERTIES:
-:Name: A Who's Who of Hermits
+:Title: A Who's Who of Hermits
 :TOGETI: 0 0
 :END:
 **** Lappy's Helium Hullaballoo : 0/0
 :PROPERTIES:
-:Name: Lappy's Helium Hullaballoo
+:Title: Lappy's Helium Hullaballoo
 :TOGETI: 0 0
 :END:
 **** Sweet Release : 0/0
 :PROPERTIES:
-:Name: Sweet Release
+:Title: Sweet Release
 :TOGETI: 0 0
 :END:
 **** Summer Avalanche : 0/0
 :PROPERTIES:
-:Name: Summer Avalanche
+:Title: Summer Avalanche
 :TOGETI: 0 0
 :END:
 **** [X] Serious Student
 :PROPERTIES:
-:Name: Serious Student
+:Title: Serious Student
 :TOCOMPLETE: true
 :END:
 **** Doggy Door : 0/0
 :PROPERTIES:
-:Name: Doggy Door
+:Title: Doggy Door
 :TOGETI: 0 0
 :END:
 **** Amateur Photographer : 1/1
 :PROPERTIES:
-:Name: Amateur Photographer
+:Title: Amateur Photographer
 :TOGETI: 1 1
 :END:
 **** Precious Memories : 24/36
 :PROPERTIES:
-:Name: Precious Memories
+:Title: Precious Memories
 :TOGETI: 24 36
 :END:
 **** ???
@@ -953,7 +953,7 @@ expectedDhall = """* Astral Chain
 **** ???
 **** Astral Perfection : 0/0
 :PROPERTIES:
-:Name: Astral Perfection
+:Title: Astral Perfection
 :TOGETI: 0 0
 :END:
 **** Photo
@@ -963,56 +963,56 @@ expectedDhall = """* Astral Chain
 :END:
 ***** I See You! : 0/0
 :PROPERTIES:
-:Name: I See You!
+:Title: I See You!
 :TOGETI: 0 0
 :END:
 ***** Daddy Dearest : 0/0
 :PROPERTIES:
-:Name: Daddy Dearest
+:Title: Daddy Dearest
 :TOGETI: 0 0
 :END:
 ***** Major Malfunction : 0/0
 :PROPERTIES:
-:Name: Major Malfunction
+:Title: Major Malfunction
 :TOGETI: 0 0
 :END:
 ***** Get Me Down! : 0/0
 :PROPERTIES:
-:Name: Get Me Down!
+:Title: Get Me Down!
 :TOGETI: 0 0
 :END:
 ***** Get Well Soon : 0/0
 :PROPERTIES:
-:Name: Get Well Soon
+:Title: Get Well Soon
 :TOGETI: 0 0
 :END:
 ***** Uppers Delight : 0/0
 :PROPERTIES:
-:Name: Uppers Delight
+:Title: Uppers Delight
 :TOGETI: 0 0
 :END:
 ***** Do NOT show Marie! : 0/0
 :PROPERTIES:
-:Name: Do NOT show Marie!
+:Title: Do NOT show Marie!
 :TOGETI: 0 0
 :END:
 ***** Hello, Partner! : 0/0
 :PROPERTIES:
-:Name: Hello, Partner!
+:Title: Hello, Partner!
 :TOGETI: 0 0
 :END:
 ***** Best Friends! : 0/0
 :PROPERTIES:
-:Name: Best Friends!
+:Title: Best Friends!
 :TOGETI: 0 0
 :END:
 ***** Packing Heat! : 0/0
 :PROPERTIES:
-:Name: Packing Heat!
+:Title: Packing Heat!
 :TOGETI: 0 0
 :END:
 ***** Comfort and Justice! : 0/0
 :PROPERTIES:
-:Name: Comfort and Justice!
+:Title: Comfort and Justice!
 :TOGETI: 0 0
 :END:""" :: String
