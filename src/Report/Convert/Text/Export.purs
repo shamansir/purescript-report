@@ -8,7 +8,7 @@ import Prelude
 import Foreign (Foreign, F)
 import Control.Monad.Except (runExcept)
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Either (either)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Tuple (uncurry) as Tuple
@@ -39,7 +39,7 @@ import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
-import Report.Tabular (findV) as Tabular
+import Report.Tabular (findV, Item(..), items) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
@@ -91,21 +91,13 @@ toText inclRule =
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
             D.text "#" <> D.space <> D.text subjectRec.name
-            <> D.break <> D.indent (tabularsBlock
+            <> D.break <> D.indent (_tabularsBlock
                 $ Array.catMaybes
                     [ {- Just $ "Id" /\ D.text (unwrap subjectRec.id)
                     , -} mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ textDate dateRec
                     ]
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
-
-        tabularsBlock :: Array (String /\ Doc Unit) -> Doc Unit
-        tabularsBlock [] = mempty
-        tabularsBlock fields =
-            (joinWith D.break $ tabularLine <$> fields) <> D.break
-
-        tabularLine :: (String /\ Doc Unit) -> Doc Unit
-        tabularLine (name /\ value) = D.text "-" <> D.space <> D.text name <> D.text ": " <> value
 
         addIndent :: Int -> Doc Unit -> Doc Unit
         addIndent level toWhat =
@@ -135,7 +127,7 @@ toText inclRule =
                 itemIndent = addIndent $ groupDeepLevel + 1
                 decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
                 decoratorsSuffixes   = Array.catMaybes $ convertDecoratorToSuffix   <$> itemRec.decorators
-                tabulars             = Array.catMaybes $ convertTabularToDoc        <$> itemRec.tabulars
+                tabulars             =                   _convertTabularToDoc       <$> itemRec.tabulars
                 decoratorsPrefixesDoc =
                     case decoratorsPrefixes of
                         [] -> mempty
@@ -144,13 +136,9 @@ toText inclRule =
                     case decoratorsSuffixes of
                         [] -> mempty
                         suffixes -> D.space <> joinWith D.space suffixes
-                tabularsBlockDoc =
-                    case tabulars of
-                        [] -> mempty
-                        _ -> D.break <> tabularsBlock tabulars
             in
             itemIndent (decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc)
-            <> tabularsBlockDoc
+            <> _tabularsBlockDoc tabulars
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
@@ -186,24 +174,14 @@ toText inclRule =
                         Just $ D.text "/ " <> D.text desc <> D.text " /"
                     D.SReference _ ->
                         Nothing
-                    D.STags tags ->
-                        case unwrap tags of
+                    D.STags theTags ->
+                        case unwrap theTags of
                             [] -> Nothing
                             tagArr ->
-                                Just $ D.text " #" <>
-                                    ( joinWith (D.space <> D.text "#")
-                                         $ D.text
-                                        <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
-                                        <$> MbW.toString
-                                        <$> tagContent
-                                        <$> tagArr
-                                    )
+                                Just $ tags tagArr
                     _ -> mempty
                 )
                 modRec.fvalue
-
-        convertTabularToDoc :: TabularRec -> Maybe (String /\ Doc Unit)
-        convertTabularToDoc { tkey, tlabel, value } = Just (tlabel /\ D.text tkey) -- FIXME
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
@@ -223,6 +201,90 @@ textTime timeRec
     =  D.text (CT.toLeadingZero timeRec.hrs)
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.min)
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
+
+
+_tabularsBlock :: Array (String /\ Doc Unit) -> Doc Unit
+_tabularsBlock [] = mempty
+_tabularsBlock fields =
+    (joinWith D.break $ _tabularLine <$> fields) <> D.break
+
+
+_tabularLine :: (String /\ Doc Unit) -> Doc Unit
+_tabularLine (name /\ value) = D.text "-" <> D.space <> D.text name <> D.text ": " <> value
+
+
+_tabularsBlockDoc :: Array (String /\ Doc Unit) -> Doc Unit
+_tabularsBlockDoc tabulars =
+    case tabulars of
+        [] -> mempty
+        _ -> D.break <> _tabularsBlock tabulars
+
+
+tags :: Array RawTag -> Doc Unit
+tags tagArr = D.text " #" <>
+    ( joinWith (D.space <> D.text "#")
+            $ D.text
+        <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
+        <$> MbW.toString
+        <$> tagContent
+        <$> tagArr
+    )
+
+
+_convertTabularToDoc :: TabularRec -> String /\ Doc Unit
+_convertTabularToDoc { tkey, tlabel, value } = tlabel /\ _tabularValueDoc value
+
+
+_collectTabularItem :: Tabular.Item TV.TabularValue -> TabularRec
+_collectTabularItem = case _ of
+    Tabular.Item { key, label, value } ->
+        { tkey  : key
+        , tlabel : label
+        , value : value -- ValueModify.toEditable
+        }
+
+
+_tabularValueDoc :: TV.TabularValue -> Doc Unit
+_tabularValueDoc = case _ of
+    TV.TVAtomic atomicValue -> _tabularAtomicValueDoc atomicValue
+    TV.TVValues aValues -> joinWith (D.break <> D.text "- ") $ _tabularAtomicValueDoc <$> aValues
+    TV.TVValuesNest aValuesNest -> joinWith D.break $ (joinWith $ D.break <> D.break) <$> map _tabularAtomicValueDoc <$> aValuesNest
+    TV.TVTabulars tabulars ->
+        joinWith (D.break <> D.break)
+             $ (Tabular.items
+                >>> map (map TV.TVAtomic >>> _collectTabularItem >>> _convertTabularToDoc)
+                >>> _tabularsBlock)
+            <$> tabulars
+    TV.TVPair left right -> _tabularValueDoc left <> D.text " | " <> _tabularValueDoc right
+    TV.TVTabularsNest tabularsNest -> mempty -- TODO: implement -- joinWith D.break $ ?wh <$> tabularsNest
+
+
+_tabularAtomicValueDoc :: TV.TabularAtomicValue -> Doc Unit
+_tabularAtomicValueDoc = case _ of
+    TV.TVString str -> D.text str
+    TV.TVNumber num -> D.text $ show num
+    TV.TVBoolean b -> D.text $ show b
+    TV.TVInt i -> D.text $ show i
+    TV.TVDate dateRec -> textDate $ CT.dateToRec dateRec
+    TV.TVTime timeRec -> textTime timeRec
+    TV.TVYear year -> D.text $ show year
+    TV.TVID n -> D.text $ show n
+    TV.TVDateTime dateRec timeRec -> textDate (CT.dateToRec dateRec) <> D.text " " <> textTime timeRec
+    TV.TVTimeRange { from, to } -> textTime from <> D.text "--" <> textTime to
+    TV.TVDateRange { from, to } -> textDate (CT.dateToRec from) <> D.text "--" <> textDate (CT.dateToRec to)
+    TV.TVDateTimeRange { from, to } -> textDate (CT.dateToRec from.date) <> D.text " " <> textTime from.time <> D.text "--" <> textDate (CT.dateToRec to.date) <> D.text " " <> textTime to.time
+    TV.TVDecorator decorator -> case decorator of
+        D.SProgress p -> fromMaybe mempty $ _progressSuffixOneLiner p
+        D.SEarnedAt ea -> D.text " at " <> textDate (CT.dateToRec ea)
+        D.SDescription desc -> D.text "/ " <> D.text desc <> D.text " /"
+        D.SReference _ -> mempty
+        D.STags theTags -> case unwrap theTags of
+            [] -> mempty
+            tagArr ->
+                tags tagArr
+        D.PRating rating -> D.text $ show $ Rating.toStars rating
+        D.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
+        D.PTask task -> D.text $ Task.taskPToString task
 
 
 _progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
