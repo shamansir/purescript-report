@@ -38,7 +38,6 @@ data Decorator t
     | STags (Tags t)
 
 
-
 -- derive instance Eq (Decorator t)
 -- instance Ord t => Ord (Decorator t) where
 --     compare a b = CK.keyOf @Key a `compare` CK.keyOf @Key b
@@ -75,6 +74,8 @@ instance CK.Keyed Key (Decorator t) where
 
 newtype Decorators t = Decorators (Map Key (Decorator t)) -- other names: `Adornments`, `Markers`, `Attributes, `Modifiers`
 derive instance Newtype (Decorators t) _
+instance Functor Decorators where
+    map f = unwrap >>> map (mapTags f) >>> wrap
 
 
 instance ReadForeign (Decorators RawTag)

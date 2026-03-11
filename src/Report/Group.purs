@@ -100,6 +100,16 @@ type FoldStep = { prevPath :: Array String, prevNames :: Array String, groupChai
 -- type FoldStep = NonEmptyArray (Array String /\ String)
 
 
+
+mkg :: Array String -> String -> Group
+mkg path = mkGroup $ wrap <$> path
+
+
+mkgw :: Array String -> String -> Stats -> Group
+mkgw path = mkGroupWith $ wrap <$> path
+
+
+-- TODO: same shortcuts for mkGroup / mkGroupWith
 cg :: Array String -> String -> Chain Group
 cg is l = cgx ((\i -> i /\ i) <$> is) (l /\ l)
 cg_ :: String -> Chain Group

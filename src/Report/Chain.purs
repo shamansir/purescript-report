@@ -168,12 +168,15 @@ fromNEArray nearr =
                 mbwRest -> maybe (End head) (More head) $ fromArray mbwRest
 
 
+chainSeparator = "::" :: String
+
+
 toString :: Chain String -> String
-toString mbw = String.joinWith "<>" (toArray mbw)
+toString mbw = String.joinWith chainSeparator (toArray mbw)
 
 
 fromString :: String -> Maybe (Chain String)
-fromString str = fromArray (String.split (String.Pattern "<>") str)
+fromString str = fromArray (String.split (String.Pattern chainSeparator) str)
 
 
 fromList :: forall a. List a -> Maybe (Chain a)

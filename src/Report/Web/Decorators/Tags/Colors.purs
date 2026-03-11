@@ -15,3 +15,5 @@ tagVar09 = { background : "green", border : "black", text : "aqua" } :: TagColor
 tagVar10 = { background : "transparent", text : "black", border : "blue" } :: TagColors
 tagVar11 = { background : "transparent", text : "black", border : "black" } :: TagColors
 tagVar12 = { background : "lightgray", text : "white", border : "gray" } :: TagColors
+tagVar13 = { background : "transparent", border : "black", text : "torquoise" } :: TagColors
+-- torquoise, violet, springgreen, whitesmoke, wheat, tomato, thistle, teal, steelblue, springgreen
