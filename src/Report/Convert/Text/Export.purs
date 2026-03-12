@@ -25,6 +25,8 @@ import Yoga.JSON (class WriteForeign, writePrettyJSON, class ReadForeign, readIm
 import Report (Report)
 import Report.Core as CT
 import Report.Group (Group)
+import Report.Decorators.Stats (Stats)
+import Report.Decorators.Stats as Stats
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
 import Report.Chain as MbW
@@ -90,7 +92,7 @@ toText inclRule =
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            D.text "#" <> D.space <> D.text subjectRec.name
+            D.text "#" <> D.space <> D.text subjectRec.name <> D.space <> renderStats subjectRec.stats
             <> D.break <> D.indent (_tabularsBlock
                 $ Array.catMaybes
                     [ {- Just $ "Id" /\ D.text (unwrap subjectRec.id)
@@ -114,7 +116,7 @@ toText inclRule =
                 groupDeepLevel = GroupPath.howDeep groupRec.path
                 groupIndent = addIndent groupDeepLevel
             in
-            groupIndent (D.text (show index) <> D.text "." <+> D.text groupRec.title <+> convertPath groupRec.path)
+            groupIndent (D.text (show index) <> D.text "." <+> D.text groupRec.title <+> renderStats groupRec.stats <> convertPath groupRec.path)
             <> D.break
             <> (joinWith D.break $ convertItem groupRec.path <$> items)
             <> D.break
@@ -348,3 +350,14 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> textTime timeRec
     Error err ->
         mempty
+
+
+renderStats :: Stats -> Doc Unit
+renderStats stats =
+    case stats of
+        Stats.SGotTotal { got, total } -> D.text (show got) <> D.text "/" <> D.text (show total) <> D.space
+        Stats.SWithProgress { got, onTheWay, total } -> D.text (show got) <> D.text "/" <> D.text (show total) -- <> D.text "(" <> D.text (show onTheWay) <> D.text ")" <> D.space
+        Stats.SFromProgress progress -> mempty
+        Stats.SCount { count } -> D.text " (" <> D.text (show count) <> D.text ")" <> D.space
+        Stats.SNotRelevant -> mempty
+        Stats.SYetUnknown -> mempty
