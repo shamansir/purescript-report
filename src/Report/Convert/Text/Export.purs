@@ -63,6 +63,16 @@ type Config = { style :: Style, indent :: String }
 -}
 
 
+type Config =
+    { renderTabulars :: Boolean
+    }
+
+
+defaultConfig =
+    { renderTabulars: true
+    } :: Config
+
+
 toText
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToExport subj_id subj_tag item_tag subj group item x
@@ -70,7 +80,18 @@ toText
     => Report.IncludeRule subj_id
     -> Report subj group item
     -> String
-toText inclRule =
+toText = toTextWith @x @subj_id @subj_tag @item_tag defaultConfig
+
+
+toTextWith
+    :: forall @x @subj_id @subj_tag @item_tag subj group item
+     . Report.ToExport subj_id subj_tag item_tag subj group item x
+    => IsTag item_tag
+    => Config
+    -> Report.IncludeRule subj_id
+    -> Report subj group item
+    -> String
+toTextWith cfg inclRule =
     Report.toExport @x @subj_id @subj_tag @item_tag inclRule
         >>> unwrap
         >>> _.subjects
@@ -140,7 +161,7 @@ toText inclRule =
                         suffixes -> D.space <> joinWith D.space suffixes
             in
             itemIndent (decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc)
-            <> _tabularsBlockDoc tabulars
+            <> if cfg.renderTabulars then (itemIndent $ _tabularsBlockDoc tabulars) else mempty
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
