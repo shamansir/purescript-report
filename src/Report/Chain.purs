@@ -172,11 +172,19 @@ chainSeparator = "::" :: String
 
 
 toString :: Chain String -> String
-toString mbw = String.joinWith chainSeparator (toArray mbw)
+toString = toStringSep chainSeparator
+
+
+toStringSep :: String -> Chain String -> String
+toStringSep sep mbw = String.joinWith sep (toArray mbw)
 
 
 fromString :: String -> Maybe (Chain String)
-fromString str = fromArray (String.split (String.Pattern chainSeparator) str)
+fromString = fromStringSep chainSeparator
+
+
+fromStringSep :: String -> String -> Maybe (Chain String)
+fromStringSep sep str = fromArray (String.split (String.Pattern sep) str)
 
 
 fromList :: forall a. List a -> Maybe (Chain a)
