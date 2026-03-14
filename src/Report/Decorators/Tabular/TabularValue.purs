@@ -38,7 +38,8 @@ data TabularAtomicValue
          { from :: { date :: SDate, time :: STimeRec }
          , to   :: { date :: SDate, time :: STimeRec }
          }
-    | TVDecorator (Decorator RawTag)
+    | TVDecorator Decorator
+    | TVTags (Array RawTag)
 
 
 data TabularValue
@@ -147,6 +148,7 @@ tagOfAtomic = TVTag <<< case _ of
     TVDateRange _ -> "DR"
     TVDateTimeRange _ -> "DTR"
     TVDecorator _ -> "DX"
+    TVTags _ -> "TS"
 
 
 tagOf :: TabularValue -> TVTag
@@ -197,7 +199,8 @@ decodeAtomicWithKey key frgn = case key of
     TVTag "DTR" -> do
         rec <- readImpl frgn :: F { from :: { date :: SDate, time :: STimeRec }, to :: { date :: SDate, time :: STimeRec } }
         pure $ TVDateTimeRange { from: rec.from, to: rec.to }
-    TVTag "DX" -> TVDecorator <$> (readImpl frgn :: F (Decorator RawTag))
+    TVTag "DX" -> TVDecorator <$> (readImpl frgn :: F Decorator)
+    TVTag "TS" -> TVTags <$> (readImpl frgn :: F (Array RawTag))
     _          -> F.fail $ F.ForeignError "Unknown TabularAtomicValue tag"
 
 
@@ -232,6 +235,7 @@ instance WriteForeign TabularAtomicValue where
         TVDateRange dr -> writeImpl dr
         TVDateTimeRange dtr -> writeImpl dtr
         TVDecorator decx -> writeImpl decx
+        TVTags tags -> writeImpl tags
         where
             tabularKey = CK.encodeKey $ tagOfAtomic tabular
 
@@ -240,9 +244,8 @@ progress :: P.Progress -> TabularValue
 progress = TVAtomic <<< TVDecorator <<< SProgress
 
 
-dec :: Decorator RawTag -> TabularValue
+dec :: Decorator -> TabularValue
 dec = TVAtomic <<< TVDecorator
-
 
 str :: String -> TabularValue
 str = TVAtomic <<< TVString
@@ -267,3 +270,6 @@ timeRange = TVAtomic <<< TVTimeRange
 
 dateRange :: { from :: SDate, to :: SDate } -> TabularValue
 dateRange = TVAtomic <<< TVDateRange
+
+tags :: Array RawTag -> TabularValue
+tags = TVAtomic <<< TVTags

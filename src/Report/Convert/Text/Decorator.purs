@@ -18,7 +18,7 @@ import Report.Convert.Text.Decorators.Task as TEnc
 import Report.Convert.Text.Decorators.Tags as TgEnc
 
 
-encodeDecorator :: forall t. IsTag t => Decorator t -> Key /\ CT.EncodedValue
+encodeDecorator :: Decorator -> Key /\ CT.EncodedValue
 encodeDecorator s = case s of
     PRating rating ->
         KRating /\ REnc.encodeRating rating
@@ -34,11 +34,11 @@ encodeDecorator s = case s of
         KDescription /\ CT.EncodedValue desc
     SReference gpath ->
         KReference /\ (CT.EncodedValue $ GP.encode gpath)
-    STags tags ->
-        KTags /\ TgEnc.encodeTags tags
+    -- STags tags ->
+    --     KTags /\ TgEnc.encodeTags tags
 
 
-decodeDecorator :: forall t. IsTag t => Key -> CT.EncodedValue -> Maybe (Decorator t)
+decodeDecorator :: Key -> CT.EncodedValue -> Maybe Decorator
 decodeDecorator key encVal@(CT.EncodedValue evStr) = case key of
     KRating ->
         REnc.decodeRating encVal
@@ -59,5 +59,5 @@ decodeDecorator key encVal@(CT.EncodedValue evStr) = case key of
         Just $ SDescription evStr
     KReference ->
         GP.decode evStr <#> SReference
-    KTags ->
-        Just $ STags $ TgEnc.decodeTags encVal
+    -- KTags ->
+    --     Just $ STags $ TgEnc.decodeTags encVal

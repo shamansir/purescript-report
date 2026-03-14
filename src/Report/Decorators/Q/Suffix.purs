@@ -11,43 +11,43 @@ import Report.Decorator (Decorator(..))
 
 
 
-text :: forall t. String -> Decorator t
+text :: String -> Decorator
 text = SProgress <<< P.PText
 
 
-num :: forall t. Number -> Decorator t
+num :: Number -> Decorator
 num = SProgress <<< P.PNumber
 
 
-int :: forall t. Int -> Decorator t
+int :: Int -> Decorator
 int = SProgress <<< P.PInt
 
 
-done :: forall t. Decorator t
+done :: Decorator
 done = SProgress $ P.ToComplete { done : true }
 
 
-none :: forall t. Decorator t
+none :: Decorator
 none = SProgress $ P.ToComplete { done : false }
 
 
-todo :: forall t. Decorator t
+todo :: Decorator
 todo = none
 
 
-got_i :: forall t. Int -> Int -> Decorator t
+got_i :: Int -> Int -> Decorator
 got_i got total = SProgress $ P.ToGetI { got, total }
 
 
-got_n :: forall t. Number -> Number -> Decorator t
+got_n :: Number -> Number -> Decorator
 got_n got total = SProgress $ P.ToGetN { got, total }
 
 
-pct_i :: forall t. Int -> Decorator t
+pct_i :: Int -> Decorator
 pct_i = SProgress <<< P.PercentI
 
 
-pct_n :: forall t. Number -> Decorator t
+pct_n :: Number -> Decorator
 pct_n = SProgress <<< P.PercentN
 
 
@@ -62,7 +62,7 @@ _ston = case _ of
     Negative -> -1
 
 
-pct_sn :: forall t. Sign -> Number -> Decorator t
+pct_sn :: Sign -> Number -> Decorator
 pct_sn sgn n = SProgress $ P.PercentSign { sign : _ston sgn, pct : n }
 
 
@@ -70,117 +70,109 @@ newtype Measure = Measure String
 newtype Per = Per String
 
 
-meas_i :: forall t. Int -> Measure -> Decorator t
+meas_i :: Int -> Measure -> Decorator
 meas_i n (Measure u) = SProgress $ P.MeasuredI { amount : n, measure : u }
 
 
-meas_n :: forall t. Number -> Measure -> Decorator t
+meas_n :: Number -> Measure -> Decorator
 meas_n n (Measure u) = SProgress $ P.MeasuredN { amount : n, measure : u }
 
 
-meas_sn :: forall t. Sign -> Number -> Measure -> Decorator t
+meas_sn :: Sign -> Number -> Measure -> Decorator
 meas_sn sgn n (Measure u) = SProgress $ P.MeasuredSign { sign : _ston sgn, amount : n, measure : u }
 
 
-per_i :: forall t. Int -> Per -> Decorator t
+per_i :: Int -> Per -> Decorator
 per_i n (Per u) = SProgress $ P.PerI { amount : n, per : u }
 
 
-per_n :: forall t. Number -> Per -> Decorator t
+per_n :: Number -> Per -> Decorator
 per_n n (Per u) = SProgress $ P.PerN { amount : n, per : u }
 
 
-on_date :: forall t. CT.SDateRec -> Decorator t
+on_date :: CT.SDateRec -> Decorator
 on_date = SProgress <<< P.OnDate <<< CT.dateFromRec
 
 
-on_time :: forall t. CT.STimeRec -> Decorator t
+on_time :: CT.STimeRec -> Decorator
 on_time = SProgress <<< P.OnTime
 
 
-rng_i :: forall t. Int -> Int -> Decorator t
+rng_i :: Int -> Int -> Decorator
 rng_i from to = SProgress $ P.RangeI { from, to }
 
 
-rng_n :: forall t. Number -> Number -> Decorator t
+rng_n :: Number -> Number -> Decorator
 rng_n from to = SProgress $ P.RangeN { from, to }
 
 
-task_todo :: forall t. Decorator t
+task_todo :: Decorator
 task_todo = SProgress $ P.Task T.TTodo
 
 
-task_done :: forall t. Decorator t
+task_done :: Decorator
 task_done = SProgress $ P.Task T.TDone
 
 
-task_doing :: forall t. Decorator t
+task_doing :: Decorator
 task_doing = SProgress $ P.Task T.TDoing
 
 
-task_wait :: forall t. Decorator t
+task_wait :: Decorator
 task_wait = SProgress $ P.Task T.TWait
 
 
-task_canceled :: forall t. Decorator t
+task_canceled :: Decorator
 task_canceled = SProgress $ P.Task T.TCanceled
 
 
-task_now :: forall t. Decorator t
+task_now :: Decorator
 task_now = SProgress $ P.Task T.TNow
 
 
-task_later :: forall t. Decorator t
+task_later :: Decorator
 task_later = SProgress $ P.Task T.TLater
 
 
-levels_n :: forall t. P.LevelsN -> Decorator t
+levels_n :: P.LevelsN -> Decorator
 levels_n = SProgress <<< P.LevelsN
 
 
-levels_i :: forall t. P.LevelsI -> Decorator t
+levels_i :: P.LevelsI -> Decorator
 levels_i = SProgress <<< P.LevelsI
 
 
-levels_o :: forall t. P.LevelsO -> Decorator t
+levels_o :: P.LevelsO -> Decorator
 levels_o = SProgress <<< P.LevelsO
 
 
-levels_s :: forall t. P.LevelsS -> Decorator t
+levels_s :: P.LevelsS -> Decorator
 levels_s = SProgress <<< P.LevelsS
 
 
-levels_e :: forall t. P.LevelsE -> Decorator t
+levels_e :: P.LevelsE -> Decorator
 levels_e = SProgress <<< P.LevelsE
 
 
-levels_c :: forall t. P.LevelsC -> Decorator t
+levels_c :: P.LevelsC -> Decorator
 levels_c = SProgress <<< P.LevelsC
 
 
-levels_p :: forall t. P.LevelsP -> Decorator t
+levels_p :: P.LevelsP -> Decorator
 levels_p = SProgress <<< P.LevelsP
 
 
-rel_time :: forall t. P.Relation -> CT.STimeRec -> Decorator t
+rel_time :: P.Relation -> CT.STimeRec -> Decorator
 rel_time rel timeRec = SProgress $ P.RelTime rel timeRec
 
 
-earnedAt :: forall t. CT.SDateRec -> Decorator t
+earnedAt :: CT.SDateRec -> Decorator
 earnedAt = SEarnedAt <<< CT.dateFromRec
 
 
-details :: forall t. String -> Decorator t
+details :: String -> Decorator
 details = SDescription
 
 
-self_ref :: forall t. GroupPath -> Decorator t
+self_ref :: GroupPath -> Decorator
 self_ref = SReference
-
-
-tags :: forall t. Array t -> Decorator t
-tags = STags <<< Tags
-
-
-tag :: forall t. t -> Decorator t
-tag = tags <<< pure

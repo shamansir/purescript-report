@@ -27,7 +27,7 @@ import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
 
 
 
-data Decorator t
+data Decorator
     = PRating Rating
     | PPriority Priority
     | PTask TaskP
@@ -35,7 +35,7 @@ data Decorator t
     | SEarnedAt CT.SDate
     | SDescription String
     | SReference GP.GroupPath
-    | STags (Tags t)
+    -- | STags (Tags t)
 
 
 -- derive instance Eq (Decorator t)
@@ -56,10 +56,9 @@ data Key
     | KEarnedAt
     | KDescription
     | KReference
-    | KTags
 
 
-instance CK.Keyed Key (Decorator t) where
+instance CK.Keyed Key Decorator where
     keyOf = case _ of
         PRating _ -> KRating
         PPriority _ -> KPriority
@@ -68,62 +67,58 @@ instance CK.Keyed Key (Decorator t) where
         SEarnedAt _ -> KEarnedAt
         SDescription _ -> KDescription
         SReference _ -> KReference
-        STags _ -> KTags
 
 
-
-newtype Decorators t = Decorators (Map Key (Decorator t)) -- other names: `Adornments`, `Markers`, `Attributes, `Modifiers`
-derive instance Newtype (Decorators t) _
-instance Functor Decorators where
-    map f = unwrap >>> map (mapTags f) >>> wrap
+newtype Decorators = Decorators (Map Key Decorator) -- other names: `Adornments`, `Markers`, `Attributes, `Modifiers`
+derive instance Newtype Decorators _
 
 
-instance ReadForeign (Decorators RawTag)
+instance ReadForeign Decorators
     where
         readImpl frgn = do
-            recArr <- (readImpl frgn :: F (Array { key :: String, value :: Decorator RawTag }))
+            recArr <- (readImpl frgn :: F (Array { key :: String, value :: Decorator }))
             let tupleArr = recArr <#> (\{ key, value } -> decodeKey key <#> \k -> k /\ value)
             pure $ fromArray $ Array.catMaybes tupleArr
-instance WriteForeign (Decorators RawTag)
+instance WriteForeign Decorators
     where
         writeImpl modifiers =
             let recArr = toArray modifiers <#> \(k /\ v) -> { key: encodeKey k, value: v }
             in  writeImpl recArr
 
 
-empty :: forall tag. Decorators tag
+empty :: Decorators
 empty = wrap Map.empty
 
 
-size :: forall tag. Decorators tag -> Int
+size :: Decorators -> Int
 size = unwrap >>> Map.size
 
 
-get :: forall tag. Key -> Decorators tag -> Maybe (Decorator tag)
+get :: Key -> Decorators -> Maybe Decorator
 get key = unwrap >>> Map.lookup key
 
 
-keys :: forall tag. Decorators tag -> Array Key
+keys :: Decorators -> Array Key
 keys = unwrap >>> Map.keys >>> Set.toUnfoldable
 
 
-put :: forall tag. Decorator tag -> Decorators tag -> Decorators tag
+put :: Decorator -> Decorators -> Decorators
 put modifier = unwrap >>> Map.insert (CK.keyOf modifier) modifier >>> wrap
 
 
-toArray :: forall tag. Decorators tag -> Array (Key /\ Decorator tag)
+toArray :: Decorators -> Array (Key /\ Decorator)
 toArray = unwrap >>> Map.toUnfoldable
 
 
-fromArray :: forall tag. Ord Key => Array (Key /\ Decorator tag) -> Decorators tag
+fromArray :: Ord Key => Array (Key /\ Decorator) -> Decorators
 fromArray = wrap <<< Map.fromFoldable
 
 
-prefixes :: forall tag. Decorators tag -> Array (Key /\ Decorator tag)
+prefixes :: Decorators -> Array (Key /\ Decorator)
 prefixes = unwrap >>> Map.toUnfoldable >>> Array.filter (isPrefix <<< Tuple.fst)
 
 
-suffixes :: forall tag. Decorators tag -> Array (Key /\ Decorator tag)
+suffixes :: Decorators -> Array (Key /\ Decorator)
 suffixes = unwrap >>> Map.toUnfoldable >>> Array.filter (isSuffix <<< Tuple.fst)
 
 
@@ -136,7 +131,6 @@ encodeKey = case _ of
     KEarnedAt -> "EARN"
     KDescription -> "DESC"
     KReference -> "REF"
-    KTags -> "TAGS"
 
 
 decodeKey :: String -> Maybe Key
@@ -148,14 +142,13 @@ decodeKey str =
             "EARN" -> Just KEarnedAt
             "DESC" -> Just KDescription
             "REF"  -> Just KReference
-            "TAGS" -> Just KTags
             "RATING"   -> Just KRating
             "PRIORITY" -> Just KPriority
             "TASK"     -> Just KTask
             _      -> Nothing
 
 
-decodeWithKey :: forall tag. ReadForeign tag => Key -> Foreign -> F (Decorator tag)
+decodeWithKey :: Key -> Foreign -> F Decorator
 decodeWithKey key f = case key of
     KRating   -> PRating   <$> readImpl f
     KPriority -> PPriority <$> readImpl f
@@ -164,10 +157,9 @@ decodeWithKey key f = case key of
     KEarnedAt -> SEarnedAt <$> readImpl f
     KDescription -> SDescription <$> readImpl f
     KReference -> SReference <$> readImpl f
-    KTags -> STags <$> readImpl f
 
 
-writeValue :: forall tag. WriteForeign tag => Decorator tag -> Foreign
+writeValue :: Decorator -> Foreign
 writeValue = case _ of
     PRating r -> writeImpl r
     PPriority p -> writeImpl p
@@ -176,7 +168,6 @@ writeValue = case _ of
     SEarnedAt d -> writeImpl d
     SDescription desc -> writeImpl desc
     SReference path -> writeImpl path
-    STags tags -> writeImpl tags
 
 
 debugNavLabel :: Key -> String
@@ -188,17 +179,17 @@ instance CK.EncodableKey Key where
     decodeKey = decodeKey
 
 
-instance CK.KeyedReadForeign Key (Decorator RawTag) where
+instance CK.KeyedReadForeign Key Decorator where
     keyedReadImpl = decodeWithKey
 
 
-instance ReadForeign (Decorator RawTag) where
+instance ReadForeign Decorator where
     readImpl frgn =
         (CK.readImpl' frgn :: F (CK.KeyedValue Key Foreign))
             >>= \kv -> decodeWithKey (CK.key kv) (CK.value kv)
 
 
-instance WriteForeign (Decorator RawTag) where
+instance WriteForeign Decorator where
     writeImpl decorator =
         CK.writeImpl' $ CK.make (CK.keyOf @Key decorator) $ writeValue decorator
 
@@ -218,7 +209,6 @@ isSuffix = case _ of
     KEarnedAt -> true
     KDescription -> true
     KReference -> true
-    KTags -> true
     _ -> false
 
 
@@ -227,7 +217,7 @@ prefixesInOrder = [ KRating, KPriority, KTask ]
 
 
 suffixesInOrder :: Array Key
-suffixesInOrder = (P.inlineProgress <#> KProgress) <> [ KEarnedAt, KDescription, KReference, KTags ] <> (P.leveledProgress <#> KProgress)
+suffixesInOrder = (P.inlineProgress <#> KProgress) <> [ KEarnedAt, KDescription, KReference ] <> (P.leveledProgress <#> KProgress)
 
 
 orderOf :: Key -> Int
@@ -272,7 +262,6 @@ orderOf = case _ of
     KEarnedAt -> 21
     KDescription -> 22
     KReference -> 23
-    KTags -> 24
     where
         levelShift = 25
 
@@ -283,13 +272,13 @@ allKeys =
     prefixesInOrder <> suffixesInOrder
 
 
-getProgress :: forall t. P.PValueTag -> Decorators t -> Maybe P.Progress
+getProgress :: P.PValueTag -> Decorators -> Maybe P.Progress
 getProgress pvtag dcrts = get (KProgress pvtag) dcrts >>= case _ of
     SProgress p -> Just p
     _ -> Nothing
 
 
-hasProgress :: forall t. Decorators t -> Maybe P.PValueTag
+hasProgress :: Decorators -> Maybe P.PValueTag
 hasProgress = keys >>> Array.findMap
     ( case _ of
         KProgress p -> Just p
@@ -297,7 +286,7 @@ hasProgress = keys >>> Array.findMap
     )
 
 
-collectProgress :: forall t. Decorators t -> Array (Maybe P.PValueTag /\ P.Progress)
+collectProgress :: Decorators -> Array (Maybe P.PValueTag /\ P.Progress)
 collectProgress sfx =
     toArray sfx
         <#> (\(key /\ suffix) -> case key /\ suffix of
@@ -308,60 +297,37 @@ collectProgress sfx =
          # Array.catMaybes
 
 
-getEarnedAt :: forall t. Decorators t -> Maybe CT.SDate
+getEarnedAt :: Decorators -> Maybe CT.SDate
 getEarnedAt sfx = get KEarnedAt sfx >>= case _ of
     SEarnedAt d -> Just d
     _ -> Nothing
 
 
-getDescription :: forall t. Decorators t -> Maybe String
+getDescription :: Decorators -> Maybe String
 getDescription sfx = get KDescription sfx >>= case _ of
     SDescription desc -> Just desc
     _ -> Nothing
 
 
-getReference :: forall t. Decorators t -> Maybe GP.GroupPath
+getReference :: Decorators -> Maybe GP.GroupPath
 getReference sfx = get KReference sfx >>= case _ of
     SReference path -> Just path
     _ -> Nothing
 
 
-getTags :: forall t. Decorators t -> Maybe (Tags t)
-getTags sfx = get KTags sfx >>= case _ of
-    STags tags -> Just tags
-    _ -> Nothing
-
-
-getRating :: forall t. Decorators t -> Maybe Rating
+getRating :: Decorators -> Maybe Rating
 getRating pfx = get KRating pfx >>= case _ of
     PRating r -> Just r
     _ -> Nothing
 
 
-getPriotity :: forall t. Decorators t -> Maybe Priority
+getPriotity :: Decorators -> Maybe Priority
 getPriotity pfx = get KPriority pfx >>= case _ of
     PPriority p -> Just p
     _ -> Nothing
 
 
-getTask :: forall t. Decorators t ->  Maybe TaskP
+getTask :: Decorators ->  Maybe TaskP
 getTask pfx = get KTask pfx >>= case _ of
     PTask t -> Just t
     _ -> Nothing
-
-
-mapTags :: forall t t'. (t -> t') -> Decorator t -> Decorator t'
-mapTags f = case _ of
-    STags tags -> STags $ f <$> tags
-    -- unsafeCoerce
-    PRating r -> PRating r
-    PPriority p -> PPriority p
-    PTask t -> PTask t
-    SProgress prog -> SProgress prog
-    SEarnedAt d -> SEarnedAt d
-    SDescription desc -> SDescription desc
-    SReference path -> SReference path
-
-
-allMapTags :: forall t u. (t -> u) -> Decorators t -> Decorators u
-allMapTags f = unwrap >>> map (mapTags f) >>> wrap

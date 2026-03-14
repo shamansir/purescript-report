@@ -112,7 +112,7 @@ type DecoratorRenderConfig i t =
        , isEditingDecorator :: Maybe CT.EncodedValue
        , isEditingItemName :: Maybe CT.EncodedValue
        , onEditItemName :: CT.EncodedValue -> i
-       , allDecorators :: Decorators t
+       , allDecorators :: Decorators
        , parentItemName :: String
        , onTagClick :: t -> MouseEvent -> i
     --    , onTagMove :: t -> MouseEvent -> TagAction
