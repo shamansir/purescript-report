@@ -23,54 +23,52 @@ import Report.Decorators.Rating (toNumber, maxValue, relValue, toStars, toString
 import Report.Decorators.Priority (priorityChar) as Priority
 import Report.Decorators.Task (taskPToString) as Task
 import Report.Decorators.Tags (Tags(..))
+import Report.Decorators.Tags (toArray) as Tags
 
 import Report.Web.Helpers
-import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfig)
+import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfig, TagsRenderConfig, EditableValueEvents)
 import Report.Web.Decorators.Progress (renderProgress)
 import Report.Web.Decorators.Tags (itemTagBadge)
 import Report.Web.GroupPath (renderGroupRef)
 
 
 renderPrefixes
-    :: forall @item_tag item w i
-     . S.IsTag item_tag
-    => S.IsItem item
-    => S.HasDecorators item_tag item
-    => DecoratorsRenderConfig i item_tag
+    :: forall item w i
+     . S.IsItem item
+    => S.HasDecorators item
+    => DecoratorsRenderConfig i
     -> item
     -> Array (H w i)
 renderPrefixes conf item =
     let
-        i_decorators = S.i_decorators @item_tag item
+        i_decorators = S.i_decorators item
         i_title = S.i_title item
         decoratorsKeys = Decorators.keys i_decorators # Array.filter Decorators.isPrefix # Array.sortWith Decorators.orderOf -- FIXME: should be already sorted
     in
-    renderDecorators_ @item_tag conf i_title i_decorators decoratorsKeys
+    renderDecorators_ conf i_title i_decorators decoratorsKeys
 
 
 renderSuffixes
     :: forall @item_tag item w i
-     . S.IsTag item_tag
-    => S.IsItem item
-    => S.HasDecorators item_tag item
-    => DecoratorsRenderConfig i item_tag
+     . S.IsItem item
+    => S.HasDecorators item
+    => DecoratorsRenderConfig i
     -> item
     -> Array (H w i)
 renderSuffixes conf item =
     let
-        i_decorators = S.i_decorators @item_tag item
+        i_decorators = S.i_decorators item
         i_title = S.i_title item
         decoratorsKeys = Decorators.keys i_decorators # Array.filter Decorators.isSuffix # Array.sortWith Decorators.orderOf -- FIXME: should be already sorted
     in
-    renderDecorators_ @item_tag conf i_title i_decorators decoratorsKeys
+    renderDecorators_ conf i_title i_decorators decoratorsKeys
 
 
 renderDecorators_
-    :: forall @item_tag w i
-     . S.IsTag item_tag
-    => DecoratorsRenderConfig i item_tag
+    :: forall w i
+     . DecoratorsRenderConfig i
     -> String
-    -> Decorators item_tag
+    -> Decorators
     -> Array Dec.Key
     -> Array (H w i)
 renderDecorators_ conf itemName allDecorators decoratorsKeys =
@@ -96,15 +94,13 @@ renderDecorators_ conf itemName allDecorators decoratorsKeys =
                             , parentItemName : itemName
                             , onStartEditing : conf.onStartEditing
                             , onCancelEditing : conf.onCancelEditing
-                            , onTagClick : conf.onTagClick
                             , noop : conf.noop
                             }
 
 
 renderDecorator
     :: forall @t w i
-     . S.IsTag t
-    => DecoratorRenderConfig i t
+     . DecoratorRenderConfig i
     -> H w i
 renderDecorator conf =
     let
@@ -205,17 +201,12 @@ renderDecorator conf =
                 whenNotEditing $ renderGroupRef groupRef
             Just _ -> HH.text ""
             Nothing -> HH.text ""
-        Dec.KTags -> case currentDecorator of
-            Just (Dec.STags (Tags tags)) ->
-                whenNotEditing $ HH.span_ $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> tags
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+        -- Dec.KTags -> case currentDecorator of
+        --     Just (Dec.STags (Tags tags)) ->
+        --         whenNotEditing $ HH.span_ $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> tags
+        --     Just _ -> HH.text ""
+        --     Nothing -> HH.text ""
     where
-        -- whenNotEditing :: H w i -> H w i
-        -- whenNotEditing nonEditing = case conf.isEditingPrefix of
-        --     Just (CT.EncodedValue value) ->
-        --         HH.span [ HP.style "color: gray;" ] [ HH.text value ]
-        --     Nothing -> nonEditing
         progressConfig =
             { onEdit : conf.onEdit
             , onClick : conf.onClick
@@ -226,17 +217,37 @@ renderDecorator conf =
             }
         whenNotEditing :: H w i -> H w i
         whenNotEditing nonEditing = case conf.isEditingDecorator of
-            Just (CT.EncodedValue encVal) ->
-                HH.input
-                    [ HP.type_ HP.InputText
-                    , HP.value encVal
-                    , HE.onClick conf.onStartEditing
-                    , HE.onValueChange (CT.EncodedValue >>> conf.onEdit)
-                    , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
-                        \code -> if code == "Escape" || code == "Enter"
-                            then conf.onCancelEditing
-                            else conf.noop)
-                    , HE.onBlur $ const conf.onCancelEditing
-                    , HE.onAbort $ const conf.onCancelEditing
-                    ]
+            Just encVal ->
+                _editInput conf encVal
             Nothing -> nonEditing
+
+
+_editInput :: forall r w i. EditableValueEvents i r -> CT.EncodedValue -> H w i
+_editInput conf (CT.EncodedValue encVal) =
+    HH.input
+        [ HP.type_ HP.InputText
+        , HP.value encVal
+        , HE.onClick conf.onStartEditing
+        , HE.onValueChange (CT.EncodedValue >>> conf.onEdit)
+        , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
+            \code -> if code == "Escape" || code == "Enter"
+                then conf.onCancelEditing
+                else conf.noop)
+        , HE.onBlur $ const conf.onCancelEditing
+        , HE.onAbort $ const conf.onCancelEditing
+        ]
+
+
+renderTags
+    :: forall @t w i
+     . S.IsTag t
+    => Tags t
+    -> TagsRenderConfig i t
+    -> H w i
+renderTags tags conf =
+    case conf.isEditingTags of
+        Just encVal ->
+            _editInput conf encVal
+        Nothing ->
+            HH.span_
+                $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> Tags.toArray tags
