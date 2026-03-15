@@ -35,7 +35,7 @@ data What
     -- | GroupStat -- TODO
     | ItemName Int
     | ItemDecorator Int Decorator.Key
-    | ItemTags Int Int
+    | ItemTag Int Int
     | ItemTabular Int Int
     -- | AddDecorator -- TODO
     -- | AddItem -- TODO
@@ -118,7 +118,7 @@ modifyAt { subjId, what, newValue, path } report = case what of
         Report.withItem subjId path itemIdx (setItemName $ unwrapEditable newValue) report
     ItemDecorator itemIdx deckey -> do
         Report.withItem subjId path itemIdx (setDecorator deckey) report
-    ItemTags itemIdx tagIdx ->
+    ItemTag itemIdx tagIdx ->
         Report.withItem subjId path itemIdx setTags report
     ItemTabular itemIdx tabularIdx ->
         report -- FIXME: Implement

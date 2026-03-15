@@ -262,6 +262,7 @@ orderOf = case _ of
     KEarnedAt -> 21
     KDescription -> 22
     KReference -> 23
+    -- KTags -> 24
     where
         levelShift = 25
 

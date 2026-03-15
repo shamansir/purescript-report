@@ -17,6 +17,7 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Newtype (wrap)
 
 import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
@@ -32,6 +33,7 @@ import Halogen.HTML.Properties as HP
 import Report as R
 import Report.Builder as RB
 import Report.Class as R
+import Report.Chain (toString) as Chain
 import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq) as GP
@@ -55,7 +57,7 @@ import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
-import Report.Web.Decorators (renderPrefixes, renderSuffixes)
+import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Report.Web.Component.RecalcBehavior as CRB
 
@@ -193,14 +195,13 @@ instance
 
 
 class
-    ( R.HasDecorators item_tag item
+    ( R.HasTags subj_tag subj
     , R.HasTags item_tag item
-    , R.HasTabular item
-    , R.HasTags subj_tag subj
     , R.HasStats subj
+    , R.HasStats group
+    , R.HasDecorators item
+    , R.HasTabular item
     , R.HasTabular subj
-    -- , R.HasPrefixes subj
-    -- , R.HasSuffixes subj_tag subj
     , R.HasStats group
 
     )
@@ -211,10 +212,10 @@ instance
     ( R.HasTags item_tag item
     , R.HasTags subj_tag subj
     , R.HasStats subj
-    , R.HasDecorators item_tag item
+    , R.HasStats group
+    , R.HasDecorators item
     , R.HasTabular item
     , R.HasTabular subj
-    , R.HasStats group
     ) =>
     Has subj_tag item_tag subj group item (R.Report subj group item)
 
@@ -222,7 +223,8 @@ instance
 class
     ( Modify.GroupModify group
     , Modify.StatsModify group
-    , Modify.DecoratorsModify item_tag item
+    , Modify.DecoratorsModify item
+    , Modify.TagsModify item_tag item
     , Modify.ItemModify item
     )
     <= Modify item_tag group item (x :: Type)
@@ -231,7 +233,8 @@ class
 instance
     ( Modify.GroupModify group
     , Modify.StatsModify group
-    , Modify.DecoratorsModify item_tag item
+    , Modify.DecoratorsModify item
+    , Modify.TagsModify item_tag item
     , Modify.ItemModify item
     ) =>
     Modify item_tag group item (R.Report subj group item)
@@ -570,6 +573,10 @@ component cfg =
                                                 Navigation.toItem subjId groupPath itemIdx
                     AtDecorator subjId groupPath itemIdx decoratorKey ->
                                                 Navigation.toDecorator subjId groupPath itemIdx decoratorKey
+                    AtTag subjId groupPath itemIdx tagIdx ->
+                                                Navigation.toTag subjId groupPath itemIdx tagIdx
+                    AtTabular subjId groupPath itemIdx tabularIdx ->
+                                                Navigation.toTabular subjId groupPath itemIdx tabularIdx
                     Nowhere ->
                                                 Navigation.clear
                 editNavigation s = case location of
@@ -584,8 +591,16 @@ component cfg =
                                                 Navigation.editDecorator subjId groupPath itemIdx decoratorKey
                                                 $ maybe (EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
                                                 $ Decorator.get decoratorKey
-                                                =<< R.i_decorators @item_tag
+                                                =<< R.i_decorators
                                                 <$> R.findItem subjId groupPath itemIdx s.report
+                    AtTag subjId groupPath itemIdx tagIdx ->
+                                                Navigation.editTag subjId groupPath itemIdx tagIdx
+                                                $ maybe (EncodedValue "") (R.i_tags @item_tag >>> flip Array.index tagIdx >>> map (R.tagContent >>> Chain.toString >>> EncodedValue) >>> fromMaybe (EncodedValue ""))
+                                                $ R.findItem subjId groupPath itemIdx s.report
+                    AtTabular subjId groupPath itemIdx tabularIdx ->
+                                                Navigation.editTag subjId groupPath itemIdx tabularIdx
+                                                $ maybe (EncodedValue "") (const $ EncodedValue "") -- FIXME
+                                                $ R.findItem subjId groupPath itemIdx s.report
                     Nowhere -> s.navigatedTo
                 processedReport s = processingCount s > 0
                 navigateOrEdit s =
@@ -631,11 +646,29 @@ component cfg =
                                     , what : Modify.ItemDecorator itemIdx decoratorKey
                                     , newValue : encval
                                     }
+                        AtTag subjId groupPath itemIdx tagIdx ->
+                            curReport
+                                # Modify.modifyAt @item_tag
+                                    -- ( Debug.spy "edit at tag"
+                                    { subjId
+                                    , path : groupPath
+                                    , what : Modify.ItemTag itemIdx tagIdx
+                                    , newValue : encval
+                                    }
+                        AtTabular subjId groupPath itemIdx tabularIdx ->
+                            curReport
+                                # Modify.modifyAt @item_tag
+                                    -- ( Debug.spy "edit at tabular"
+                                    { subjId
+                                    , path : groupPath
+                                    , what : Modify.ItemTabular itemIdx tabularIdx
+                                    , newValue : encval
+                                    }
             in
                 case cfg.recalculate.onEdit of
                     Just recCfg ->
                         H.modify_
-                            \s -> s { report = Modify.recalculate @item_tag recCfg $ nextReport s.report }
+                            \s -> s { report = Modify.recalculate recCfg $ nextReport s.report }
                     Nothing ->
                         H.modify_
                             \s -> s { report = nextReport s.report }
@@ -692,11 +725,12 @@ renderSubject
     => R.IsGroup group
     => R.IsSubjectId subj_id subj
     => R.IsSubject subj_id subj
-    => R.HasDecorators item_tag item
+    => R.HasDecorators item
     => R.HasTabular item
     => R.HasTabular subj
     => R.HasStats group
     => R.HasTags subj_tag subj
+    => R.HasTags item_tag item
     => NavigatedTo subj_id
     -> CollapseMap subj_id
     -> subj
@@ -778,7 +812,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     makeDecoratorEditEvt decoratorKey = EditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
-                    itemDecorators = R.i_decorators @item_tag item
+                    itemDecorators = R.i_decorators item
                     hasPrefixes = Array.length (Decorator.prefixes itemDecorators) > 0
                     titlePosition = if Decorators.hasProgress itemDecorators # Maybe.isJust then InsideProgress else Normal
                     renderDecoratorsConfig =
@@ -788,8 +822,18 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         , onClick : makeDecoratorClickEvt
                         , onEdit : makeDecoratorEditEvt
                         , onEditItemName : makeItemNameEditEvt
-                        , onTagClick : makeTagClickEvt
+                        -- , onTagClick : makeTagClickEvt
                         , onStartEditing  : StartEditing
+                        , onCancelEditing : CancelEditing
+                        , noop : NoOp
+                        }
+                    tagsRenderConfig =
+                        { isEditingTags : Just $ EncodedValue "" -- FIXME: TODO
+                        , isSelected : false  -- FIXME: TODO
+                        , onTagClick : makeTagClickEvt
+                        , onClick : const NoOp -- FIXME: TODO
+                        , onEdit : const NoOp -- FIXME: TODO
+                        , onStartEditing : StartEditing
                         , onCancelEditing : CancelEditing
                         , noop : NoOp
                         }
@@ -813,8 +857,12 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                                     if (not hasPrefixes)
                                         then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
                                         else HH.text title
+                    : HH.span_
+                        (pure
+                            $ renderTags (wrap $ R.i_tags @item_tag item)
+                            $ tagsRenderConfig
+                        )
                     : HH.span_ (renderSuffixes
-                            @item_tag
                             renderDecoratorsConfig
                             item
                         )
@@ -828,26 +876,20 @@ navigationHint navigation =
         navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
         hintIfEditing Nothing = HH.text ""
         hintIfEditing (Just { value : EncodedValue val }) = HH.text $ "E:" <> show val
+        hintText = case Navigation.toLocation navigation of
+            Nowhere -> "-"
+            AtGroup subjId groupPath -> "G: " <> show subjId <> " / " <> show groupPath
+            AtItem subjId groupPath itemIdx -> "I: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
+            AtDecorator subjId groupPath itemIdx decoratorKey -> "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Decorator.debugNavLabel decoratorKey
+            AtTag subjId groupPath itemIdx tagIdx -> "T: " <> show subjId <> " / " <> show groupPath <> " [ " <> show tagIdx <> " ]"
+            AtTabular subjId groupPath itemIdx tabularIdx -> "V: " <> show subjId <> " / " <> show groupPath <> " [ " <> show tabularIdx <> " ]"
+
     in case Navigation.toLocation navigation of
         Nowhere -> HH.text ""
-        AtGroup subjId groupPath ->
+        _ ->
             HH.div
                 [ HP.style navigationHintStyle ]
-                [ HH.text $ "G: " <> show subjId <> " / " <> show groupPath
-                , qspacerSpan
-                , hintIfEditing navigation.mbEditing
-                ]
-        AtItem subjId groupPath itemIdx ->
-            HH.div
-                [ HP.style navigationHintStyle ]
-                [ HH.text $ "I: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
-                , qspacerSpan
-                , hintIfEditing navigation.mbEditing
-                ]
-        AtDecorator subjId groupPath itemIdx decoratorKey ->
-            HH.div
-                [ HP.style navigationHintStyle ]
-                [ HH.text $ "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Decorator.debugNavLabel decoratorKey
+                [ HH.text hintText
                 , qspacerSpan
                 , hintIfEditing navigation.mbEditing
                 ]
@@ -861,7 +903,7 @@ postProcess
     => R.IsSortable item_tag
     => R.IsGroupable group item_tag
     => R.HasTags item_tag item
-    => R.HasDecorators item_tag item -- FIXME: `HasDecorators` & `HasTags` are sometimes interchangable
+    => R.HasDecorators item
     => Modify.StatsModify group
     => CRB.RecalcBehavior
     -> Array (Process item_tag)
@@ -870,7 +912,7 @@ postProcess
 postProcess recalc processes report =
     case processes of
         [] -> case recalc.onEmpty of
-                Just config -> Modify.recalculate @item_tag config report
+                Just config -> Modify.recalculate config report
                 Nothing -> report
         _  -> foldl applyProcess report processes
     where
@@ -878,14 +920,14 @@ postProcess recalc processes report =
             { action : FilterBy, tag : itemTag } ->
                 R.filterItemsByTag itemTag curReport
                     # case recalc.onFilter of
-                        Just config -> Modify.recalculate @item_tag config
+                        Just config -> Modify.recalculate config
                         Nothing -> identity
             { action : SortBy, tag : itemTag } ->
                 R.sortItemsByTag itemTag curReport
             { action : GroupBy, tag : itemTag } ->
                 R.groupItemsByTag itemTag curReport
                     # case recalc.onRegroup of
-                        Just config -> Modify.recalculate @item_tag config
+                        Just config -> Modify.recalculate config
                         Nothing -> identity
                     -- Modify.recalculate @item_tag $ nextReport s.report
 

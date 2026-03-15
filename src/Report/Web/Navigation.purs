@@ -132,6 +132,18 @@ editDecorator subj groupPath itemIdx decoratorKey encValue =
     # _ { mbEditing = Just { what : M.WKItemDecorator, value : encValue } }
 
 
+editTag :: forall subj_id. subj_id -> GP.GroupPath -> Int -> Int -> EncodedValue -> NavigatedTo subj_id
+editTag subj groupPath itemIdx tagIdx encValue =
+    toTag subj groupPath itemIdx tagIdx
+    # _ { mbEditing = Just { what : M.WKItemTags, value : encValue } }
+
+
+editTabular :: forall subj_id. subj_id -> GP.GroupPath -> Int -> Int -> EncodedValue -> NavigatedTo subj_id
+editTabular subj groupPath itemIdx tabularIdx encValue =
+    toTabular subj groupPath itemIdx tabularIdx
+    # _ { mbEditing = Just { what : M.WKItemTabular, value : encValue } }
+
+
 atGroup :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Boolean
 atGroup subj groupPath navigatedTo
     =  navigatedTo.mbSubjectId == Just subj
@@ -225,7 +237,7 @@ toModification navigatedTo =
                     pure
                         { subjId : subjId
                         , path : groupPath
-                        , what : M.ItemTags itemIdx tagIdx
+                        , what : M.ItemTag itemIdx tagIdx
                         , newValue : value
                         }
                 M.WKItemTabular -> do
