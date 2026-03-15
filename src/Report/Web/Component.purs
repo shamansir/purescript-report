@@ -828,7 +828,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         , noop : NoOp
                         }
                     tagsRenderConfig =
-                        { isEditingTags : Just $ EncodedValue "" -- FIXME: TODO
+                        { isEditingTags : Nothing
                         , isSelected : false  -- FIXME: TODO
                         , onTagClick : makeTagClickEvt
                         , onClick : const NoOp -- FIXME: TODO
@@ -857,14 +857,14 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                                     if (not hasPrefixes)
                                         then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
                                         else HH.text title
+                    : HH.span_ (renderSuffixes
+                            renderDecoratorsConfig
+                            item
+                        )
                     : HH.span_
                         (pure
                             $ renderTags (wrap $ R.i_tags @item_tag item)
                             $ tagsRenderConfig
-                        )
-                    : HH.span_ (renderSuffixes
-                            renderDecoratorsConfig
-                            item
                         )
                     : pure (const NoOp <$> renderItemTabularValues item)
 
