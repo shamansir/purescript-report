@@ -2,7 +2,7 @@ module Report.Web.Tabular where
 
 import Prelude
 
-import Data.Newtype (unwrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Array (length, intersperse) as Array
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Maybe (Maybe(..))
@@ -19,7 +19,7 @@ import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicVa
 import Report.Decorators.Tags (RawTag)
 
 import Report.Web.Helpers
-import Report.Web.Decorators (renderDecorator)
+import Report.Web.Decorators (renderDecorator, renderTags)
 
 import Report.Convert.Keyed (keyOf)
 
@@ -190,6 +190,33 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , valueSpan (TVTime to.time)
                         ]
                 TVDecorator decorator ->
+                    renderDecorator
+                        { isEditingDecorator : Nothing
+                        , isEditingItemName : Nothing
+                        , isSelected : false
+                        , key : keyOf decorator
+                        , noop : unit
+                        , onCancelEditing : unit
+                        , onClick : const unit
+                        , onEdit : const unit
+                        , onStartEditing : const unit
+                        , onEditItemName : const unit
+                        , parentItemName : ""
+                        , allDecorators : Decorators.empty
+                        }
+                TVTags tags ->
+                    renderTags
+                        (wrap tags)
+                        { isEditingTags : Nothing
+                        , isSelected : false
+                        , noop : unit
+                        , onCancelEditing : unit
+                        , onClick : const unit
+                        , onEdit : const unit
+                        , onStartEditing : const unit
+                        , onTagClick : const $ const unit
+                        }
+                    {-
                     renderDecorator @RawTag
                         { isEditingDecorator : Nothing
                         , isEditingItemName : Nothing
@@ -205,3 +232,4 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , parentItemName : ""
                         , allDecorators : Decorators.empty
                         }
+                    -}

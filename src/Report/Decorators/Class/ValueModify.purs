@@ -42,10 +42,11 @@ instance ValueModify (Maybe PValueTag) Stats where
     toEditable   = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
 
+
 instance (IsTag t) => ValueModify Unit (Tags t) where
     toEditable   = Tags.encodeTags >>> pure
     fromEditable = const $ Just <<< Tags.decodeTags
 
-instance (IsTag t) => ValueModify Dec.Key (Decorator t) where
+instance ValueModify Dec.Key Decorator where
     toEditable   = DecEnc.encodeDecorator
     fromEditable = DecEnc.decodeDecorator

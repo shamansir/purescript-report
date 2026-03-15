@@ -105,12 +105,23 @@ toDhall inclRule =
 
         convertItem :: ItemRec -> Doc Unit
         convertItem itemRec =
-            D.text "T.kv_" <> D.space <> quote itemRec.title <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
+            D.text "T.kv_" <> D.space <> quote itemRec.title <>
+                (case itemRec.tags of
+                    [] -> mempty
+                    tags -> convertTags tags <> D.space
+                )
+                <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
 
+
+        convertTags :: Array RawTag -> Doc Unit
+        convertTags =
+            map (tagContent >>> MbW.toString >>> quote)
+                >>> ilarrayD
+                >>> prefixD "// T.inj/tags"
 
         convertDecorator :: DecoratorRec -> RenderedAs (Doc Unit)
         convertDecorator decRec =
-            withImplRA @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+            withImplRA @D.Decorator
                 (case _ of
                     D.PRating rating ->
                         _ol $ D.text "p_rating " -- <> quote (decRec.value)
@@ -129,12 +140,6 @@ toDhall inclRule =
                             # map (unwrap >>> quote)
                             # ilarrayD
                             # prefixD "// T.inj/self"
-                            # _ol
-                    D.STags tags ->
-                        unwrap tags
-                            # map (tagContent >>> MbW.toString >>> quote)
-                            # ilarrayD
-                            # prefixD "// T.inj/tags"
                             # _ol
                 )
                 decRec.fvalue

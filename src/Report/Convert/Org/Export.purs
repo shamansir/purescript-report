@@ -128,6 +128,9 @@ toOrg inclRule =
                 decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
                 decoratorsSuffixes   = Array.catMaybes $ convertDecoratorToSuffix   <$> itemRec.decorators
                 decoratorsProperties = Array.concat    $ convertDecoratorToProperty <$> itemRec.decorators
+                mbTagsSuffix         = convertTagsToSuffix itemRec.tags
+                mbTagsProperty       = convertTagsToProperty itemRec.tags
+                titleProperty = ("Title" /\ D.text itemRec.title)
                 decoratorsPrefixesDoc =
                     case decoratorsPrefixes of
                         [] -> mempty
@@ -138,15 +141,28 @@ toOrg inclRule =
                         suffixes -> D.space <> joinWith D.space suffixes
                 propertiesBlockDoc =
                     case decoratorsProperties of
-                        [] -> mempty
-                        props -> D.break <> propertiesBlock ( ("Title" /\ D.text itemRec.title) : props )
+                        [] -> case mbTagsProperty of
+                            Just tagsProp -> D.break <> propertiesBlock ( titleProperty : pure tagsProp )
+                            Nothing -> mempty
+                        props -> case mbTagsProperty of
+                            Just tagsProp -> D.break <> propertiesBlock ( titleProperty : tagsProp : props )
+                            Nothing -> D.break <> propertiesBlock ( titleProperty : props )
             in
             itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc
+            <> case mbTagsSuffix of
+                Just tagsSuffix -> D.space <> tagsSuffix
+                Nothing -> mempty
             <> propertiesBlockDoc
+
+        convertTagsToProperty :: Array RawTag -> Maybe (String /\ Doc Unit)
+        convertTagsToProperty = case _ of
+            [] -> Nothing
+            tags ->
+                Just $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> tags)
 
         convertDecoratorToProperty :: DecoratorRec -> Array (String /\ Doc Unit)
         convertDecoratorToProperty modRec =
-            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+            DH.withImpl @D.Decorator
                 []
                 (case _ of
                     D.PRating rating ->
@@ -163,14 +179,12 @@ toOrg inclRule =
                         pure $ "Description" /\ D.text desc
                     D.SReference path ->
                         pure $ "Reference" /\ convertPath path
-                    D.STags tags ->
-                        pure $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> unwrap tags)
                 )
                 modRec.fvalue
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
-            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+            DH.withImpl @D.Decorator -- TODO: export tags to strings beforehand
                 mempty
                 (case _ of
                     D.PRating rating ->
@@ -191,7 +205,7 @@ toOrg inclRule =
 
         convertDecoratorToSuffix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToSuffix modRec =
-            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+            DH.withImpl @D.Decorator -- TODO: export tags to strings beforehand
                 mempty
                 (case _ of
                     D.SProgress p ->
@@ -202,21 +216,23 @@ toOrg inclRule =
                         Just $ D.text "/ " <> D.text desc <> D.text " /"
                     D.SReference _ ->
                         Nothing
-                    D.STags tags ->
-                        case unwrap tags of
-                            [] -> Nothing
-                            tagArr ->
-                                Just $ D.text " #" <>
-                                ( joinWith (D.space <> D.text "#")
-                                     $ D.text
-                                    <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
-                                    <$> MbW.toString
-                                    <$> tagContent
-                                    <$> tagArr
-                                )
                     _ -> mempty
                 )
                 modRec.fvalue
+
+        convertTagsToSuffix :: Array RawTag -> Maybe (Doc Unit)
+        convertTagsToSuffix rawTags =
+            case rawTags of
+                [] -> Nothing
+                tagArr ->
+                    Just $ D.text " #" <>
+                    ( joinWith (D.space <> D.text "#")
+                            $ D.text
+                        <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
+                        <$> MbW.toString
+                        <$> tagContent
+                        <$> tagArr
+                    )
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a

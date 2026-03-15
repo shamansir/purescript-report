@@ -3,8 +3,10 @@ module Report.Class where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Data.String (split, Pattern(..)) as String
-import Data.Array.NonEmpty (fromArray) as NEA
+import Data.String (split, Pattern(..), joinWith) as String
+import Data.Array (catMaybes) as Array
+import Data.Array.NonEmpty (fromArray, toArray, catMaybes) as NEA
+import Data.Newtype (unwrap, wrap)
 
 import Report.Chain (Chain(..))
 import Report.Chain (fromNEArray, toNEArray) as Chain
@@ -13,19 +15,19 @@ import Report.Tabular (Tabular)
 import Report.Decorator (Decorators)
 import Report.Decorators.Stats (Stats) as S
 import Report.Decorators.Tabular.TabularValue (TabularValue)
-import Report.Decorators.Tags (RawTag(..))
-
-
-class HasDecorators t a where
-    i_decorators :: a -> Decorators t
-
-
-class HasTabular a where
-    i_tabular :: a -> Tabular TabularValue
+import Report.Decorators.Tags (Tags(..), RawTag(..))
 
 
 class HasTags t a where
     i_tags :: a -> Array t
+
+
+class HasDecorators a where
+    i_decorators :: a -> Decorators
+
+
+class HasTabular a where
+    i_tabular :: a -> Tabular TabularValue
 
 
 class HasStats a where
@@ -98,3 +100,15 @@ instance IsTag RawTag where
 
 rawifyTag :: forall @t. IsTag t => t -> RawTag
 rawifyTag = tagContent >>> Chain.toNEArray >>> RawTag
+
+
+derawifyTag :: forall @t. IsTag t => RawTag -> Maybe t
+derawifyTag (RawTag rtags) = decodeTag $ String.joinWith "::" $ NEA.toArray rtags
+
+
+rawifyTags :: forall @t. IsTag t => Tags t -> Tags RawTag
+rawifyTags = unwrap >>> map rawifyTag >>> wrap
+
+
+derawifyTags :: forall @t. IsTag t => Tags RawTag -> Tags t
+derawifyTags = unwrap >>> map derawifyTag >>> Array.catMaybes >>> wrap

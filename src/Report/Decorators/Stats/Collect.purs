@@ -17,14 +17,14 @@ data CollectWhat
     | ItemsProgress -- from suffixes
 
 
-collectStats :: forall @tag item. HasDecorators tag item => CollectWhat -> Array item -> Stats
+collectStats :: forall item. HasDecorators item => CollectWhat -> Array item -> Stats
 collectStats what flattened =
     case what of
         ItemsProgress ->
             let
                 allProgressN = loadNProgress <$> getProgress <$> flattened
                 getProgress :: item -> Progress -- FIXME: we only take one progress per item, need to aggregate all tagged progresses
-                getProgress = fromMaybe None <<< map Tuple.snd <<< Array.head <<< Decorator.collectProgress <<< i_decorators @tag
+                getProgress = fromMaybe None <<< map Tuple.snd <<< Array.head <<< Decorator.collectProgress <<< i_decorators
                 nonValue = Array.filter (\i -> i /= Skip && i /= StatsValue) allProgressN
                 total = Array.length nonValue
                 got = Array.length $ Array.filter (_ == Achieved) nonValue

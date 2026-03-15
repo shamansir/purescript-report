@@ -24,6 +24,8 @@ import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith, en
 import Report.Decorator as Decorator
 import Report.Decorator (Decorator, Decorators)
 import Report.Decorators.Stats (Stats)
+import Report.Decorators.Tags (Tags, RawTag)
+import Report.Decorators.Tags (fromArray) as Tags
 import Report.Decorators.Class.ValueModify (fromEditable)
 import Report.Decorators.Stats.Collect (collectStats, CollectWhat)
 
@@ -33,6 +35,8 @@ data What
     -- | GroupStat -- TODO
     | ItemName Int
     | ItemDecorator Int Decorator.Key
+    | ItemTag Int Int
+    | ItemTabular Int Int
     -- | AddDecorator -- TODO
     -- | AddItem -- TODO
     -- | AddGroup -- TODO
@@ -43,6 +47,8 @@ data WhatKey
     -- | WKGroupStat -- TODO
     | WKItemName
     | WKItemDecorator
+    | WKItemTags
+    | WKItemTabular
     -- | WKAddDecorator -- TODO
     -- | WKAddItem -- TODO
     -- | WKAddGroup -- TODO
@@ -56,6 +62,8 @@ data Location subj_id
     | AtGroup     subj_id GroupPath
     | AtItem      subj_id GroupPath Int
     | AtDecorator subj_id GroupPath Int Decorator.Key
+    | AtTag       subj_id GroupPath Int Int
+    | AtTabular   subj_id GroupPath Int Int
 
 
 type Modification subj_id =
@@ -74,8 +82,12 @@ class StatsModify a where
     setStats :: Stats -> a -> a
 
 
-class DecoratorsModify t a where
-    updateDecorators :: Decorators t -> a -> a
+class DecoratorsModify a where
+    updateDecorators :: Decorators -> a -> a
+
+
+class TagsModify t a where
+    updateTags :: Tags t -> a -> a
 
 
 class ItemModify a where
@@ -88,10 +100,12 @@ modifyAt
     => IsSubjectId subj_id subj
     => IsTag tag
     => IsGroup group
-    => HasDecorators tag item
+    => HasDecorators item
+    => HasTags tag item
     => GroupModify group
     => ItemModify item
-    => DecoratorsModify tag item
+    => TagsModify tag item
+    => DecoratorsModify item
     => Modification subj_id
     -> Report subj group item
     -> Report subj group item
@@ -104,6 +118,10 @@ modifyAt { subjId, what, newValue, path } report = case what of
         Report.withItem subjId path itemIdx (setItemName $ unwrapEditable newValue) report
     ItemDecorator itemIdx deckey -> do
         Report.withItem subjId path itemIdx (setDecorator deckey) report
+    ItemTag itemIdx tagIdx ->
+        Report.withItem subjId path itemIdx setTags report
+    ItemTabular itemIdx tabularIdx ->
+        report -- FIXME: Implement
     where
         -- setDecorator :: Decorator.Key -> item -> item
         -- setDecorator pkey item =
@@ -115,10 +133,17 @@ modifyAt { subjId, what, newValue, path } report = case what of
         setDecorator :: Decorator.Key -> item -> item
         setDecorator skey item =
             let
-                (decorators :: Decorators tag) = i_decorators @tag item
-                (mbDecodedValue :: Maybe (Decorator tag)) = fromEditable skey newValue
+                (decorators :: Decorators) = i_decorators item
+                (mbDecodedValue :: Maybe Decorator) = fromEditable skey newValue
                 nextDecorators = fromMaybe decorators $ (\dec -> Decorator.put dec decorators) <$> mbDecodedValue
             in updateDecorators nextDecorators item
+        setTags :: item -> item
+        setTags item =
+            let
+                (currentTags :: Tags tag) = Tags.fromArray $ i_tags item
+                (mbDecodedValue :: Maybe (Tags RawTag)) = fromEditable unit newValue
+                nextTags = fromMaybe currentTags $ (\tags -> derawifyTags @tag tags) <$> mbDecodedValue
+            in updateTags nextTags item
         unwrapEditable (EncodedValue string) = string
         -- groupStatsFromEditable :: Editable -> group -> Stats
         -- groupStatsFromEditable editable group = fromMaybe (g_stats group) $ fromEditable editable
@@ -193,10 +218,10 @@ recalculateAlt cfg =
 -}
 
 recalculate
-    :: forall @tag subj group item
+    :: forall subj group item
      . Ord group
     => IsGroup group
-    => HasDecorators tag item
+    => HasDecorators item
     => StatsModify group
     => RecalculateConfig
     -> Report subj group item
@@ -210,7 +235,7 @@ recalculate cfg =
         collectAllItems :: group -> Array (group /\ Array item) -> Array item
         collectAllItems grp = Array.filter (Tuple.fst >>> belongsTo grp) >>> map Tuple.snd >>> Array.concat
         updateGroup :: Array item -> group -> group
-        updateGroup itemsCollected group = setStats (collectStats @tag cfg.collect itemsCollected) group
+        updateGroup itemsCollected group = setStats (collectStats cfg.collect itemsCollected) group
         updateGroups :: Array (group /\ Array item) -> Array (group /\ Array item)
         updateGroups groupsArr =
             groupsArr <#> \(group /\ items) ->

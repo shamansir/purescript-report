@@ -37,6 +37,7 @@ type ItemRec =
     { title :: String
     , decorators :: Array DecoratorRec
     , tabulars :: Array TabularRec
+    , tags :: Array RawTag
     }
 
 

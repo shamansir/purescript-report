@@ -32,6 +32,10 @@ fromArray :: forall t. Array t -> Tags t
 fromArray = wrap
 
 
+empty :: forall t. Tags t
+empty = fromArray []
+
+
 newtype RawTag = RawTag (NonEmptyArray String)
 derive instance Newtype RawTag _
 derive newtype instance Eq RawTag
