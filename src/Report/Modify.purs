@@ -35,7 +35,8 @@ data What
     -- | GroupStat -- TODO
     | ItemName Int
     | ItemDecorator Int Decorator.Key
-    | ItemTags Int
+    | ItemTags Int Int
+    | ItemTabular Int Int
     -- | AddDecorator -- TODO
     -- | AddItem -- TODO
     -- | AddGroup -- TODO
@@ -47,6 +48,7 @@ data WhatKey
     | WKItemName
     | WKItemDecorator
     | WKItemTags
+    | WKItemTabular
     -- | WKAddDecorator -- TODO
     -- | WKAddItem -- TODO
     -- | WKAddGroup -- TODO
@@ -60,7 +62,8 @@ data Location subj_id
     | AtGroup     subj_id GroupPath
     | AtItem      subj_id GroupPath Int
     | AtDecorator subj_id GroupPath Int Decorator.Key
-    | AtTags      subj_id GroupPath Int
+    | AtTag       subj_id GroupPath Int Int
+    | AtTabular   subj_id GroupPath Int Int
 
 
 type Modification subj_id =
@@ -115,8 +118,10 @@ modifyAt { subjId, what, newValue, path } report = case what of
         Report.withItem subjId path itemIdx (setItemName $ unwrapEditable newValue) report
     ItemDecorator itemIdx deckey -> do
         Report.withItem subjId path itemIdx (setDecorator deckey) report
-    ItemTags itemIdx ->
+    ItemTags itemIdx tagIdx ->
         Report.withItem subjId path itemIdx setTags report
+    ItemTabular itemIdx tabularIdx ->
+        report -- FIXME: Implement
     where
         -- setDecorator :: Decorator.Key -> item -> item
         -- setDecorator pkey item =

@@ -17,8 +17,17 @@ type NavigatedTo subj_id = -- TODO: add subj_idect, add tabular key
     , mbGroup :: Maybe GP.GroupPath
     , mbItem :: Maybe Int
     , mbDecorator :: Maybe Decorator.Key
+    , mbTag :: Maybe Int
+    , mbTabular :: Maybe Int
     , mbEditing :: Maybe { what :: M.WhatKey, value :: EncodedValue }
     }
+
+-- FIXME: store the Location directly in NavigatedTo instead of computing it on the fly;
+--        on the other hand, though, it easier to just set `Maybe`s from the UI itself
+--        and then manage the consistency / inconsistency in one place here;
+--        `mbEditing` also looks like a complication, since it also stores a `WhatKey` as
+--        the location...
+--        `mbEditing` can be just `EncodedValue` then...
 
 
 init :: forall subj_id. NavigatedTo subj_id
@@ -27,6 +36,8 @@ init =
     , mbGroup : Nothing
     , mbItem : Nothing
     , mbDecorator : Nothing
+    , mbTag : Nothing
+    , mbTabular : Nothing
     , mbEditing : Nothing
     }
 
@@ -49,16 +60,20 @@ toGroup subj groupPath =
     , mbGroup : Just groupPath
     , mbItem : Nothing
     , mbDecorator : Nothing
+    , mbTag : Nothing
+    , mbTabular : Nothing
     , mbEditing : Nothing
     }
 
 
-toItem :: forall subj_id. subj_id ->GP.GroupPath -> Int -> NavigatedTo subj_id
+toItem :: forall subj_id. subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id
 toItem subj groupPath itemIdx =
     { mbSubjectId : Just subj
     , mbGroup : Just groupPath
     , mbItem : Just itemIdx
     , mbDecorator : Nothing
+    , mbTag : Nothing
+    , mbTabular : Nothing
     , mbEditing : Nothing
     }
 
@@ -69,6 +84,32 @@ toDecorator subj groupPath itemIdx decoratorKey =
     , mbGroup : Just groupPath
     , mbItem : Just itemIdx
     , mbDecorator : Just decoratorKey
+    , mbTag : Nothing
+    , mbTabular : Nothing
+    , mbEditing : Nothing
+    }
+
+
+toTag :: forall subj_id. subj_id -> GP.GroupPath -> Int -> Int -> NavigatedTo subj_id
+toTag subj groupPath itemIdx tagIdx =
+    { mbSubjectId : Just subj
+    , mbGroup : Just groupPath
+    , mbItem : Just itemIdx
+    , mbDecorator : Nothing
+    , mbTag : Just tagIdx
+    , mbTabular : Nothing
+    , mbEditing : Nothing
+    }
+
+
+toTabular :: forall subj_id. subj_id -> GP.GroupPath -> Int -> Int -> NavigatedTo subj_id
+toTabular subj groupPath itemIdx tabularIdx =
+    { mbSubjectId : Just subj
+    , mbGroup : Just groupPath
+    , mbItem : Just itemIdx
+    , mbDecorator : Nothing
+    , mbTag : Nothing
+    , mbTabular : Just tabularIdx
     , mbEditing : Nothing
     }
 
@@ -103,6 +144,19 @@ atDecorator :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> D
 atDecorator subj groupPath itemIdx decoratorKey navigatedTo
     =  atItem subj groupPath itemIdx navigatedTo
     && navigatedTo.mbDecorator == Just decoratorKey
+atTags :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean
+atTags subj groupPath itemIdx navigatedTo
+    =  atItem subj groupPath itemIdx navigatedTo
+    && isJust navigatedTo.mbTag
+atTag :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Int -> NavigatedTo subj_id -> Boolean
+atTag subj groupPath itemIdx tagIdx navigatedTo
+    =  atItem subj groupPath itemIdx navigatedTo
+    && navigatedTo.mbTag == Just tagIdx
+atTabular :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Int -> NavigatedTo subj_id -> Boolean
+atTabular subj groupPath itemIdx tabularIdx navigatedTo
+    =  atItem subj groupPath itemIdx navigatedTo
+    && navigatedTo.mbTabular == Just tabularIdx
+
 
 
 editingGroupName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Maybe EncodedValue
@@ -163,17 +217,45 @@ toModification navigatedTo =
                         , what : M.ItemDecorator itemIdx decoratorKey
                         , newValue : value
                         }
+                M.WKItemTags -> do
+                    subjId <- navigatedTo.mbSubjectId
+                    groupPath <- navigatedTo.mbGroup
+                    itemIdx <- navigatedTo.mbItem
+                    tagIdx <- navigatedTo.mbTag
+                    pure
+                        { subjId : subjId
+                        , path : groupPath
+                        , what : M.ItemTags itemIdx tagIdx
+                        , newValue : value
+                        }
+                M.WKItemTabular -> do
+                    subjId <- navigatedTo.mbSubjectId
+                    groupPath <- navigatedTo.mbGroup
+                    itemIdx <- navigatedTo.mbItem
+                    tabularIdx <- navigatedTo.mbTabular
+                    pure
+                        { subjId : subjId
+                        , path : groupPath
+                        , what : M.ItemTabular itemIdx tabularIdx
+                        , newValue : value
+                        }
 
 
-
+-- FIXME: store the Location directly in NavigatedTo instead of computing it on the fly
+--        on the other hand, though, it easier to just set `Maybe`s from the UI itself
+--        and then manage the consistency / inconsistency in one place here
 toLocation :: forall subj_id. NavigatedTo subj_id -> Location subj_id
 toLocation navigatedTo = case (  navigatedTo.mbSubjectId
                               /\ navigatedTo.mbGroup
                               /\ navigatedTo.mbItem
                               /\ navigatedTo.mbDecorator
+                              /\ navigatedTo.mbTag
+                              /\ navigatedTo.mbTabular
                               ) of
-    ( Nothing /\  _ /\ _ /\ _ ) -> Nowhere
-    ( Just subj /\ Just groupPath /\ Nothing /\ _ ) -> AtGroup subj groupPath
-    ( Just subj /\ Just groupPath /\ Just itemIdx /\ Nothing ) -> AtItem subj groupPath itemIdx
-    ( Just subj /\ Just groupPath /\ Just itemIdx /\ Just decoratorKey ) -> AtDecorator subj groupPath itemIdx decoratorKey
+    ( Nothing /\ _ /\ _ /\ _ /\ _ /\ _ ) ->                                                       Nowhere
+    ( Just subj /\ Just groupPath /\ Nothing /\ _ /\ _ /\ _ ) ->                                  AtGroup subj groupPath
+    ( Just subj /\ Just groupPath /\ Just itemIdx /\ Nothing /\ Nothing /\ Nothing ) ->           AtItem subj groupPath itemIdx
+    ( Just subj /\ Just groupPath /\ Just itemIdx /\ Just decoratorKey /\ Nothing /\ Nothing ) -> AtDecorator subj groupPath itemIdx decoratorKey
+    ( Just subj /\ Just groupPath /\ Just itemIdx /\ _ /\ Just tagIdx /\ Nothing ) ->             AtTag subj groupPath itemIdx tagIdx
+    ( Just subj /\ Just groupPath /\ Just itemIdx /\ _ /\ _ /\ Just tabularIdx ) ->               AtTabular subj groupPath itemIdx tabularIdx
     _ -> Nowhere

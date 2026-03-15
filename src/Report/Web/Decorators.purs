@@ -99,7 +99,7 @@ renderDecorators_ conf itemName allDecorators decoratorsKeys =
 
 
 renderDecorator
-    :: forall @t w i
+    :: forall w i
      . DecoratorRenderConfig i
     -> H w i
 renderDecorator conf =
@@ -239,7 +239,7 @@ _editInput conf (CT.EncodedValue encVal) =
 
 
 renderTags
-    :: forall @t w i
+    :: forall t w i
      . S.IsTag t
     => Tags t
     -> TagsRenderConfig i t
