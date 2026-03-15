@@ -194,7 +194,7 @@ instance IsGroupable Group Tag where
     t_group = tagContent >>> map (\tag -> mkGroup [ PathSegment tag ] $ "#" <> tag) >>> Just -- TODO: use Group.cg constructors?
 
 
-loadDecorators :: Achievement -> Decorators Tag
+loadDecorators :: Achievement -> Decorators
 loadDecorators = unwrap >>> \achRec ->
     Decorators.empty
     # (Decorators.put $ Dec.SProgress achRec.progress)
@@ -210,27 +210,31 @@ loadDecorators = unwrap >>> \achRec ->
         Just descr -> Decorators.put $ Dec.SDescription descr
         Nothing -> identity
        )
-    # (case achRec.tags of
-        []  -> identity
-        arr ->  Decorators.put $ Dec.STags $ Tags $ Tag <$> arr
-       )
 
 
-applyDecorators :: Decorators Tag -> Achievement -> Achievement
+loadTags :: Achievement -> Tags Tag
+loadTags = unwrap >>> _.tags >>> map Tag >>> Tags
+
+
+applyDecorators :: Decorators -> Achievement -> Achievement
 applyDecorators decorators = with \achRec ->
     Decorators.toArray decorators
         # foldl applyDecorator achRec
     where
-        applyDecorator :: AchievementRec -> (Decorators.Key /\ Decorator Tag) -> AchievementRec
+        applyDecorator :: AchievementRec -> (Decorators.Key /\ Decorator) -> AchievementRec
         applyDecorator acc (key /\ decorator) = case decorator of
             Dec.SProgress prog -> acc { progress = prog }
             Dec.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
             Dec.SDescription descr -> acc { mbDescription = Just descr }
             Dec.SReference gpath -> acc { mbReference = Just gpath }
-            Dec.STags (Tags tagsArr) -> acc { tags = unwrap <$> tagsArr }
             Dec.PRating _ -> acc
             Dec.PPriority _ -> acc
             Dec.PTask _ -> acc
+
+
+applyTags :: Tags Tag -> Achievement -> Achievement
+applyTags tags = with \achRec ->
+    achRec { tags = unwrap <$> unwrap tags }
 
 
 instance IsItem Achievement where
@@ -240,7 +244,7 @@ instance IsItem Achievement where
     -- i_tags = unwrap >>> _.tags >>> map Tag
 
 
-instance HasDecorators Tag Achievement where
+instance HasDecorators Achievement where
     i_decorators = loadDecorators
 
 
@@ -256,8 +260,12 @@ instance ItemModify Achievement where
     setItemName newName = with \achRec -> achRec { name = newName }
 
 
-instance DecoratorsModify Tag Achievement where
+instance DecoratorsModify Achievement where
     updateDecorators = applyDecorators
+
+
+instance TagsModify Tag Achievement where
+    updateTags = applyTags
 
 
 bindToAchievement :: Achievement -> Group -> Group

@@ -56,6 +56,11 @@ instance DecoratorsModify (Item item_tag) where
         unwrap >>> _ { decorators = nextDecorators } >>> wrap
 
 
+instance TagsModify item_tag (Item item_tag) where
+    updateTags nextTags =
+        unwrap >>> _ { tags = nextTags } >>> wrap
+
+
 init :: forall item_tag. String -> Item item_tag
 init name =
     Item
