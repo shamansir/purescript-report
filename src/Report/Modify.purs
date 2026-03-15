@@ -218,7 +218,7 @@ recalculateAlt cfg =
 -}
 
 recalculate
-    :: forall @tag subj group item
+    :: forall subj group item
      . Ord group
     => IsGroup group
     => HasDecorators item

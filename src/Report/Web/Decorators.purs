@@ -49,7 +49,7 @@ renderPrefixes conf item =
 
 
 renderSuffixes
-    :: forall @item_tag item w i
+    :: forall item w i
      . S.IsItem item
     => S.HasDecorators item
     => DecoratorsRenderConfig i

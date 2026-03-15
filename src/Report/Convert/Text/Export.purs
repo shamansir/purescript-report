@@ -161,11 +161,14 @@ toTextWith cfg inclRule =
                         suffixes -> D.space <> joinWith D.space suffixes
             in
             itemIndent (decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc)
+            <> case itemRec.tags of
+                [] -> mempty
+                tags' -> D.space <> tags tags'
             <> if cfg.renderTabulars then (itemIndent $ _tabularsBlockDoc tabulars) else mempty
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
-            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+            DH.withImpl @D.Decorator
                 mempty
                 (case _ of
                     D.PRating rating ->
@@ -186,7 +189,7 @@ toTextWith cfg inclRule =
 
         convertDecoratorToSuffix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToSuffix modRec =
-            DH.withImpl @(D.Decorator RawTag) -- TODO: export tags to strings beforehand
+            DH.withImpl @D.Decorator
                 mempty
                 (case _ of
                     D.SProgress p ->
@@ -197,11 +200,6 @@ toTextWith cfg inclRule =
                         Just $ D.text "/ " <> D.text desc <> D.text " /"
                     D.SReference _ ->
                         Nothing
-                    D.STags theTags ->
-                        case unwrap theTags of
-                            [] -> Nothing
-                            tagArr ->
-                                Just $ tags tagArr
                     _ -> mempty
                 )
                 modRec.fvalue
@@ -301,13 +299,13 @@ _tabularAtomicValueDoc = case _ of
         D.SEarnedAt ea -> D.text " at " <> textDate (CT.dateToRec ea)
         D.SDescription desc -> D.text "/ " <> D.text desc <> D.text " /"
         D.SReference _ -> mempty
-        D.STags theTags -> case unwrap theTags of
-            [] -> mempty
-            tagArr ->
-                tags tagArr
         D.PRating rating -> D.text $ show $ Rating.toStars rating
         D.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
         D.PTask task -> D.text $ Task.taskPToString task
+    TV.TVTags theTags -> case theTags of
+        [] -> mempty
+        tagArr ->
+            tags tagArr
 
 
 _progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
