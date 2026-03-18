@@ -299,7 +299,7 @@ _tabularAtomicValueDoc = case _ of
         D.SEarnedAt ea -> D.text " at " <> textDate (CT.dateToRec ea)
         D.SDescription desc -> D.text "/ " <> D.text desc <> D.text " /"
         D.SReference _ -> mempty
-        D.PRating rating -> D.text $ show $ Rating.toStars rating
+        D.PRating rating -> D.text $ Rating.toStars rating
         D.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
         D.PTask task -> D.text $ Task.taskPToString task
     TV.TVTags theTags -> case theTags of
