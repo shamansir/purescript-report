@@ -18,20 +18,27 @@ import Web.UIEvent.KeyboardEvent as KE
 
 mkValueEditInput :: forall a r w i. EditableValueEvents i r -> (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
 mkValueEditInput events onEdit =
-        maybe (HH.text "<EDIT>")
-            (\(CT.EncodedValue encVal) ->
-                    HH.input
-                    [ HP.type_ HP.InputText
-                    , HP.value encVal
-                    , HE.onClick events.onStartEditing
-                    , HE.onValueChange (CT.EncodedValue >>> onEdit)
-                    , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
-                        \code -> if code == "Escape" || code == "Enter"
-                            then events.onCancelEditing
-                            else events.noop)
-                    , HE.onBlur $ const events.onCancelEditing
-                    , HE.onAbort $ const events.onCancelEditing
-                    ]
-            )
-            <<< CT.loadEncoded
+    maybe (HH.text "<EDIT>")
+        (mkValueEditInput_ events onEdit)
+        <<< CT.loadEncoded
 
+
+mkValueEditInput_ :: forall r w i. EditableValueEvents i r -> (CT.EncodedValue -> i) -> CT.EncodedValue -> H w i
+mkValueEditInput_ events customOnEdit (CT.EncodedValue encVal) =
+    HH.input
+        [ HP.type_ HP.InputText
+        , HP.value encVal
+        , HE.onClick events.onStartEditing
+        , HE.onValueChange (CT.EncodedValue >>> customOnEdit)
+        , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
+            \code -> if code == "Escape" || code == "Enter"
+                then events.onCancelEditing
+                else events.noop)
+        , HE.onBlur $ const events.onCancelEditing
+        , HE.onAbort $ const events.onCancelEditing
+        ]
+
+
+
+mkValueEditInput' :: forall r w i. EditableValueEvents i r -> CT.EncodedValue -> H w i
+mkValueEditInput' conf = mkValueEditInput_ conf conf.onEdit

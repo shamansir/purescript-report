@@ -30,6 +30,7 @@ import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfi
 import Report.Web.Decorators.Progress (renderProgress)
 import Report.Web.Decorators.Tags (itemTagBadge)
 import Report.Web.GroupPath (renderGroupRef)
+import Report.Web.Decorators.EditInput as EI
 
 
 renderPrefixes
@@ -223,19 +224,7 @@ renderDecorator conf =
 
 
 _editInput :: forall r w i. EditableValueEvents i r -> CT.EncodedValue -> H w i
-_editInput conf (CT.EncodedValue encVal) =
-    HH.input
-        [ HP.type_ HP.InputText
-        , HP.value encVal
-        , HE.onClick conf.onStartEditing
-        , HE.onValueChange (CT.EncodedValue >>> conf.onEdit)
-        , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
-            \code -> if code == "Escape" || code == "Enter"
-                then conf.onCancelEditing
-                else conf.noop)
-        , HE.onBlur $ const conf.onCancelEditing
-        , HE.onAbort $ const conf.onCancelEditing
-        ]
+_editInput = EI.mkValueEditInput'
 
 
 renderTags
