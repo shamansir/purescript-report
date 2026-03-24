@@ -2,12 +2,14 @@ module Report.Web.Helpers where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 
 import Report.Core as CT
+import Report.Core.Logic as CT
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import Halogen.HTML.Events as HE
 
 type H w i = HH.HTML w i
 type Color = String
@@ -81,6 +83,3 @@ qcheckbox toColor toText a =
                     <> "background-color: " <> toColor a <> ";"
         ]
         [ HH.text $ toText a ]
-
-
-

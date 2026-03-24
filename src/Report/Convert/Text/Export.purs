@@ -172,7 +172,7 @@ toTextWith cfg inclRule =
                 mempty
                 (case _ of
                     D.PRating rating ->
-                        Just $ D.text $ show $ Rating.toStars rating
+                        Just $ D.text $ Rating.toStars rating
                     D.PPriority priority ->
                         Just $ D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
                     D.PTask task ->

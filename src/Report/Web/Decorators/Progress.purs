@@ -16,6 +16,7 @@ import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Decorators.Task (TaskP(..)) as S
 import Report.Decorators.Progress (Progress(..), Relation(..)) as Prog
+import Report.Web.Decorators.EditInput as EI
 import Report.Convert.Keyed
 
 import Halogen.HTML as HH
@@ -423,30 +424,15 @@ renderProgress events voeItemName voeProgress = case progress of
             if not editingProgress
                 then htmlWhenViewing
                 else mkValueEditInput events.onEdit voeProgress
+        mkValueEditInput :: forall a. (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
+        mkValueEditInput = EI.mkValueEditInput events
         editingName = CT.isEditing voeItemName
         editingProgress = CT.isEditing voeProgress
         relMarker = case _ of
             Prog.RMoreThan -> ">"
             Prog.REqual -> "="
             Prog.RLessThan -> "<"
-        mkValueEditInput :: forall a. (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
-        mkValueEditInput onEdit =
-                maybe (HH.text "<EDIT>")
-                    (\(CT.EncodedValue encVal) ->
-                         HH.input
-                            [ HP.type_ HP.InputText
-                            , HP.value encVal
-                            , HE.onClick events.onStartEditing
-                            , HE.onValueChange (CT.EncodedValue >>> onEdit)
-                            , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>
-                                \code -> if code == "Escape" || code == "Enter"
-                                    then events.onCancelEditing
-                                    else events.noop)
-                            , HE.onBlur $ const events.onCancelEditing
-                            , HE.onAbort $ const events.onCancelEditing
-                            ]
-                    )
-                    <<< CT.loadEncoded
+
 
 
 percentage :: forall w i. Number -> Number -> H w i
