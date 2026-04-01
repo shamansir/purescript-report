@@ -27,7 +27,8 @@ import Halogen.HTML.Events as HE
 
 import Report.Web.Helpers
 import Report.Web.Helpers.InlineOrBlock
-import Report.Web.Decorators.Types (ProgressRenderConfig, ProgressVState(..))
+import Report.Web.Helpers.VisualState (ProgressVState(..))
+import Report.Web.Decorators.Types (ProgressRenderConfig)
 import Report.Web.Decorators.Task (qtaskCheckbox, taskTextColor, taskVState)
 
 

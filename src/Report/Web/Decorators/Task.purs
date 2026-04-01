@@ -5,7 +5,7 @@ import Prelude
 import Report.Decorators.Task (TaskP(..)) as S
 
 import Report.Web.Helpers
-import Report.Web.Decorators.Types
+import Report.Web.Helpers.VisualState (ProgressVState(..))
 
 
 taskColor :: S.TaskP -> String

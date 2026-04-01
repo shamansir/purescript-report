@@ -34,6 +34,7 @@ import Report.Decorators.Tags (toArray) as Tags
 
 import Report.Web.Helpers
 import Report.Web.Helpers.InlineOrBlock
+import Report.Web.Helpers.VisualState (VState(..), VStates)
 import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfig, TagsRenderConfig, EditableValueEvents)
 import Report.Web.Decorators.Progress (renderProgress)
 import Report.Web.Decorators.Tags (itemTagBadge)

@@ -59,7 +59,7 @@ import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
-import Report.Web.Decorators.Types (selectOne) as VStates
+import Report.Web.Helpers.VisualState (selectOne) as VStates
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Report.Web.Component.RecalcBehavior as CRB
 
