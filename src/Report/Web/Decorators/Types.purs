@@ -2,14 +2,17 @@ module Report.Web.Decorators.Types where
 
 import Prelude
 
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Array as Array
 import Data.Foldable (fold)
+import Data.Map (Map)
+import Data.Map (lookup, keys, values) as Map
+import Data.List (toUnfoldable) as List
 
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 import Report.Core.Logic as CT
-import Report.Decorator (Key) as Decorator
+import Report.Decorator (Key(..)) as Decorator
 import Report.Decorator (Decorators)
 import Report.Decorators.Progress (PValueTag) as Progress
 import Report.Web.Helpers (H)
@@ -145,6 +148,12 @@ type ProgressRenderConfig i =
        )
 
 
+
+
+-- VState is for visually marking the item (using the color of the title, for example), as if it is completed or not and so on
+-- this value is extracted from decorators
+-- TODO: but we have many types like this one, mostly in `Stats`, may be reuse it?
+
 data ProgressVState
     = Incomplete
     | Neutral
@@ -161,6 +170,8 @@ data VState
     | FromProgress ProgressVState
     | VNeutral
 
+
+type VStates = Map Decorator.Key VState
 
 
 derive instance Eq VState
@@ -189,5 +200,12 @@ mergeVState _ (FromRating rating) = FromRating rating -- rating is more importan
 mergeVState VNeutral VNeutral = VNeutral
 
 
-foldVState :: Array VState -> VState
-foldVState = fold
+foldToOne :: Array VState -> VState
+foldToOne = fold
+
+
+selectOne :: VStates -> VState
+selectOne vstates =
+    case Map.lookup Decorator.KTask vstates of
+        Just vstate -> vstate
+        Nothing -> Map.values vstates # List.toUnfoldable # foldToOne

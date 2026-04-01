@@ -59,6 +59,7 @@ import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
+import Report.Web.Decorators.Types (selectOne) as VStates
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Report.Web.Component.RecalcBehavior as CRB
 
@@ -838,10 +839,11 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         , onCancelEditing : CancelEditing
                         , noop : NoOp
                         }
-                    (pvState /\ renderedPrefixes) = renderPrefixes renderDecoratorsConfig item
-                    (svState /\ renderedSuffixes) = renderSuffixes renderDecoratorsConfig item
+                    (pvStates /\ renderedPrefixes) = renderPrefixes renderDecoratorsConfig item
+                    (svStates /\ renderedSuffixes) = renderSuffixes renderDecoratorsConfig item
                     inlinePrefixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedPrefixes
                     inlineSuffixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedSuffixes
+                    selectedVState = VStates.selectOne $ pvStates <> svStates
                     blockDecorators =
                         Array.concat
                         $ Array.catMaybes

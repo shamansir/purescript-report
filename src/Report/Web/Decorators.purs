@@ -10,6 +10,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Data.Foldable (foldl)
 import Data.Traversable (sequence)
 import Data.Bifunctor (lmap)
+import Data.Map (empty, insert) as Map
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -48,7 +49,7 @@ renderPrefixes
     => S.HasDecorators item
     => DecoratorsRenderConfig i
     -> item
-    -> VState /\ Array (InlineOrBlock w i)
+    -> VStates /\ Array (InlineOrBlock w i)
 renderPrefixes conf item =
     let
         i_decorators = S.i_decorators item
@@ -64,7 +65,7 @@ renderSuffixes
     => S.HasDecorators item
     => DecoratorsRenderConfig i
     -> item
-    -> VState /\ Array (InlineOrBlock w i)
+    -> VStates /\ Array (InlineOrBlock w i)
 renderSuffixes conf item =
     let
         i_decorators = S.i_decorators item
@@ -80,7 +81,7 @@ renderDecorators_
     -> String
     -> Decorators
     -> Array Dec.Key
-    -> VState /\ Array (InlineOrBlock w i)
+    -> VStates /\ Array (InlineOrBlock w i)
 renderDecorators_ conf itemName allDecorators decoratorsKeys =
     let
         -- i_decorators = S.i_decorators @item_tag item
@@ -251,7 +252,9 @@ renderTags tags conf =
 
 
 
-_foldVStates :: forall w i. Array (Dec.Key /\ VState /\ InlineOrBlock w i) -> VState /\ Array (InlineOrBlock w i)
-_foldVStates = foldl foldF (VNeutral /\ []) -- sequence ??
+_foldVStates :: forall w i. Array (Dec.Key /\ VState /\ InlineOrBlock w i) -> VStates /\ Array (InlineOrBlock w i)
+_foldVStates = foldl foldF (Map.empty /\ []) -- sequence ??
     where
-        foldF (prevVstate /\ prevIobs) (_ /\ nextVState /\ nextIob) = (prevVstate <> nextVState) /\ Array.snoc prevIobs nextIob -- (prevVstate <> nextVState) /\ (prevIobs <> nextIobs)
+        foldF (prevVstates /\ prevIobs) (decKey /\ nextVState /\ nextIob) =
+            Map.insert decKey nextVState prevVstates
+            /\ Array.snoc prevIobs nextIob -- (prevVstate <> nextVState) /\ (prevIobs <> nextIobs)
