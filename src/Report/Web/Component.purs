@@ -838,8 +838,8 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         , onCancelEditing : CancelEditing
                         , noop : NoOp
                         }
-                    renderedPrefixes = renderPrefixes renderDecoratorsConfig item
-                    renderedSuffixes = renderSuffixes renderDecoratorsConfig item
+                    (pvState /\ renderedPrefixes) = renderPrefixes renderDecoratorsConfig item
+                    (svState /\ renderedSuffixes) = renderSuffixes renderDecoratorsConfig item
                     inlinePrefixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedPrefixes
                     inlineSuffixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedSuffixes
                     blockDecorators =

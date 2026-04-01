@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Newtype (unwrap, wrap)
 import Data.Array (length, intersperse) as Array
+import Data.Tuple (snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Maybe (Maybe(..), fromMaybe)
 
@@ -192,7 +193,7 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         ]
                 TVDecorator decorator ->
                     fromMaybe (HH.text "BLOCK (TODO)")
-                    $ loadInlineContent $ renderDecorator -- TODO: use InlineOrBlock
+                    $ loadInlineContent $ Tuple.snd $ renderDecorator -- TODO: use InlineOrBlock
                         { isEditingDecorator : Nothing
                         , isEditingItemName : Nothing
                         , isSelected : false

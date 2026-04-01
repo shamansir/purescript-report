@@ -19,7 +19,7 @@ taskTextColor = taskVState >>> case _ of
     Complete -> completeColor
     _ -> incompleteColor -- TODO: implement other colors
 
-taskVState :: S.TaskP -> VState
+taskVState :: S.TaskP -> ProgressVState
 taskVState = case _ of
     S.TDone -> Complete
     _ -> Incomplete

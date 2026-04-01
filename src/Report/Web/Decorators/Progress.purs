@@ -27,11 +27,11 @@ import Halogen.HTML.Events as HE
 
 import Report.Web.Helpers
 import Report.Web.Helpers.InlineOrBlock
-import Report.Web.Decorators.Types (ProgressRenderConfig, VState(..))
+import Report.Web.Decorators.Types (ProgressRenderConfig, ProgressVState(..))
 import Report.Web.Decorators.Task (qtaskCheckbox, taskTextColor, taskVState)
 
 
-renderProgress :: forall w i. ProgressRenderConfig i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> VState /\ InlineOrBlock w i
+renderProgress :: forall w i. ProgressRenderConfig i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> ProgressVState /\ InlineOrBlock w i
 renderProgress events voeItemName voeProgress = case progress of
     Prog.None ->
         Tuple Incomplete $

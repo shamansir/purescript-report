@@ -6,6 +6,10 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Array as Array
 import Data.Tuple (Tuple(..))
 import Data.Tuple (fst, snd) as Tuple
+import Data.Tuple.Nested ((/\), type (/\))
+import Data.Foldable (foldl)
+import Data.Traversable (sequence)
+import Data.Bifunctor (lmap)
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -22,7 +26,7 @@ import Report.Decorator (Decorators)
 import Report.Decorator as Decorators
 import Report.Decorator (Key(..), Decorator(..)) as Dec
 import Report.Decorators.Rating (toNumber, maxValue, relValue, toStars, toString) as Rating
-import Report.Decorators.Priority (priorityChar) as Priority
+import Report.Decorators.Priority (priorityChar, toValue) as Priority
 import Report.Decorators.Task (taskPToString) as Task
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Tags (toArray) as Tags
@@ -32,6 +36,7 @@ import Report.Web.Helpers.InlineOrBlock
 import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfig, TagsRenderConfig, EditableValueEvents)
 import Report.Web.Decorators.Progress (renderProgress)
 import Report.Web.Decorators.Tags (itemTagBadge)
+import Report.Web.Decorators.Task (taskVState) as Task
 import Report.Web.GroupPath (renderGroupRef)
 import Report.Web.Decorators.EditInput as EI
 import Report.Web.Decorators.Types
@@ -43,7 +48,7 @@ renderPrefixes
     => S.HasDecorators item
     => DecoratorsRenderConfig i
     -> item
-    -> Array (InlineOrBlock w i)
+    -> VState /\ Array (InlineOrBlock w i)
 renderPrefixes conf item =
     let
         i_decorators = S.i_decorators item
@@ -59,7 +64,7 @@ renderSuffixes
     => S.HasDecorators item
     => DecoratorsRenderConfig i
     -> item
-    -> Array (InlineOrBlock w i)
+    -> VState /\ Array (InlineOrBlock w i)
 renderSuffixes conf item =
     let
         i_decorators = S.i_decorators item
@@ -75,7 +80,7 @@ renderDecorators_
     -> String
     -> Decorators
     -> Array Dec.Key
-    -> Array (InlineOrBlock w i)
+    -> VState /\ Array (InlineOrBlock w i)
 renderDecorators_ conf itemName allDecorators decoratorsKeys =
     let
         -- i_decorators = S.i_decorators @item_tag item
@@ -86,27 +91,28 @@ renderDecorators_ conf itemName allDecorators decoratorsKeys =
                 Just selectedKey -> selectedKey == prefixKey
                 Nothing -> false
     in
-        decoratorsKeys
-            <#> \key -> renderDecorator
-                            { key
-                            , isSelected : isSelected key
-                            , isEditingDecorator : conf.isEditingDecorator key
-                            , isEditingItemName : conf.isEditingItemName
-                            , onClick : conf.onClick key
-                            , onEdit : conf.onEdit key
-                            , onEditItemName : conf.onEditItemName
-                            , allDecorators
-                            , parentItemName : itemName
-                            , onStartEditing : conf.onStartEditing
-                            , onCancelEditing : conf.onCancelEditing
-                            , noop : conf.noop
-                            }
+        _foldVStates $ decoratorsKeys
+            <#> \key -> key /\
+                renderDecorator
+                    { key
+                    , isSelected : isSelected key
+                    , isEditingDecorator : conf.isEditingDecorator key
+                    , isEditingItemName : conf.isEditingItemName
+                    , onClick : conf.onClick key
+                    , onEdit : conf.onEdit key
+                    , onEditItemName : conf.onEditItemName
+                    , allDecorators
+                    , parentItemName : itemName
+                    , onStartEditing : conf.onStartEditing
+                    , onCancelEditing : conf.onCancelEditing
+                    , noop : conf.noop
+                    }
 
 
 renderDecorator
     :: forall w i
      . DecoratorRenderConfig i
-    -> InlineOrBlock w i
+    -> VState /\ InlineOrBlock w i
 renderDecorator conf =
     let
         currentDecorator = Decorators.get conf.key conf.allDecorators -- FIXME: we could just filter key / value pairs out of map
@@ -119,31 +125,37 @@ renderDecorator conf =
                 , HE.onClick conf.onClick
                 ]
                 [ content ]
-        wrapRenderedDecorator = mapInlineContent wrapInlineContent
+        wrapRenderedDecorator = map $ mapInlineContent wrapInlineContent
+        qskip = VNeutral /\ Skip
     in
     wrapRenderedDecorator $ case conf.key of
         Dec.KRating -> case currentDecorator of
-            Just (Dec.PRating rating) -> Inline $ whenNotEditing $
+            Just (Dec.PRating rating) ->
+                Tuple (FromRating $ Rating.relValue rating) $
+                Inline $ whenNotEditing $
                     let ratingColor' = ratingColor $ Rating.relValue rating
                     in HH.span [ HP.style "margin: 0px -4px 0px 7px; opacity: 0.9; position: relative; top: -1px;" ]
                         [ qcolorSpan ratingColor' $ Rating.toStars rating
                         , qthinspacerSpan
                         , smallerFont $ qcolorSpan ratingColor' $ Rating.toString rating
                         ]
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         Dec.KPriority -> case currentDecorator of
-            Just (Dec.PPriority priority) -> Inline $ whenNotEditing $
+            Just (Dec.PPriority priority) ->
+                Tuple (FromPriority $ Priority.toValue priority) $
+                Inline $ whenNotEditing $
                     let priorityColor' = genericColor -- TODO!
                     in HH.span_
                         [ qbracketspan "[#"
                         , qcolorSpan priorityColor' $ Priority.priorityChar priority
                         , qbracketspan "]"
                         ]
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         Dec.KTask -> case currentDecorator of
             Just (Dec.PTask task) ->
+                Tuple (FromProgress $ Task.taskVState task) $
                 Inline $ whenNotEditing $
                     let taskColor' = genericColor -- TODO!
                     in HH.span_
@@ -151,11 +163,11 @@ renderDecorator conf =
                         , qcolorSpan taskColor' $ Task.taskPToString task
                         , qbracketspan "]"
                         ]
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         Dec.KProgress _ -> case currentDecorator of
             Just (Dec.SProgress progress) ->
-                Tuple.snd $ renderProgress
+                lmap FromProgress $ renderProgress
                     progressConfig
                     ( maybe
                         CT.view
@@ -170,10 +182,11 @@ renderDecorator conf =
                         conf.isEditingDecorator
                         progress
                     )
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         Dec.KEarnedAt -> case currentDecorator of
             Just (Dec.SEarnedAt (CT.SDate { day, month, year })) ->
+                Tuple VNeutral $
                 Inline $ whenNotEditing $
                     HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
                         [ qcolorSpan timeColor $ CT.toLeadingZero day
@@ -182,19 +195,21 @@ renderDecorator conf =
                         , qspacerSpan
                         , qcolorSpan timeColor $ show year
                         ]
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         Dec.KDescription -> case currentDecorator of
             Just (Dec.SDescription description) ->
+                Tuple VNeutral $
                 Inline $ whenNotEditing $
                     HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         Dec.KReference -> case currentDecorator of
             Just (Dec.SReference groupRef) ->
+                Tuple VNeutral $
                 Inline $ whenNotEditing $ renderGroupRef groupRef
-            Just _ -> Skip
-            Nothing -> Skip
+            Just _ -> qskip
+            Nothing -> qskip
         -- Dec.KTags -> case currentDecorator of
         --     Just (Dec.STags (Tags tags)) ->
         --         whenNotEditing $ HH.span_ $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> tags
@@ -233,3 +248,10 @@ renderTags tags conf =
         Nothing ->
             HH.span_
                 $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> Tags.toArray tags
+
+
+
+_foldVStates :: forall w i. Array (Dec.Key /\ VState /\ InlineOrBlock w i) -> VState /\ Array (InlineOrBlock w i)
+_foldVStates = foldl foldF (VNeutral /\ []) -- sequence ??
+    where
+        foldF (prevVstate /\ prevIobs) (_ /\ nextVState /\ nextIob) = (prevVstate <> nextVState) /\ Array.snoc prevIobs nextIob -- (prevVstate <> nextVState) /\ (prevIobs <> nextIobs)

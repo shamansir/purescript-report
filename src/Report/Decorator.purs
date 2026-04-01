@@ -51,7 +51,7 @@ instance Ord Key where
 data Key
     = KRating
     | KPriority
-    | KTask
+    | KTask -- FIXME: KProgress can contain Task
     | KProgress P.PValueTag
     | KEarnedAt
     | KDescription

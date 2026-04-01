@@ -1,6 +1,10 @@
 module Report.Web.Decorators.Types where
 
-import Data.Maybe (Maybe)
+import Prelude
+
+import Data.Maybe (Maybe, fromMaybe)
+import Data.Array as Array
+import Data.Foldable (fold)
 
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -141,8 +145,49 @@ type ProgressRenderConfig i =
        )
 
 
-data VState
+data ProgressVState
     = Incomplete
     | Neutral
     | Complete
     | Error
+
+
+derive instance Eq ProgressVState
+
+
+data VState
+    = FromRating Number
+    | FromPriority Number -- Int
+    | FromProgress ProgressVState
+    | VNeutral
+
+
+
+derive instance Eq VState
+instance Ord VState where compare = ordVState
+instance Semigroup VState where append = mergeVState
+instance Monoid VState where mempty = VNeutral
+
+
+ordVState :: VState -> VState -> Ordering
+ordVState (FromProgress _) _ = GT -- progress is more important than priority & rating & neutral
+ordVState _ (FromProgress _) = LT -- progress is more important than priority & rating & neutral
+ordVState (FromPriority _) _ = GT  -- priority is more important than rating & neutral
+ordVState _ (FromPriority _) = LT  -- priority is more important than rating & neutral
+ordVState (FromRating _) _ = GT  -- rating is more important than neutral
+ordVState _ (FromRating _) = LT -- rating is more important than neutral
+ordVState VNeutral VNeutral = EQ
+
+
+mergeVState :: VState -> VState -> VState
+mergeVState (FromProgress progress) _ = FromProgress progress -- progress is more important than priority & rating & neutral
+mergeVState _ (FromProgress progress) = FromProgress progress -- progress is more important than priority & rating & neutral
+mergeVState (FromPriority priority) _ = FromPriority priority -- priority is more important than rating & neutral
+mergeVState _ (FromPriority priority) = FromPriority priority -- priority is more important than rating & neutral
+mergeVState (FromRating rating) _ = FromRating rating  -- rating is more important than neutral
+mergeVState _ (FromRating rating) = FromRating rating -- rating is more important than neutral
+mergeVState VNeutral VNeutral = VNeutral
+
+
+foldVState :: Array VState -> VState
+foldVState = fold
