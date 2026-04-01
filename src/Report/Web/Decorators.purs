@@ -26,11 +26,13 @@ import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Tags (toArray) as Tags
 
 import Report.Web.Helpers
+import Report.Web.Helpers.InlineOrBlock
 import Report.Web.Decorators.Types (DecoratorsRenderConfig, DecoratorRenderConfig, TagsRenderConfig, EditableValueEvents)
 import Report.Web.Decorators.Progress (renderProgress)
 import Report.Web.Decorators.Tags (itemTagBadge)
 import Report.Web.GroupPath (renderGroupRef)
 import Report.Web.Decorators.EditInput as EI
+import Report.Web.Decorators.Types
 
 
 renderPrefixes
@@ -39,7 +41,7 @@ renderPrefixes
     => S.HasDecorators item
     => DecoratorsRenderConfig i
     -> item
-    -> Array (H w i)
+    -> Array (InlineOrBlock w i)
 renderPrefixes conf item =
     let
         i_decorators = S.i_decorators item
@@ -55,7 +57,7 @@ renderSuffixes
     => S.HasDecorators item
     => DecoratorsRenderConfig i
     -> item
-    -> Array (H w i)
+    -> Array (InlineOrBlock w i)
 renderSuffixes conf item =
     let
         i_decorators = S.i_decorators item
@@ -71,7 +73,7 @@ renderDecorators_
     -> String
     -> Decorators
     -> Array Dec.Key
-    -> Array (H w i)
+    -> Array (InlineOrBlock w i)
 renderDecorators_ conf itemName allDecorators decoratorsKeys =
     let
         -- i_decorators = S.i_decorators @item_tag item
@@ -102,60 +104,53 @@ renderDecorators_ conf itemName allDecorators decoratorsKeys =
 renderDecorator
     :: forall w i
      . DecoratorRenderConfig i
-    -> H w i
+    -> InlineOrBlock w i
 renderDecorator conf =
     let
         currentDecorator = Decorators.get conf.key conf.allDecorators -- FIXME: we could just filter key / value pairs out of map
         selectedStyle = "background-color: #fffdd0ff; border-radius: 5px;"
         usualStyle = "background-color: transparent;"
         smallerFont inside = HH.span [ HP.style "font-size: 0.6em;" ] $ pure inside
-        wrapDecorator content =
+        wrapInlineContent content =
             HH.span
                 [ HP.style $ if conf.isSelected then selectedStyle else usualStyle
                 , HE.onClick conf.onClick
                 ]
                 [ content ]
+        wrapRenderedDecorator = mapInlineContent wrapInlineContent
     in
-    wrapDecorator $ case conf.key of
+    wrapRenderedDecorator $ case conf.key of
         Dec.KRating -> case currentDecorator of
-            Just (Dec.PRating rating) -> HH.span_
-                [ whenNotEditing $
+            Just (Dec.PRating rating) -> Inline $ whenNotEditing $
                     let ratingColor' = ratingColor $ Rating.relValue rating
                     in HH.span [ HP.style "margin: 0px -4px 0px 7px; opacity: 0.9; position: relative; top: -1px;" ]
                         [ qcolorSpan ratingColor' $ Rating.toStars rating
                         , qthinspacerSpan
                         , smallerFont $ qcolorSpan ratingColor' $ Rating.toString rating
                         ]
-                , qspacerSpan
-                ]
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+            Just _ -> Skip
+            Nothing -> Skip
         Dec.KPriority -> case currentDecorator of
-            Just (Dec.PPriority priority) -> HH.span_
-                [ whenNotEditing $
+            Just (Dec.PPriority priority) -> Inline $ whenNotEditing $
                     let priorityColor' = genericColor -- TODO!
                     in HH.span_
                         [ qbracketspan "[#"
                         , qcolorSpan priorityColor' $ Priority.priorityChar priority
                         , qbracketspan "]"
                         ]
-                , qspacerSpan
-                ]
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+            Just _ -> Skip
+            Nothing -> Skip
         Dec.KTask -> case currentDecorator of
-            Just (Dec.PTask task) -> HH.span_
-                [ whenNotEditing $
+            Just (Dec.PTask task) ->
+                Inline $ whenNotEditing $
                     let taskColor' = genericColor -- TODO!
                     in HH.span_
                         [ qbracketspan "[#"
                         , qcolorSpan taskColor' $ Task.taskPToString task
                         , qbracketspan "]"
                         ]
-                , qspacerSpan
-                ]
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+            Just _ -> Skip
+            Nothing -> Skip
         Dec.KProgress _ -> case currentDecorator of
             Just (Dec.SProgress progress) ->
                 renderProgress
@@ -173,12 +168,11 @@ renderDecorator conf =
                         conf.isEditingDecorator
                         progress
                     )
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+            Just _ -> Skip
+            Nothing -> Skip
         Dec.KEarnedAt -> case currentDecorator of
-            Just (Dec.SEarnedAt (CT.SDate { day, month, year })) -> HH.span_
-                [ qspacerSpan
-                , whenNotEditing $
+            Just (Dec.SEarnedAt (CT.SDate { day, month, year })) ->
+                Inline $ whenNotEditing $
                     HH.span [ HP.style "font-size: 0.8em; color: silver;" ]
                         [ qcolorSpan timeColor $ CT.toLeadingZero day
                         , qspacerSpan
@@ -186,22 +180,19 @@ renderDecorator conf =
                         , qspacerSpan
                         , qcolorSpan timeColor $ show year
                         ]
-                ]
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+            Just _ -> Skip
+            Nothing -> Skip
         Dec.KDescription -> case currentDecorator of
-            Just (Dec.SDescription description) -> HH.span_
-                [ qspacerSpan
-                , whenNotEditing $
+            Just (Dec.SDescription description) ->
+                Inline $ whenNotEditing $
                     HH.span [ HP.style "font-size: 0.8em; color: silver;" ] [ HH.text description ]
-                ]
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+            Just _ -> Skip
+            Nothing -> Skip
         Dec.KReference -> case currentDecorator of
             Just (Dec.SReference groupRef) ->
-                whenNotEditing $ renderGroupRef groupRef
-            Just _ -> HH.text ""
-            Nothing -> HH.text ""
+                Inline $ whenNotEditing $ renderGroupRef groupRef
+            Just _ -> Skip
+            Nothing -> Skip
         -- Dec.KTags -> case currentDecorator of
         --     Just (Dec.STags (Tags tags)) ->
         --         whenNotEditing $ HH.span_ $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> tags

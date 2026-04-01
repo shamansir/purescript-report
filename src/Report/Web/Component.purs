@@ -5,7 +5,7 @@ import Prelude
 import Effect.Class (class MonadEffect)
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find) as Array
+import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat) as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
@@ -53,6 +53,7 @@ import Report.Convert.Org (toOrg) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
+import Report.Web.Helpers.InlineOrBlock as IoB
 import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Navigation (NavigatedTo)
@@ -837,16 +838,22 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         , onCancelEditing : CancelEditing
                         , noop : NoOp
                         }
+                    renderedPrefixes = renderPrefixes renderDecoratorsConfig item
+                    renderedSuffixes = renderSuffixes renderDecoratorsConfig item
+                    inlinePrefixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedPrefixes
+                    inlineSuffixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedSuffixes
+                    blockDecorators =
+                        Array.concat
+                        $ Array.catMaybes
+                        $ IoB.loadBlockContent
+                        <$>
+                        (renderedPrefixes <> renderedSuffixes)
                 in HH.div
                     [ HP.style
                         $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
-                    $ HH.span_
-                        (renderPrefixes
-                            renderDecoratorsConfig
-                            item
-                        )
+                    $ HH.span_ inlinePrefixes
                     : case titlePosition of
                         InsideProgress ->
                             HH.text ""
@@ -857,15 +864,13 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                                     if (not hasPrefixes)
                                         then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
                                         else HH.text title
-                    : HH.span_ (renderSuffixes
-                            renderDecoratorsConfig
-                            item
-                        )
+                    : HH.span_ inlineSuffixes
                     : HH.span_
                         (pure
                             $ renderTags (wrap $ R.i_tags @item_tag item)
                             $ tagsRenderConfig
                         )
+                    : HH.div_ blockDecorators
                     : pure (const NoOp <$> renderItemTabularValues item)
 
 

@@ -7,6 +7,7 @@ import Web.UIEvent.MouseEvent (MouseEvent)
 import Report.Core.Logic as CT
 import Report.Decorator (Key) as Decorator
 import Report.Decorator (Decorators)
+import Report.Decorators.Progress (PValueTag) as Progress
 import Report.Web.Helpers (H)
 {-
 import Report.Prefix (Key) as Prefix
@@ -130,19 +131,13 @@ type TagsRenderConfig i t =
         )
 
 
+type IsComplete = Boolean
+
+
 type ProgressRenderConfig i =
     EditableValueEvents i
        ( onEditItemName :: CT.EncodedValue -> i
+    --    , renderItemName :: IsComplete -> Progress.PValueTag -> H w i
        )
 
 
-data InlineOrBlock w i
-    = Inline (H w i)
-    | Block (H w i) (Array (H w i))
-
-
-type RenderedDecorator w i =
-    { key :: Decorator.Key
-    , rendered :: InlineOrBlock w i
-    }
-    -- , affectsTitle :: Maybe Progress

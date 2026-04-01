@@ -5,7 +5,7 @@ import Prelude
 import Data.Newtype (unwrap, wrap)
 import Data.Array (length, intersperse) as Array
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -19,6 +19,7 @@ import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicVa
 import Report.Decorators.Tags (RawTag)
 
 import Report.Web.Helpers
+import Report.Web.Helpers.InlineOrBlock
 import Report.Web.Decorators (renderDecorator, renderTags)
 
 import Report.Convert.Keyed (keyOf)
@@ -117,7 +118,7 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                     ]
 
 
-renderTabularAtomicValue :: forall w. Tabular.Item TabularAtomicValue -> H w Unit
+renderTabularAtomicValue :: forall w. Tabular.Item TabularAtomicValue -> H w Unit -- TODO: InlineOrBlock
 renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
     HH.span_
         [ qcolorSpan tabularLabelColor label
@@ -190,7 +191,8 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , valueSpan (TVTime to.time)
                         ]
                 TVDecorator decorator ->
-                    renderDecorator
+                    fromMaybe (HH.text "BLOCK (TODO)")
+                    $ loadInlineContent $ renderDecorator -- TODO: use InlineOrBlock
                         { isEditingDecorator : Nothing
                         , isEditingItemName : Nothing
                         , isSelected : false
