@@ -141,3 +141,8 @@ type ProgressRenderConfig i =
        )
 
 
+data VState
+    = Incomplete
+    | Neutral
+    | Complete
+    | Error

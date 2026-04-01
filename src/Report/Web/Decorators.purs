@@ -4,6 +4,8 @@ import Prelude
 
 import Data.Maybe (Maybe(..), maybe)
 import Data.Array as Array
+import Data.Tuple (Tuple(..))
+import Data.Tuple (fst, snd) as Tuple
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -153,7 +155,7 @@ renderDecorator conf =
             Nothing -> Skip
         Dec.KProgress _ -> case currentDecorator of
             Just (Dec.SProgress progress) ->
-                renderProgress
+                Tuple.snd $ renderProgress
                     progressConfig
                     ( maybe
                         CT.view
