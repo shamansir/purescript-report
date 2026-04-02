@@ -36,6 +36,8 @@ renderProgress :: forall w i. ProgressRenderConfig i -> CT.ViewOrEdit { itemName
 renderProgress events voeItemName voeProgress = case progress of
     Prog.None ->
         Tuple Incomplete $
+        Inline $ qprogress $ qcolorSpan incompleteColor "<None>"
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
@@ -43,8 +45,11 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcolorSpan incompleteColor "<None>"
             ]
+        -}
     Prog.Unknown ->
         Tuple Incomplete $
+        Inline $ qprogress $ qcolorSpan incompleteColor "???"
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan incompleteColor
             , qspacerSpan
@@ -52,8 +57,11 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcolorSpan incompleteColor "???"
             ]
+        -}
     Prog.Error errorStr ->
         Tuple Error $
+        Inline $ qprogress $ qcolorSpan errorColor errorStr
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan genericColor
             , qspacerSpan
@@ -61,8 +69,11 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcolorSpan errorColor errorStr
             ]
+        -}
     Prog.PText text ->
         Tuple Neutral $
+        Inline $ qprogress $ qcolorSpan textColor text
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -70,8 +81,11 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcolorSpan textColor text
             ]
+        -}
     Prog.PNumber num ->
         Tuple Neutral $
+        Inline $ qprogress $ qcolorSpan numColor $ formatNum num
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -79,8 +93,11 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcolorSpan numColor $ formatNum num
             ]
+        -}
     Prog.PInt num ->
         Tuple Neutral $
+        Inline $ qprogress $ qcolorSpan numColor $ formatInt num
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -88,8 +105,17 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcolorSpan numColor $ formatInt num
             ]
+        -}
     Prog.OnDate (CT.SDate { day, month, year }) ->
         Tuple Neutral $ -- TODO: check if date is current?
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan timeColor $ CT.toLeadingZero day
+            , qspacerSpan
+            , qcolorSpan timeColor $ show month
+            , qspacerSpan
+            , qcolorSpan timeColor $ show year
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -103,8 +129,17 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan timeColor $ show year
                 ]
             ]
+        -}
     Prog.OnTime { hrs, min, sec } ->
         Tuple Neutral $ -- TODO: check if date is current?
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan timeColor $ CT.toLeadingZero hrs
+            , qtimesplitSpan
+            , qcolorSpan timeColor $ CT.toLeadingZero min
+            , qtimesplitSpan
+            , qcolorSpan timeColor $ CT.toLeadingZero sec
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -118,8 +153,11 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan timeColor $ CT.toLeadingZero sec
                 ]
             ]
+        -}
     Prog.ToComplete { done } ->
         Tuple (vsFrom done) $
+        Inline $ qprogress $ qcompleteCheckbox done
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ if done then completeColor else incompleteColor
             , qspacerSpan
@@ -127,11 +165,17 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qcompleteCheckbox done
             ]
+        -}
     Prog.PercentI pctInt ->
         let
             isDone = pctInt >= 100
         in
         Tuple (vsFrom isDone) $
+        Inline $ qprogress $ HH.span_
+            [ percentage 100.0 $ Int.toNumber pctInt
+            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt pctInt <> "%"
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -142,11 +186,17 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt pctInt <> "%"
                 ]
             ]
+        -}
     Prog.PercentN pctN ->
         let
             isDone = pctN >= 1.0
         in
         Tuple (vsFrom isDone) $
+        Inline $ qprogress $ HH.span_
+            [ percentage 1.0 pctN
+            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum (pctN * 100.0) <> "%"
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -157,12 +207,18 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum (pctN * 100.0) <> "%"
                 ]
             ]
+        -}
     Prog.PercentSign { pct, sign } ->
         let
             isDone = pct >= 1.0
             signStr = if sign >= 0 then "+" else "-"
         in
         Tuple (vsFrom isDone) $
+        Inline $ qprogress $ HH.span_
+            [ percentage 1.0 pct
+            , qcolorSpan (if isDone then completeColor else incompleteColor) $ signStr <> formatNum (pct * 100.0) <> "%"
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -173,11 +229,17 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ signStr <> formatNum (pct * 100.0) <> "%"
                 ]
             ]
+        -}
     Prog.ToGetI { got, total } ->
         let
             isDone = (total > 0) && (got >= total)
         in
         Tuple (vsFrom isDone) $
+        Inline $ qprogress $ HH.span_
+            [ percentage (Int.toNumber total) (Int.toNumber got)
+            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt got <> "/" <> formatInt total
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -188,11 +250,17 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt got <> "/" <> formatInt total
                 ]
             ]
+        -}
     Prog.ToGetN { got, total } ->
         let
             isDone = (total > 0.0) && (got >= total)
         in
         Tuple (vsFrom isDone) $
+        Inline $ qprogress $ HH.span_
+            [ percentage total got
+            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum got <> "/" <> formatNum total
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -203,8 +271,15 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum got <> "/" <> formatNum total
                 ]
             ]
+        -}
     Prog.MeasuredI { amount, measure } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ formatInt amount
+            , qthinspacerSpan
+            , qcolorSpan measureColor $ measure
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -216,8 +291,15 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan measureColor $ measure
                 ]
             ]
+        -}
     Prog.MeasuredN { amount, measure } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ formatNum amount
+            , qthinspacerSpan
+            , qcolorSpan measureColor $ measure
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -229,11 +311,18 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan measureColor $ measure
                 ]
             ]
+        -}
     Prog.MeasuredSign { amount, measure, sign } ->
         let
             signStr = if sign >= 0 then "+" else "-"
         in
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ signStr <> formatNum amount
+            , qthinspacerSpan
+            , qcolorSpan measureColor $ measure
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -245,8 +334,15 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan measureColor $ measure
                 ]
             ]
+        -}
     Prog.PerI { amount, per } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ formatInt amount
+            , qpersplitSpan
+            , qcolorSpan measureColor per
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -258,8 +354,15 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan measureColor per
                 ]
             ]
+        -}
     Prog.PerN { amount, per } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ formatNum amount
+            , qpersplitSpan
+            , qcolorSpan measureColor per
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -271,8 +374,15 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan measureColor per
                 ]
             ]
+        -}
     Prog.RangeI { from, to } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ formatInt from
+            , qrangesplitSpan
+            , qcolorSpan numColor $ formatInt to
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -284,8 +394,15 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan numColor $ formatInt to
                 ]
             ]
+        -}
     Prog.RangeN { from, to } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan numColor $ formatNum from
+            , qrangesplitSpan
+            , qcolorSpan numColor $ formatNum to
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -297,8 +414,11 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan numColor $ formatNum to
                 ]
             ]
+        -}
     Prog.Task task ->
         Tuple (taskVState task) $
+        Inline $ qprogress $ qtaskCheckbox task
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan $ taskTextColor task
             , qspacerSpan
@@ -306,11 +426,20 @@ renderProgress events voeItemName voeProgress = case progress of
             , qspacerSpan
             , qprogress $ qtaskCheckbox task
             ]
+        -}
     Prog.LevelsI { reached, levels } ->
         let
             maximum = foldl max 0 $ _.maximum <$> levels
             isDone = reached >= maximum
         in Tuple (vsFrom isDone) $
+        Block
+            ( qprogress $ HH.span_
+                [ percentage (Int.toNumber maximum) (Int.toNumber reached)
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                ]
+            )
+            $ renderLevelI reached <$> levels
+        {-
         Block
             ( HH.span_
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
@@ -324,11 +453,20 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             )
             $ renderLevelI reached <$> levels
+        -}
     Prog.LevelsN { reached, levels } ->
         let
             maximum = foldl max 0.0 $ _.maximum <$> levels
             isDone = reached >= maximum
         in Tuple (vsFrom isDone) $
+        Block
+            ( qprogress $ HH.span_
+                [ percentage maximum reached
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatNum reached <> "/" <> formatNum maximum
+                ]
+            )
+            $ renderLevelN reached <$> levels
+        {-
         Block
             ( HH.span_
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
@@ -342,11 +480,20 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             )
             $ renderLevelN reached <$> levels
+        -}
     Prog.LevelsS { reached, levels } ->
         let
             maximum = Array.length levels
             isDone = reached >= maximum
         in Tuple (vsFrom isDone) $
+        Block
+            ( qprogress $ HH.span_
+                    [ percentage (Int.toNumber maximum) (Int.toNumber reached)
+                    , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                    ]
+            )
+            $ mapWithIndex (renderLevelS reached) levels
+        {-
         Block
             ( HH.span_
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
@@ -360,10 +507,16 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             )
             $ mapWithIndex (renderLevelS reached) levels
+        -}
     Prog.LevelsE { reached, total } ->
         let
             isDone = reached >= total
         in Tuple (vsFrom isDone) $
+        Inline $ qprogress $ HH.span_
+            [ percentage (Int.toNumber total) (Int.toNumber reached)
+            , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt total <> "L"
+            ]
+        {-
         Inline $
             HH.span_
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
@@ -375,10 +528,20 @@ renderProgress events voeItemName voeProgress = case progress of
                     , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt total <> "L"
                     ]
                 ]
+        -}
     Prog.LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } ->
         let
             isDone = levelReached >= totalLevels
         in Tuple (vsFrom isDone) $
+        Inline $ qprogress
+            $ HH.span_
+                [ percentage (Int.toNumber totalLevels) (Int.toNumber levelReached)
+                , qcolorSpan (if isDone then completeColor else incompleteColor)
+                        $ formatInt levelReached <> "/" <> formatInt totalLevels <> "L"
+                        <> " : "
+                        <> formatInt reachedAtCurrent <> "/" <> formatInt maximumAtCurrent
+                ]
+        {-
         Inline $
             HH.span_
                 [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
@@ -393,12 +556,21 @@ renderProgress events voeItemName voeProgress = case progress of
                             <> formatInt reachedAtCurrent <> "/" <> formatInt maximumAtCurrent
                     ]
                 ]
+        -}
     Prog.LevelsP { levels } ->
         let
             maximum = Array.length levels
             reached = Array.length $ Array.filter (_ == S.TDone) $ _.proc <$> levels
             isDone = reached >= maximum
         in Tuple (vsFrom isDone) $
+        Block
+            ( qprogress $ HH.span_
+                [ percentage (Int.toNumber maximum) (Int.toNumber reached)
+                , qcolorSpan (if isDone then completeColor else incompleteColor) $ formatInt reached <> "/" <> formatInt maximum
+                ]
+            )
+            $ mapWithIndex renderLevelP levels
+        {-
         Block
                 ( HH.span []
                     [ qitemmarkerSpan $ if isDone then completeColor else incompleteColor
@@ -412,6 +584,7 @@ renderProgress events voeItemName voeProgress = case progress of
                     ]
                 )
             $ mapWithIndex renderLevelP levels
+        -}
     Prog.LevelsO { reached, levels } ->
         -- TODO: we only know if we are done is when all maximum values are Just
 
@@ -433,6 +606,16 @@ renderProgress events voeItemName voeProgress = case progress of
 
     Prog.RelTime rel { hrs, min, sec } ->
         Tuple Neutral $
+        Inline $ qprogress $ HH.span_
+            [ qcolorSpan measureColor $ relMarker rel
+            , qthinspacerSpan
+            , qcolorSpan timeColor $ CT.toLeadingZero hrs
+            , qtimesplitSpan
+            , qcolorSpan timeColor $ CT.toLeadingZero min
+            , qtimesplitSpan
+            , qcolorSpan timeColor $ CT.toLeadingZero sec
+            ]
+        {-
         Inline $ HH.span_
             [ qitemmarkerSpan completeColor
             , qspacerSpan
@@ -448,6 +631,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 , qcolorSpan timeColor $ CT.toLeadingZero sec
                 ]
             ]
+        -}
     where
         progress = CT.loadViewOrEdit voeProgress
         qprogress htmlWhenViewing =
