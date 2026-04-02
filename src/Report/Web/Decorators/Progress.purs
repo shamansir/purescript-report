@@ -450,18 +450,12 @@ renderProgress events voeItemName voeProgress = case progress of
             ]
     where
         progress = CT.loadViewOrEdit voeProgress
-        { itemName } = CT.loadViewOrEdit voeItemName
-        qitemnameSpan color =
-            if not editingName
-                then qcolorSpan color itemName
-                else mkValueEditInput events.onEditItemName $ _.itemName <$> voeItemName
         qprogress htmlWhenViewing =
             if not editingProgress
                 then htmlWhenViewing
                 else mkValueEditInput events.onEdit voeProgress
         mkValueEditInput :: forall a. (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
         mkValueEditInput = EI.mkValueEditInput events
-        editingName = CT.isEditing voeItemName
         editingProgress = CT.isEditing voeProgress
         relMarker = case _ of
             Prog.RMoreThan -> ">"

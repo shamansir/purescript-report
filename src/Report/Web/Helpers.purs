@@ -55,6 +55,7 @@ qpathsplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "::" ] :: forall w i. H
 qpersplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "/" ] :: forall w i. H w i
 qrangesplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "-" ] :: forall w i. H w i
 qtabularsplitSpan = HH.span [ qcolor splitcolor ] [ HH.text "::" ] :: forall w i. H w i
+qemptySpan = HH.span [ ] [ HH.text "" ] :: forall w i. H w i
 
 qbracketspan :: forall w i. String -> H w i
 qbracketspan br = HH.span [ qcolor splitcolor ] [ HH.text br ]

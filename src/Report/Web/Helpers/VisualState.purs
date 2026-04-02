@@ -81,7 +81,7 @@ itemNameColor = case _ of
     FromProgress Complete -> H.completeColor
     FromProgress Incomplete -> H.incompleteColor
     FromProgress Neutral -> H.completeColor
-    FromProgress Error -> H.completeColor
+    FromProgress Error -> H.genericColor
     FromPriority _ -> H.completeColor -- FIXME: TODO
     FromRating rating -> H.ratingColor rating
     VNeutral -> H.completeColor

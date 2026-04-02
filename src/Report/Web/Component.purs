@@ -9,7 +9,7 @@ import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
-import Data.Map (Map)
+import Data.Map (Map, SemigroupMap(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Maybe (isJust) as Maybe
@@ -17,7 +17,7 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Newtype (wrap)
+import Data.Newtype (wrap, unwrap)
 
 import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
@@ -34,7 +34,8 @@ import Report as R
 import Report.Builder as RB
 import Report.Class as R
 import Report.Chain (toString) as Chain
-import Report.Core.Logic (EncodedValue(..))
+-- import Report.Core.Logic (EncodedValue(..))
+import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq) as GP
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
@@ -52,14 +53,15 @@ import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Org (toOrg) as Report
 
 import Report.Web.GroupPath (groupPathId, renderPath)
-import Report.Web.Helpers (qspacerSpan, lineHeight, nestMargin)
+import Report.Web.Helpers (qspacerSpan, qcolorSpan, qitemmarkerSpan, lineHeight, nestMargin, qemptySpan, H)
 import Report.Web.Helpers.InlineOrBlock as IoB
 import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
+import Report.Web.Decorators.EditInput as EI
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
 import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
-import Report.Web.Helpers.VisualState (selectOne) as VStates
+import Report.Web.Helpers.VisualState (selectOne, itemNameColor) as VStates
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Report.Web.Component.RecalcBehavior as CRB
 
@@ -106,7 +108,7 @@ data Action subj_id subj_tag item_tag report
     | NextSort
     | ClearNavigation
     | NavigateTo MouseEvent (Location subj_id)
-    | EditAt (Location subj_id) EncodedValue
+    | EditAt (Location subj_id) CT.EncodedValue
     | StartEditing MouseEvent
     | CancelEditing
     | ToggleReadOnlyMode
@@ -583,25 +585,25 @@ component cfg =
                                                 Navigation.clear
                 editNavigation s = case location of
                     AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
-                                                $ maybe (EncodedValue "") (R.g_title >>> EncodedValue)
+                                                $ maybe (CT.EncodedValue "") (R.g_title >>> CT.EncodedValue)
                                                 $ R.findGroup subjId groupPath s.report
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.editItemName subjId groupPath itemIdx
-                                                $ maybe (EncodedValue "") (R.i_title >>> EncodedValue)
+                                                $ maybe (CT.EncodedValue "") (R.i_title >>> CT.EncodedValue)
                                                 $ R.findItem subjId groupPath itemIdx s.report
                     AtDecorator subjId groupPath itemIdx decoratorKey ->
                                                 Navigation.editDecorator subjId groupPath itemIdx decoratorKey
-                                                $ maybe (EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
+                                                $ maybe (CT.EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
                                                 $ Decorator.get decoratorKey
                                                 =<< R.i_decorators
                                                 <$> R.findItem subjId groupPath itemIdx s.report
                     AtTag subjId groupPath itemIdx tagIdx ->
                                                 Navigation.editTag subjId groupPath itemIdx tagIdx
-                                                $ maybe (EncodedValue "") (R.i_tags @item_tag >>> flip Array.index tagIdx >>> map (R.tagContent >>> Chain.toString >>> EncodedValue) >>> fromMaybe (EncodedValue ""))
+                                                $ maybe (CT.EncodedValue "") (R.i_tags @item_tag >>> flip Array.index tagIdx >>> map (R.tagContent >>> Chain.toString >>> CT.EncodedValue) >>> fromMaybe (CT.EncodedValue ""))
                                                 $ R.findItem subjId groupPath itemIdx s.report
                     AtTabular subjId groupPath itemIdx tabularIdx ->
                                                 Navigation.editTag subjId groupPath itemIdx tabularIdx
-                                                $ maybe (EncodedValue "") (const $ EncodedValue "") -- FIXME
+                                                $ maybe (CT.EncodedValue "") (const $ CT.EncodedValue "") -- FIXME
                                                 $ R.findItem subjId groupPath itemIdx s.report
                     Nowhere -> s.navigatedTo
                 processedReport s = processingCount s > 0
@@ -803,6 +805,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
 
             renderGroupItem groupPath itemIdx item =
                 let
+                    itemTitle = R.i_title item
                     isNavigatedToItem = navigatedTo # Navigation.atItem subjId groupPath itemIdx
                     isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
                     isEditingDecorator decorator = navigatedTo # Navigation.editingAtDecorator subjId groupPath itemIdx decorator
@@ -816,7 +819,30 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                     itemDecorators = R.i_decorators item
                     hasPrefixes = Array.length (Decorator.prefixes itemDecorators) > 0
+                    hasSuffixes = Array.length (Decorator.suffixes itemDecorators) > 0
                     titlePosition = if Decorators.hasProgress itemDecorators # Maybe.isJust then InsideProgress else Normal
+                    voeItemName = maybe
+                        CT.view
+                        CT.edit
+                        isEditingItemName
+                        itemTitle
+                            <#> \name -> { itemName : name }
+                    editingName = CT.isEditing voeItemName
+                    { itemName } = CT.loadViewOrEdit voeItemName
+                    ititleEvents =
+                        { onClick : const NoOp -- FIXME: TODO
+                        , onEdit : const NoOp -- FIXME: TODO
+                        , onStartEditing  : StartEditing
+                        , onCancelEditing : CancelEditing
+                        , noop : NoOp
+                        , onEditItemName : makeItemNameEditEvt
+                        }
+                    -- mkEditTitleInput :: forall a w i. CT.ViewOrEdit a -> H w i
+                    mkEditTitleInput = EI.mkValueEditInput ititleEvents ititleEvents.onEditItemName
+                    qitemnameSpan color =
+                        if not editingName
+                            then qcolorSpan color itemName
+                            else mkEditTitleInput $ _.itemName <$> voeItemName
                     renderDecoratorsConfig =
                         { mbSelectedDecorator : mbCurrentDecorator
                         , isEditingDecorator
@@ -843,7 +869,8 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     (svStates /\ renderedSuffixes) = renderSuffixes renderDecoratorsConfig item
                     inlinePrefixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedPrefixes
                     inlineSuffixes = Array.catMaybes $ IoB.loadInlineContent <$> renderedSuffixes
-                    selectedVState = VStates.selectOne $ pvStates <> svStates
+                    selectedVState = VStates.selectOne $ unwrap $ SemigroupMap pvStates <> SemigroupMap svStates
+                    itemNameColor = VStates.itemNameColor selectedVState
                     blockDecorators =
                         Array.concat
                         $ Array.catMaybes
@@ -856,16 +883,20 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
                     $ HH.span_ inlinePrefixes
-                    : case titlePosition of
+                    : {- case titlePosition of
                         InsideProgress ->
                             HH.text ""
-                        Normal ->
-                            case R.i_title item of
+                        Normal -> -}
+                            case itemTitle of
                                 "" -> HH.text ""
-                                title ->
-                                    if (not hasPrefixes)
-                                        then HH.span [ HP.style "padding-left: 6px;" ] [ HH.text title ]
-                                        else HH.text title
+                                _ ->
+                                    HH.span_
+                                        [ if hasPrefixes then qspacerSpan else qemptySpan
+                                        , qitemmarkerSpan itemNameColor
+                                        , qspacerSpan
+                                        , qitemnameSpan itemNameColor
+                                        , if hasSuffixes then qspacerSpan else qemptySpan
+                                        ]
                     : HH.span_ inlineSuffixes
                     : HH.span_
                         (pure
@@ -882,7 +913,7 @@ navigationHint navigation =
     let
         navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
         hintIfEditing Nothing = HH.text ""
-        hintIfEditing (Just { value : EncodedValue val }) = HH.text $ "E:" <> show val
+        hintIfEditing (Just { value : CT.EncodedValue val }) = HH.text $ "E:" <> show val
         hintText = case Navigation.toLocation navigation of
             Nowhere -> "-"
             AtGroup subjId groupPath -> "G: " <> show subjId <> " / " <> show groupPath
