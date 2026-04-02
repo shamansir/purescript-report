@@ -5,7 +5,7 @@ import Prelude
 import Effect.Class (class MonadEffect)
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat) as Array
+import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat, intersperse) as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
@@ -882,7 +882,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                         $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
-                    $ HH.span_ inlinePrefixes
+                    $ HH.span_ (Array.intersperse qspacerSpan inlinePrefixes)
                     : {- case titlePosition of
                         InsideProgress ->
                             HH.text ""
@@ -897,7 +897,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                                         , qitemnameSpan itemNameColor
                                         , if hasSuffixes then qspacerSpan else qemptySpan
                                         ]
-                    : HH.span_ inlineSuffixes
+                    : HH.span_ (Array.intersperse qspacerSpan inlineSuffixes)
                     : HH.span_
                         (pure
                             $ renderTags (wrap $ R.i_tags @item_tag item)

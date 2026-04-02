@@ -640,7 +640,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 else mkValueEditInput events.onEdit voeProgress
         mkValueEditInput :: forall a. (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
         mkValueEditInput = EI.mkValueEditInput events
-        editingProgress = CT.isEditing voeProgress
+        editingProgress  = CT.isEditing voeProgress
         relMarker = case _ of
             Prog.RMoreThan -> ">"
             Prog.REqual -> "="
