@@ -139,12 +139,6 @@ data SortKey
     | SS String
 
 
-data ItemTitlePosition
-    = InsideProgress
-    | Normal
-
-
-
 derive instance Eq SortKey
 derive instance Ord SortKey
 
@@ -820,7 +814,6 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     itemDecorators = R.i_decorators item
                     hasPrefixes = Array.length (Decorator.prefixes itemDecorators) > 0
                     hasSuffixes = Array.length (Decorator.suffixes itemDecorators) > 0
-                    titlePosition = if Decorators.hasProgress itemDecorators # Maybe.isJust then InsideProgress else Normal
                     voeItemName = maybe
                         CT.view
                         CT.edit
