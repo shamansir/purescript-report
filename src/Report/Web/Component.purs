@@ -5,7 +5,7 @@ import Prelude
 import Effect.Class (class MonadEffect, liftEffect)
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat, intersperse) as Array
+import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat, intersperse, null) as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
@@ -14,7 +14,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Maybe (isJust) as Maybe
 import Data.Set as Set
-import Data.String (length, contains, toLower, Pattern(..)) as String
+import Data.String (length, contains, toLower, joinWith, split, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Newtype (wrap, unwrap)
@@ -1013,22 +1013,43 @@ makeTagClickEvt tag mevt =
 
 
 newtype ComponentURLConfig
-    = ComponentURLConfig {}
-    {-
+    = ComponentURLConfig
     { subjIdFilter :: Array String
     , subjFilter :: Maybe String
-    , tagKindFilter :: Array String
-    , tagKindGrouping :: Array String
-    } -}
+    , subjTagFilter :: Array String
+    , itemTagFilter :: Array String
+    , itemTagKindGrouping :: Array String
+    }
 
 
 instance UC.UrlConfig ComponentURLConfig where
     default :: ComponentURLConfig
-    default = ComponentURLConfig {}
+    default = ComponentURLConfig
+        { subjIdFilter : []
+        , subjFilter : Nothing
+        , subjTagFilter : []
+        , itemTagFilter : []
+        , itemTagKindGrouping : []
+        }
     writeToUrl :: ComponentURLConfig -> UC.ParamMap
-    writeToUrl = const UC.emptyParams
+    writeToUrl (ComponentURLConfig cfg) =
+        UC.emptyParams
+            # UC.insertIf (not $ Array.null cfg.subjIdFilter)        "sif"  (String.joinWith "," cfg.subjIdFilter)
+            # UC.insertWhenJust                                      "sf"   cfg.subjFilter
+            # UC.insertIf (not $ Array.null cfg.subjTagFilter)       "stf"  (String.joinWith "," cfg.subjTagFilter)
+            # UC.insertIf (not $ Array.null cfg.itemTagFilter)       "itf"  (String.joinWith "," cfg.itemTagFilter)
+            # UC.insertIf (not $ Array.null cfg.itemTagKindGrouping) "itkg" (String.joinWith "," cfg.itemTagKindGrouping)
     loadFromUrl :: ComponentURLConfig -> UC.ParamMap -> ComponentURLConfig
-    loadFromUrl = flip $ const identity
+    loadFromUrl _ paramMap =
+        ComponentURLConfig
+            { subjIdFilter        : paramMap # UC.lookup "sif"  # arrayFromMaybe
+            , subjFilter          : paramMap # UC.lookup "sf"
+            , subjTagFilter       : paramMap # UC.lookup "stf"  # arrayFromMaybe
+            , itemTagFilter       : paramMap # UC.lookup "itf"  # arrayFromMaybe
+            , itemTagKindGrouping : paramMap # UC.lookup "itkg" # arrayFromMaybe
+            }
+        where
+            arrayFromMaybe = maybe [] (String.split $ String.Pattern ",")
 
 
 updateUrl
@@ -1047,8 +1068,14 @@ updateUrl = H.get >>= \state ->
 
 
 collectUrlConfig :: forall subj_id subj_tag item_tag subj group item. ReportComponentState subj_id subj_tag item_tag subj group item -> ComponentURLConfig
-collectUrlConfig = const $ ComponentURLConfig {}
+collectUrlConfig state = UC.default -- FIXME
 
 
 loadUrlConfig :: forall subj_id subj_tag item_tag subj group item. ComponentURLConfig -> ReportComponentState subj_id subj_tag item_tag subj group item -> ReportComponentState subj_id subj_tag item_tag subj group item
-loadUrlConfig = const identity
+loadUrlConfig (ComponentURLConfig cfg) = identity
+    {- _
+    { filter = cfg.subjFilter
+    , subjects = ?wh
+    , tagFilter = ?wh
+    , process = ?wh
+    } -}
