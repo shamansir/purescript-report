@@ -187,6 +187,9 @@ instance IsTag Tag where
 instance IsSortable Tag where
     sameKind :: Tag -> Tag -> Boolean
     sameKind = const $ const true -- all the tags are the same kind
+    kindContent = const $ End "tag"
+    kindId = const "tag"
+    fromKindId = const $ Just $ Tag "tag"
 
 
 instance IsGroupable Group Tag where

@@ -130,6 +130,9 @@ instance IsGroup MyGroup where
 
 instance IsSortable BoolTag where
     sameKind = const $ const true
+    kindContent = const $ C.End "bool"
+    kindId = const "bool"
+    fromKindId = const $ Just $ BoolTag false
 
 instance IsGroupable MyGroup BoolTag where
     t_group = unwrap >>> case _ of
@@ -162,6 +165,19 @@ instance IsSortable ArtistTag where
             Country _ /\ Country _ -> true
             AlbumsCount _ /\ AlbumsCount _ -> true
             _ -> false
+    kindContent = case _ of
+        Genre _ -> C.End "Genre"
+        Country _ -> C.End "Country"
+        AlbumsCount _ -> C.End "Albums #"
+    kindId = case _ of
+        Genre _ -> "genre"
+        Country _ -> "country"
+        AlbumsCount _ -> "albums_n"
+    fromKindId = case _ of
+        "genre" -> Just $ Genre "Sample"
+        "country" -> Just $ Country "Sample"
+        "albums_n" -> Just $ AlbumsCount $ -1
+        _ -> Nothing
 
 instance IsGroupable MyGroup ArtistTag where
     t_group = case _ of

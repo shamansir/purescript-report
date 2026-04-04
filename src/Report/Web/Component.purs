@@ -1014,6 +1014,12 @@ makeTagClickEvt tag mevt =
 
 newtype ComponentURLConfig
     = ComponentURLConfig {}
+    {-
+    { subjIdFilter :: Array String
+    , subjFilter :: Maybe String
+    , tagKindFilter :: Array String
+    , tagKindGrouping :: Array String
+    } -}
 
 
 instance UC.UrlConfig ComponentURLConfig where

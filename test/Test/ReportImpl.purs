@@ -59,6 +59,9 @@ instance IsTag ItemTag where
 
 instance IsSortable ItemTag where
     sameKind _ _ = true
+    kindContent = tagContent
+    kindId = const "tag"
+    fromKindId = const $ Just ItemTag
 
 
 instance IsGroupable Group ItemTag where

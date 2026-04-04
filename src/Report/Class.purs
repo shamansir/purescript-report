@@ -70,6 +70,9 @@ class IsGroup g <= IsGroupable g t where
 -- and if they are the same, sort by their `Ord` instance
 class IsSortable t where
     sameKind :: t -> t -> Boolean
+    kindContent :: t -> Chain String
+    kindId :: t -> String
+    fromKindId :: String -> Maybe t
 
 
 class Eq t <= IsTag t where
