@@ -2,7 +2,7 @@ module Report.Web.Component where
 
 import Prelude
 
-import Effect.Class (class MonadEffect)
+import Effect.Class (class MonadEffect, liftEffect)
 
 import Data.Array ((:))
 import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat, intersperse) as Array
@@ -24,6 +24,11 @@ import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 import Web.Event.Event (stopPropagation) as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
+
+import Web.HTML (window) as Web
+import Web.HTML.Location (hash, setHash, search, setSearch) as Location
+import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history) as Window
+import Web.HTML.History (URL(..), DocumentTitle(..), state, pushState) as History
 
 import Halogen as H
 import Halogen.HTML as HH
@@ -55,6 +60,7 @@ import Report.Convert.Org (toOrg) as Report
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, qcolorSpan, qitemmarkerSpan, lineHeight, nestMargin, qemptySpan, H)
 import Report.Web.Helpers.InlineOrBlock as IoB
+import Report.Web.Helpers.UrlConfig as UC
 import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
 import Report.Web.Decorators.EditInput as EI
@@ -96,6 +102,7 @@ type Input subj group item =
 
 data Action subj_id subj_tag item_tag report
     = Receive report
+    | HandleUrlChange
     | SelectSubject subj_id
     | AddSubjectToSelection subj_id
     | DeselectSubject subj_id
@@ -238,6 +245,22 @@ instance
     Modify item_tag group item (R.Report subj group item)
 
 
+type ReportComponentState subj_id subj_tag item_tag subj group item =
+    State subj_id subj_tag item_tag (R.Report subj group item)
+
+type ReportComponentAction subj_id subj_tag item_tag subj group item =
+    Action subj_id subj_tag item_tag (Input subj group item)
+
+type ReportComponentM subj_id subj_tag item_tag subj group item output m =
+    H.HalogenM
+        (ReportComponentState subj_id subj_tag item_tag subj group item)
+        (ReportComponentAction subj_id subj_tag item_tag subj group item)
+        ()
+        output
+        m
+        Unit
+
+
 component
     :: forall @x @subj_id @subj_tag @item_tag @subj @group @item query output m
      . MonadEffect m
@@ -262,7 +285,7 @@ component cfg =
         , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, receive = Just <<< Receive <<< R.toReport }
         }
     where
-    initialState :: x -> State subj_id subj_tag item_tag (R.Report subj group item)
+    initialState :: x -> ReportComponentState subj_id subj_tag item_tag subj group item
     initialState x =
         { subjects : cfg.preSelected
         , report : R.toReport x
@@ -283,7 +306,7 @@ component cfg =
     s_id :: subj -> subj_id
     s_id subj = R.s_id subj
 
-    render :: State subj_id subj_tag item_tag (R.Report subj group item) -> HH.ComponentHTML (Action subj_id subj_tag item_tag (Input subj group item)) () m
+    render :: ReportComponentState subj_id subj_tag item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag subj group item) () m
     render state =
         HH.div
             [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
@@ -540,14 +563,8 @@ component cfg =
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
 
     handleAction
-        :: Action subj_id subj_tag item_tag (Input subj group item)
-        -> H.HalogenM
-            (State subj_id subj_tag item_tag (R.Report subj group item))
-            (Action subj_id subj_tag item_tag (Input subj group item))
-            ()
-            output
-            m
-            Unit
+        :: ReportComponentAction subj_id subj_tag item_tag subj group item
+        -> ReportComponentM subj_id subj_tag item_tag subj group item output m
     handleAction = case _ of
         SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] }
         AddSubjectToSelection subjId -> H.modify_ \state -> state { subjects = Array.snoc state.subjects subjId }
@@ -710,6 +727,22 @@ component cfg =
                         # probablyCollapseSubGroupsAsWell
                 newCollapsedState = s.collapsed # Map.insert subjId newCollapsedStateOfThisSubj
             in s { collapsed = newCollapsedState }
+        HandleUrlChange -> do
+            state <- H.get
+
+            hashCfg <- H.liftEffect $ do
+                window <- Web.window
+                loc <- Window.location window
+                search <- Location.search loc
+
+                let curCfg = collectUrlConfig state
+                let hashCfg = UC.loadFromUrl curCfg $ UC.fromUrlPairs search
+
+                -- Console.log search
+                pure hashCfg
+
+            H.modify_ $ loadUrlConfig hashCfg
+
         NoOp -> pure unit
 
 
@@ -733,7 +766,7 @@ renderSubject
     -> CollapseMap subj_id
     -> subj
     -> Array (group /\ Array item)
-    -> HH.ComponentHTML (Action subj_id subj_tag item_tag (R.Report subj group item)) slots m
+    -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag subj group item) slots m
 renderSubject navigatedTo collapsedMap subj groupsArr =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
@@ -876,20 +909,16 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
                     ]
                     $ HH.span_ (Array.intersperse qspacerSpan inlinePrefixes)
-                    : {- case titlePosition of
-                        InsideProgress ->
-                            HH.text ""
-                        Normal -> -}
-                            case itemTitle of
-                                "" -> HH.text ""
-                                _ ->
-                                    HH.span_
-                                        [ if hasPrefixes then qspacerSpan else qemptySpan
-                                        , qitemmarkerSpan itemNameColor
-                                        , qspacerSpan
-                                        , qitemnameSpan itemNameColor
-                                        , if hasSuffixes then qspacerSpan else qemptySpan
-                                        ]
+                    : case itemTitle of
+                        "" -> HH.text ""
+                        _ ->
+                            HH.span_
+                                [ if hasPrefixes then qspacerSpan else qemptySpan
+                                , qitemmarkerSpan itemNameColor
+                                , qspacerSpan
+                                , qitemnameSpan itemNameColor
+                                , if hasSuffixes then qspacerSpan else qemptySpan
+                                ]
                     : HH.span_ (Array.intersperse qspacerSpan inlineSuffixes)
                     : HH.span_
                         (pure
@@ -981,3 +1010,39 @@ makeTagClickEvt tag mevt =
         Just { action: SortBy, tag: itemTag }   -> SortItemsBy mevt itemTag
         Just { action: GroupBy, tag: itemTag }  -> GroupItemsBy mevt itemTag
         Nothing -> NoOp
+
+
+newtype ComponentURLConfig
+    = ComponentURLConfig {}
+
+
+instance UC.UrlConfig ComponentURLConfig where
+    default :: ComponentURLConfig
+    default = ComponentURLConfig {}
+    writeToUrl :: ComponentURLConfig -> UC.ParamMap
+    writeToUrl = const UC.emptyParams
+    loadFromUrl :: ComponentURLConfig -> UC.ParamMap -> ComponentURLConfig
+    loadFromUrl = flip $ const identity
+
+
+updateUrl
+    :: forall subj_id subj_tag item_tag subj group item output m
+     . MonadEffect m
+    => ReportComponentM subj_id subj_tag item_tag subj group item output m
+updateUrl = H.get >>= \state ->
+    liftEffect $ do
+      window <- Web.window
+      history <- Window.history window
+      hstate <- History.state history
+      let nextHashMap = UC.writeToUrl $ collectUrlConfig state
+      let url = History.URL $ "?" <> UC.toUrlPairs nextHashMap
+      let title = History.DocumentTitle ""
+      history # History.pushState hstate title url
+
+
+collectUrlConfig :: forall subj_id subj_tag item_tag subj group item. ReportComponentState subj_id subj_tag item_tag subj group item -> ComponentURLConfig
+collectUrlConfig = const $ ComponentURLConfig {}
+
+
+loadUrlConfig :: forall subj_id subj_tag item_tag subj group item. ComponentURLConfig -> ReportComponentState subj_id subj_tag item_tag subj group item -> ReportComponentState subj_id subj_tag item_tag subj group item
+loadUrlConfig = const identity

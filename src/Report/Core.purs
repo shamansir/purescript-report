@@ -176,6 +176,22 @@ toNativeMonth = case _ of
   Dec -> N.December
 
 
+fromNativeMonth :: N.Month -> SMonth
+fromNativeMonth = case _ of
+  N.January   -> Jan
+  N.February  -> Feb
+  N.March     -> Mar
+  N.April     -> Apr
+  N.May       -> May
+  N.June      -> Jun
+  N.July      -> Jul
+  N.August    -> Aug
+  N.September -> Sep
+  N.October   -> Oct
+  N.November  -> Nov
+  N.December  -> Dec
+
+
 newtype Year = Year Int -- TODO: replace with Year from Data.Date
 
 
