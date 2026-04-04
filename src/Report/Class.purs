@@ -9,7 +9,7 @@ import Data.Array.NonEmpty (fromArray, toArray, catMaybes) as NEA
 import Data.Newtype (unwrap, wrap)
 
 import Report.Chain (Chain(..))
-import Report.Chain (fromNEArray, toNEArray) as Chain
+import Report.Chain (fromNEArray, toNEArray, toString, fromString) as Chain
 import Report.GroupPath (GroupPath) as S
 import Report.Tabular (Tabular)
 import Report.Decorator (Decorators)
@@ -46,6 +46,7 @@ class IsGroup a where
 class IsSubjectId i a where
     s_id :: a -> i
     s_unique :: i -> String
+    s_decode :: String -> Maybe i
 
 
 class IsSubjectId i a <= IsSubject i a where
@@ -78,6 +79,7 @@ class IsSortable t where
 class Eq t <= IsTag t where
     tagColors :: t -> TagColors
     tagContent :: t -> Chain String
+    encodeTag :: t -> String
     decodeTag :: String -> Maybe t
     allTags :: Array t
 
@@ -90,6 +92,7 @@ defaultTagColors =
 instance IsTag Unit where
     tagColors _ = defaultTagColors
     tagContent _ = End ""
+    encodeTag = const "."
     decodeTag _ = Just unit
     allTags = [unit]
 
@@ -97,7 +100,8 @@ instance IsTag Unit where
 instance IsTag RawTag where
     tagColors _ = defaultTagColors
     tagContent (RawTag rtags) = Chain.fromNEArray rtags
-    decodeTag = String.split (String.Pattern "::") >>> NEA.fromArray >>> map RawTag
+    encodeTag (RawTag rtags) = Chain.fromNEArray rtags # Chain.toString
+    decodeTag = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
     allTags = []
 
 

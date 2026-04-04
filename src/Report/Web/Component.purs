@@ -5,7 +5,7 @@ import Prelude
 import Effect.Class (class MonadEffect, liftEffect)
 
 import Data.Array ((:))
-import Data.Array (length, snoc, catMaybes, elem, filter, sortWith, reverse, any, index, find, concat, intersperse, null) as Array
+import Data.Array as Array
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
 import Data.Int as Int
@@ -1018,6 +1018,7 @@ newtype ComponentURLConfig
     , subjFilter :: Maybe String
     , subjTagFilter :: Array String
     , itemTagFilter :: Array String
+    , itemTagKindSorting :: Array String
     , itemTagKindGrouping :: Array String
     }
 
@@ -1029,6 +1030,7 @@ instance UC.UrlConfig ComponentURLConfig where
         , subjFilter : Nothing
         , subjTagFilter : []
         , itemTagFilter : []
+        , itemTagKindSorting : []
         , itemTagKindGrouping : []
         }
     writeToUrl :: ComponentURLConfig -> UC.ParamMap
@@ -1038,6 +1040,7 @@ instance UC.UrlConfig ComponentURLConfig where
             # UC.insertWhenJust                                      "sf"   cfg.subjFilter
             # UC.insertIf (not $ Array.null cfg.subjTagFilter)       "stf"  (String.joinWith "," cfg.subjTagFilter)
             # UC.insertIf (not $ Array.null cfg.itemTagFilter)       "itf"  (String.joinWith "," cfg.itemTagFilter)
+            # UC.insertIf (not $ Array.null cfg.itemTagKindSorting)  "itks" (String.joinWith "," cfg.itemTagKindSorting)
             # UC.insertIf (not $ Array.null cfg.itemTagKindGrouping) "itkg" (String.joinWith "," cfg.itemTagKindGrouping)
     loadFromUrl :: ComponentURLConfig -> UC.ParamMap -> ComponentURLConfig
     loadFromUrl _ paramMap =
@@ -1046,6 +1049,7 @@ instance UC.UrlConfig ComponentURLConfig where
             , subjFilter          : paramMap # UC.lookup "sf"
             , subjTagFilter       : paramMap # UC.lookup "stf"  # arrayFromMaybe
             , itemTagFilter       : paramMap # UC.lookup "itf"  # arrayFromMaybe
+            , itemTagKindSorting :  paramMap # UC.lookup "itks" # arrayFromMaybe
             , itemTagKindGrouping : paramMap # UC.lookup "itkg" # arrayFromMaybe
             }
         where
@@ -1055,6 +1059,10 @@ instance UC.UrlConfig ComponentURLConfig where
 updateUrl
     :: forall subj_id subj_tag item_tag subj group item output m
      . MonadEffect m
+    => R.IsSubjectId subj_id subj
+    => R.IsTag subj_tag
+    => R.IsTag item_tag
+    => R.IsSortable item_tag
     => ReportComponentM subj_id subj_tag item_tag subj group item output m
 updateUrl = H.get >>= \state ->
     liftEffect $ do
@@ -1067,15 +1075,47 @@ updateUrl = H.get >>= \state ->
       history # History.pushState hstate title url
 
 
-collectUrlConfig :: forall subj_id subj_tag item_tag subj group item. ReportComponentState subj_id subj_tag item_tag subj group item -> ComponentURLConfig
-collectUrlConfig state = UC.default -- FIXME
+collectUrlConfig
+    :: forall subj_id subj_tag item_tag subj group item
+     . R.IsSubjectId subj_id subj
+    => R.IsTag subj_tag
+    => R.IsTag item_tag
+    => R.IsSortable item_tag
+    => ReportComponentState subj_id subj_tag item_tag subj group item
+    -> ComponentURLConfig
+collectUrlConfig state =
+    ComponentURLConfig
+        { subjIdFilter        : R.s_unique @subj_id @subj <$> state.subjects
+        , subjFilter          : state.filter
+        , subjTagFilter       : R.encodeTag @subj_tag <$> state.tagFilter
+        , itemTagFilter       : Array.mapMaybe (actionToTag FilterBy)    state.process
+        , itemTagKindSorting  : Array.mapMaybe (actionToTagKind SortBy)  state.process
+        , itemTagKindGrouping : Array.mapMaybe (actionToTagKind GroupBy) state.process
+        }
+        where
+            actionToTag cmp { action, tag } = if cmp == action then Just $ R.encodeTag tag else Nothing
+            actionToTagKind cmp { action, tag } = if cmp == action then Just $ R.kindId tag else Nothing
 
 
-loadUrlConfig :: forall subj_id subj_tag item_tag subj group item. ComponentURLConfig -> ReportComponentState subj_id subj_tag item_tag subj group item -> ReportComponentState subj_id subj_tag item_tag subj group item
-loadUrlConfig (ComponentURLConfig cfg) = identity
-    {- _
-    { filter = cfg.subjFilter
-    , subjects = ?wh
-    , tagFilter = ?wh
-    , process = ?wh
-    } -}
+loadUrlConfig
+    :: forall subj_id subj_tag item_tag subj group item
+     . R.IsSubjectId subj_id subj
+    => R.IsTag subj_tag
+    => R.IsTag item_tag
+    => R.IsSortable item_tag
+    => ComponentURLConfig
+    -> ReportComponentState subj_id subj_tag item_tag subj group item
+    -> ReportComponentState subj_id subj_tag item_tag subj group item
+loadUrlConfig (ComponentURLConfig cfg) = _
+    { filter    = cfg.subjFilter
+    , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
+    , tagFilter = Array.catMaybes $ R.decodeTag @subj_tag     <$> cfg.subjTagFilter
+    , process   = Array.catMaybes $
+            (map (mkAction FilterBy) <$> R.decodeTag  @item_tag <$> cfg.itemTagFilter)
+            <>
+            (map (mkAction GroupBy)  <$> R.fromKindId @item_tag <$> cfg.itemTagKindGrouping)
+            <>
+            (map (mkAction SortBy)   <$> R.fromKindId @item_tag <$> cfg.itemTagKindSorting)
+    }
+    where
+        mkAction action tag = { action, tag }
