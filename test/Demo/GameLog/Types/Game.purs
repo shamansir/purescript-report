@@ -11,7 +11,7 @@ import Report.Class
 import Report.Core as CT
 import Report.Chain (Chain(..))
 import Report.Decorators.Stats (Stats)
-import Report.Convert.Keyed (class EncodableKey, encodeKey)
+import Report.Convert.Keyed (class EncodableKey, encodeKey, decodeKey)
 import Report.Tabular as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 
@@ -112,6 +112,8 @@ instance IsTag GameTag where
             , text : "white"
             , border : "gray"
             }
+    encodeTag :: GameTag -> String
+    encodeTag = encodeGameTag
     decodeTag :: String -> Maybe GameTag
     decodeTag = decodeGameTag
     allTags :: Array GameTag
@@ -149,6 +151,7 @@ instance WriteForeign GameTag where
 instance IsSubjectId GameId Game where
     s_id = unwrap >>> _.gameId
     s_unique = encodeKey
+    s_decode = decodeKey
 
 
 instance IsSubject GameId Game where
@@ -188,3 +191,13 @@ decodeGameTag str =
         "IBL"   -> Just $ SourceTag S_IBL
         "BLG"   -> Just $ SourceTag S_Backloggery
         _       -> Just $ PlatformTag $ GLT.parsePlatform str
+
+
+encodeGameTag :: GameTag -> String
+encodeGameTag =
+    case _ of
+        SourceTag S_Dhall -> "Dhall"
+        SourceTag S_Logseq -> "LSeq"
+        SourceTag S_IBL -> "IBL"
+        SourceTag S_Backloggery -> "BLG"
+        PlatformTag platformTag -> GLT.encodePlatform platformTag

@@ -46,6 +46,7 @@ derive instance Ord ItemTag
 instance IsTag SubjectTag where
     tagColors _ = Tag.defaultColors
     tagContent _ = End "subj"
+    encodeTag = const "subj"
     decodeTag = const $ Just SubjectTag
     allTags = [ SubjectTag ]
 
@@ -53,6 +54,7 @@ instance IsTag SubjectTag where
 instance IsTag ItemTag where
     tagColors _ = Tag.defaultColors
     tagContent _ = End "item"
+    encodeTag = const "item"
     decodeTag = const $ Just ItemTag
     allTags = [ ItemTag ]
 

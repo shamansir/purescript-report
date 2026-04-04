@@ -2,6 +2,8 @@ module Report.Impl.Subject where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
+import Data.Int (fromString) as Int
 import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Report.Class
@@ -41,11 +43,13 @@ instance Ord subj_id => Ord (Subject subj_id subj_tag) where
 instance IsSubjectId String (Subject String subj_tag) where
     s_id = _.id <<< unwrap
     s_unique = identity
+    s_decode = Just
 
 
 instance IsSubjectId Int (Subject Int subj_tag) where
     s_id = _.id <<< unwrap
     s_unique = show
+    s_decode = Int.fromString
 
 
 instance (IsSubjectId subj_id (Subject subj_id subj_tag)) => IsSubject subj_id (Subject subj_id subj_tag) where

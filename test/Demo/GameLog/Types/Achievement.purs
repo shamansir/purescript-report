@@ -178,6 +178,8 @@ instance IsTag Tag where
     tagContent = unwrap >>> End
     tagColors :: Tag -> TagColors
     tagColors = const $ TC.tagVar10
+    encodeTag :: Tag -> String
+    encodeTag = unwrap
     decodeTag :: String -> Maybe Tag
     decodeTag = Just <<< Tag
     allTags :: Array Tag
