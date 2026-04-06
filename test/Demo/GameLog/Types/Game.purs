@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.String as String
-import Data.Tuple.Nested ((/\), type (/\))
+import Data.Tuple.Nested ((/\))
 import Data.Int as Int
 
 import Yoga.JSON (class WriteForeign, writeImpl)

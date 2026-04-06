@@ -12,7 +12,7 @@ import Halogen.HTML.Events as HE
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 import Report.Chain (Chain(..)) as S
-import Report.Class (class IsTag, TagColors, tagColors, tagContent) as S
+import Report.Class (class IsTag, class IsSortable, TagColors, tagColors, tagContent, kindContent) as S
 import Report.Decorators.Tags (TagAction)
 import Report.Web.Helpers (H)
 
@@ -35,6 +35,13 @@ itemTagBadge onClick tag =
     HH.span
         [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; white-space: nowrap;" ]
         [ renderChain (Just onClick) (S.tagColors tag) (S.tagContent tag) ]
+
+
+itemTagKindBadge :: forall item_tag w i. S.IsTag item_tag => S.IsSortable item_tag => (MouseEvent -> i) -> item_tag -> H w i
+itemTagKindBadge onClick tag =
+    HH.span
+        [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; white-space: nowrap;" ]
+        [ renderChain (Just onClick) (S.tagColors tag) (S.kindContent tag) ]
 
 
 renderChain :: forall w i. Maybe (MouseEvent -> i) -> S.TagColors -> S.Chain String -> H w i

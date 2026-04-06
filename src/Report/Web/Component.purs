@@ -67,7 +67,7 @@ import Report.Web.Helpers (qspacerSpan, qcolorSpan, qitemmarkerSpan, lineHeight,
 import Report.Web.Helpers.InlineOrBlock as IoB
 import Report.Web.Helpers.UrlConfig as UC
 import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
-import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge)
+import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, itemTagKindBadge)
 import Report.Web.Decorators.EditInput as EI
 import Report.Web.Navigation (NavigatedTo)
 import Report.Web.Navigation as Navigation
@@ -81,6 +81,14 @@ type Process item_tag = { action :: TagAction, tag :: item_tag }
 
 
 type CollapseMap subj_id = Map subj_id (Map GroupPath Boolean)
+
+
+{-
+data SubjFilter
+    = NoSubjFilter
+    | FromUser String
+    | FromUrl String
+-}
 
 
 type State subj_id subj_tag item_tag report =
@@ -515,9 +523,9 @@ component cfg =
     processStyle = "background-color: rgb(139, 121, 182); color: white; border-radius: 5px; padding: 3px 5px; margin: 0 3px; cursor: pointer;"
 
     processButton = case _ of
-        { action: FilterBy, tag } -> [ HH.text "F", itemTagBadge (flip CancelProcess { action: FilterBy, tag }) tag ]
-        { action: SortBy, tag }   -> [ HH.text "S", itemTagBadge (flip CancelProcess { action: SortBy,   tag }) tag ]
-        { action: GroupBy, tag }  -> [ HH.text "G", itemTagBadge (flip CancelProcess { action: GroupBy,  tag }) tag ]
+        { action: FilterBy, tag } -> [ HH.text "F", itemTagKindBadge (flip CancelProcess { action: FilterBy, tag }) tag ]
+        { action: SortBy, tag }   -> [ HH.text "S", itemTagKindBadge (flip CancelProcess { action: SortBy,   tag }) tag ]
+        { action: GroupBy, tag }  -> [ HH.text "G", itemTagKindBadge (flip CancelProcess { action: GroupBy,  tag }) tag ]
         >>> HH.span [ HP.style processStyle ]
 
     subjTagIsOn tagFilter tag =
@@ -731,15 +739,17 @@ component cfg =
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
-        TurnSubjectNavNamesOn -> H.modify_ \s -> s { showSubjectNavNames = true }
-        AddToItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process { action: FilterBy, tag : itemTag }, readOnlyMode = true }
-        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process { action: SortBy,   tag : itemTag }, readOnlyMode = true }
-        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ \s -> s { process = Array.snoc s.process { action: GroupBy,  tag : itemTag }, readOnlyMode = true }
-        CancelProcess mevt process -> stopPropagation mevt <> H.modify_ (\s ->
+        TurnSubjectNavNamesOn  -> H.modify_ \s -> s { showSubjectNavNames = true }
+        AddToItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process { action: FilterBy, tag : itemTag }, readOnlyMode = true }) <> updateUrl
+        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process { action: SortBy,   tag : itemTag }, readOnlyMode = true }) <> updateUrl
+        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process { action: GroupBy,  tag : itemTag }, readOnlyMode = true }) <> updateUrl
+        CancelProcess mevt process -> stopPropagation mevt <>
+            H.modify_ (\s ->
                 let filteredProcess = Array.filter (_ /= process) s.process in
                 s { process = filteredProcess, readOnlyMode = if Array.length filteredProcess > 0 then true else s.readOnlyMode }
             )
-        ResetPostProcess -> H.modify_ \s -> s { process = [] }
+            <> updateUrl
+        ResetPostProcess -> H.modify_ _ { process = [] } <> updateUrl
         ToggleGroupCollapse mevt subjId groupPath -> H.modify_ \s ->
             let
                 prevCollapsedStateOfThisSubj = fromMaybe Map.empty $ Map.lookup subjId $ s.collapsed

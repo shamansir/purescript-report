@@ -72,8 +72,8 @@ class IsGroup g <= IsGroupable g t where
 class IsSortable t where
     sameKind :: t -> t -> Boolean
     kindContent :: t -> Chain String
-    kindId :: t -> String
-    fromKindId :: String -> Maybe t
+    kindId :: t -> String -- TODO: kind as another type var, kind can be `IsTag`.... as well
+    fromKindId :: String -> Maybe t -- TODO: kind as another type var, kind can be `IsTag`.... as well
 
 
 class Eq t <= IsTag t where
