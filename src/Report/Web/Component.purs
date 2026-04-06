@@ -1071,6 +1071,7 @@ newtype ComponentURLConfig
     = ComponentURLConfig
     { subjIdFilter :: Array String
     , subjFilter :: Maybe String
+    , subjAlphaSort :: Boolean
     , subjTagFilter :: Array String
     , itemTagFilter :: Array String
     , itemTagKindSorting :: Array String
@@ -1086,6 +1087,7 @@ instance UC.UrlConfig ComponentURLConfig where
     default = ComponentURLConfig
         { subjIdFilter : []
         , subjFilter : Nothing
+        , subjAlphaSort : false
         , subjTagFilter : []
         , itemTagFilter : []
         , itemTagKindSorting : []
@@ -1096,6 +1098,7 @@ instance UC.UrlConfig ComponentURLConfig where
         UC.emptyParams
             # UC.insertIf (not $ Array.null cfg.subjIdFilter)        "sif"  (String.joinWith "," cfg.subjIdFilter)
             # UC.insertWhenJust                                      "sf"   cfg.subjFilter
+            # UC.insertIf (cfg.subjAlphaSort)                        "sort" "alpha"
             # UC.insertIf (not $ Array.null cfg.subjTagFilter)       "stf"  (String.joinWith "," cfg.subjTagFilter)
             # UC.insertIf (not $ Array.null cfg.itemTagFilter)       "itf"  (String.joinWith "," cfg.itemTagFilter)
             # UC.insertIf (not $ Array.null cfg.itemTagKindSorting)  "itks" (String.joinWith "," cfg.itemTagKindSorting)
@@ -1105,9 +1108,10 @@ instance UC.UrlConfig ComponentURLConfig where
         ComponentURLConfig
             { subjIdFilter        : paramMap # UC.lookup "sif"  # arrayFromMaybe
             , subjFilter          : paramMap # UC.lookup "sf"
+            , subjAlphaSort       : paramMap # UC.lookup "sort" # (maybe false $ const true)
             , subjTagFilter       : paramMap # UC.lookup "stf"  # arrayFromMaybe
             , itemTagFilter       : paramMap # UC.lookup "itf"  # arrayFromMaybe
-            , itemTagKindSorting :  paramMap # UC.lookup "itks" # arrayFromMaybe
+            , itemTagKindSorting  : paramMap # UC.lookup "itks" # arrayFromMaybe
             , itemTagKindGrouping : paramMap # UC.lookup "itkg" # arrayFromMaybe
             }
         where
@@ -1145,12 +1149,16 @@ collectUrlConfig state =
     ComponentURLConfig
         { subjIdFilter        : R.s_unique @subj_id @subj <$> state.subjects
         , subjFilter          : loadFilterContent state.filter
+        , subjAlphaSort       : loadAlphaSort state.sortBy
         , subjTagFilter       : R.encodeTag @subj_tag <$> state.tagFilter
         , itemTagFilter       : Array.mapMaybe (actionToTag FilterBy)    state.process
         , itemTagKindSorting  : Array.mapMaybe (actionToTagKind SortBy)  state.process
         , itemTagKindGrouping : Array.mapMaybe (actionToTagKind GroupBy) state.process
         }
         where
+            loadAlphaSort = case _ of
+                Alpha -> true
+                _ -> false
             loadFilterContent = case _ of
                 NoSubjectFilter -> Nothing
                 FromUrl content -> Just content
@@ -1170,7 +1178,8 @@ loadUrlConfig
     -> ReportComponentState subj_id subj_tag item_tag subj group item
 loadUrlConfig (ComponentURLConfig cfg) = _
     { filter    = maybe NoSubjectFilter FromUrl cfg.subjFilter
-    , subjects  = Debug.spy "subjIDs" $ Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
+    , sortBy    = if cfg.subjAlphaSort then Alpha else ByWeight
+    , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
     , tagFilter = Array.catMaybes $ R.decodeTag @subj_tag     <$> cfg.subjTagFilter
     , process   = Array.catMaybes $
             (map (mkAction FilterBy) <$> R.decodeTag  @item_tag <$> cfg.itemTagFilter)
