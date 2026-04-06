@@ -83,18 +83,16 @@ type Process item_tag = { action :: TagAction, tag :: item_tag }
 type CollapseMap subj_id = Map subj_id (Map GroupPath Boolean)
 
 
-{-
-data SubjFilter
-    = NoSubjFilter
+data SubjectFilter
+    = NoSubjectFilter
     | FromUser String
     | FromUrl String
--}
 
 
 type State subj_id subj_tag item_tag report =
     { subjects :: Array subj_id
     , report :: report
-    , filter :: Maybe String
+    , filter :: SubjectFilter
     , tagFilter :: Array subj_tag
     , optionsPaneExpanded :: Boolean
     , showItemsTags :: Boolean
@@ -307,7 +305,7 @@ component cfg =
     initialState x =
         { subjects : cfg.preSelected
         , report : R.toReport x
-        , filter : Nothing
+        , filter : NoSubjectFilter
         , tagFilter : []
         , optionsPaneExpanded : true
         , showItemsTags : true
@@ -448,11 +446,17 @@ component cfg =
 
     processingCount = _.process >>> Array.length
 
-    applyFilter :: Array subj_tag -> SubjectSort -> Maybe String -> Array subj -> Array subj
-    applyFilter tagFilter sortBy mbFilter subjects
+    loadFilterStr :: SubjectFilter -> Maybe String
+    loadFilterStr = case _ of
+        NoSubjectFilter -> Nothing
+        FromUrl filterStr -> Just filterStr
+        FromUser filterStr -> Just filterStr
+
+    applyFilter :: Array subj_tag -> SubjectSort -> SubjectFilter-> Array subj -> Array subj
+    applyFilter tagFilter sortBy subjFilter subjects
         = subjects
             # Array.filter (makeTagFilter tagFilter)
-            # Array.filter (case mbFilter of
+            # Array.filter (case loadFilterStr subjFilter of
                 Just filterStr -> \subj -> String.contains (String.Pattern $ String.toLower filterStr) $ String.toLower $ R.s_name @subj_id subj
                 Nothing -> const true)
             # Array.sortWith (sortSubjects sortBy)
@@ -464,6 +468,10 @@ component cfg =
             [ HH.input
                 [ HE.onValueInput ChangeListFilter
                 , HP.style "border: 1px solid lightgray; border-radius: 5px; padding: 5px 6px; margin-bottom: 15px; min-width: 250px;"
+                , HP.placeholder $ case state.filter of
+                    FromUrl str -> str
+                    FromUser _ -> ""
+                    NoSubjectFilter -> ""
                 ]
             , HH.span
                 [ HE.onClick $ const ToggleOptionsPane
@@ -614,7 +622,7 @@ component cfg =
         DeselectSubject subjId -> H.modify_ (\state -> state { subjects = Array.filter (_ /= subjId) state.subjects }) *> updateUrl
         DeselectAllSubjects -> H.modify_ _ { subjects = [ ] } *> updateUrl
         Receive nextReport -> H.modify_ _ { report = nextReport }
-        ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then Just filter else Nothing } *> updateUrl
+        ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then FromUser filter else NoSubjectFilter } *> updateUrl
         IncludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.snoc state.tagFilter subjTag }) *> updateUrl
         ExcludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }) *> updateUrl
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
@@ -1136,13 +1144,17 @@ collectUrlConfig
 collectUrlConfig state =
     ComponentURLConfig
         { subjIdFilter        : R.s_unique @subj_id @subj <$> state.subjects
-        , subjFilter          : state.filter
+        , subjFilter          : loadFilterContent state.filter
         , subjTagFilter       : R.encodeTag @subj_tag <$> state.tagFilter
         , itemTagFilter       : Array.mapMaybe (actionToTag FilterBy)    state.process
         , itemTagKindSorting  : Array.mapMaybe (actionToTagKind SortBy)  state.process
         , itemTagKindGrouping : Array.mapMaybe (actionToTagKind GroupBy) state.process
         }
         where
+            loadFilterContent = case _ of
+                NoSubjectFilter -> Nothing
+                FromUrl content -> Just content
+                FromUser content -> Just content
             actionToTag cmp { action, tag }     = if cmp == action then Just $ R.encodeTag tag else Nothing
             actionToTagKind cmp { action, tag } = if cmp == action then Just $ R.kindId tag    else Nothing
 
@@ -1157,7 +1169,7 @@ loadUrlConfig
     -> ReportComponentState subj_id subj_tag item_tag subj group item
     -> ReportComponentState subj_id subj_tag item_tag subj group item
 loadUrlConfig (ComponentURLConfig cfg) = _
-    { filter    = cfg.subjFilter
+    { filter    = maybe NoSubjectFilter FromUrl cfg.subjFilter
     , subjects  = Debug.spy "subjIDs" $ Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
     , tagFilter = Array.catMaybes $ R.decodeTag @subj_tag     <$> cfg.subjTagFilter
     , process   = Array.catMaybes $
