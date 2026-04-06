@@ -3,6 +3,9 @@ module Report.Web.Component where
 import Prelude
 
 import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Console as Console
+
+import Debug as Debug
 
 import Data.Array ((:))
 import Data.Array as Array
@@ -17,7 +20,7 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, joinWith, split, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Newtype (wrap, unwrap)
+import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
@@ -29,11 +32,13 @@ import Web.HTML (window) as Web
 import Web.HTML.Location (hash, setHash, search, setSearch) as Location
 import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history) as Window
 import Web.HTML.History (URL(..), DocumentTitle(..), state, pushState) as History
+import Web.Event.Event as E
 
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.Query.Event (eventListener)
 
 import Report as R
 import Report.Builder as RB
@@ -101,7 +106,8 @@ type Input subj group item =
 
 
 data Action subj_id subj_tag item_tag report
-    = Receive report
+    = Initialize
+    | Receive report
     | HandleUrlChange
     | SelectSubject subj_id
     | AddSubjectToSelection subj_id
@@ -282,7 +288,11 @@ component cfg =
     H.mkComponent
         { initialState
         , render
-        , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, receive = Just <<< Receive <<< R.toReport }
+        , eval: H.mkEval $ H.defaultEval
+            { handleAction = handleAction
+            , initialize = Just Initialize
+            , receive = Just <<< Receive <<< R.toReport
+            }
         }
     where
     initialState :: x -> ReportComponentState subj_id subj_tag item_tag subj group item
@@ -566,14 +576,39 @@ component cfg =
         :: ReportComponentAction subj_id subj_tag item_tag subj group item
         -> ReportComponentM subj_id subj_tag item_tag subj group item output m
     handleAction = case _ of
-        SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] }
-        AddSubjectToSelection subjId -> H.modify_ \state -> state { subjects = Array.snoc state.subjects subjId }
-        DeselectSubject subjId -> H.modify_ \state -> state { subjects = Array.filter (_ /= subjId) state.subjects }
-        DeselectAllSubjects -> H.modify_ _ { subjects = [ ] }
+        Initialize -> do
+            window <- H.liftEffect $ Web.window
+
+            handleAction HandleUrlChange
+            -- handleAction HandleResize
+
+            -- H.subscribe' \_ ->
+            --     eventListener
+            --         (E.EventType "resize")
+            --         (Window.toEventTarget window)
+            --         (E.target >=> (const $ Just HandleResize))
+
+            {- H.subscribe' \_ ->
+                eventListener
+                    (E.EventType "hashchange")
+                    (Window.toEventTarget window)
+                    (E.target >=> (const $ Just HandleUrlChange)) -}
+
+            H.subscribe' \_ ->
+                eventListener
+                    (E.EventType "popstate")
+                    (Window.toEventTarget window)
+                    (E.target >=> (const $ Just HandleUrlChange))
+
+            pure unit
+        SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] } *> updateUrl
+        AddSubjectToSelection subjId -> H.modify_ (\state -> state { subjects = Array.snoc state.subjects subjId }) *> updateUrl
+        DeselectSubject subjId -> H.modify_ (\state -> state { subjects = Array.filter (_ /= subjId) state.subjects }) *> updateUrl
+        DeselectAllSubjects -> H.modify_ _ { subjects = [ ] } *> updateUrl
         Receive nextReport -> H.modify_ _ { report = nextReport }
-        ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then Just filter else Nothing }
-        IncludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.snoc state.tagFilter subjTag }
-        ExcludeTag subjTag -> H.modify_ \state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }
+        ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then Just filter else Nothing } *> updateUrl
+        IncludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.snoc state.tagFilter subjTag }) *> updateUrl
+        ExcludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }) *> updateUrl
         ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
         ToggleItemsTagsInOptions -> H.modify_ \state -> state { showItemsTags = not state.showItemsTags }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
@@ -730,18 +765,20 @@ component cfg =
         HandleUrlChange -> do
             state <- H.get
 
-            hashCfg <- H.liftEffect $ do
+            nextHashCfg <- H.liftEffect $ do
+
                 window <- Web.window
                 loc <- Window.location window
                 search <- Location.search loc
 
                 let curCfg = collectUrlConfig state
-                let hashCfg = UC.loadFromUrl curCfg $ UC.fromUrlPairs search
+                let nextCfg = UC.loadFromUrl curCfg $ UC.fromUrlPairs search
 
-                -- Console.log search
-                pure hashCfg
+                Console.log search
+                Console.log $ show $ unwrap nextCfg
+                pure nextCfg
 
-            H.modify_ $ loadUrlConfig hashCfg
+            H.modify_ $ loadUrlConfig nextHashCfg
 
         NoOp -> pure unit
 
@@ -1023,6 +1060,9 @@ newtype ComponentURLConfig
     }
 
 
+derive instance Newtype ComponentURLConfig _
+
+
 instance UC.UrlConfig ComponentURLConfig where
     default :: ComponentURLConfig
     default = ComponentURLConfig
@@ -1093,8 +1133,8 @@ collectUrlConfig state =
         , itemTagKindGrouping : Array.mapMaybe (actionToTagKind GroupBy) state.process
         }
         where
-            actionToTag cmp { action, tag } = if cmp == action then Just $ R.encodeTag tag else Nothing
-            actionToTagKind cmp { action, tag } = if cmp == action then Just $ R.kindId tag else Nothing
+            actionToTag cmp { action, tag }     = if cmp == action then Just $ R.encodeTag tag else Nothing
+            actionToTagKind cmp { action, tag } = if cmp == action then Just $ R.kindId tag    else Nothing
 
 
 loadUrlConfig
@@ -1108,7 +1148,7 @@ loadUrlConfig
     -> ReportComponentState subj_id subj_tag item_tag subj group item
 loadUrlConfig (ComponentURLConfig cfg) = _
     { filter    = cfg.subjFilter
-    , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
+    , subjects  = Debug.spy "subjIDs" $ Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
     , tagFilter = Array.catMaybes $ R.decodeTag @subj_tag     <$> cfg.subjTagFilter
     , process   = Array.catMaybes $
             (map (mkAction FilterBy) <$> R.decodeTag  @item_tag <$> cfg.itemTagFilter)

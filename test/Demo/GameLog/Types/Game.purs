@@ -4,6 +4,9 @@ import Prelude
 
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
+import Data.String as String
+import Data.Tuple.Nested ((/\), type (/\))
+import Data.Int as Int
 
 import Yoga.JSON (class WriteForeign, writeImpl)
 
@@ -124,14 +127,45 @@ instance EncodableKey GameId where
     encodeKey = case _ of
         DHL code -> "DHL:" <> code
         LGS code mbPlatform ->
-            "LGS:" <> code <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
+            "LGS:" <> code <> maybe "" (\p -> ":" <> GLT.encodePlatform p) mbPlatform
         BLG code platform ->
-            "BLG:" <> code <> "(" <> show platform <> ")"
+            "BLG:" <> code <> ":" <> GLT.encodePlatform platform
         IBL id mbPlatform ->
-            "IBL:" <> show id <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
+            "IBL:" <> show id <> maybe "" (\p -> ":" <> GLT.encodePlatform p) mbPlatform
         EPC code ->
             "EPC:" <> code
-    decodeKey = const Nothing -- TODO
+    decodeKey str =
+        let
+            src  = str # String.take 3
+            tail = str # String.drop 4
+        in case src of
+            "DHL" -> if tail /= "" then Just $ DHL tail else Nothing
+            "LGS" ->
+                if tail /= "" then
+                    case loadPlatform tail of
+                        Just (code /\ mbPlatform) -> Just $ LGS code mbPlatform
+                        Nothing -> Nothing
+                else Nothing
+            "BLG" -> if tail /= "" then
+                    case loadPlatform tail of
+                        Just (code /\ Just platform) -> Just $ BLG code platform
+                        Just (code /\ Nothing) -> Nothing
+                        Nothing -> Nothing
+                else Nothing
+            "IBL" ->
+                if tail /= "" then
+                    case loadPlatform tail of
+                        Just (code /\ mbPlatform) -> Int.fromString code <#> \icode -> IBL icode mbPlatform
+                        Nothing -> Nothing
+                else Nothing
+            "EPC" -> if tail /= "" then Just $ EPC tail else Nothing
+            _ -> Nothing
+        where
+            loadPlatform tail =
+                case String.split (String.Pattern ":") tail of
+                    [ id, platform ] -> Just $ id /\ (Just $ GLT.parsePlatform platform)
+                    [ id ] -> Just $ id /\ Nothing
+                    _ -> Nothing
 
 
 instance HasTabular Game where

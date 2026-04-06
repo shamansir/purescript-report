@@ -189,8 +189,11 @@ instance IsTag Tag where
 instance IsSortable Tag where
     sameKind :: Tag -> Tag -> Boolean
     sameKind = const $ const true -- all the tags are the same kind
+    kindContent :: Tag -> Chain String
     kindContent = const $ End "tag"
+    kindId :: Tag -> String
     kindId = const "tag"
+    fromKindId :: String -> Maybe Tag
     fromKindId = const $ Just $ Tag "tag"
 
 
