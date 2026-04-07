@@ -55,10 +55,16 @@ renderProgressPlates itemsProgress =
     let
         maxHeight = 50.0
         platesCount = Array.length itemsProgress
-        platesByV = if platesCount <= 5 then 1 else 5
+        platesByV =
+            if platesCount <= 5 then 1
+            -- else if platesCount <= 5 * 5 then platesCount `div` 5
+            else 5
         platesByH' = platesCount `div` platesByV
-        platesByH = if platesByH' * platesByV == platesCount then platesByH' else platesByH' + 1
-        plateSide = min 20.0 $ maxHeight / Int.toNumber platesByV
+        platesByH =
+            if platesCount <= 5 * 5 then 5
+            else if platesByH' * platesByV == platesCount then platesByH'
+            else platesByH' + 1
+        plateSide = 10.0 -- min 20.0 $ maxHeight / Int.toNumber platesByV
         -- svgWidth = if platesByV /= 0 then ((Int.toNumber platesCount / Int.toNumber platesByV) + 1.0) * plateSide else 0.0
         svgWidth = Int.toNumber platesByH * plateSide
         svgHeight = maxHeight
