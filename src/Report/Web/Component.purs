@@ -861,26 +861,32 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     , HP.id $ groupPathId groupPath
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtGroup subjId groupPath
                     ]
-                    [ HH.span
-                        [ HP.style $ "font-weight: bold;"
-                            <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
-                        ]
-                        [ HH.span
-                            [ HE.onClick \mevt -> ToggleGroupCollapse mevt subjId groupPath
-                            , HP.style $ "cursor: pointer; user-select: none; margin-right: 5px;" <> if isCollapsed then "" else "opacity: 0.25;" -- 0.6?
+                    [ HH.div [ HP.style "display: flex; flex-direction: row;" ]
+                        [ HH.div [ {- HP.style "display: flex; flex-direction: column;" -} ]
+                            [ HH.div_
+                                [ HH.span
+                                    [ HP.style $ "font-weight: bold;"
+                                        <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
+                                    ]
+                                    [ HH.span
+                                        [ HE.onClick \mevt -> ToggleGroupCollapse mevt subjId groupPath
+                                        , HP.style $ "cursor: pointer; user-select: none; margin-right: 5px;" <> if isCollapsed then "" else "opacity: 0.25;" -- 0.6?
+                                        ]
+                                        [ HH.text $ if isCollapsed then "▶" else "▼" ]
+                                    , HH.text $ R.g_title group
+                                    ]
+                                , qspacerSpan
+                                , renderPath groupPath
+                                ]
+                            -- , HH.text (show group.mbIndexPath)
+                            -- , qspacerSpan
+                            , HH.div_ $ pure $ renderGroupStats groupStats
                             ]
-                            [ HH.text $ if isCollapsed then "▶" else "▼" ]
-                        , HH.text $ R.g_title group
+                        , case groupStats of
+                                R.SWithProgress _ (Just itemsProgress) ->
+                                    renderProgressPlates itemsProgress
+                                _ -> HH.text ""
                         ]
-                    , qspacerSpan
-                    , renderPath groupPath
-                    -- , HH.text (show group.mbIndexPath)
-                    , qspacerSpan
-                    , renderGroupStats groupStats
-                    , case groupStats of
-                        R.SWithProgress _ (Just itemsProgress) ->
-                            renderProgressPlates itemsProgress
-                        _ -> HH.text ""
                     , if isCollapsed
                         then HH.text ""
                         else HH.div

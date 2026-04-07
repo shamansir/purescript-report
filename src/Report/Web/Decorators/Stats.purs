@@ -26,7 +26,7 @@ renderGroupStats = S.gotTotalFromStats >>> case _ of
             isDone = got >= total
         in
             HH.div
-                [ HP.style "opacity: 0.55; max-width: 60%;" ]
+                [ HP.style "opacity: 0.55;" ]
                 [ {- qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
                 , -} percentage' groupProgressBarCompleteColor groupProgressBarIncompleteColor (Int.toNumber total) (Int.toNumber got)
@@ -55,11 +55,12 @@ renderProgressPlates itemsProgress =
     let
         maxHeight = 50.0
         platesCount = Array.length itemsProgress
-        platesByV = 5
+        platesByV = if platesCount <= 5 then 1 else 5
         platesByH' = platesCount `div` platesByV
         platesByH = if platesByH' * platesByV == platesCount then platesByH' else platesByH' + 1
-        plateSide = maxHeight / Int.toNumber platesByV
-        svgWidth = if platesByV /= 0 then ((Int.toNumber platesCount / Int.toNumber platesByV) + 1.0) * plateSide else 0.0
+        plateSide = min 20.0 $ maxHeight / Int.toNumber platesByV
+        -- svgWidth = if platesByV /= 0 then ((Int.toNumber platesCount / Int.toNumber platesByV) + 1.0) * plateSide else 0.0
+        svgWidth = Int.toNumber platesByH * plateSide
         svgHeight = maxHeight
 
         renderSquare idx color =
@@ -74,7 +75,7 @@ renderProgressPlates itemsProgress =
     in
         HS.svg
             [ HA.width svgWidth, HA.height svgHeight
-            , HP.style "display: inline; position: relative;"
+            , HP.style "display: inline-block; position: relative; align-self: center; margin-left: 12px;" --  opacity: 0.8;
             ]
             $ mapWithIndex renderPlate itemsProgress
     where
