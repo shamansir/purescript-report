@@ -51,7 +51,7 @@ import Report.GroupPath (howDeep, startsWithNotEq) as GP
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
 import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
 import Report.Decorators.Tags (TagAction(..))
-import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf) as R
+import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf, Stats(..)) as R
 import Report.Decorators.Class.ValueModify as VModify
 import Report.Decorators.Stats.Collect as Collect
 import Report.Modify (Location(..))
@@ -66,7 +66,7 @@ import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, qcolorSpan, qitemmarkerSpan, lineHeight, nestMargin, qemptySpan, H)
 import Report.Web.Helpers.InlineOrBlock as IoB
 import Report.Web.Helpers.UrlConfig as UC
-import Report.Web.Decorators.Stats (renderGroupStats, gotTotalBadge)
+import Report.Web.Decorators.Stats (renderGroupStats, renderProgressPlates, gotTotalBadge)
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, itemTagKindBadge)
 import Report.Web.Decorators.EditInput as EI
 import Report.Web.Navigation (NavigatedTo)
@@ -877,6 +877,10 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     -- , HH.text (show group.mbIndexPath)
                     , qspacerSpan
                     , renderGroupStats groupStats
+                    , case groupStats of
+                        R.SWithProgress _ (Just itemsProgress) ->
+                            renderProgressPlates itemsProgress
+                        _ -> HH.text ""
                     , if isCollapsed
                         then HH.text ""
                         else HH.div

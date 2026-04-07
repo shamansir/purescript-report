@@ -53,22 +53,30 @@ gotTotalBadge { got, total } =
 renderProgressPlates :: forall w i. Array NProgress -> H w i
 renderProgressPlates itemsProgress =
     let
+        maxHeight = 50.0
         platesCount = Array.length itemsProgress
         platesByV = 5
         platesByH' = platesCount `div` platesByV
         platesByH = if platesByH' * platesByV == platesCount then platesByH' else platesByH' + 1
+        plateSide = maxHeight / Int.toNumber platesByV
+        svgWidth = if platesByV /= 0 then ((Int.toNumber platesCount / Int.toNumber platesByV) + 1.0) * plateSide else 0.0
+        svgHeight = maxHeight
 
         renderSquare idx color =
             HS.rect
-                [ HA.x $ (Int.toNumber $ idx `div` platesByH) * 10.0
-                , HA.y $ (Int.toNumber $ idx `mod` platesByV) * 10.0
-                , HA.width 10.0, HA.height 10.0
+                [ HA.x $ (Int.toNumber $ idx `mod` platesByH) * plateSide
+                , HA.y $ (Int.toNumber $ idx `div` platesByH) * plateSide
+                , HA.width plateSide, HA.height plateSide
                 , HA.rx 2.0, HA.ry 2.0
                 , HA.fill color
                 ]
         renderPlate idx = colorFor >>> renderSquare idx
     in
-        HS.svg [] $ mapWithIndex renderPlate itemsProgress
+        HS.svg
+            [ HA.width svgWidth, HA.height svgHeight
+            , HP.style "display: inline; position: relative;"
+            ]
+            $ mapWithIndex renderPlate itemsProgress
     where
         colorFor = case _ of
             Achieved -> plateCompleteColor
