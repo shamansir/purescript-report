@@ -375,7 +375,7 @@ renderStats :: Stats -> Doc Unit
 renderStats stats =
     case stats of
         Stats.SGotTotal { got, total } -> D.text (show got) <> D.text "/" <> D.text (show total) <> D.space
-        Stats.SWithProgress { got, onTheWay, total } -> D.text (show got) <> D.text "/" <> D.text (show total) <> D.space -- <> D.text "(" <> D.text (show onTheWay) <> D.text ")" <> D.space
+        Stats.SWithProgress { got, onTheWay, total } _ -> D.text (show got) <> D.text "/" <> D.text (show total) <> D.space -- <> D.text "(" <> D.text (show onTheWay) <> D.text ")" <> D.space
         Stats.SFromProgress progress -> mempty
         Stats.SCount { count } -> D.text " (" <> D.text (show count) <> D.text ")" <> D.space
         Stats.SNotRelevant -> mempty

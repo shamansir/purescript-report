@@ -161,6 +161,7 @@ collectStatsRaw flattened =
                 , got
                 , onTheWay
                 }
+            $ Just allProgressN
 
 
 newtype Tag = Tag String

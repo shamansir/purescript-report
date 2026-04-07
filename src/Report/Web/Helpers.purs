@@ -10,6 +10,7 @@ import Report.Core.Logic as CT
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
+import Halogen.Svg.Attributes.Color as HAC
 
 type H w i = HH.HTML w i
 type Color = String
@@ -28,6 +29,11 @@ progressBarCompleteColor = "forestgreen" :: Color
 progressBarIncompleteColor = "silver" :: Color
 groupProgressBarCompleteColor = "darkslategray" :: Color -- cadetblue, cornflowerblue, darkcyan, darkslategray
 groupProgressBarIncompleteColor = "gainsboro" :: Color -- gainsboro
+plateCompleteColor = HAC.Named "forestgreen" :: HAC.Color
+plateIncompleteColor = HAC.Named "silver" :: HAC.Color
+plateOnTheWayColor = HAC.Named "bisque" :: HAC.Color
+plateStatsValColor = HAC.Named "transparent" :: HAC.Color
+plateSkipColor = HAC.Named "white" :: HAC.Color
 textColor = "dodgerblue" :: Color
 numColor = "green" :: Color
 measureColor = "darkgray" :: Color

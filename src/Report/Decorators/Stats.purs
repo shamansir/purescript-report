@@ -6,20 +6,20 @@ import Foreign (Foreign, F)
 
 import Data.Int (toNumber, floor) as Int
 import Data.Foldable (foldl)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Array (length) as Array
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), NProgress(..))
 
 {- Stats -}
 
 
 data Stats
     = SGotTotal { got :: Int, total :: Int }
-    | SWithProgress { total :: Int, got :: Int, onTheWay :: Int }
+    | SWithProgress { total :: Int, got :: Int, onTheWay :: Int } (Maybe (Array NProgress)) -- Array GotTotal?
     -- | SCompletionStatus GLT.Completion
     | SFromProgress Progress
     | SCount { count :: Int }
@@ -39,7 +39,7 @@ defaultStats = SYetUnknown
 {- GotTotal -}
 
 
-data GotTotal
+data GotTotal -- very close to `NProgress`, merge?
     = Defined { got :: Int, total :: Int }
     | JustCount { count :: Int }
     | GTStatsValue
@@ -54,7 +54,7 @@ weightOf :: Stats -> Number
 weightOf = case _ of
     SGotTotal { got } -> Int.toNumber got -- total can be 0
     SCount { count } -> Int.toNumber count
-    SWithProgress { got, onTheWay } -> Int.toNumber got + (Int.toNumber onTheWay * 0.2)  -- total can be 0
+    SWithProgress { got, onTheWay } _ -> Int.toNumber got + (Int.toNumber onTheWay * 0.2)  -- total can be 0
     SFromProgress progress ->
         case gotTotalFrom progress of
             Defined { got } -> Int.toNumber got
@@ -70,7 +70,7 @@ weightOf = case _ of
 gotTotalFromStats :: Stats -> GotTotal
 gotTotalFromStats = case _ of
     SGotTotal { got, total } -> Defined { got, total }
-    SWithProgress { got, total } -> Defined { got, total }
+    SWithProgress { got, total } _ -> Defined { got, total }
     SFromProgress progress -> gotTotalFrom progress
     -- SCompletionStatus _ -> Undefined
     SCount { count } -> JustCount { count } -- Defined { got : count, total : count }
@@ -140,7 +140,7 @@ instance ReadForeign Stats where
             "GotTotal" -> do
                 ( readImpl stats :: F { got :: Int, total :: Int } ) <#> SGotTotal
             "WithProgress" -> do
-                ( readImpl stats :: F { got :: Int, total :: Int, onTheWay :: Int } ) <#> SWithProgress
+                ( readImpl stats :: F { got :: Int, total :: Int, onTheWay :: Int } ) <#> (\x -> SWithProgress x Nothing)
             "FromProgress" -> do
                 ( readImpl stats :: F Progress ) <#> SFromProgress
             "Count" -> do
@@ -157,7 +157,7 @@ instance WriteForeign Stats where
     writeImpl = case _ of
         SGotTotal { got, total } ->
             writeImpl { kind: "GotTotal", stats : writeImpl { got: got, total: total } }
-        SWithProgress { got, total, onTheWay } ->
+        SWithProgress { got, total, onTheWay } _ ->
             writeImpl { kind: "WithProgress", stats : writeImpl { got: got, total: total, onTheWay: onTheWay } }
         SFromProgress progress ->
             writeImpl { kind: "FromProgress", stats : writeImpl progress }

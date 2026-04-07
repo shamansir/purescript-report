@@ -17,7 +17,7 @@ import Report.Convert.Text.Decorators.Progress (decodeProgress, encodeProgress)
 encodeStats :: Stats -> Maybe PValueTag /\ CT.EncodedValue
 encodeStats stats = case stats of
     SGotTotal { got, total } -> Nothing /\ (CT.EncodedValue $ show got <> "/" <> show total)
-    SWithProgress { got, total, onTheWay } -> Nothing /\ (CT.EncodedValue $ show got <> "/" <> show onTheWay <> "/" <> show total)
+    SWithProgress { got, total, onTheWay } _ -> Nothing /\ (CT.EncodedValue $ show got <> "/" <> show onTheWay <> "/" <> show total)
     SFromProgress progress -> lmap pure $ encodeProgress progress
     SCount { count } -> Nothing /\ (CT.EncodedValue $ show count)
     SNotRelevant -> Nothing /\ CT.EncodedValue "SNR"
@@ -36,7 +36,7 @@ decodeStats mbPTag (CT.EncodedValue evStr) =
                     <$> Int.fromString gotStr
                     <*> Int.fromString totalStr
                 [ gotStr, onTheWayStr, totalStr ] ->
-                    (\got onTheWay total -> SWithProgress { got, onTheWay, total })
+                    (\got onTheWay total -> SWithProgress { got, onTheWay, total } Nothing)
                     <$> Int.fromString gotStr
                     <*> Int.fromString onTheWayStr
                     <*> Int.fromString totalStr

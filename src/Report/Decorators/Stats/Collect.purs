@@ -3,7 +3,7 @@ module Report.Decorators.Stats.Collect where
 import Prelude
 
 import Data.Tuple (snd) as Tuple
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Array (filter, length, head) as Array
 
 import Report.Class (class HasDecorators, i_decorators)
@@ -44,5 +44,6 @@ collectStats what flattened =
                         , got
                         , onTheWay
                         }
+                    $ Just allProgressN
         ItemsCount ->
             SCount { count : Array.length flattened }
