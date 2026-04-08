@@ -239,7 +239,7 @@ _editInput = EI.mkValueEditInput'
 
 renderTags
     :: forall t w i
-     . S.IsTag t
+     . S.TagAlike t
     => Tags t
     -> TagsRenderConfig i t
     -> H w i

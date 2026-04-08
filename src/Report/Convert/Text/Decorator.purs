@@ -8,14 +8,12 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Class (class IsTag)
 import Report.GroupPath as GP
 import Report.Decorator (Decorator(..), Key(..))
 import Report.Convert.Text.Decorators.Progress as PEnc
 import Report.Convert.Text.Decorators.Rating as REnc
 import Report.Convert.Text.Decorators.Priority as PrEnc
 import Report.Convert.Text.Decorators.Task as TEnc
-import Report.Convert.Text.Decorators.Tags as TgEnc
 
 
 encodeDecorator :: Decorator -> Key /\ CT.EncodedValue
@@ -34,8 +32,6 @@ encodeDecorator s = case s of
         KDescription /\ CT.EncodedValue desc
     SReference gpath ->
         KReference /\ (CT.EncodedValue $ GP.encode gpath)
-    -- STags tags ->
-    --     KTags /\ TgEnc.encodeTags tags
 
 
 decodeDecorator :: Key -> CT.EncodedValue -> Maybe Decorator
@@ -59,5 +55,3 @@ decodeDecorator key encVal@(CT.EncodedValue evStr) = case key of
         Just $ SDescription evStr
     KReference ->
         GP.decode evStr <#> SReference
-    -- KTags ->
-    --     Just $ STags $ TgEnc.decodeTags encVal

@@ -7,7 +7,8 @@ import Data.Tuple.Nested (type (/\))
 import Data.String (stripPrefix, Pattern(..)) as String
 
 import Report.Core.Logic (EncodedValue)
-import Report.Class (class IsTag)
+import Report.Class
+import Report.Chain (Chain)
 
 import Report.Convert.Keyed (keyOf)
 import Report.Decorator (Decorator)
@@ -38,12 +39,15 @@ instance ValueModify Unit TaskP where
     toEditable   = TEnc.encodeTask >>> pure
     fromEditable = const $ TEnc.decodeTask
 
+
 instance ValueModify (Maybe PValueTag) Stats where
     toEditable   = SEnc.encodeStats
     fromEditable = SEnc.decodeStats
 
-
-instance (IsTag t) => ValueModify Unit (Tags t) where
+instance
+    ( ConvertTo (Chain String) t
+    , ConvertFrom (Chain String) t
+    ) => ValueModify Unit (Tags t) where
     toEditable   = Tags.encodeTags >>> pure
     fromEditable = const $ Just <<< Tags.decodeTags
 
