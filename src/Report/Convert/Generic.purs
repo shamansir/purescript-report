@@ -13,15 +13,16 @@ import Yoga.JSON (writeImpl)
 import Report (Report, class ToReport)
 import Report.Group (Group(..))
 import Report.Class
+import Report.Chain (Chain)
 import Report as Report
 import Report.Builder as ReportB
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Decorator (Decorator)
 import Report.Decorator (Key) as Decorator
-import Report.Decorators.Tags (RawTag)
 import Report.Tabular as Tabular
 import Report.Decorators.Tabular.TabularValue (TabularValue)
-import Report.Decorators.Tabular.TabularValue as TabV
+-- import Report.Decorators.Tabular.TabularValue as TabV
+import Report.Convert.Text.Decorators.Tags as CT
 import Report.Convert.Types
 
 
@@ -30,8 +31,8 @@ exportVersion = ExportVersion 3 :: ExportVersion
 class
     ( Ord group
     , Eq subj_id
-    , IsTag subj_tag
-    , IsTag item_tag
+    , ConvertTo (Chain String) item_tag
+    , ConvertTo (Chain String) subj_tag
     , IsItem item
     , IsGroup group
     , IsSubject subj_id subj
@@ -53,8 +54,8 @@ class
 instance
     ( Ord group
     , Eq subj_id
-    , IsTag subj_tag
-    , IsTag item_tag
+    , ConvertTo (Chain String) item_tag
+    , ConvertTo (Chain String) subj_tag
     , IsItem item
     , IsGroup group
     , IsSubject subj_id subj
@@ -106,7 +107,7 @@ toExport inclRule =
         collectSubject subj =
             { id : SubjectId $ encodeKey @subj_id $ s_id subj
             , name  : s_name  @subj_id subj
-            , tags  : i_tags  @subj_tag subj <#> rawifyTag
+            , tags  : i_tags  @subj_tag subj <#> CT.rawifyTag
             , stats : i_stats subj
             -- , trackedAt : Nothing -- TODO
             -- , properties : [] -- collectModifiers @subj_tag subj
@@ -124,7 +125,7 @@ toExport inclRule =
         collectItem item =
             { title : i_title item
             , decorators : collectDecorators item
-            , tags : collectTags @item_tag item
+            , tags : CT.rawifyTag @item_tag <$> i_tags item
             , tabulars : collectTabulars item
             }
         collectDecorator :: Decorator.Key -> Decorator -> DecoratorRec
@@ -147,9 +148,9 @@ toExport inclRule =
         collectTabulars a =
             -- []
             collectTabular <$> (Tabular.items $ i_tabular a)
-        collectTags :: forall @t a. IsTag t => HasTags t a => a -> Array RawTag
-        collectTags a =
-            rawifyTag @t <$> i_tags a
+        -- collectTags :: forall @t a. ConvertFrom (Chain String) t => HasTags t a => a -> Array RawTag
+        -- collectTags a =
+        --     CT.rawifyTag @_ @t <$> i_tags a
         -- rawifyDecorator :: forall @t. IsTag t => Decorator t -> Decorator RawTag
         -- rawifyDecorator = Decorator.mapTags (rawifyTag @t)
         subjectToExport :: SubjectRec -> Array (Group /\ Array ItemRec) -> SubjectWithGroups

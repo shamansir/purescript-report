@@ -23,11 +23,11 @@ decodeTags :: forall t. ConvertFrom (Chain String) t => CT.EncodedValue -> Tags 
 decodeTags = unwrap >>> String.split (String.Pattern ",") >>> map Chain.fromString >>> Array.catMaybes >>> map decodeFrom >>> Array.catMaybes >>> Tags
 
 
-rawifyTag :: forall t. ConvertTo (Chain String) t => t -> RawTag
+rawifyTag :: forall @t. ConvertTo (Chain String) t => t -> RawTag
 rawifyTag = encodeTo >>> Chain.toNEArray >>> RawTag
 
 
-derawifyTag :: forall t. ConvertFrom (Chain String) t => RawTag -> Maybe t
+derawifyTag :: forall @t. ConvertFrom (Chain String) t => RawTag -> Maybe t
 derawifyTag = unwrap >>> Chain.fromNEArray >>> decodeFrom
 
 
