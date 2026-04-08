@@ -28,6 +28,7 @@ import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Tags (fromArray) as Tags
 import Report.Decorators.Class.ValueModify (fromEditable)
 import Report.Decorators.Stats.Collect (collectStats, CollectWhat)
+import Report.Convert.Text.Decorators.Tags (decodeTags) as Tags
 
 
 data What
@@ -95,16 +96,16 @@ class ItemModify a where
 
 
 modifyAt
-    :: forall @tag subj_id subj group item
+    :: forall @item_tag subj_id subj group item
      . Eq subj_id
     => IsSubjectId subj_id subj
-    => IsTag tag
+    => ConvertFrom (Chain String) item_tag
     => IsGroup group
     => HasDecorators item
-    => HasTags tag item
+    => HasTags item_tag item
     => GroupModify group
     => ItemModify item
-    => TagsModify tag item
+    => TagsModify item_tag item
     => DecoratorsModify item
     => Modification subj_id
     -> Report subj group item
@@ -140,9 +141,10 @@ modifyAt { subjId, what, newValue, path } report = case what of
         setTags :: item -> item
         setTags item =
             let
-                (currentTags :: Tags tag) = Tags.fromArray $ i_tags item
-                (mbDecodedValue :: Maybe (Tags RawTag)) = fromEditable unit newValue
-                nextTags = fromMaybe currentTags $ (\tags -> derawifyTags @tag tags) <$> mbDecodedValue
+                -- (currentTags :: Tags item_tag) = Tags.fromArray $ i_tags item
+                -- (mbDecodedValue :: Maybe (Tags RawTag)) = fromEditable unit newValue
+                (nextTags :: Tags item_tag) = Tags.decodeTags newValue
+                -- nextTags = fromMaybe currentTags $ (\tags -> ?wh <$> tags) <$> mbDecodedValue
             in updateTags nextTags item
         unwrapEditable (EncodedValue string) = string
         -- groupStatsFromEditable :: Editable -> group -> Stats

@@ -3,9 +3,9 @@ module Report.Class where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Data.String (split, Pattern(..), joinWith) as String
+import Data.String (joinWith) as String
 import Data.Array (catMaybes) as Array
-import Data.Array.NonEmpty (fromArray, toArray, catMaybes) as NEA
+import Data.Array.NonEmpty (toArray) as NEA
 import Data.Newtype (unwrap, wrap)
 
 import Report.Chain (Chain(..))
@@ -15,7 +15,7 @@ import Report.Tabular (Tabular)
 import Report.Decorator (Decorators)
 import Report.Decorators.Stats (Stats) as S
 import Report.Decorators.Tabular.TabularValue (TabularValue)
-import Report.Decorators.Tags (Tags(..), RawTag(..))
+import Report.Decorators.Tags (Tags, RawTag(..))
 
 
 class HasTags t a where
@@ -67,55 +67,105 @@ class IsGroup g <= IsGroupable g t where
     t_group :: t -> Maybe (Chain g)
 
 
+class LimitedSet t where
+    values :: Array t
+
+
+class ConvertTo trg src where
+    encodeTo :: src -> trg
+
+
+class ConvertFrom trg src where
+    decodeFrom :: trg -> Maybe src
+
+
+{-
+class ChainContent a t where
+    chainContent :: t -> Chain a
+-}
+
+
+class Same k where -- alternative to `Eq`, not strict equality, but "same kind of thing", e.g. same tag type, same rating type, same platform type, etc.
+    same :: k -> k -> Boolean
+
+
 -- used for tags, so when we sort items by a tag, we can find the "same kind" tag on each item, i.e. rating or platform
 -- and if they are the same, sort by their `Ord` instance
-class IsSortable t where
-    sameKind :: t -> t -> Boolean
+class Same k <= IsSortable k t where
+    kindOf :: t -> k
+    {-
     kindContent :: t -> Chain String
     kindId :: t -> String -- TODO: kind as another type var, kind can be `IsTag`.... as well
     fromKindId :: String -> Maybe t -- TODO: kind as another type var, kind can be `IsTag`.... as well
+    -}
 
 
-class Eq t <= IsTag t where
+class TagAlike t where
     tagColors :: t -> TagColors
-    tagContent :: t -> Chain String
-    encodeTag :: t -> String
-    decodeTag :: String -> Maybe t
-    allTags :: Array t
+    tagContent :: t -> Chain String -- different from encoding / decoding since could contain formatted text and any unicode
 
 
 defaultTagColors :: TagColors
 defaultTagColors =
-    { text: "#000000", background: "#FFFFFF", border: "#CCCCCC" }
+    { text: "#000000"
+    , background: "#FFFFFF"
+    , border: "#CCCCCC"
+    }
 
 
-instance IsTag Unit where
+instance TagAlike Unit where
     tagColors _ = defaultTagColors
-    tagContent _ = End ""
-    encodeTag = const "."
-    decodeTag _ = Just unit
-    allTags = [unit]
+    tagContent _ = End "."
+    -- encodeTag = const "."
+    -- decodeTag _ = Just unit
+    -- allTags = [unit]
 
 
-instance IsTag RawTag where
+instance TagAlike String where
+    tagColors _ = defaultTagColors
+    tagContent s = End s
+
+
+instance ConvertTo String Unit where encodeTo _ = "."
+instance ConvertFrom String Unit where decodeFrom s = if s == "." then Just unit else Nothing
+instance ConvertTo String String where encodeTo = identity
+instance ConvertFrom String String where decodeFrom = Just
+
+
+instance TagAlike RawTag where
     tagColors _ = defaultTagColors
     tagContent (RawTag rtags) = Chain.fromNEArray rtags
-    encodeTag (RawTag rtags) = Chain.fromNEArray rtags # Chain.toString
-    decodeTag = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
-    allTags = []
 
 
-rawifyTag :: forall @t. IsTag t => t -> RawTag
+instance ConvertTo String RawTag where encodeTo (RawTag rtags) = Chain.fromNEArray rtags # Chain.toString
+instance ConvertFrom String RawTag where decodeFrom = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
+instance ConvertTo (Chain String) RawTag where encodeTo (RawTag rtags) = Chain.fromNEArray rtags
+instance ConvertFrom (Chain String) RawTag where decodeFrom = Chain.toNEArray >>> RawTag >>> Just
+
+
+instance LimitedSet Unit where
+    values = [ unit ]
+
+
+{-
+rawifyTag :: forall @t. TagAlike t => t -> RawTag
 rawifyTag = tagContent >>> Chain.toNEArray >>> RawTag
+-}
 
 
-derawifyTag :: forall @t. IsTag t => RawTag -> Maybe t
-derawifyTag (RawTag rtags) = decodeTag $ String.joinWith "::" $ NEA.toArray rtags
+{-
+derawifyTag :: forall @t. Convert String t => RawTag -> Maybe t
+derawifyTag (RawTag rtags) = decodeFrom $ String.joinWith "::" $ NEA.toArray rtags
+-}
 
 
-rawifyTags :: forall @t. IsTag t => Tags t -> Tags RawTag
+{-
+rawifyTags :: forall @t. TagAlike t => Tags t -> Tags RawTag
 rawifyTags = unwrap >>> map rawifyTag >>> wrap
+-}
 
 
-derawifyTags :: forall @t. IsTag t => Tags RawTag -> Tags t
+{-
+derawifyTags :: forall @t. Convert String t => Tags RawTag -> Tags t
 derawifyTags = unwrap >>> map derawifyTag >>> Array.catMaybes >>> wrap
+-}

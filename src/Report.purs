@@ -268,10 +268,10 @@ filterItemsByTag itemTag =
 
 
 sortItemsByTag
-    :: forall item_tag subj group item
+    :: forall @tag_kind item_tag subj group item
      . Ord item_tag
     => HasTags item_tag item
-    => IsSortable item_tag
+    => IsSortable tag_kind item_tag
     => item_tag
     -> Report subj group item
     -> Report subj group item
@@ -280,14 +280,14 @@ sortItemsByTag itemTag =
     where
         itemTagSortValue :: item_tag -> item -> Maybe item_tag
         itemTagSortValue tag =
-            Array.find (sameKind tag) <<< i_tags
+            Array.find (kindOf @tag_kind >>> (same $ kindOf tag)) <<< i_tags
 
 
 groupItemsByTag
-    :: forall item_tag subj group item
+    :: forall @tag_kind item_tag subj group item
      . HasTags item_tag item
     => IsGroupable group item_tag
-    => IsSortable item_tag
+    => IsSortable tag_kind item_tag
     => item_tag
     -> Report subj group item
     -> Report subj group item
@@ -296,7 +296,7 @@ groupItemsByTag itemTag =
         >>> B.regroupByMany
             (\chA chB -> compare (g_path <$> Chain.toArray chA) (g_path <$> Chain.toArray chB))
             (\item ->
-                let sameKindTags = Array.filter (sameKind itemTag) $ i_tags item
+                let sameKindTags = Array.filter (kindOf @tag_kind @item_tag >>> (same $ kindOf itemTag)) $ i_tags item
                 in Array.catMaybes $ (\otherTag -> t_group @group otherTag) <$> sameKindTags
             )
         >>> fromBuilder

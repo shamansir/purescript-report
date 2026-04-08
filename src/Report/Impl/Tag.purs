@@ -9,20 +9,23 @@ import Foreign (F, Foreign, fail, ForeignError(..))
 
 import Yoga.JSON (readImpl, writeImpl)
 
-import Report.Class (class IsTag, TagColors, decodeTag, tagContent)
+import Report.Decorators.Tags (RawTag)
+import Report.Class (TagColors)
 import Report.Chain as MbW
 
 
+type Tag = RawTag
 
 
-defaultColors :: TagColors
-defaultColors =
+altDefaultColors :: TagColors
+altDefaultColors =
     { text: "#000000"
     , background: "#adceffff"
     , border: "#000000"
     }
 
 
+{-
 defaultWriteImpl :: forall tag. IsTag tag => tag -> Foreign
 defaultWriteImpl = tagContent >>> MbW.toArray >>> String.joinWith "::" >>> writeImpl
 
@@ -33,3 +36,4 @@ defaultReadImpl frgn = do
     case decodeTag @tag str of -- FIXME: doesn't do Chain reconstruction
         Just tag -> pure tag
         Nothing  -> fail $ ForeignError $ "failed to decode tag from " <> str
+-}
