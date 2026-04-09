@@ -43,7 +43,8 @@ import Halogen.Query.Event (eventListener)
 import Report as R
 import Report.Builder as RB
 import Report.Class as R
-import Report.Chain (toString) as Chain
+import Report.Chain (Chain)
+import Report.Chain (fromString, toString) as Chain
 -- import Report.Core.Logic (EncodedValue(..))
 import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.GroupPath (GroupPath)
@@ -77,7 +78,8 @@ import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Report.Web.Component.RecalcBehavior as CRB
 
 
-type Process item_tag = { action :: TagAction, tag :: item_tag }
+-- FIXME: we're storing only tags now, but it should be better to store kinds
+type Process (item_tag_kind :: Type) item_tag = { action :: TagAction, tag :: item_tag }
 
 
 type CollapseMap subj_id = Map subj_id (Map GroupPath Boolean)
@@ -89,7 +91,7 @@ data SubjectFilter
     | FromUrl String
 
 
-type State subj_id subj_tag item_tag report =
+type State subj_id subj_tag item_tag_kind item_tag report =
     { subjects :: Array subj_id
     , report :: report
     , filter :: SubjectFilter
@@ -102,7 +104,7 @@ type State subj_id subj_tag item_tag report =
     , showSubjectNavNames :: Boolean
     , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
-    , process :: Array (Process item_tag)
+    , process :: Array (Process item_tag_kind item_tag)
     , collapsed :: CollapseMap subj_id
     }
 
@@ -111,7 +113,7 @@ type Input subj group item =
     R.Report subj group item
 
 
-data Action subj_id subj_tag item_tag report
+data Action subj_id subj_tag item_tag_kind item_tag report
     = Initialize
     | Receive report
     | HandleUrlChange
@@ -137,7 +139,7 @@ data Action subj_id subj_tag item_tag report
     | EnableExport ExportTarget
     | DisableExport
     | AddToItemsFilter MouseEvent item_tag
-    | CancelProcess MouseEvent (Process item_tag)
+    | CancelProcess MouseEvent (Process item_tag_kind item_tag)
     | SortItemsBy MouseEvent item_tag
     | GroupItemsBy MouseEvent item_tag
     | ResetPostProcess
@@ -188,27 +190,23 @@ defaultConfig =
 
 
 class
-    ( R.IsTag subj_tag
-    , R.IsTag item_tag
-    , R.IsItem item
+    ( R.IsItem item
     , R.IsGroup group
     , R.IsSubject subj_id subj
-    , R.IsSortable item_tag
+    , R.IsSortable item_tag_kind item_tag
     , R.IsGroupable group item_tag
     )
-    <= Is subj_id subj_tag item_tag subj group item (x :: Type)
+    <= Is subj_id subj_tag item_tag_kind item_tag subj group item (x :: Type)
 
 
 instance
-    ( R.IsTag subj_tag
-    , R.IsTag item_tag
-    , R.IsItem item
+    ( R.IsItem item
     , R.IsGroup group
     , R.IsSubject subj_id subj
-    , R.IsSortable item_tag
+    , R.IsSortable item_tag_kind item_tag
     , R.IsGroupable group item_tag
     ) =>
-    Is subj_id subj_tag item_tag subj group item (R.Report subj group item)
+    Is subj_id subj_tag item_tag_kind item_tag subj group item (R.Report subj group item)
 
 
 class
@@ -257,16 +255,16 @@ instance
     Modify item_tag group item (R.Report subj group item)
 
 
-type ReportComponentState subj_id subj_tag item_tag subj group item =
-    State subj_id subj_tag item_tag (R.Report subj group item)
+type ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item =
+    State subj_id subj_tag item_tag_kind item_tag (R.Report subj group item)
 
-type ReportComponentAction subj_id subj_tag item_tag subj group item =
-    Action subj_id subj_tag item_tag (Input subj group item)
+type ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item =
+    Action subj_id subj_tag item_tag_kind item_tag (Input subj group item)
 
-type ReportComponentM subj_id subj_tag item_tag subj group item output m =
+type ReportComponentM subj_id subj_tag item_tag_kind item_tag subj group item output m =
     H.HalogenM
-        (ReportComponentState subj_id subj_tag item_tag subj group item)
-        (ReportComponentAction subj_id subj_tag item_tag subj group item)
+        (ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item)
+        (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item)
         ()
         output
         m
@@ -274,12 +272,20 @@ type ReportComponentM subj_id subj_tag item_tag subj group item output m =
 
 
 component
-    :: forall @x @subj_id @subj_tag @item_tag @subj @group @item query output m
+    :: forall @x @subj_id @subj_tag @item_tag_kind @item_tag @subj @group @item query output m
      . MonadEffect m
     => Ord subj_id
     => Ord item_tag
+    => Eq subj_tag
     => Show subj_id
-    => Is subj_id subj_tag item_tag subj group item x
+    => R.TagAlike subj_tag
+    => R.TagAlike item_tag
+    => R.TagAlike item_tag_kind
+    => R.LimitedSet subj_tag
+    -- => R.IsSortable item_tag_kind item_tag
+    => R.ConvertFrom (Chain String) item_tag
+    => R.ConvertFrom (Chain String) subj_tag
+    => Is subj_id subj_tag item_tag_kind item_tag subj group item x
     => Has subj_tag item_tag subj group item x
     => Modify item_tag group item x
     -- => VModify.EncodableKey subj_id
@@ -301,7 +307,7 @@ component cfg =
             }
         }
     where
-    initialState :: x -> ReportComponentState subj_id subj_tag item_tag subj group item
+    initialState :: x -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
     initialState x =
         { subjects : cfg.preSelected
         , report : R.toReport x
@@ -322,7 +328,7 @@ component cfg =
     s_id :: subj -> subj_id
     s_id subj = R.s_id subj
 
-    render :: ReportComponentState subj_id subj_tag item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag subj group item) () m
+    render :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) () m
     render state =
         HH.div
             [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
@@ -331,7 +337,7 @@ component cfg =
                 -- , HE.onClick $ const ClearNavigation
                 ]
                 $
-                ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag state.navigatedTo state.collapsed)
+                ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag_kind @item_tag state.navigatedTo state.collapsed)
                     <$> selectedSubjects
                 )
                 <> pure menuButtons
@@ -359,7 +365,7 @@ component cfg =
                 R.toBuilder state.report
                 # RB.filterSubjects (s_id >>> flip Array.elem state.subjects)
                 # R.fromBuilder
-                # postProcess cfg.recalculate state.process
+                # postProcess @item_tag_kind cfg.recalculate state.process
             selectedSubjects = processedReport # R.unfoldAll
             allSubjects = RB.allSubjects $ R.toBuilder state.report
             selKeys = Map.fromFoldable $ (\subj -> s_id subj /\ subj) <$> allSubjects
@@ -522,7 +528,7 @@ component cfg =
                             ]
                 else []
                 )
-            <> (subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.allTags :: Array subj_tag))
+            <> (subjTagButton <$> subjTagIsOn state.tagFilter <$> (R.values :: Array subj_tag))
 
     processingButtons = case _ of
         [] -> HH.text ""
@@ -531,9 +537,9 @@ component cfg =
     processStyle = "background-color: rgb(139, 121, 182); color: white; border-radius: 5px; padding: 3px 5px; margin: 0 3px; cursor: pointer;"
 
     processButton = case _ of
-        { action: FilterBy, tag } -> [ HH.text "F", itemTagKindBadge (flip CancelProcess { action: FilterBy, tag }) tag ]
-        { action: SortBy, tag }   -> [ HH.text "S", itemTagKindBadge (flip CancelProcess { action: SortBy,   tag }) tag ]
-        { action: GroupBy, tag }  -> [ HH.text "G", itemTagKindBadge (flip CancelProcess { action: GroupBy,  tag }) tag ]
+        { action: FilterBy, tag } -> [ HH.text "F", itemTagKindBadge @item_tag_kind (flip CancelProcess { action: FilterBy, tag }) tag ]
+        { action: SortBy, tag }   -> [ HH.text "S", itemTagKindBadge @item_tag_kind (flip CancelProcess { action: SortBy,   tag }) tag ]
+        { action: GroupBy, tag }  -> [ HH.text "G", itemTagKindBadge @item_tag_kind (flip CancelProcess { action: GroupBy,  tag }) tag ]
         >>> HH.span [ HP.style processStyle ]
 
     subjTagIsOn tagFilter tag =
@@ -589,8 +595,8 @@ component cfg =
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
 
     handleAction
-        :: ReportComponentAction subj_id subj_tag item_tag subj group item
-        -> ReportComponentM subj_id subj_tag item_tag subj group item output m
+        :: ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item
+        -> ReportComponentM subj_id subj_tag item_tag_kind item_tag subj group item output m
     handleAction = case _ of
         Initialize -> do
             window <- H.liftEffect $ Web.window
@@ -796,17 +802,17 @@ component cfg =
                 Console.log $ show $ unwrap nextCfg
                 pure nextCfg
 
-            H.modify_ $ loadUrlConfig nextHashCfg
+            H.modify_ $ loadUrlConfig @item_tag_kind nextHashCfg
 
         NoOp -> pure unit
 
 
 renderSubject
-    :: forall @subj_id @subj_tag @item_tag subj group item slots m
+    :: forall @subj_id @subj_tag @item_tag_kind @item_tag subj group item slots m
      . Eq subj_id
     => Ord subj_id
-    => R.IsTag item_tag
-    => R.IsTag subj_tag
+    => R.TagAlike subj_tag
+    => R.TagAlike item_tag
     => R.IsItem item
     => R.IsGroup group
     => R.IsSubjectId subj_id subj
@@ -821,7 +827,7 @@ renderSubject
     -> CollapseMap subj_id
     -> subj
     -> Array (group /\ Array item)
-    -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag subj group item) slots m
+    -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) slots m
 renderSubject navigatedTo collapsedMap subj groupsArr =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
@@ -1021,17 +1027,17 @@ navigationHint navigation =
 
 
 postProcess
-    :: forall item_tag subj group item
+    :: forall @item_tag_kind item_tag subj group item
      . Eq item_tag
     => Ord item_tag
     => Ord group
-    => R.IsSortable item_tag
+    => R.IsSortable item_tag_kind item_tag
     => R.IsGroupable group item_tag
     => R.HasTags item_tag item
     => R.HasDecorators item
     => Modify.StatsModify group
     => CRB.RecalcBehavior
-    -> Array (Process item_tag)
+    -> Array (Process item_tag_kind item_tag)
     -> R.Report subj group item
     -> R.Report subj group item
 postProcess recalc processes report =
@@ -1048,16 +1054,16 @@ postProcess recalc processes report =
                         Just config -> Modify.recalculate config
                         Nothing -> identity
             { action : SortBy, tag : itemTag } ->
-                R.sortItemsByTag itemTag curReport
+                R.sortItemsByTag @item_tag_kind itemTag curReport
             { action : GroupBy, tag : itemTag } ->
-                R.groupItemsByTag itemTag curReport
+                R.groupItemsByTag @item_tag_kind itemTag curReport
                     # case recalc.onRegroup of
                         Just config -> Modify.recalculate config
                         Nothing -> identity
                     -- Modify.recalculate @item_tag $ nextReport s.report
 
 
-whichProcess :: forall item_tag. item_tag -> MouseEvent -> Maybe (Process item_tag)
+whichProcess :: forall item_tag_kind item_tag. item_tag -> MouseEvent -> Maybe (Process item_tag_kind item_tag)
 whichProcess itemTag mevt =
     if ME.shiftKey mevt && not (ME.altKey mevt || ME.metaKey mevt) then
         Just { action: FilterBy, tag: itemTag }
@@ -1068,7 +1074,7 @@ whichProcess itemTag mevt =
     else Nothing
 
 
-makeTagClickEvt :: forall subj_id subj_tag item_tag x. item_tag -> MouseEvent -> Action subj_id subj_tag item_tag x
+makeTagClickEvt :: forall subj_id subj_tag item_tag_kind item_tag x. item_tag -> MouseEvent -> Action subj_id subj_tag item_tag_kind item_tag x
 makeTagClickEvt tag mevt =
     case whichProcess tag mevt of
         Just { action: FilterBy, tag: itemTag } -> AddToItemsFilter mevt itemTag
@@ -1129,13 +1135,15 @@ instance UC.UrlConfig ComponentURLConfig where
 
 
 updateUrl
-    :: forall subj_id subj_tag item_tag subj group item output m
+    :: forall subj_id subj_tag item_tag_kind item_tag subj group item output m
      . MonadEffect m
     => R.IsSubjectId subj_id subj
-    => R.IsTag subj_tag
-    => R.IsTag item_tag
-    => R.IsSortable item_tag
-    => ReportComponentM subj_id subj_tag item_tag subj group item output m
+    => R.ConvertTo (Chain String) subj_tag
+    => R.ConvertTo (Chain String) item_tag
+    -- => R.IsTag subj_tag
+    -- => R.IsTag item_tag
+    => R.IsSortable item_tag_kind item_tag
+    => ReportComponentM subj_id subj_tag item_tag_kind item_tag subj group item output m
 updateUrl = H.get >>= \state ->
     liftEffect $ do
       window <- Web.window
@@ -1148,19 +1156,21 @@ updateUrl = H.get >>= \state ->
 
 
 collectUrlConfig
-    :: forall subj_id subj_tag item_tag subj group item
+    :: forall subj_id subj_tag item_tag_kind item_tag subj group item
      . R.IsSubjectId subj_id subj
-    => R.IsTag subj_tag
-    => R.IsTag item_tag
-    => R.IsSortable item_tag
-    => ReportComponentState subj_id subj_tag item_tag subj group item
+    => R.ConvertTo (Chain String) subj_tag
+    => R.ConvertTo (Chain String) item_tag -- FIXME: for grouping and sorting, decode / encode kinds, not tags
+    -- => R.IsTag subj_tag
+    -- => R.IsTag item_tag
+    -- => R.IsSortable item_tag_kind item_tag
+    => ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
     -> ComponentURLConfig
 collectUrlConfig state =
     ComponentURLConfig
         { subjIdFilter        : R.s_unique @subj_id @subj <$> state.subjects
         , subjFilter          : loadFilterContent state.filter
         , subjAlphaSort       : loadAlphaSort state.sortBy
-        , subjTagFilter       : R.encodeTag @subj_tag <$> state.tagFilter
+        , subjTagFilter       : Chain.toString <$> R.encodeTo <$> state.tagFilter
         , itemTagFilter       : Array.mapMaybe (actionToTag FilterBy)    state.process
         , itemTagKindSorting  : Array.mapMaybe (actionToTagKind SortBy)  state.process
         , itemTagKindGrouping : Array.mapMaybe (actionToTagKind GroupBy) state.process
@@ -1173,30 +1183,32 @@ collectUrlConfig state =
                 NoSubjectFilter -> Nothing
                 FromUrl content -> Just content
                 FromUser content -> Just content
-            actionToTag cmp { action, tag }     = if cmp == action then Just $ R.encodeTag tag else Nothing
-            actionToTagKind cmp { action, tag } = if cmp == action then Just $ R.kindId tag    else Nothing
+            actionToTag cmp { action, tag }     = if cmp == action then Just $ Chain.toString $ R.encodeTo tag else Nothing
+            actionToTagKind cmp { action, tag } = if cmp == action then Just $ Chain.toString $ R.encodeTo tag {- R.kindId tag -} else Nothing
 
 
 loadUrlConfig
-    :: forall subj_id subj_tag item_tag subj group item
+    :: forall subj_id subj_tag @item_tag_kind item_tag subj group item
      . R.IsSubjectId subj_id subj
-    => R.IsTag subj_tag
-    => R.IsTag item_tag
-    => R.IsSortable item_tag
+    => R.ConvertFrom (Chain String) subj_tag
+    => R.ConvertFrom (Chain String) item_tag -- FIXME: for grouping and sorting, decode / encode kinds, not tags
+    -- => R.IsTag subj_tag
+    -- => R.IsTag item_tag
+    => R.IsSortable item_tag_kind item_tag
     => ComponentURLConfig
-    -> ReportComponentState subj_id subj_tag item_tag subj group item
-    -> ReportComponentState subj_id subj_tag item_tag subj group item
+    -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
+    -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
 loadUrlConfig (ComponentURLConfig cfg) = _
     { filter    = maybe NoSubjectFilter FromUrl cfg.subjFilter
     , sortBy    = if cfg.subjAlphaSort then Alpha else ByWeight
     , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
-    , tagFilter = Array.catMaybes $ R.decodeTag @subj_tag     <$> cfg.subjTagFilter
+    , tagFilter = Array.catMaybes $ R.decodeFrom <$> (Array.catMaybes $ Chain.fromString <$> cfg.subjTagFilter)
     , process   = Array.catMaybes $
-            (map (mkAction FilterBy) <$> R.decodeTag  @item_tag <$> cfg.itemTagFilter)
+            (map (mkAction FilterBy) <$> (Chain.fromString >>> flip bind R.decodeFrom) {- R.decodeTag @item_tag -}  <$> cfg.itemTagFilter)
             <>
-            (map (mkAction GroupBy)  <$> R.fromKindId @item_tag <$> cfg.itemTagKindGrouping)
+            (map (mkAction GroupBy)  <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindGrouping)
             <>
-            (map (mkAction SortBy)   <$> R.fromKindId @item_tag <$> cfg.itemTagKindSorting)
+            (map (mkAction SortBy)   <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindSorting)
     }
     where
         mkAction action tag = { action, tag }

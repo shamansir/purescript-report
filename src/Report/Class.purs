@@ -45,8 +45,8 @@ class IsGroup a where
 
 class IsSubjectId i a where
     s_id :: a -> i
-    s_unique :: i -> String
-    s_decode :: String -> Maybe i
+    s_unique :: i -> String -- FIXME: use `ConvertTo`
+    s_decode :: String -> Maybe i -- FIXME: use `ConvertFrom`
 
 
 class IsSubjectId i a <= IsSubject i a where
@@ -72,11 +72,11 @@ class LimitedSet t where
 
 
 class ConvertTo trg src where
-    encodeTo :: src -> trg
+    encodeTo :: src -> trg -- LAW: decodeFrom (encodeTo src) === Just src
 
 
 class ConvertFrom trg src where
-    decodeFrom :: trg -> Maybe src
+    decodeFrom :: trg -> Maybe src -- LAW: decodeFrom (encodeTo src) === Just src
 
 
 {-
@@ -92,7 +92,8 @@ class Same k where -- alternative to `Eq`, not strict equality, but "same kind o
 -- used for tags, so when we sort items by a tag, we can find the "same kind" tag on each item, i.e. rating or platform
 -- and if they are the same, sort by their `Ord` instance
 class Same k <= IsSortable k t where
-    kindOf :: t -> k
+    kindOf :: t -> k -- FIXME: ConvertTo k t
+    -- defaultFor :: k -> Maybe t  -- FIXME: ConvertFrom k t
     {-
     kindContent :: t -> Chain String
     kindId :: t -> String -- TODO: kind as another type var, kind can be `IsTag`.... as well
