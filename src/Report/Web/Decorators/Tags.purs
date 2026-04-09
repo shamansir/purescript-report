@@ -37,11 +37,8 @@ itemTagBadge onClick tag =
         [ renderChain (Just onClick) (S.tagColors tag) (S.tagContent tag) ]
 
 
-itemTagKindBadge :: forall @tag_kind item_tag w i. S.TagAlike tag_kind => S.TagAlike item_tag => S.IsSortable tag_kind item_tag => (MouseEvent -> i) -> item_tag -> H w i
-itemTagKindBadge onClick tag =
-    HH.span
-        [ HP.style "font-size: 0.7em; position: relative; top: -1px; margin: 0 0 0 7px; white-space: nowrap;" ]
-        [ renderChain (Just onClick) (S.tagColors tag) (S.tagContent $ S.kindOf @tag_kind tag) ]
+itemTagKindBadge :: forall item_tag_kind w i. S.TagAlike item_tag_kind => (MouseEvent -> i) -> item_tag_kind -> H w i
+itemTagKindBadge = itemTagBadge
 
 
 renderChain :: forall w i. Maybe (MouseEvent -> i) -> S.TagColors -> S.Chain String -> H w i
