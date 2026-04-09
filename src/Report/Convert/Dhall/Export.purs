@@ -25,7 +25,7 @@ import Report.Chain (Chain)
 import Report.Chain as MbW
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
-import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
+import Report.Class (class IsGroup, class IsItem, class IsSubject, class TagAlike, tagContent)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
@@ -46,7 +46,6 @@ import Dodo as D
 toDhall
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToExport subj_id subj_tag item_tag subj group item x
-    => IsTag item_tag
     => Report.IncludeRule subj_id
     -> Report subj group item
     -> String

@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Data.Array (catMaybes) as Array
+import Data.Array.NonEmpty (toArray) as NEA
 import Data.String (split, joinWith, Pattern(..)) as String
 import Data.Newtype (unwrap, wrap)
 
@@ -37,3 +38,11 @@ rawifyTags = unwrap >>> map rawifyTag >>> wrap
 
 derawifyTags :: forall t. ConvertFrom (Chain String) t => Tags RawTag -> Tags t
 derawifyTags = unwrap >>> map derawifyTag >>> Array.catMaybes >>> wrap
+
+
+toArray :: forall t. ConvertTo (Chain String) t => Tags t -> Array String
+toArray = unwrap >>> map encodeTo >>> map Chain.toString
+
+
+fromArray :: forall t. ConvertFrom (Chain String) t => Array String -> Tags t
+fromArray = map Chain.fromString >>> Array.catMaybes >>> map decodeFrom >>> Array.catMaybes >>> Tags
