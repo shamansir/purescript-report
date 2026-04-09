@@ -78,8 +78,7 @@ import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Report.Web.Component.RecalcBehavior as CRB
 
 
--- FIXME: we're storing only tags now, but it should be better to store kinds
-type Process (item_tag_kind :: Type) item_tag = { action :: TagAction, tag :: item_tag }
+type Process item_tag_kind item_tag = TagAction item_tag_kind item_tag
 
 
 type CollapseMap subj_id = Map subj_id (Map GroupPath Boolean)
@@ -140,8 +139,8 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | DisableExport
     | AddToItemsFilter MouseEvent item_tag
     | CancelProcess MouseEvent (Process item_tag_kind item_tag)
-    | SortItemsBy MouseEvent item_tag
-    | GroupItemsBy MouseEvent item_tag
+    | SortItemsBy MouseEvent item_tag_kind
+    | GroupItemsBy MouseEvent item_tag_kind
     | ResetPostProcess
     | ToggleGroupCollapse MouseEvent subj_id GroupPath
     | NoOp
@@ -277,6 +276,7 @@ component
     => Ord subj_id
     => Ord item_tag
     => Eq subj_tag
+    => Eq item_tag_kind
     => Show subj_id
     => R.TagAlike subj_tag
     => R.TagAlike item_tag
@@ -285,13 +285,11 @@ component
     -- => R.IsSortable item_tag_kind item_tag
     => R.ConvertFrom (Chain String) item_tag
     => R.ConvertFrom (Chain String) subj_tag
+    => R.ConvertFrom (Chain String) item_tag_kind
+    => R.ConvertTo   (Chain String) item_tag_kind -- other `ConvertTo` instances are inside `Report.ToExport`
     => Is subj_id subj_tag item_tag_kind item_tag subj group item x
     => Has subj_tag item_tag subj group item x
     => Modify item_tag group item x
-    -- => VModify.EncodableKey subj_id
-    -- => ReadForeign item_tag
-    -- => WriteForeign item_tag
-    -- => WriteForeign subj_tag
     => Report.ToExport subj_id subj_tag item_tag subj group item x
     => R.ToReport subj group item x
     => Config subj_id
@@ -537,9 +535,9 @@ component cfg =
     processStyle = "background-color: rgb(139, 121, 182); color: white; border-radius: 5px; padding: 3px 5px; margin: 0 3px; cursor: pointer;"
 
     processButton = case _ of
-        { action: FilterBy, tag } -> [ HH.text "F", itemTagKindBadge @item_tag_kind (flip CancelProcess { action: FilterBy, tag }) tag ]
-        { action: SortBy, tag }   -> [ HH.text "S", itemTagKindBadge @item_tag_kind (flip CancelProcess { action: SortBy,   tag }) tag ]
-        { action: GroupBy, tag }  -> [ HH.text "G", itemTagKindBadge @item_tag_kind (flip CancelProcess { action: GroupBy,  tag }) tag ]
+        FilterBy tag    -> [ HH.text "F", itemTagBadge     (flip CancelProcess $ FilterBy tag)    tag     ]
+        SortBy  tagKind -> [ HH.text "S", itemTagKindBadge (flip CancelProcess $ SortBy tagKind)  tagKind ]
+        GroupBy tagKind -> [ HH.text "G", itemTagKindBadge (flip CancelProcess $ GroupBy tagKind) tagKind ]
         >>> HH.span [ HP.style processStyle ]
 
     subjTagIsOn tagFilter tag =
@@ -754,9 +752,9 @@ component cfg =
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
         TurnSubjectNavNamesOn  -> H.modify_ \s -> s { showSubjectNavNames = true }
-        AddToItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process { action: FilterBy, tag : itemTag }, readOnlyMode = true }) <> updateUrl
-        SortItemsBy mevt itemTag ->      stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process { action: SortBy,   tag : itemTag }, readOnlyMode = true }) <> updateUrl
-        GroupItemsBy mevt itemTag ->     stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process { action: GroupBy,  tag : itemTag }, readOnlyMode = true }) <> updateUrl
+        AddToItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag,    readOnlyMode = true }) <> updateUrl
+        SortItemsBy  mevt itemTagKind -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process $ SortBy  itemTagKind, readOnlyMode = true }) <> updateUrl
+        GroupItemsBy mevt itemTagKind -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process $ GroupBy itemTagKind, readOnlyMode = true }) <> updateUrl
         CancelProcess mevt process -> stopPropagation mevt <>
             H.modify_ (\s ->
                 let filteredProcess = Array.filter (_ /= process) s.process in
@@ -813,6 +811,7 @@ renderSubject
     => Ord subj_id
     => R.TagAlike subj_tag
     => R.TagAlike item_tag
+    => R.IsSortable item_tag_kind item_tag
     => R.IsItem item
     => R.IsGroup group
     => R.IsSubjectId subj_id subj
@@ -1048,38 +1047,38 @@ postProcess recalc processes report =
         _  -> foldl applyProcess report processes
     where
         applyProcess curReport process = case process of
-            { action : FilterBy, tag : itemTag } ->
+            FilterBy itemTag ->
                 R.filterItemsByTag itemTag curReport
                     # case recalc.onFilter of
                         Just config -> Modify.recalculate config
                         Nothing -> identity
-            { action : SortBy, tag : itemTag } ->
-                R.sortItemsByTag @item_tag_kind itemTag curReport
-            { action : GroupBy, tag : itemTag } ->
-                R.groupItemsByTag @item_tag_kind itemTag curReport
+            SortBy itemTagKind ->
+                R.sortItemsByTag @item_tag itemTagKind curReport
+            GroupBy itemTagKind ->
+                R.groupItemsByTag @item_tag itemTagKind curReport
                     # case recalc.onRegroup of
                         Just config -> Modify.recalculate config
                         Nothing -> identity
                     -- Modify.recalculate @item_tag $ nextReport s.report
 
 
-whichProcess :: forall item_tag_kind item_tag. item_tag -> MouseEvent -> Maybe (Process item_tag_kind item_tag)
+whichProcess :: forall @item_tag_kind item_tag. R.IsSortable item_tag_kind item_tag => item_tag -> MouseEvent -> Maybe (Process item_tag_kind item_tag)
 whichProcess itemTag mevt =
     if ME.shiftKey mevt && not (ME.altKey mevt || ME.metaKey mevt) then
-        Just { action: FilterBy, tag: itemTag }
+        Just $ FilterBy itemTag
     else if (not $ ME.shiftKey mevt) && (ME.altKey mevt || ME.metaKey mevt) then
-        Just { action: SortBy, tag: itemTag }
+        Just $ SortBy $ R.kindOf itemTag
     else if (ME.ctrlKey mevt || (ME.shiftKey mevt && (ME.altKey mevt || ME.metaKey mevt))) then
-        Just { action: GroupBy, tag: itemTag }
+        Just $ GroupBy $ R.kindOf itemTag
     else Nothing
 
 
-makeTagClickEvt :: forall subj_id subj_tag item_tag_kind item_tag x. item_tag -> MouseEvent -> Action subj_id subj_tag item_tag_kind item_tag x
+makeTagClickEvt :: forall subj_id subj_tag @item_tag_kind item_tag x. R.IsSortable item_tag_kind item_tag => item_tag -> MouseEvent -> Action subj_id subj_tag item_tag_kind item_tag x
 makeTagClickEvt tag mevt =
     case whichProcess tag mevt of
-        Just { action: FilterBy, tag: itemTag } -> AddToItemsFilter mevt itemTag
-        Just { action: SortBy, tag: itemTag }   -> SortItemsBy mevt itemTag
-        Just { action: GroupBy, tag: itemTag }  -> GroupItemsBy mevt itemTag
+        Just (FilterBy itemTag)     -> AddToItemsFilter mevt itemTag
+        Just (SortBy itemTagKind)   -> SortItemsBy mevt itemTagKind
+        Just (GroupBy itemTagKind)  -> GroupItemsBy mevt itemTagKind
         Nothing -> NoOp
 
 
@@ -1140,6 +1139,7 @@ updateUrl
     => R.IsSubjectId subj_id subj
     => R.ConvertTo (Chain String) subj_tag
     => R.ConvertTo (Chain String) item_tag
+    => R.ConvertTo (Chain String) item_tag_kind
     -- => R.IsTag subj_tag
     -- => R.IsTag item_tag
     => R.IsSortable item_tag_kind item_tag
@@ -1159,7 +1159,8 @@ collectUrlConfig
     :: forall subj_id subj_tag item_tag_kind item_tag subj group item
      . R.IsSubjectId subj_id subj
     => R.ConvertTo (Chain String) subj_tag
-    => R.ConvertTo (Chain String) item_tag -- FIXME: for grouping and sorting, decode / encode kinds, not tags
+    => R.ConvertTo (Chain String) item_tag
+    => R.ConvertTo (Chain String) item_tag_kind
     -- => R.IsTag subj_tag
     -- => R.IsTag item_tag
     -- => R.IsSortable item_tag_kind item_tag
@@ -1171,9 +1172,9 @@ collectUrlConfig state =
         , subjFilter          : loadFilterContent state.filter
         , subjAlphaSort       : loadAlphaSort state.sortBy
         , subjTagFilter       : Chain.toString <$> R.encodeTo <$> state.tagFilter
-        , itemTagFilter       : Array.mapMaybe (actionToTag FilterBy)    state.process
-        , itemTagKindSorting  : Array.mapMaybe (actionToTagKind SortBy)  state.process
-        , itemTagKindGrouping : Array.mapMaybe (actionToTagKind GroupBy) state.process
+        , itemTagFilter       : Array.mapMaybe extractFilterBy state.process
+        , itemTagKindSorting  : Array.mapMaybe extractSortBy   state.process
+        , itemTagKindGrouping : Array.mapMaybe extractGroupBy  state.process
         }
         where
             loadAlphaSort = case _ of
@@ -1183,15 +1184,23 @@ collectUrlConfig state =
                 NoSubjectFilter -> Nothing
                 FromUrl content -> Just content
                 FromUser content -> Just content
-            actionToTag cmp { action, tag }     = if cmp == action then Just $ Chain.toString $ R.encodeTo tag else Nothing
-            actionToTagKind cmp { action, tag } = if cmp == action then Just $ Chain.toString $ R.encodeTo tag {- R.kindId tag -} else Nothing
+            extractFilterBy = case _ of
+                FilterBy tag -> Just $ Chain.toString $ R.encodeTo tag
+                _ -> Nothing
+            extractSortBy = case _ of
+                SortBy tagKind -> Just $ Chain.toString $ R.encodeTo tagKind
+                _ -> Nothing
+            extractGroupBy = case _ of
+                GroupBy tagKind -> Just $ Chain.toString $ R.encodeTo tagKind
+                _ -> Nothing
 
 
 loadUrlConfig
     :: forall subj_id subj_tag @item_tag_kind item_tag subj group item
      . R.IsSubjectId subj_id subj
     => R.ConvertFrom (Chain String) subj_tag
-    => R.ConvertFrom (Chain String) item_tag -- FIXME: for grouping and sorting, decode / encode kinds, not tags
+    => R.ConvertFrom (Chain String) item_tag
+    => R.ConvertFrom (Chain String) item_tag_kind
     -- => R.IsTag subj_tag
     -- => R.IsTag item_tag
     => R.IsSortable item_tag_kind item_tag
@@ -1204,11 +1213,11 @@ loadUrlConfig (ComponentURLConfig cfg) = _
     , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
     , tagFilter = Array.catMaybes $ R.decodeFrom <$> (Array.catMaybes $ Chain.fromString <$> cfg.subjTagFilter)
     , process   = Array.catMaybes $
-            (map (mkAction FilterBy) <$> (Chain.fromString >>> flip bind R.decodeFrom) {- R.decodeTag @item_tag -}  <$> cfg.itemTagFilter)
+            (map FilterBy <$> (Chain.fromString >>> flip bind R.decodeFrom) {- R.decodeTag @item_tag -}  <$> cfg.itemTagFilter)
             <>
-            (map (mkAction GroupBy)  <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindGrouping)
+            (map GroupBy  <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindGrouping)
             <>
-            (map (mkAction SortBy)   <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindSorting)
+            (map SortBy   <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindSorting)
     }
-    where
-        mkAction action tag = { action, tag }
+    -- where
+    --     mkAction action tag = { action, tag }
