@@ -25,7 +25,7 @@ import GameLog.Dhall (FromDhall, dhallToAchievements) as GL
 import GameLog.Types.Game (Game, GameId(..), GameTag, gameName) as GL
 import GameLog.Types.SingleGameStats (totalAchievements) as GL
 import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as GL
-import GameLog.Types.Achievement (Achievement, Tag) as GL
+import GameLog.Types.Achievement (Achievement, Tag, TagKind) as GL
 
 import Report (toReport)
 import Report.Group (Group) as Report
@@ -103,7 +103,7 @@ component = H.mkComponent
 
 reportComponent :: forall query output m. MonadEffect m => H.Component query GL.RawAchievements output m
 reportComponent =
-    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag @GL.Game @Report.Group @GL.Achievement $
+    StatsReport.component @GL.RawAchievements @GL.GameId @GL.GameTag @GL.TagKind @GL.Tag @GL.Game @Report.Group @GL.Achievement $
         StatsReport.defaultConfig
             { preSelected = [ GL.DHL "astral-chain" ]
             , recalculate = onAnyAction { collect : ItemsProgress, include : OnlyDirect }

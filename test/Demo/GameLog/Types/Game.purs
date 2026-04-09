@@ -13,6 +13,7 @@ import Yoga.JSON (class WriteForeign, writeImpl)
 import Report.Class
 import Report.Core as CT
 import Report.Chain (Chain(..))
+import Report.Chain as Chain
 import Report.Decorators.Stats (Stats)
 import Report.Convert.Keyed (class EncodableKey, encodeKey, decodeKey)
 import Report.Tabular as Tabular
@@ -93,7 +94,7 @@ allTags =
 derive instance Eq GameTag
 
 
-instance IsTag GameTag where
+instance TagAlike GameTag where
     tagContent :: GameTag -> Chain String
     tagContent = End <<< case _ of
         PlatformTag platform -> show platform
@@ -115,12 +116,21 @@ instance IsTag GameTag where
             , text : "white"
             , border : "gray"
             }
-    encodeTag :: GameTag -> String
-    encodeTag = encodeGameTag
-    decodeTag :: String -> Maybe GameTag
-    decodeTag = decodeGameTag
-    allTags :: Array GameTag
-    allTags = allTags
+
+
+instance ConvertTo (Chain String) GameTag where
+    encodeTo :: GameTag -> Chain String
+    encodeTo = encodeGameTag >>> End
+
+
+instance ConvertFrom (Chain String) GameTag where
+    decodeFrom :: Chain String -> Maybe GameTag
+    decodeFrom = decodeGameTag <<< Chain.last
+
+
+instance LimitedSet GameTag where
+    values :: Array GameTag
+    values = allTags
 
 
 instance EncodableKey GameId where

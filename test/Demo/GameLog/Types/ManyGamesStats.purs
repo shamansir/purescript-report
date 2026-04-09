@@ -14,7 +14,7 @@ import Report.Convert.Generic (class ToExport)
 import Report.Web.Component as ForWeb
 
 import GameLog.Types.Game (Game, GameId, GameTag)
-import GameLog.Types.Achievement (Achievement, Tag)
+import GameLog.Types.Achievement (Achievement, Tag, TagKind)
 import GameLog.Types.SingleGameStats (GameAchievements)
 
 newtype RawAchievements = RawAchievements (Map Game GameAchievements)
@@ -32,7 +32,7 @@ fromArray :: Array (Game /\ GameAchievements) -> RawAchievements
 fromArray = Map.fromFoldable >>> RawAchievements
 
 
-instance ForWeb.Is GameId GameTag Tag Game Group Achievement RawAchievements
+instance ForWeb.Is GameId GameTag TagKind Tag Game Group Achievement RawAchievements
 instance ForWeb.Has       GameTag Tag Game Group Achievement RawAchievements
 instance ForWeb.Modify            Tag      Group Achievement RawAchievements
 instance ToExport  GameId GameTag Tag Game Group Achievement RawAchievements

@@ -12,6 +12,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Report.Core as CT
 import Report.Class
 import Report.Chain (Chain(..))
+import Report.Chain as Chain
 import Report.Group (Group(..), mkGroup)
 import Report.GroupPath (GroupPath, PathSegment(..))
 import Report.Decorators.Task (TaskP(..))
@@ -174,28 +175,58 @@ derive newtype instance ReadForeign Tag
 derive newtype instance WriteForeign Tag
 
 
-instance IsTag Tag where
+instance TagAlike Tag where
     tagContent :: Tag -> Chain String
     tagContent = unwrap >>> End
     tagColors :: Tag -> TagColors
     tagColors = const $ TC.tagVar10
-    encodeTag :: Tag -> String
-    encodeTag = unwrap
-    decodeTag :: String -> Maybe Tag
-    decodeTag = Just <<< Tag
-    allTags :: Array Tag
-    allTags = []
 
 
-instance IsSortable Tag where
-    sameKind :: Tag -> Tag -> Boolean
-    sameKind = const $ const true -- all the tags are the same kind
-    kindContent :: Tag -> Chain String
-    kindContent = const $ End "tag"
-    kindId :: Tag -> String
-    kindId = const "tag"
-    fromKindId :: String -> Maybe Tag
-    fromKindId = const $ Just $ Tag "tag"
+instance ConvertTo (Chain String) Tag where
+    encodeTo :: Tag -> Chain String
+    encodeTo = unwrap >>> End
+
+
+instance ConvertFrom (Chain String) Tag where
+    decodeFrom :: Chain String -> Maybe Tag
+    decodeFrom = Just <<< Tag <<< Chain.last
+
+
+instance LimitedSet Tag where
+    values :: Array Tag
+    values = []
+
+
+newtype TagKind = TagKind String
+derive instance Newtype TagKind _
+derive newtype instance Eq TagKind
+
+
+instance ConvertTo (Chain String) TagKind where
+    encodeTo :: TagKind -> Chain String
+    encodeTo = unwrap >>> End
+
+
+instance ConvertFrom (Chain String) TagKind where
+    decodeFrom :: Chain String -> Maybe TagKind
+    decodeFrom = Just <<< TagKind <<< Chain.last
+
+
+instance Same TagKind where
+    same :: TagKind -> TagKind -> Boolean
+    same = const $ const true -- all the tags are the same kind
+
+
+instance TagAlike TagKind where
+    tagContent :: TagKind -> Chain String
+    tagContent = unwrap >>> End
+    tagColors :: TagKind -> TagColors
+    tagColors = const $ TC.tagVar10
+
+
+instance IsSortable TagKind Tag where
+    kindOf :: Tag -> TagKind
+    kindOf = const $ TagKind "tag"
 
 
 instance IsGroupable Group Tag where
