@@ -12,24 +12,24 @@ import Data.Newtype (unwrap, wrap)
 import Report.Core.Logic as CT
 import Report.Chain (Chain)
 import Report.Chain as Chain
-import Report.Class (class ConvertTo, class ConvertFrom, encodeTo, decodeFrom)
+import Report.Class (class ConvertTo, class ConvertFrom, convertTo, convertFrom)
 import Report.Decorators.Tags (Tags(..), RawTag(..))
 
 
 encodeTags :: forall t. ConvertTo (Chain String) t => Tags t -> CT.EncodedValue
-encodeTags (Tags ts) = CT.EncodedValue $ String.joinWith "," $ Chain.toString <$> encodeTo <$> ts
+encodeTags (Tags ts) = CT.EncodedValue $ String.joinWith "," $ Chain.toString <$> convertTo <$> ts
 
 
 decodeTags :: forall t. ConvertFrom (Chain String) t => CT.EncodedValue -> Tags t
-decodeTags = unwrap >>> String.split (String.Pattern ",") >>> map Chain.fromString >>> Array.catMaybes >>> map decodeFrom >>> Array.catMaybes >>> Tags
+decodeTags = unwrap >>> String.split (String.Pattern ",") >>> map Chain.fromString >>> Array.catMaybes >>> map convertFrom >>> Array.catMaybes >>> Tags
 
 
 rawifyTag :: forall @t. ConvertTo (Chain String) t => t -> RawTag
-rawifyTag = encodeTo >>> Chain.toNEArray >>> RawTag
+rawifyTag = convertTo >>> Chain.toNEArray >>> RawTag
 
 
 derawifyTag :: forall @t. ConvertFrom (Chain String) t => RawTag -> Maybe t
-derawifyTag = unwrap >>> Chain.fromNEArray >>> decodeFrom
+derawifyTag = unwrap >>> Chain.fromNEArray >>> convertFrom
 
 
 rawifyTags :: forall t. ConvertTo (Chain String) t => Tags t -> Tags RawTag
@@ -41,8 +41,8 @@ derawifyTags = unwrap >>> map derawifyTag >>> Array.catMaybes >>> wrap
 
 
 toArray :: forall t. ConvertTo (Chain String) t => Tags t -> Array String
-toArray = unwrap >>> map encodeTo >>> map Chain.toString
+toArray = unwrap >>> map convertTo >>> map Chain.toString
 
 
 fromArray :: forall t. ConvertFrom (Chain String) t => Array String -> Tags t
-fromArray = map Chain.fromString >>> Array.catMaybes >>> map decodeFrom >>> Array.catMaybes >>> Tags
+fromArray = map Chain.fromString >>> Array.catMaybes >>> map convertFrom >>> Array.catMaybes >>> Tags

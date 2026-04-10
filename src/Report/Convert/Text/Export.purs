@@ -30,7 +30,7 @@ import Report.Decorators.Stats as Stats
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
 import Report.Chain as MbW
-import Report.Class (class IsGroup, class IsItem, class IsSubject, class TagAlike, tagContent)
+import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
@@ -111,7 +111,7 @@ toTextWith cfg inclRule =
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            D.text "#" <> D.space <> D.text subjectRec.name <> D.space <> renderStats subjectRec.stats
+            D.text "#" <> D.space <> D.text subjectRec.name <> D.space <> maybe mempty identity (renderStats subjectRec.stats)
             <> D.break <> D.indent (_tabularsBlock
                 $ Array.catMaybes
                     [ {- Just $ "Id" /\ D.text (unwrap subjectRec.id)
@@ -135,7 +135,7 @@ toTextWith cfg inclRule =
                 groupDeepLevel = GroupPath.howDeep groupRec.path
                 groupIndent = addIndent groupDeepLevel
             in
-            groupIndent (D.text (show index) <> D.text "." <+> D.text groupRec.title <+> renderStats groupRec.stats <> convertPath groupRec.path)
+            groupIndent (D.text (show index) <> D.text "." <+> D.text groupRec.title <+> maybe mempty addPostfixSpace (renderStats groupRec.stats) <> convertPath groupRec.path)
             <> D.break
             <> (joinWith D.break $ convertItem groupRec.path <$> items)
             <> D.break
@@ -201,6 +201,10 @@ toTextWith cfg inclRule =
                     _ -> mempty
                 )
                 modRec.fvalue
+
+
+addPostfixSpace :: Doc Unit -> Doc Unit
+addPostfixSpace doc = doc <> D.space
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
@@ -369,12 +373,12 @@ _progressSuffixOneLiner = case _ of
         mempty
 
 
-renderStats :: Stats -> Doc Unit
+renderStats :: Stats -> Maybe (Doc Unit)
 renderStats stats =
     case stats of
-        Stats.SGotTotal { got, total } -> D.text (show got) <> D.text "/" <> D.text (show total) <> D.space
-        Stats.SWithProgress { got, onTheWay, total } _ -> D.text (show got) <> D.text "/" <> D.text (show total) <> D.space -- <> D.text "(" <> D.text (show onTheWay) <> D.text ")" <> D.space
+        Stats.SGotTotal { got, total } -> Just $ D.text (show got) <> D.text "/" <> D.text (show total)
+        Stats.SWithProgress { got, onTheWay, total } _ -> Just $ D.text (show got) <> D.text "/" <> D.text (show total) -- <> D.text "(" <> D.text (show onTheWay) <> D.text ")" <> D.space
         Stats.SFromProgress progress -> mempty
-        Stats.SCount { count } -> D.text " (" <> D.text (show count) <> D.text ")" <> D.space
+        Stats.SCount { count } -> Just $ D.text " (" <> D.text (show count) <> D.text ")"
         Stats.SNotRelevant -> mempty
         Stats.SYetUnknown -> mempty

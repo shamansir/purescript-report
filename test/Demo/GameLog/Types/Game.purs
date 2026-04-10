@@ -94,7 +94,7 @@ allTags =
 derive instance Eq GameTag
 
 
-instance TagAlike GameTag where
+instance IsTag GameTag where
     tagContent :: GameTag -> Chain String
     tagContent = End <<< case _ of
         PlatformTag platform -> show platform
@@ -119,13 +119,13 @@ instance TagAlike GameTag where
 
 
 instance ConvertTo (Chain String) GameTag where
-    encodeTo :: GameTag -> Chain String
-    encodeTo = encodeGameTag >>> End
+    convertTo :: GameTag -> Chain String
+    convertTo = encodeGameTag >>> End
 
 
 instance ConvertFrom (Chain String) GameTag where
-    decodeFrom :: Chain String -> Maybe GameTag
-    decodeFrom = decodeGameTag <<< Chain.last
+    convertFrom :: Chain String -> Maybe GameTag
+    convertFrom = decodeGameTag <<< Chain.last
 
 
 instance LimitedSet GameTag where

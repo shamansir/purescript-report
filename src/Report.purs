@@ -11,7 +11,7 @@ module Report
     , findGroup, findItem
     , leaveOnly, leaveOnlyById
     , collectSubjectsTags, collectItemsTags
-    , filterItemsByTag, sortItemsByTag, groupItemsByTag
+    , filterItemsByTag, sortItemsByKind, groupItemsByKind
     , module BExport
     )
     where
@@ -267,7 +267,7 @@ filterItemsByTag itemTag =
     toBuilder >>> B.filterItems (const $ const $ i_tags >>> Array.elem itemTag) >>> fromBuilder
 
 
-sortItemsByTag
+sortItemsByKind
     :: forall tag_kind @item_tag subj group item
      . Ord item_tag
     => HasTags item_tag item
@@ -275,7 +275,7 @@ sortItemsByTag
     => tag_kind
     -> Report subj group item
     -> Report subj group item
-sortItemsByTag itemTagKind =
+sortItemsByKind itemTagKind =
     toBuilder >>> B.sortItemsWith (itemTagSortValue itemTagKind) >>> Report
     where
         itemTagSortValue :: tag_kind -> item -> Maybe item_tag
@@ -283,7 +283,7 @@ sortItemsByTag itemTagKind =
             Array.find (kindOf @tag_kind >>> same tagKind) <<< i_tags
 
 
-groupItemsByTag
+groupItemsByKind
     :: forall tag_kind @item_tag subj group item
      . HasTags item_tag item
     => IsGroupable group item_tag
@@ -291,7 +291,7 @@ groupItemsByTag
     => tag_kind
     -> Report subj group item
     -> Report subj group item
-groupItemsByTag itemTagKind =
+groupItemsByKind itemTagKind =
     toBuilder
         >>> B.regroupByMany
             (\chA chB -> compare (g_path <$> Chain.toArray chA) (g_path <$> Chain.toArray chB))
