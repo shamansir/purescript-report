@@ -184,12 +184,12 @@ instance TagAlike Tag where
 
 instance ConvertTo (Chain String) Tag where
     encodeTo :: Tag -> Chain String
-    encodeTo = unwrap >>> End
+    encodeTo = mkChainEncode unwrap
 
 
 instance ConvertFrom (Chain String) Tag where
     decodeFrom :: Chain String -> Maybe Tag
-    decodeFrom = Just <<< Tag <<< Chain.last
+    decodeFrom = mkChainDecode (Just <<< wrap)
 
 
 instance LimitedSet Tag where

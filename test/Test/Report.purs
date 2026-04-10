@@ -38,7 +38,7 @@ import Report
 import Report as Report
 import Report.Chain as C
 import Report.Builder as RB
-import Report.Class (class IsGroup, class HasStats, class HasTags, class IsGroupable, class IsSortable)
+import Report.Class
 import Report.GroupPath (pathFromArray) as GP
 import Report.Decorators.Stats (Stats(..)) as ST
 
@@ -91,11 +91,13 @@ sampleReportA =
 newtype BoolTag = BoolTag Boolean
 derive instance Newtype BoolTag _
 
+
 data ArtistTag
     = Genre String
     | Country String
     | AlbumsCount Int
     -- | YearsActive Int Int
+
 
 newtype MyGroup = G (Array String)
 derive instance Newtype MyGroup _
@@ -124,21 +126,34 @@ instance HasTags BoolTag TagTest1Item where
         _ -> []
         >>> map BoolTag
 
+
 instance IsGroup MyGroup where
     g_title = unwrap >>> map String.toUpper >>> String.joinWith "::"
     g_path = unwrap >>> GP.pathFromArray
 
-instance IsSortable BoolTag where
-    sameKind = const $ const true
-    kindContent = const $ C.End "bool"
-    kindId = const "bool"
-    fromKindId = const $ Just $ BoolTag false
+
+data BoolTagKind
+    = Truthful
+    | Falseful
+
+
+derive instance Eq BoolTagKind
+
+
+instance IsSortable BoolTagKind BoolTag where
+    kindOf (BoolTag v) = if v then Truthful else Falseful
+
+
+
+instance Same BoolTagKind where
+    same = eq
+
+
 
 instance IsGroupable MyGroup BoolTag where
     t_group = unwrap >>> case _ of
         true -> Just $ C.End $ G [ "true" ]
         false -> Just $ C.End $ G [ "false" ]
-
 
 
 instance HasTags ArtistTag Artist where
@@ -158,26 +173,69 @@ instance HasTags ArtistTag Artist where
         _ -> []
 
 
-instance IsSortable ArtistTag where
-    sameKind atA atB =
-        case atA /\ atB of
-            Genre _ /\ Genre _ -> true
-            Country _ /\ Country _ -> true
-            AlbumsCount _ /\ AlbumsCount _ -> true
-            _ -> false
-    kindContent = case _ of
+data ArtistTagKind
+    = KGenre
+    | KCountry
+    | KAlbumsCount
+
+
+derive instance Eq ArtistTagKind
+
+
+instance IsSortable ArtistTagKind ArtistTag where
+    kindOf = case _ of
+        Genre _ -> KGenre
+        Country _ -> KCountry
+        AlbumsCount _ -> KAlbumsCount
+
+
+instance Same ArtistTagKind where
+    same = eq
+
+
+{-
+instance TagAlike ArtistTag where
+    tagContent = case _ of
         Genre _ -> C.End "Genre"
         Country _ -> C.End "Country"
         AlbumsCount _ -> C.End "Albums #"
-    kindId = case _ of
+    tagColors = const defaultTagColors
+-}
+
+
+{-
+instance ConvertTo (C.Chain String) ArtistTag where
+    encodeTo = mkChainEncode $ case _ of
         Genre _ -> "genre"
         Country _ -> "country"
         AlbumsCount _ -> "albums_n"
-    fromKindId = case _ of
+
+
+instance ConvertFrom (C.Chain String) ArtistTag where
+    decodeFrom = mkChainDecode $ case _ of
         "genre" -> Just $ Genre "Sample"
         "country" -> Just $ Country "Sample"
         "albums_n" -> Just $ AlbumsCount $ -1
         _ -> Nothing
+-}
+
+
+{-
+instance ConvertTo (C.Chain String) ArtistTagKind where
+    encodeTo = mkChainEncode $ case _ of
+        KGenre -> "genre"
+        KCountry -> "country"
+        KAlbumsCount -> "albums_n"
+
+
+instance ConvertFrom (C.Chain String) ArtistTagKind where
+    decodeFrom = mkChainDecode $ case _ of
+        "genre" -> Just KGenre
+        "country" -> Just KCountry
+        "albums_n" -> Just KAlbumsCount
+        _ -> Nothing
+-}
+
 
 instance IsGroupable MyGroup ArtistTag where
     t_group = case _ of
@@ -260,7 +318,7 @@ spec = do
                 RB.build
                     [ "subj" /\ [ G [ "root" ] /\ (TT1I <$> [ "item1", "item2", "item3", "item4" ]) ] ]
                     # Report.fromBuilder
-        (report # Report.groupItemsByTag (BoolTag true) # Report.unfold)
+        (report # Report.groupItemsByTag @BoolTag Truthful # Report.unfold)
         `shouldEqual`
             [ "subj" /\
                 [ G [ "false" ] /\ (TT1I <$> [ "item2", "item4" ])
@@ -284,7 +342,7 @@ spec = do
 
     it "re-groups report by tag, nested tags" $
 
-        (artistsReport # Report.groupItemsByTag (Genre "foo") # Report.unfold)
+        (artistsReport # Report.groupItemsByTag @ArtistTag KGenre # Report.unfold)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Analogue", "Grunge" ] /\ (A <$> [ "Nirvana" ])
@@ -300,7 +358,7 @@ spec = do
 
         <>
 
-        (artistsReport # Report.groupItemsByTag (Country "foo") # Report.unfold)
+        (artistsReport # Report.groupItemsByTag @ArtistTag KCountry # Report.unfold)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Americas", "USA" ] /\ (A <$> [ "NIN", "Nirvana", "Moby" ])
@@ -313,7 +371,7 @@ spec = do
 
         <>
 
-        (artistsReport # Report.groupItemsByTag (AlbumsCount (-1)) # Report.unfold)
+        (artistsReport # Report.groupItemsByTag @ArtistTag KAlbumsCount # Report.unfold)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Less-than-5" ] /\ (A <$> [ "Nirvana", "Fever Ray" ])
@@ -325,7 +383,7 @@ spec = do
 
     it "re-groups report by tag, nested tags + unfold all" $
 
-        (artistsReport # Report.groupItemsByTag (Genre "foo") # Report.unfoldAll)
+        (artistsReport # Report.groupItemsByTag @ArtistTag KGenre # Report.unfoldAll)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Analogue" ] /\ (A <$> [])
@@ -343,7 +401,7 @@ spec = do
 
         <>
 
-        (artistsReport # Report.groupItemsByTag (Country "foo") # Report.unfoldAll)
+        (artistsReport # Report.groupItemsByTag @ArtistTag KCountry # Report.unfoldAll)
         `shouldEqual`
         [ "subj" /\
             [ G [ "Americas" ] /\ (A <$> [])
