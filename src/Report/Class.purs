@@ -121,6 +121,7 @@ class IsTag t where
     tagContent :: t -> Chain String -- different from encoding / decoding since could contain formatted text and any unicode
 
 
+
 defaultTagColors :: TagColors
 defaultTagColors =
     { text: "#000000"

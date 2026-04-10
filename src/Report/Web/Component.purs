@@ -192,6 +192,10 @@ class
     ( R.IsItem item
     , R.IsGroup group
     , R.IsSubject subj_id subj
+    , R.IsTag subj_tag
+    , R.IsTag item_tag
+    , R.IsTag item_tag_kind
+    , R.LimitedSet subj_tag
     , R.IsSortable item_tag_kind item_tag
     , R.IsGroupable group item_tag
     )
@@ -202,6 +206,10 @@ instance
     ( R.IsItem item
     , R.IsGroup group
     , R.IsSubject subj_id subj
+    , R.IsTag subj_tag
+    , R.IsTag item_tag
+    , R.IsTag item_tag_kind
+    , R.LimitedSet subj_tag
     , R.IsSortable item_tag_kind item_tag
     , R.IsGroupable group item_tag
     ) =>
@@ -217,7 +225,6 @@ class
     , R.HasTabular item
     , R.HasTabular subj
     , R.HasStats group
-
     )
     <= Has subj_tag item_tag subj group item (x :: Type)
 
@@ -254,6 +261,28 @@ instance
     Modify item_tag group item (R.Report subj group item)
 
 
+class
+    ( R.ConvertFrom (Chain String) item_tag
+    , R.ConvertFrom (Chain String) subj_tag
+    , R.ConvertFrom (Chain String) item_tag_kind
+    , R.ConvertTo   (Chain String) item_tag
+    , R.ConvertTo   (Chain String) subj_tag
+    , R.ConvertTo   (Chain String) item_tag_kind
+    )
+    <= TagsChainConvert item_tag_kind item_tag subj_tag (x :: Type)
+
+
+instance
+    ( R.ConvertFrom (Chain String) item_tag
+    , R.ConvertFrom (Chain String) subj_tag
+    , R.ConvertFrom (Chain String) item_tag_kind
+    , R.ConvertTo   (Chain String) item_tag
+    , R.ConvertTo   (Chain String) subj_tag
+    , R.ConvertTo   (Chain String) item_tag_kind
+    ) =>
+    TagsChainConvert item_tag_kind item_tag subj_tag x
+
+
 type ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item =
     State subj_id subj_tag item_tag_kind item_tag (R.Report subj group item)
 
@@ -277,19 +306,10 @@ component
     => Ord item_tag
     => Eq subj_tag
     => Eq item_tag_kind
-    => Show subj_id
-    => R.IsTag subj_tag
-    => R.IsTag item_tag
-    => R.IsTag item_tag_kind
-    => R.LimitedSet subj_tag
-    -- => R.IsSortable item_tag_kind item_tag
-    => R.ConvertFrom (Chain String) item_tag
-    => R.ConvertFrom (Chain String) subj_tag
-    => R.ConvertFrom (Chain String) item_tag_kind
-    => R.ConvertTo   (Chain String) item_tag_kind -- other `ConvertTo` instances are inside `Report.ToExport`
     => Is subj_id subj_tag item_tag_kind item_tag subj group item x
     => Has subj_tag item_tag subj group item x
     => Modify item_tag group item x
+    => TagsChainConvert item_tag_kind item_tag subj_tag x
     => Report.ToExport subj_id subj_tag item_tag subj group item x
     => R.ToReport subj group item x
     => Config subj_id
@@ -355,7 +375,7 @@ component cfg =
                             ]
                         ]
                 Nothing -> HH.text ""
-            , if state.debugEnabled then navigationHint state.navigatedTo else HH.text ""
+            , if state.debugEnabled then navigationHint @subj state.navigatedTo else HH.text ""
             ]
         where
 
@@ -1000,19 +1020,20 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
 
 
 -- TODO: remove
-navigationHint :: forall subj_id w i. Show subj_id => NavigatedTo subj_id -> HH.HTML w i
+navigationHint :: forall @subj subj_id w i. R.IsSubject subj_id subj => NavigatedTo subj_id -> HH.HTML w i
 navigationHint navigation =
     let
         navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
         hintIfEditing Nothing = HH.text ""
         hintIfEditing (Just { value : CT.EncodedValue val }) = HH.text $ "E:" <> show val
+        showSubjId = R.s_unique @subj_id @subj
         hintText = case Navigation.toLocation navigation of
             Nowhere -> "-"
-            AtGroup subjId groupPath -> "G: " <> show subjId <> " / " <> show groupPath
-            AtItem subjId groupPath itemIdx -> "I: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
-            AtDecorator subjId groupPath itemIdx decoratorKey -> "X: " <> show subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Decorator.debugNavLabel decoratorKey
-            AtTag subjId groupPath itemIdx tagIdx -> "T: " <> show subjId <> " / " <> show groupPath <> " [ " <> show tagIdx <> " ]"
-            AtTabular subjId groupPath itemIdx tabularIdx -> "V: " <> show subjId <> " / " <> show groupPath <> " [ " <> show tabularIdx <> " ]"
+            AtGroup subjId groupPath -> "G: " <> showSubjId subjId <> " / " <> show groupPath
+            AtItem subjId groupPath itemIdx -> "I: " <> showSubjId subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
+            AtDecorator subjId groupPath itemIdx decoratorKey -> "X: " <> showSubjId subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Decorator.debugNavLabel decoratorKey
+            AtTag subjId groupPath itemIdx tagIdx -> "T: " <> showSubjId subjId <> " / " <> show groupPath <> " [ " <> show tagIdx <> " ]"
+            AtTabular subjId groupPath itemIdx tabularIdx -> "V: " <> showSubjId subjId <> " / " <> show groupPath <> " [ " <> show tabularIdx <> " ]"
 
     in case Navigation.toLocation navigation of
         Nowhere -> HH.text ""
