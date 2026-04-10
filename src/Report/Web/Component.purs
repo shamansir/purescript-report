@@ -434,7 +434,7 @@ component cfg =
 
             subjNavigationItem subjId =
                 let
-                    uniqueId = R.s_unique @subj_id @subj subjId
+                    uniqueId = (R.convertTo subjId :: String)
                     subjName = findSubjName subjId # fromMaybe "--"
                 in HH.span
                     []
@@ -863,7 +863,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
         : (renderTree <$> groupsArr)
         where
             subjId = R.s_id subj
-            subjUniqueId = R.s_unique @subj_id @subj subjId
+            subjUniqueId = R.convertTo @String subjId
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"
@@ -1026,7 +1026,7 @@ navigationHint navigation =
         navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
         hintIfEditing Nothing = HH.text ""
         hintIfEditing (Just { value : CT.EncodedValue val }) = HH.text $ "E:" <> show val
-        showSubjId = R.s_unique @subj_id @subj
+        showSubjId = R.convertTo @String @subj_id
         hintText = case Navigation.toLocation navigation of
             Nowhere -> "-"
             AtGroup subjId groupPath -> "G: " <> showSubjId subjId <> " / " <> show groupPath
@@ -1189,7 +1189,7 @@ collectUrlConfig
     -> ComponentURLConfig
 collectUrlConfig state =
     ComponentURLConfig
-        { subjIdFilter        : R.s_unique @subj_id @subj <$> state.subjects
+        { subjIdFilter        : R.convertTo @String @subj_id <$> state.subjects
         , subjFilter          : loadFilterContent state.filter
         , subjAlphaSort       : loadAlphaSort state.sortBy
         , subjTagFilter       : Chain.toString <$> R.convertTo <$> state.tagFilter
@@ -1222,8 +1222,6 @@ loadUrlConfig
     => R.ConvertFrom (Chain String) subj_tag
     => R.ConvertFrom (Chain String) item_tag
     => R.ConvertFrom (Chain String) item_tag_kind
-    -- => R.IsTag subj_tag
-    -- => R.IsTag item_tag
     => R.IsSortable item_tag_kind item_tag
     => ComponentURLConfig
     -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
@@ -1231,7 +1229,7 @@ loadUrlConfig
 loadUrlConfig (ComponentURLConfig cfg) = _
     { filter    = maybe NoSubjectFilter FromUrl cfg.subjFilter
     , sortBy    = if cfg.subjAlphaSort then Alpha else ByWeight
-    , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
+    , subjects  = Array.catMaybes $ R.convertFrom @String @subj_id <$> cfg.subjIdFilter
     , tagFilter = Array.catMaybes $ R.convertFrom <$> (Array.catMaybes $ Chain.fromString <$> cfg.subjTagFilter)
     , process   = Array.catMaybes $
             (map FilterBy <$> (Chain.fromString >>> flip bind R.convertFrom) {- R.decodeTag @item_tag -}  <$> cfg.itemTagFilter)

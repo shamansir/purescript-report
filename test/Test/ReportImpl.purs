@@ -5,6 +5,7 @@ import Prelude
 import Effect (Effect)
 import Foreign (fail, ForeignError(..))
 
+import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Maybe (Maybe(..))
 
 import Type.Proxy (Proxy(..))
@@ -29,11 +30,20 @@ import Report.Impl.Tag (altDefaultColors) as Tag
 import Report.Convert.Generic (class ToExport) as Report
 import Report.Web.Component as Report
 import Report.Web.Component (defaultConfig) as RepComponent
+import Report.Convert.Keyed
 
 
 
 
-type SubjectId = String
+newtype SubjectId = SubjectId String
+derive instance Newtype SubjectId _
+derive newtype instance Eq SubjectId
+derive newtype instance Ord SubjectId
+derive newtype instance ConvertFrom String SubjectId
+derive newtype instance ConvertTo String SubjectId
+derive newtype instance EncodableKey SubjectId
+
+
 data SubjectTag = SubjectTag
 data ItemTag = ItemTag
 
@@ -124,6 +134,6 @@ spec =
         let myReport :: MyReport
             myReport = MyReport Report.empty
             component :: H.Component _ MyReport _ Effect
-            component = Report.component @MyReport @String @SubjectTag @Unit @ItemTag @MySubject @MyGroup @MyItem RepComponent.defaultConfig
+            component = Report.component @MyReport @SubjectId @SubjectTag @Unit @ItemTag @MySubject @MyGroup @MyItem RepComponent.defaultConfig
             slot = HH.slot_ _report unit component myReport
         true `shouldEqual` true
