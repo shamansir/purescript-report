@@ -76,11 +76,11 @@ class LimitedSet t where
 
 
 class ConvertTo trg src where
-    encodeTo :: src -> trg -- LAW: decodeFrom (encodeTo src) === Just src
+    convertTo :: src -> trg -- LAW: convertFrom (convertTo src) === Just src
 
 
 class ConvertFrom trg src where
-    decodeFrom :: trg -> Maybe src -- LAW: decodeFrom (encodeTo src) === Just src
+    convertFrom :: trg -> Maybe src -- LAW: convertFrom (convertTo src) === Just src
 
 
 {-
@@ -90,11 +90,11 @@ class ChainContent a t where
 
 
 instance ConvertTo (Chain String) Unit where
-    encodeTo _ = End "."
+    convertTo _ = End "."
 
 
 instance ConvertFrom (Chain String) Unit where
-    decodeFrom s = if s == End "." then Just unit else Nothing
+    convertFrom s = if s == End "." then Just unit else Nothing
 
 
 class Same k where -- alternative to `Eq`, not strict equality, but "same kind of thing", e.g. same tag type, same rating type, same platform type, etc.
@@ -116,7 +116,7 @@ class Same k <= IsSortable k t where
     -}
 
 
-class TagAlike t where
+class IsTag t where
     tagColors :: t -> TagColors
     tagContent :: t -> Chain String -- different from encoding / decoding since could contain formatted text and any unicode
 
@@ -134,7 +134,7 @@ mkChainEncode toStr = toStr >>> End
 
 
 mkChainEncode' :: forall trg. ConvertTo String trg => (trg -> Chain String)
-mkChainEncode' = mkChainEncode encodeTo
+mkChainEncode' = mkChainEncode convertTo
 
 
 mkChainDecode :: forall trg. (String -> Maybe trg) -> (Chain String -> Maybe trg)
@@ -142,24 +142,24 @@ mkChainDecode fromStr = Chain.last >>> fromStr
 
 
 mkChainDecode' :: forall trg. ConvertFrom String trg => (Chain String -> Maybe trg)
-mkChainDecode' = mkChainDecode decodeFrom
+mkChainDecode' = mkChainDecode convertFrom
 
 
 defaultWriteImpl :: forall trg. ConvertTo (Chain String) trg => trg -> Foreign
-defaultWriteImpl = encodeTo >>> Chain.toString >>> writeImpl
+defaultWriteImpl = convertTo >>> Chain.toString >>> writeImpl
 
 
 defaultReadImpl :: forall trg. ConvertFrom (Chain String) trg => Foreign -> F trg
 defaultReadImpl frgn = do
     str <- readImpl frgn
     case Chain.fromString str of
-        Just strChain -> case decodeFrom strChain of
+        Just strChain -> case convertFrom strChain of
             Just trg -> pure trg
             Nothing -> fail $ ForeignError $ "failed to decode target from " <> str
         Nothing  -> fail $ ForeignError $ "failed to decode target from " <> str
 
 
-instance TagAlike Unit where
+instance IsTag Unit where
     tagColors _ = defaultTagColors
     tagContent _ = End "."
     -- encodeTag = const "."
@@ -167,26 +167,26 @@ instance TagAlike Unit where
     -- allTags = [unit]
 
 
-instance TagAlike String where
+instance IsTag String where
     tagColors _ = defaultTagColors
     tagContent s = End s
 
 
-instance ConvertTo String Unit where encodeTo _ = "."
-instance ConvertFrom String Unit where decodeFrom s = if s == "." then Just unit else Nothing
-instance ConvertTo String String where encodeTo = identity
-instance ConvertFrom String String where decodeFrom = Just
+instance ConvertTo String Unit where convertTo _ = "."
+instance ConvertFrom String Unit where convertFrom s = if s == "." then Just unit else Nothing
+instance ConvertTo String String where convertTo = identity
+instance ConvertFrom String String where convertFrom = Just
 
 
-instance TagAlike RawTag where
+instance IsTag RawTag where
     tagColors _ = defaultTagColors
     tagContent (RawTag rtags) = Chain.fromNEArray rtags
 
 
-instance ConvertTo String RawTag where encodeTo (RawTag rtags) = Chain.fromNEArray rtags # Chain.toString
-instance ConvertFrom String RawTag where decodeFrom = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
-instance ConvertTo (Chain String) RawTag where encodeTo (RawTag rtags) = Chain.fromNEArray rtags
-instance ConvertFrom (Chain String) RawTag where decodeFrom = Chain.toNEArray >>> RawTag >>> Just
+instance ConvertTo String RawTag where convertTo (RawTag rtags) = Chain.fromNEArray rtags # Chain.toString
+instance ConvertFrom String RawTag where convertFrom = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
+instance ConvertTo (Chain String) RawTag where convertTo (RawTag rtags) = Chain.fromNEArray rtags
+instance ConvertFrom (Chain String) RawTag where convertFrom = Chain.toNEArray >>> RawTag >>> Just
 
 
 instance LimitedSet Unit where
@@ -194,19 +194,19 @@ instance LimitedSet Unit where
 
 
 {-
-rawifyTag :: forall @t. TagAlike t => t -> RawTag
+rawifyTag :: forall @t. IsTag t => t -> RawTag
 rawifyTag = tagContent >>> Chain.toNEArray >>> RawTag
 -}
 
 
 {-
 derawifyTag :: forall @t. Convert String t => RawTag -> Maybe t
-derawifyTag (RawTag rtags) = decodeFrom $ String.joinWith "::" $ NEA.toArray rtags
+derawifyTag (RawTag rtags) = convertFrom $ String.joinWith "::" $ NEA.toArray rtags
 -}
 
 
 {-
-rawifyTags :: forall @t. TagAlike t => Tags t -> Tags RawTag
+rawifyTags :: forall @t. IsTag t => Tags t -> Tags RawTag
 rawifyTags = unwrap >>> map rawifyTag >>> wrap
 -}
 

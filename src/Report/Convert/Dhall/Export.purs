@@ -25,7 +25,7 @@ import Report.Chain (Chain)
 import Report.Chain as MbW
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
-import Report.Class (class IsGroup, class IsItem, class IsSubject, class TagAlike, tagContent)
+import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report

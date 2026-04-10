@@ -278,9 +278,9 @@ component
     => Eq subj_tag
     => Eq item_tag_kind
     => Show subj_id
-    => R.TagAlike subj_tag
-    => R.TagAlike item_tag
-    => R.TagAlike item_tag_kind
+    => R.IsTag subj_tag
+    => R.IsTag item_tag
+    => R.IsTag item_tag_kind
     => R.LimitedSet subj_tag
     -- => R.IsSortable item_tag_kind item_tag
     => R.ConvertFrom (Chain String) item_tag
@@ -809,8 +809,8 @@ renderSubject
     :: forall @subj_id @subj_tag @item_tag_kind @item_tag subj group item slots m
      . Eq subj_id
     => Ord subj_id
-    => R.TagAlike subj_tag
-    => R.TagAlike item_tag
+    => R.IsTag subj_tag
+    => R.IsTag item_tag
     => R.IsSortable item_tag_kind item_tag
     => R.IsItem item
     => R.IsGroup group
@@ -1053,9 +1053,9 @@ postProcess recalc processes report =
                         Just config -> Modify.recalculate config
                         Nothing -> identity
             SortBy itemTagKind ->
-                R.sortItemsByTag @item_tag itemTagKind curReport
+                R.sortItemsByKind @item_tag itemTagKind curReport
             GroupBy itemTagKind ->
-                R.groupItemsByTag @item_tag itemTagKind curReport
+                R.groupItemsByKind @item_tag itemTagKind curReport
                     # case recalc.onRegroup of
                         Just config -> Modify.recalculate config
                         Nothing -> identity
@@ -1171,7 +1171,7 @@ collectUrlConfig state =
         { subjIdFilter        : R.s_unique @subj_id @subj <$> state.subjects
         , subjFilter          : loadFilterContent state.filter
         , subjAlphaSort       : loadAlphaSort state.sortBy
-        , subjTagFilter       : Chain.toString <$> R.encodeTo <$> state.tagFilter
+        , subjTagFilter       : Chain.toString <$> R.convertTo <$> state.tagFilter
         , itemTagFilter       : Array.mapMaybe extractFilterBy state.process
         , itemTagKindSorting  : Array.mapMaybe extractSortBy   state.process
         , itemTagKindGrouping : Array.mapMaybe extractGroupBy  state.process
@@ -1185,13 +1185,13 @@ collectUrlConfig state =
                 FromUrl content -> Just content
                 FromUser content -> Just content
             extractFilterBy = case _ of
-                FilterBy tag -> Just $ Chain.toString $ R.encodeTo tag
+                FilterBy tag -> Just $ Chain.toString $ R.convertTo tag
                 _ -> Nothing
             extractSortBy = case _ of
-                SortBy tagKind -> Just $ Chain.toString $ R.encodeTo tagKind
+                SortBy tagKind -> Just $ Chain.toString $ R.convertTo tagKind
                 _ -> Nothing
             extractGroupBy = case _ of
-                GroupBy tagKind -> Just $ Chain.toString $ R.encodeTo tagKind
+                GroupBy tagKind -> Just $ Chain.toString $ R.convertTo tagKind
                 _ -> Nothing
 
 
@@ -1211,13 +1211,13 @@ loadUrlConfig (ComponentURLConfig cfg) = _
     { filter    = maybe NoSubjectFilter FromUrl cfg.subjFilter
     , sortBy    = if cfg.subjAlphaSort then Alpha else ByWeight
     , subjects  = Array.catMaybes $ R.s_decode @subj_id @subj <$> cfg.subjIdFilter
-    , tagFilter = Array.catMaybes $ R.decodeFrom <$> (Array.catMaybes $ Chain.fromString <$> cfg.subjTagFilter)
+    , tagFilter = Array.catMaybes $ R.convertFrom <$> (Array.catMaybes $ Chain.fromString <$> cfg.subjTagFilter)
     , process   = Array.catMaybes $
-            (map FilterBy <$> (Chain.fromString >>> flip bind R.decodeFrom) {- R.decodeTag @item_tag -}  <$> cfg.itemTagFilter)
+            (map FilterBy <$> (Chain.fromString >>> flip bind R.convertFrom) {- R.decodeTag @item_tag -}  <$> cfg.itemTagFilter)
             <>
-            (map GroupBy  <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindGrouping)
+            (map GroupBy  <$> (Chain.fromString >>> flip bind R.convertFrom) <$> cfg.itemTagKindGrouping)
             <>
-            (map SortBy   <$> (Chain.fromString >>> flip bind R.decodeFrom) <$> cfg.itemTagKindSorting)
+            (map SortBy   <$> (Chain.fromString >>> flip bind R.convertFrom) <$> cfg.itemTagKindSorting)
     }
     -- where
     --     mkAction action tag = { action, tag }

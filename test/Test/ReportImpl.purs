@@ -50,44 +50,37 @@ instance LimitedSet ItemTag where
     values = [ ItemTag ]
 
 
-instance TagAlike SubjectTag where
+instance IsTag SubjectTag where
     tagColors _ = Tag.altDefaultColors
     tagContent _ = End "subj"
 
 
 instance ConvertTo (Chain String) SubjectTag where
-    encodeTo = mkChainEncode $ const "subj"
+    convertTo = mkChainEncode $ const "subj"
     -- encodeTag = const "subj"
     -- decodeTag = const $ Just SubjectTag
     -- allTags = [ SubjectTag ]
 
 
 instance ConvertFrom (Chain String) SubjectTag where
-    decodeFrom = mkChainDecode (const $ Just SubjectTag)
+    convertFrom = mkChainDecode (const $ Just SubjectTag)
 
 
 instance ConvertTo (Chain String) ItemTag where
-    encodeTo = mkChainEncode $ const "item"
+    convertTo = mkChainEncode $ const "item"
 
 
 instance ConvertFrom (Chain String) ItemTag where
-    decodeFrom = mkChainDecode (const $ Just ItemTag)
+    convertFrom = mkChainDecode (const $ Just ItemTag)
 
 
-instance TagAlike ItemTag where
+instance IsTag ItemTag where
     tagColors _ = Tag.altDefaultColors
     tagContent _ = End "item"
-    -- encodeTag = const "item"
-    -- decodeTag = const $ Just ItemTag
-    -- allTags = [ ItemTag ]
 
 
 instance IsSortable Unit ItemTag where
     kindOf = const unit
-    -- sameKind _ _ = true
-    -- kindContent = tagContent
-    -- kindId = const "tag"
-    -- fromKindId = const $ Just ItemTag
 
 
 instance IsGroupable Group ItemTag where

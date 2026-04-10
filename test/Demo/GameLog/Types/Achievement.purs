@@ -175,7 +175,7 @@ derive newtype instance ReadForeign Tag
 derive newtype instance WriteForeign Tag
 
 
-instance TagAlike Tag where
+instance IsTag Tag where
     tagContent :: Tag -> Chain String
     tagContent = unwrap >>> End
     tagColors :: Tag -> TagColors
@@ -183,13 +183,13 @@ instance TagAlike Tag where
 
 
 instance ConvertTo (Chain String) Tag where
-    encodeTo :: Tag -> Chain String
-    encodeTo = mkChainEncode unwrap
+    convertTo :: Tag -> Chain String
+    convertTo = mkChainEncode unwrap
 
 
 instance ConvertFrom (Chain String) Tag where
-    decodeFrom :: Chain String -> Maybe Tag
-    decodeFrom = mkChainDecode (Just <<< wrap)
+    convertFrom :: Chain String -> Maybe Tag
+    convertFrom = mkChainDecode (Just <<< wrap)
 
 
 instance LimitedSet Tag where
@@ -203,13 +203,13 @@ derive newtype instance Eq TagKind
 
 
 instance ConvertTo (Chain String) TagKind where
-    encodeTo :: TagKind -> Chain String
-    encodeTo = unwrap >>> End
+    convertTo :: TagKind -> Chain String
+    convertTo = unwrap >>> End
 
 
 instance ConvertFrom (Chain String) TagKind where
-    decodeFrom :: Chain String -> Maybe TagKind
-    decodeFrom = Just <<< TagKind <<< Chain.last
+    convertFrom :: Chain String -> Maybe TagKind
+    convertFrom = Just <<< TagKind <<< Chain.last
 
 
 instance Same TagKind where
@@ -217,7 +217,7 @@ instance Same TagKind where
     same = const $ const true -- all the tags are the same kind
 
 
-instance TagAlike TagKind where
+instance IsTag TagKind where
     tagContent :: TagKind -> Chain String
     tagContent = unwrap >>> End
     tagColors :: TagKind -> TagColors
