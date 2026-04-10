@@ -13,7 +13,7 @@ class Keyed k v where
     keyOf :: v -> k
 
 
-class EncodableKey k where
+class EncodableKey k where -- FIXME: same as ConvertTo String k / ConvertFrom String k
     encodeKey :: k -> String
     decodeKey :: String -> Maybe k
     -- default :: k
@@ -22,6 +22,7 @@ class EncodableKey k where
 instance EncodableKey String where
     encodeKey = identity
     decodeKey = Just
+
 
 
 class KeyedReadForeign k v where

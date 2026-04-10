@@ -30,6 +30,11 @@ type SubjectRec subj_id subj_tag =
 
 newtype Subject subj_id subj_tag = Subject (SubjectRec subj_id subj_tag)
 derive instance Newtype (Subject subj_id subj_tag) _
+instance
+    ( ConvertFrom String subj_id
+    , ConvertTo String subj_id
+    ) =>
+    IsSubjectId subj_id (Subject subj_id subj_tag) where s_id = unwrap >>> _.id
 
 
 instance Eq subj_id => Eq (Subject subj_id subj_tag) where
@@ -40,6 +45,7 @@ instance Ord subj_id => Ord (Subject subj_id subj_tag) where
     compare a b = compare (unwrap a # _.id) (unwrap b # _.id)
 
 
+{-
 instance IsSubjectId String (Subject String subj_tag) where
     s_id = _.id <<< unwrap
     s_unique = identity
@@ -50,6 +56,7 @@ instance IsSubjectId Int (Subject Int subj_tag) where
     s_id = _.id <<< unwrap
     s_unique = show
     s_decode = Int.fromString
+-}
 
 
 instance (IsSubjectId subj_id (Subject subj_id subj_tag)) => IsSubject subj_id (Subject subj_id subj_tag) where

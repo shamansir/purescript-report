@@ -192,10 +192,12 @@ instance WriteForeign GameTag where
     writeImpl = tagContent >>> writeImpl
 
 
+instance ConvertTo String GameId where convertTo = encodeKey
+instance ConvertFrom String GameId where convertFrom = decodeKey
+
+
 instance IsSubjectId GameId Game where
     s_id = unwrap >>> _.gameId
-    s_unique = encodeKey
-    s_decode = decodeKey
 
 
 instance IsSubject GameId Game where

@@ -47,10 +47,8 @@ class IsGroup a where
     g_path :: a -> S.GroupPath
 
 
-class IsSubjectId i a where
+class (ConvertFrom String i, ConvertTo String i) <= IsSubjectId i a where
     s_id :: a -> i
-    s_unique :: i -> String -- FIXME: use `ConvertTo`
-    s_decode :: String -> Maybe i -- FIXME: use `ConvertFrom`
 
 
 class IsSubjectId i a <= IsSubject i a where
@@ -81,6 +79,10 @@ class ConvertTo trg src where
 
 class ConvertFrom trg src where
     convertFrom :: trg -> Maybe src -- LAW: convertFrom (convertTo src) === Just src
+
+
+-- instance ConvertTo   String String where convertTo = identity
+-- instance ConvertFrom String String where convertFrom = Just
 
 
 {-
