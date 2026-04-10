@@ -2,6 +2,8 @@ module Report.Class where
 
 import Prelude
 
+import Foreign (Foreign, F, fail, ForeignError(..))
+
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith) as String
 import Data.Array (catMaybes) as Array
@@ -9,13 +11,15 @@ import Data.Array.NonEmpty (toArray) as NEA
 import Data.Newtype (unwrap, wrap)
 
 import Report.Chain (Chain(..))
-import Report.Chain (fromNEArray, toNEArray, toString, fromString) as Chain
+import Report.Chain (fromNEArray, toNEArray, toString, fromString, last) as Chain
 import Report.GroupPath (GroupPath) as S
 import Report.Tabular (Tabular)
 import Report.Decorator (Decorators)
 import Report.Decorators.Stats (Stats) as S
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 import Report.Decorators.Tags (Tags, RawTag(..))
+
+import Yoga.JSON (readImpl, writeImpl)
 
 
 class HasTags t a where
@@ -85,8 +89,19 @@ class ChainContent a t where
 -}
 
 
+instance ConvertTo (Chain String) Unit where
+    encodeTo _ = End "."
+
+
+instance ConvertFrom (Chain String) Unit where
+    decodeFrom s = if s == End "." then Just unit else Nothing
+
+
 class Same k where -- alternative to `Eq`, not strict equality, but "same kind of thing", e.g. same tag type, same rating type, same platform type, etc.
     same :: k -> k -> Boolean
+
+
+instance Same Unit where same = eq
 
 
 -- used for tags, so when we sort items by a tag, we can find the "same kind" tag on each item, i.e. rating or platform
@@ -112,6 +127,36 @@ defaultTagColors =
     , background: "#FFFFFF"
     , border: "#CCCCCC"
     }
+
+
+mkChainEncode :: forall trg. (trg -> String) -> (trg -> Chain String)
+mkChainEncode toStr = toStr >>> End
+
+
+mkChainEncode' :: forall trg. ConvertTo String trg => (trg -> Chain String)
+mkChainEncode' = mkChainEncode encodeTo
+
+
+mkChainDecode :: forall trg. (String -> Maybe trg) -> (Chain String -> Maybe trg)
+mkChainDecode fromStr = Chain.last >>> fromStr
+
+
+mkChainDecode' :: forall trg. ConvertFrom String trg => (Chain String -> Maybe trg)
+mkChainDecode' = mkChainDecode decodeFrom
+
+
+defaultWriteImpl :: forall trg. ConvertTo (Chain String) trg => trg -> Foreign
+defaultWriteImpl = encodeTo >>> Chain.toString >>> writeImpl
+
+
+defaultReadImpl :: forall trg. ConvertFrom (Chain String) trg => Foreign -> F trg
+defaultReadImpl frgn = do
+    str <- readImpl frgn
+    case Chain.fromString str of
+        Just strChain -> case decodeFrom strChain of
+            Just trg -> pure trg
+            Nothing -> fail $ ForeignError $ "failed to decode target from " <> str
+        Nothing  -> fail $ ForeignError $ "failed to decode target from " <> str
 
 
 instance TagAlike Unit where
