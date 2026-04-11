@@ -33,9 +33,9 @@ fromArray = Map.fromFoldable >>> RawAchievements
 
 
 instance ForWeb.Is GameId GameTag TagKind Tag Game Group Achievement RawAchievements
-instance ForWeb.Has       GameTag Tag Game Group Achievement RawAchievements
-instance ForWeb.Modify            Tag      Group Achievement RawAchievements
-instance ToExport  GameId GameTag Tag Game Group Achievement RawAchievements
+instance ForWeb.Has       GameTag         Tag Game Group Achievement RawAchievements
+instance ForWeb.Modify                    Tag      Group Achievement RawAchievements
+instance ToExport  GameId GameTag         Tag Game Group Achievement RawAchievements
 
 
 -- bindToAchievement :: Achievement -> Group -> Group

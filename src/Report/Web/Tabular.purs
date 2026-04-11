@@ -209,7 +209,7 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         }
                 TVTags tags ->
                     renderTags
-                        (wrap tags)
+                        (wrap $ unwrap tags)
                         { isEditingTags : Nothing
                         , isSelected : false
                         , noop : unit

@@ -22,6 +22,7 @@ import Report.Decorator (Key) as Decorator
 import Report.Tabular as Tabular
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 -- import Report.Decorators.Tabular.TabularValue as TabV
+import Report.Decorators.Tags (RawTags(..))
 import Report.Convert.Text.Decorators.Tags as CT
 import Report.Convert.Types
 
@@ -33,6 +34,8 @@ class
     , Eq subj_id
     , ConvertTo (Chain String) item_tag
     , ConvertTo (Chain String) subj_tag
+    , IsTag subj_tag
+    , IsTag item_tag
     , IsItem item
     , IsGroup group
     , IsSubject subj_id subj
@@ -56,6 +59,8 @@ instance
     , Eq subj_id
     , ConvertTo (Chain String) item_tag
     , ConvertTo (Chain String) subj_tag
+    , IsTag subj_tag
+    , IsTag item_tag
     , IsItem item
     , IsGroup group
     , IsSubject subj_id subj
@@ -125,7 +130,7 @@ toExport inclRule =
         collectItem item =
             { title : i_title item
             , decorators : collectDecorators item
-            , tags : CT.rawifyTag @item_tag <$> i_tags item
+            , tags : RawTags $ CT.rawifyTag @item_tag <$> i_tags item
             , tabulars : collectTabulars item
             }
         collectDecorator :: Decorator.Key -> Decorator -> DecoratorRec

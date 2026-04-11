@@ -16,7 +16,7 @@ import Report.Chain (Chain)
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Progress (DateRec)
 import Report.Tabular (Tabular)
-import Report.Decorators.Tags (RawTag)
+import Report.Decorators.Tags (RawTag, RawTags)
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 
@@ -37,7 +37,7 @@ type ItemRec =
     { title :: String
     , decorators :: Array DecoratorRec
     , tabulars :: Array TabularRec
-    , tags :: Array RawTag
+    , tags :: RawTags
     }
 
 
