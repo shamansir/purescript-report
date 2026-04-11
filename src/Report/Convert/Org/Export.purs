@@ -29,6 +29,7 @@ import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, 
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
+import Report.Convert.Text.Decorators.Tags as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
@@ -127,8 +128,8 @@ toOrg inclRule =
                 decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
                 decoratorsSuffixes   = Array.catMaybes $ convertDecoratorToSuffix   <$> itemRec.decorators
                 decoratorsProperties = Array.concat    $ convertDecoratorToProperty <$> itemRec.decorators
-                mbTagsSuffix         = convertTagsToSuffix itemRec.tags
-                mbTagsProperty       = convertTagsToProperty itemRec.tags
+                mbTagsSuffix         = convertTagsToSuffix $ unwrap itemRec.tags
+                mbTagsProperty       = convertTagsToProperty $ unwrap itemRec.tags
                 titleProperty = ("Title" /\ D.text itemRec.title)
                 decoratorsPrefixesDoc =
                     case decoratorsPrefixes of
@@ -157,7 +158,7 @@ toOrg inclRule =
         convertTagsToProperty = case _ of
             [] -> Nothing
             tags ->
-                Just $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> tagContent <$> tags)
+                Just $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> CT.loadRawId {- tagContent -} <$> tags)
 
         convertDecoratorToProperty :: DecoratorRec -> Array (String /\ Doc Unit)
         convertDecoratorToProperty modRec =
@@ -229,7 +230,8 @@ toOrg inclRule =
                             $ D.text
                         <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
                         <$> MbW.toString
-                        <$> tagContent
+                        <$> CT.loadRawId
+                        -- <$> tagContent
                         <$> tagArr
                     )
 
