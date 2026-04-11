@@ -7,6 +7,8 @@ import Data.Array.NonEmpty (NonEmptyArray)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
 
+import Report.Chain (Chain)
+
 newtype Tags t = Tags (Array t)
 derive instance Newtype (Tags t) _
 
@@ -36,9 +38,15 @@ empty :: forall t. Tags t
 empty = fromArray []
 
 
-newtype RawTag = RawTag (NonEmptyArray String)
+newtype RawTag = RawTag ({ id :: NonEmptyArray String, content :: NonEmptyArray String })
 derive instance Newtype RawTag _
 derive newtype instance Eq RawTag
 derive newtype instance Ord RawTag
 derive newtype instance WriteForeign RawTag
 derive newtype instance ReadForeign  RawTag
+
+
+newtype RawTags = RawTags (Array RawTag)
+derive instance Newtype RawTags _
+derive newtype instance WriteForeign RawTags
+derive newtype instance ReadForeign  RawTags

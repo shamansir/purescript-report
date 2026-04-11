@@ -183,13 +183,15 @@ instance ConvertFrom String String where convertFrom = Just
 
 instance IsTag RawTag where
     tagColors _ = defaultTagColors
-    tagContent (RawTag rtags) = Chain.fromNEArray rtags
+    tagContent (RawTag rawTag) = Chain.fromNEArray rawTag.content
 
 
-instance ConvertTo String RawTag where convertTo (RawTag rtags) = Chain.fromNEArray rtags # Chain.toString
+{-
+instance ConvertTo String RawTag where convertTo (RawTag rawTag) = Chain.fromNEArray rawTag.id # Chain.toString
 instance ConvertFrom String RawTag where convertFrom = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
-instance ConvertTo (Chain String) RawTag where convertTo (RawTag rtags) = Chain.fromNEArray rtags
+instance ConvertTo (Chain String) RawTag where convertTo (RawTag rawTag) = Chain.fromNEArray rawTag.id
 instance ConvertFrom (Chain String) RawTag where convertFrom = Chain.toNEArray >>> RawTag >>> Just
+-}
 
 
 instance LimitedSet Unit where

@@ -16,7 +16,7 @@ import Report.Core (Year, SDate, SDateRec, STimeRec)
 -- import Report.Prefix (Prefix)
 -- import Report.Suffix (Suffix(..))
 import Report.Decorator (Decorator(..))
-import Report.Decorators.Tags (RawTag)
+import Report.Decorators.Tags (RawTag, RawTags)
 import Report.Decorators.Progress (Progress) as P
 import Report.Convert.Keyed as CK
 import Report.Tabular (class ToTabularValue, Tabular)
@@ -39,7 +39,7 @@ data TabularAtomicValue
          , to   :: { date :: SDate, time :: STimeRec }
          }
     | TVDecorator Decorator
-    | TVTags (Array RawTag)
+    | TVTags RawTags
 
 
 data TabularValue
@@ -200,7 +200,7 @@ decodeAtomicWithKey key frgn = case key of
         rec <- readImpl frgn :: F { from :: { date :: SDate, time :: STimeRec }, to :: { date :: SDate, time :: STimeRec } }
         pure $ TVDateTimeRange { from: rec.from, to: rec.to }
     TVTag "DX" -> TVDecorator <$> (readImpl frgn :: F Decorator)
-    TVTag "TS" -> TVTags <$> (readImpl frgn :: F (Array RawTag))
+    TVTag "TS" -> TVTags <$> (readImpl frgn :: F RawTags)
     _          -> F.fail $ F.ForeignError "Unknown TabularAtomicValue tag"
 
 
@@ -271,5 +271,5 @@ timeRange = TVAtomic <<< TVTimeRange
 dateRange :: { from :: SDate, to :: SDate } -> TabularValue
 dateRange = TVAtomic <<< TVDateRange
 
-tags :: Array RawTag -> TabularValue
+tags :: RawTags -> TabularValue
 tags = TVAtomic <<< TVTags
