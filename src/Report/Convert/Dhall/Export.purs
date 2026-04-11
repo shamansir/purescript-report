@@ -25,15 +25,16 @@ import Report.Chain (Chain)
 import Report.Chain as MbW
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
-import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
+import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent, convertFrom, convertTo)
 import Report.Convert.Keyed (class EncodableKey, decodeKey)
 import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
+import Report.Convert.Text.Decorators.Tags as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (Tags, RawTag)
+import Report.Decorators.Tags (Tags, RawTag(..), RawTags(..))
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
@@ -106,15 +107,15 @@ toDhall inclRule =
         convertItem itemRec =
             D.text "T.kv_" <> D.space <> quote itemRec.title <>
                 (case itemRec.tags of
-                    [] -> mempty
-                    tags -> convertTags tags <> D.space
+                    RawTags [] -> mempty
+                    RawTags tags -> convertTags tags <> D.space
                 )
                 <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
 
 
         convertTags :: Array RawTag -> Doc Unit
         convertTags =
-            map (tagContent >>> MbW.toString >>> quote)
+            map (CT.loadRawId >>> MbW.toString >>> quote)
                 >>> ilarrayD
                 >>> prefixD "// T.inj/tags"
 

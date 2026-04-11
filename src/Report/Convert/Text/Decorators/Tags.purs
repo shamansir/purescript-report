@@ -50,3 +50,11 @@ toArray = unwrap >>> map convertTo >>> map Chain.toString
 
 fromArray :: forall t. ConvertFrom (Chain String) t => Array String -> Tags t
 fromArray = map Chain.fromString >>> Array.catMaybes >>> map convertFrom >>> Array.catMaybes >>> Tags
+
+
+loadRawId :: RawTag -> Chain String
+loadRawId = unwrap >>> _.id >>> Chain.fromNEArray
+
+
+loadRawContent :: RawTag -> Chain String
+loadRawContent = unwrap >>> _.content >>> Chain.fromNEArray

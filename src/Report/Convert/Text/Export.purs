@@ -38,7 +38,7 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (Tags, RawTag)
+import Report.Decorators.Tags (Tags, RawTag, RawTags(..))
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV, Item(..), items) as Tabular
@@ -160,8 +160,8 @@ toTextWith cfg inclRule =
             in
             itemIndent (decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc)
             <> case itemRec.tags of
-                [] -> mempty
-                tags' -> D.space <> tags tags'
+                RawTags [] -> mempty
+                RawTags tags' -> D.space <> tags tags'
             <> if cfg.renderTabulars then (itemIndent $ _tabularsBlockDoc tabulars) else mempty
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
@@ -249,7 +249,7 @@ tags tagArr = D.text " #" <>
             $ D.text
         <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
         <$> MbW.toString
-        <$> tagContent
+        <$> tagContent -- CT.loadRawId
         <$> tagArr
     )
 
@@ -305,8 +305,8 @@ _tabularAtomicValueDoc = case _ of
         D.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
         D.PTask task -> D.text $ Task.taskPToString task
     TV.TVTags theTags -> case theTags of
-        [] -> mempty
-        tagArr ->
+        RawTags [] -> mempty
+        RawTags tagArr ->
             tags tagArr
 
 
