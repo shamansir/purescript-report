@@ -90,17 +90,22 @@ data SubjectFilter
     | FromUrl String
 
 
+type Flags =
+    { optionsPaneExpanded :: Boolean
+    , showItemsTags :: Boolean
+    , readOnlyMode :: Boolean
+    , debugEnabled :: Boolean
+    , showSubjectNavNames :: Boolean
+    }
+
+
 type State subj_id subj_tag item_tag_kind item_tag report =
     { subjects :: Array subj_id
     , report :: report
     , filter :: SubjectFilter
     , tagFilter :: Array subj_tag
-    , optionsPaneExpanded :: Boolean
-    , showItemsTags :: Boolean
     , sortBy :: SubjectSort
-    , readOnlyMode :: Boolean
-    , debugEnabled :: Boolean
-    , showSubjectNavNames :: Boolean
+    , flags :: Flags
     , mbExportTo :: Maybe ExportTarget
     , navigatedTo :: NavigatedTo subj_id
     , process :: Array (Process item_tag_kind item_tag)
@@ -331,16 +336,18 @@ component cfg =
         , report : R.toReport x
         , filter : NoSubjectFilter
         , tagFilter : []
-        , optionsPaneExpanded : true
-        , showItemsTags : true
         , sortBy : ByWeight
-        , readOnlyMode : true
-        , debugEnabled : false
-        , showSubjectNavNames : false
         , mbExportTo : Nothing
         , navigatedTo : Navigation.init
         , process : []
         , collapsed : Map.empty
+        , flags :
+            { optionsPaneExpanded : true
+            , showItemsTags : true
+            , readOnlyMode : true
+            , debugEnabled : false
+            , showSubjectNavNames : false
+            }
         }
 
     s_id :: subj -> subj_id
@@ -375,7 +382,7 @@ component cfg =
                             ]
                         ]
                 Nothing -> HH.text ""
-            , if state.debugEnabled then navigationHint @subj state.navigatedTo else HH.text ""
+            , if state.flags.debugEnabled then navigationHint @subj state.navigatedTo else HH.text ""
             ]
         where
 
@@ -403,14 +410,14 @@ component cfg =
                 HH.div
                     [ HP.style "position: fixed; right: 25%; top: 0; border-radius: 5px; background: aliceblue; padding: 5px;" ]
                     $ menuButton <$>
-                        (if not state.readOnlyMode && Navigation.isEditing state.navigatedTo then
+                        (if not state.flags.readOnlyMode && Navigation.isEditing state.navigatedTo then
                             [ { label : "✎", onClick : const CancelEditing, enabled : true } ]
                         else
                             [ ]
                         )
                         <>
-                        [ { label : if state.readOnlyMode then "🔒" else "🔓", onClick : const ToggleReadOnlyMode, enabled : state.readOnlyMode }
-                        , { label : if state.debugEnabled then "🛠" else "🛠", onClick : const ToggleDebugMode,    enabled : state.debugEnabled }
+                        [ { label : if state.flags.readOnlyMode then "🔒" else "🔓", onClick : const ToggleReadOnlyMode, enabled : state.flags.readOnlyMode }
+                        , { label : if state.flags.debugEnabled then "🛠" else "🛠", onClick : const ToggleDebugMode,    enabled : state.flags.debugEnabled }
                         , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json  }
                         , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
                         , { label : "ORG",   onClick : const $ if exportSelected Org   then DisableExport else EnableExport Org,   enabled : exportSelected Org   }
@@ -428,7 +435,7 @@ component cfg =
             subjSelNavigation =
                 HH.div
                     [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
-                        -- <> if state.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
+                        -- <> if state.flags.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
                     ]
                     $ subjNavigationItem <$> state.subjects
 
@@ -443,7 +450,7 @@ component cfg =
                         , HE.onMouseEnter $ const TurnSubjectNavNamesOn
                         , HE.onMouseLeave $ const TurnSubjectNavNamesOff
                         ]
-                        [ if state.showSubjectNavNames
+                        [ if state.flags.showSubjectNavNames
                             then HH.span
                                 [ HP.style "color: black; margin-right: 5px; font-size: 0.7em; position: relative; top: -1px; margin-left: 4px; " ]
                                 [ HH.text subjName ]
@@ -500,13 +507,13 @@ component cfg =
             , HH.span
                 [ HE.onClick $ const ToggleOptionsPane
                 , HP.style "padding: 1px 3px 0 5px; cursor: pointer;"
-                , HP.title $ if state.optionsPaneExpanded then "Expand tags list" else "Collapse tags list"
+                , HP.title $ if state.flags.optionsPaneExpanded then "Expand tags list" else "Collapse tags list"
                 ]
-                [ HH.text $ if state.optionsPaneExpanded then "○" else "●" ]
+                [ HH.text $ if state.flags.optionsPaneExpanded then "○" else "●" ]
             , HH.span
                 [ HE.onClick $ const ToggleItemsTagsInOptions
-                , HP.style $ "padding: 1px 3px 0 5px; cursor: pointer;" <> if state.showItemsTags then "" {- }"font-weight: bold;" -} else "opacity: 0.3;"
-                , HP.title $ if state.showItemsTags then "Hide items tags" else "Show items tags"
+                , HP.style $ "padding: 1px 3px 0 5px; cursor: pointer;" <> if state.flags.showItemsTags then "" {- }"font-weight: bold;" -} else "opacity: 0.3;"
+                , HP.title $ if state.flags.showItemsTags then "Hide items tags" else "Show items tags"
                 ]
                 [ HH.text $ "I" ]
             , HH.span
@@ -526,7 +533,7 @@ component cfg =
         HH.div
             [ HP.style ""
             ] $
-        if not state.optionsPaneExpanded then
+        if not state.flags.optionsPaneExpanded then
             ( case state.tagFilter of
                 [] -> [ HH.text "" ]
                 tags ->
@@ -536,7 +543,7 @@ component cfg =
             [ processingButtons state.process ]
         else
             [ processingButtons state.process ]
-            <> (if state.showItemsTags then
+            <> (if state.flags.showItemsTags then
                     case R.collectItemsTags $ R.leaveOnlyById state.subjects $ state.report of
                         [] -> [ HH.text "" ]
                         tags ->
@@ -649,8 +656,8 @@ component cfg =
         ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then FromUser filter else NoSubjectFilter } *> updateUrl
         IncludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.snoc state.tagFilter subjTag }) *> updateUrl
         ExcludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }) *> updateUrl
-        ToggleOptionsPane -> H.modify_ \state -> state { optionsPaneExpanded = not state.optionsPaneExpanded }
-        ToggleItemsTagsInOptions -> H.modify_ \state -> state { showItemsTags = not state.showItemsTags }
+        ToggleOptionsPane -> H.modify_ $ withFlags \f -> f { optionsPaneExpanded = not f.optionsPaneExpanded }
+        ToggleItemsTagsInOptions -> H.modify_ $ withFlags \f -> f { showItemsTags = not f.showItemsTags }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ clearCurrentActions
 
@@ -695,7 +702,7 @@ component cfg =
                 processedReport s = processingCount s > 0
                 navigateOrEdit s =
                     if Navigation.isEditing s.navigatedTo then s else
-                    if s.readOnlyMode || s.navigatedTo /= nextNavigation
+                    if s.flags.readOnlyMode || s.navigatedTo /= nextNavigation
                         then s { navigatedTo = nextNavigation }
                         else
                             if not (processedReport s)
@@ -766,22 +773,37 @@ component cfg =
         StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
         ToggleReadOnlyMode ->
-            H.modify_ clearEditing <> H.modify_ \s -> s { readOnlyMode = not s.readOnlyMode }
-        ToggleDebugMode -> H.modify_ \s -> s { debugEnabled = not s.debugEnabled }
+            H.modify_ clearEditing <> (H.modify_ $ withFlags \f -> f { readOnlyMode = not f.readOnlyMode })
+        ToggleDebugMode -> H.modify_ $ withFlags \f -> f { debugEnabled = not f.debugEnabled }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
-        TurnSubjectNavNamesOff -> H.modify_ \s -> s { showSubjectNavNames = false }
-        TurnSubjectNavNamesOn  -> H.modify_ \s -> s { showSubjectNavNames = true }
-        AddToItemsFilter mevt itemTag -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag,    readOnlyMode = true }) <> updateUrl
-        SortItemsBy  mevt itemTagKind -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process $ SortBy  itemTagKind, readOnlyMode = true }) <> updateUrl
-        GroupItemsBy mevt itemTagKind -> stopPropagation mevt <> H.modify_ (\s -> s { process = Array.snoc s.process $ GroupBy itemTagKind, readOnlyMode = true }) <> updateUrl
-        CancelProcess mevt process -> stopPropagation mevt <>
-            H.modify_ (\s ->
-                let filteredProcess = Array.filter (_ /= process) s.process in
-                s { process = filteredProcess, readOnlyMode = if Array.length filteredProcess > 0 then true else s.readOnlyMode }
-            )
-            <> updateUrl
-        ResetPostProcess -> H.modify_ _ { process = [] } <> updateUrl
+        TurnSubjectNavNamesOff -> H.modify_ $ withFlags _ { showSubjectNavNames = false }
+        TurnSubjectNavNamesOn  -> H.modify_ $ withFlags _ { showSubjectNavNames = true }
+        AddToItemsFilter mevt itemTag -> do
+            stopPropagation mevt
+            H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag })
+            H.modify_ $ withFlags _ { readOnlyMode = true }
+            updateUrl
+        SortItemsBy  mevt itemTagKind -> do
+            stopPropagation mevt
+            H.modify_ $ \s -> s { process = Array.snoc s.process $ SortBy itemTagKind }
+            H.modify_ $ withFlags _ { readOnlyMode = true }
+            updateUrl
+        GroupItemsBy mevt itemTagKind -> do
+            stopPropagation mevt
+            H.modify_ $ \s -> s { process = Array.snoc s.process $ GroupBy itemTagKind }
+            H.modify_ $ withFlags _ { readOnlyMode = true }
+            updateUrl
+        CancelProcess mevt process -> do
+            stopPropagation mevt
+            s <- H.get
+            let filteredProcess = Array.filter (_ /= process) s.process
+            H.modify_ _ { process = filteredProcess }
+            H.modify_ $ withFlags \f -> f { readOnlyMode = if Array.length filteredProcess > 0 then true else f.readOnlyMode }
+            updateUrl
+        ResetPostProcess -> do
+            H.modify_ _ { process = [] }
+            updateUrl
         ToggleGroupCollapse mevt subjId groupPath -> H.modify_ \s ->
             let
                 prevCollapsedStateOfThisSubj = fromMaybe Map.empty $ Map.lookup subjId $ s.collapsed
@@ -1240,3 +1262,13 @@ loadUrlConfig (ComponentURLConfig cfg) = _
     }
     -- where
     --     mkAction action tag = { action, tag }
+
+
+withFlags
+    :: forall subj_id subj_tag item_tag_kind item_tag subj group item
+     . (Flags -> Flags)
+    -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
+    -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
+withFlags chFlag s =
+    let newFlags = chFlag s.flags in
+    s { flags = newFlags }
