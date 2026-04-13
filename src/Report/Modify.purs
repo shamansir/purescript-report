@@ -67,6 +67,9 @@ data Location subj_id
     | AtTabular   subj_id GroupPath Int Int
 
 
+derive instance Eq subj_id => Eq (Location subj_id)
+
+
 type Modification subj_id =
     { subjId :: subj_id
     , path :: GroupPath
@@ -154,6 +157,39 @@ modifyAt { subjId, what, newValue, path } report = case what of
 data RecalculateInclude
     = OnlyDirect
     | AllNested
+
+
+whatOfLoc :: forall subj_id. Location subj_id -> Maybe What
+whatOfLoc = case _ of
+    Nowhere -> Nothing
+    AtGroup _ _ -> Just GroupName
+    AtItem _ _ itemIdx -> Just $ ItemName itemIdx
+    AtDecorator _ _ itemIdx decKey -> Just $ ItemDecorator itemIdx decKey
+    AtTag _ _ itemIdx tagIdx -> Just $ ItemTag itemIdx tagIdx
+    AtTabular _ _ itemIdx tabularIdx -> Just $ ItemTabular itemIdx tabularIdx
+
+
+whatKeyOf :: What -> WhatKey
+whatKeyOf = case _ of
+    GroupName -> WKGroupName
+    -- GroupStat -> WKGroupStat
+    ItemName _ -> WKItemName
+    ItemDecorator _ _ -> WKItemDecorator
+    ItemTag _ _ -> WKItemTags
+    ItemTabular _ _ -> WKItemTabular
+    -- AddDecorator -> WKAddDecorator
+    -- AddItem -> WKAddItem
+    -- AddGroup -> WKAddGroup
+
+
+whatKeyOfLoc :: forall subj_id. Location subj_id -> Maybe WhatKey
+whatKeyOfLoc location = case location of
+    Nowhere -> Nothing
+    AtGroup _ _ -> Just WKGroupName
+    AtItem _ _ _ -> Just WKItemName
+    AtDecorator _ _ _ _ -> Just WKItemDecorator
+    AtTag _ _ _ _ -> Just WKItemTags
+    AtTabular _ _ _ _ -> Just WKItemTabular
 
 
 {-

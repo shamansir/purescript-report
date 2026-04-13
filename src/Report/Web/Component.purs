@@ -70,8 +70,8 @@ import Report.Web.Helpers.UrlConfig as UC
 import Report.Web.Decorators.Stats (renderGroupStats, renderProgressPlates, gotTotalBadge)
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, itemTagKindBadge)
 import Report.Web.Decorators.EditInput as EI
-import Report.Web.Navigation (NavigatedTo)
-import Report.Web.Navigation as Navigation
+import Report.Web.Navigation2 (NavigatedTo)
+import Report.Web.Navigation2 as Navigation
 import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
 import Report.Web.Helpers.VisualState (selectOne, itemNameColor) as VStates
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
@@ -772,8 +772,9 @@ component cfg =
 
         StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
-        ToggleReadOnlyMode ->
-            H.modify_ clearEditing <> (H.modify_ $ withFlags \f -> f { readOnlyMode = not f.readOnlyMode })
+        ToggleReadOnlyMode -> do
+            H.modify_ clearEditing
+            H.modify_ $ withFlags \f -> f { readOnlyMode = not f.readOnlyMode }
         ToggleDebugMode -> H.modify_ $ withFlags \f -> f { debugEnabled = not f.debugEnabled }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
@@ -948,7 +949,7 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                     isNavigatedToItem = navigatedTo # Navigation.atItem subjId groupPath itemIdx
                     isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
                     isEditingDecorator decorator = navigatedTo # Navigation.editingAtDecorator subjId groupPath itemIdx decorator
-                    mbCurrentDecorator = if isNavigatedToItem then navigatedTo.mbDecorator else Nothing
+                    mbCurrentDecorator = if isNavigatedToItem then (Navigation._toNavigationRec navigatedTo).mbDecorator else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
                     makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
@@ -1047,7 +1048,7 @@ navigationHint navigation =
     let
         navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
         hintIfEditing Nothing = HH.text ""
-        hintIfEditing (Just { value : CT.EncodedValue val }) = HH.text $ "E:" <> show val
+        hintIfEditing (Just (CT.EncodedValue val )) = HH.text $ "E:" <> show val
         showSubjId = R.convertTo @String @subj_id
         hintText = case Navigation.toLocation navigation of
             Nowhere -> "-"
@@ -1064,7 +1065,7 @@ navigationHint navigation =
                 [ HP.style navigationHintStyle ]
                 [ HH.text hintText
                 , qspacerSpan
-                , hintIfEditing navigation.mbEditing
+                , hintIfEditing $ Navigation.mbEditing navigation
                 ]
 
 
