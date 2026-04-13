@@ -63,9 +63,10 @@ type LfmBio =
     }
 
 -- | Slim artist reference used inside album and similar-artist lists.
+-- | mbid is absent from similar-artist entries, present in album-artist entries.
 type LfmArtistRef =
     { name :: String
-    , mbid :: String  -- may be "" when last.fm has no MusicBrainz link
+    , mbid :: Maybe String
     , url  :: String
     }
 
@@ -86,10 +87,11 @@ type LfmArtistInfoResponse =
 
 
 -- | One album entry from artist.getTopAlbums.
+-- | mbid is absent for releases not linked to MusicBrainz.
 type LfmAlbum =
     { name      :: String
     , playcount :: Int
-    , mbid      :: String
+    , mbid      :: Maybe String
     , url       :: String
     , artist    :: LfmArtistRef
     }

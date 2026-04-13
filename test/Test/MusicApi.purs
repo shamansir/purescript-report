@@ -112,4 +112,4 @@ spec =
 
 -- | Minimum gap between MusicBrainz requests: 1 request / second.
 mbDelay :: Milliseconds
-mbDelay = Milliseconds 1000.0
+mbDelay = Milliseconds 300.0
