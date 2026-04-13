@@ -2,13 +2,15 @@ module Demo.MusicReport.MusicBrainz where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
-import Data.Either (Either, either)
-import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Effect.Aff (Aff)
 
+-- import Control.Monad.ST.Internal (new)
 import Foreign (Foreign, F)
 import Foreign.Index (readProp)
+
+import Data.Either (Either, either)
+import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..), Replacement(..), replaceAll)
 
 import Affjax.Node (Error, Response, request, defaultRequest, printError) as Aj
 import Affjax.RequestHeader (RequestHeader(..))
@@ -48,7 +50,7 @@ type MbArea =
 type MbLifeSpan =
     { begin  :: Maybe String
     , end    :: Maybe String
-    , ended  :: Boolean
+    , ended  :: Maybe Boolean
     }
 
 -- | Genre / style tag with community vote count.
@@ -87,6 +89,8 @@ type MbArtist =
     }
 
 newtype MbArtistJ = MbArtistJ MbArtist
+derive newtype instance Show MbArtistJ
+derive newtype instance Eq MbArtistJ
 
 instance ReadForeign MbArtistJ where
     readImpl :: Foreign -> F MbArtistJ
@@ -120,6 +124,8 @@ type MbReleaseGroup =
     }
 
 newtype MbReleaseGroupJ = MbReleaseGroupJ MbReleaseGroup
+derive newtype instance Show MbReleaseGroupJ
+derive newtype instance Eq MbReleaseGroupJ
 
 instance ReadForeign MbReleaseGroupJ where
     readImpl :: Foreign -> F MbReleaseGroupJ

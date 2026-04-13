@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "parcel": "^2.16.3"
+  },
+  "dependencies": {
+    "xhr2": "^0.2.1"
   }
 }

@@ -14,6 +14,7 @@ import Test.ReportImpl as ReportImpl
 import Test.Report as Report
 import Test.Groups as Groups
 import Test.ParseTree as ParseTree
+import Test.MusicApi as MusicApi
 
 
 main :: Effect Unit
@@ -25,3 +26,4 @@ main = runSpecAndExitProcess [consoleReporter] do
     ReportImpl.spec
     Groups.spec
     ParseTree.spec
+    MusicApi.spec
