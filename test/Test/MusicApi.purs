@@ -9,7 +9,7 @@ import Effect.Aff (delay)
 import Effect.Class (liftEffect)
 import Effect.Console (log) as Console
 
-import Data.Array (head, length, zip) as Array
+import Data.Array (head, length, take, zip) as Array
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Time.Duration (Milliseconds(..))
@@ -26,7 +26,7 @@ import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldSatisfy, fail)
 
 import Demo.MusicReport.LastFm as LFM
-import Demo.MusicReport.MusicBrainz (MbArtistJ(..), MbReleaseGroupJ(..))
+import Demo.MusicReport.MusicBrainz (MbArtistJ(..), MbMediumJ(..), MbReleaseGroupJ(..))
 import Demo.MusicReport.MusicBrainz as MB
 
 
@@ -124,6 +124,39 @@ spec =
                                         rg.id    `shouldSatisfy` (_ /= "")
                                         rg.title `shouldSatisfy` (_ /= "")
                                 liftEffect $ writeTextFile UTF8 ("./test/fetched-data/artists-mbrainz-discography-" <> name <> ".json") $ writePrettyJSON 2 resp.releaseGroups
+
+            it "release tracks — fetches track listings for 2 albums from Radiohead's discography" do
+                let artistName = "Radiohead"
+                delay mbDelay
+                searchResult <- MB.fetchArtistSearch artistName
+                case searchResult >>= \r -> Array.head r.artists of
+                    Nothing            -> fail $ "Could not find artist " <> artistName
+                    Just (MbArtistJ a) -> do
+                        delay mbDelay
+                        discog <- MB.fetchDiscography a.id 0
+                        case discog of
+                            Nothing   -> fail "fetchDiscography returned Nothing"
+                            Just resp -> do
+                                let rgs = Array.take 2 resp.releaseGroups
+                                Array.length rgs `shouldSatisfy` (_ > 0)
+                                for_ rgs \(MbReleaseGroupJ rg) -> do
+                                    delay mbDelay
+                                    releases <- MB.fetchReleasesByGroup rg.id
+                                    whenJust (releases >>= Array.head) \stub -> do
+                                        delay mbDelay
+                                        release <- MB.fetchRelease stub.id
+                                        whenJust release \rel -> do
+                                            Array.length rel.media `shouldSatisfy` (_ > 0)
+                                            case Array.head rel.media of
+                                                Nothing             -> fail $ "No medium in release " <> rel.title
+                                                Just (MbMediumJ m) -> do
+                                                    Array.length m.tracks `shouldSatisfy` (_ > 0)
+                                                    case Array.head m.tracks of
+                                                        Nothing -> fail $ "No tracks in first medium of " <> rel.title
+                                                        Just t  -> t.title `shouldSatisfy` (_ /= "")
+                                            liftEffect $ writeTextFile UTF8
+                                                ("./test/fetched-data/release-tracks-" <> artistName <> "-" <> rg.title <> ".json")
+                                                (writePrettyJSON 2 rel)
 
 
 -- | Minimum gap between MusicBrainz requests: 50 request / second, for safety make it bigger.

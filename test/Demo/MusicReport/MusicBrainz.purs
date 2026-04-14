@@ -274,6 +274,12 @@ allReleaseGroupsUrl mbid offset =
     mbBase <> "release-group?artist=" <> mbid
            <> "&fmt=json&limit=100&offset=" <> show offset
 
+-- | All releases (pressings) belonging to a specific release group.
+releasesByGroupUrl :: String -> String
+releasesByGroupUrl rgMbid =
+    mbBase <> "release?release-group=" <> rgMbid
+           <> "&fmt=json&limit=5"
+
 -- | A specific release with full recording/track data included.
 releaseUrl :: String -> String
 releaseUrl mbid =
@@ -309,6 +315,16 @@ fetchDiscography mbid offset = do
     pure $ either (const Nothing) (\r ->
         readJSON_ r.body >>= \(MbReleaseGroupsResponseJ resp) ->
         Just resp
+        ) result
+
+-- | Fetch the list of pressings (releases) for a given release group.
+-- | Returns slim stubs; use fetchRelease to get full track data for a pressing.
+fetchReleasesByGroup :: String -> Aff (Maybe (Array MbReleaseStub))
+fetchReleasesByGroup rgMbid = do
+    result <- mbGet (releasesByGroupUrl rgMbid)
+    pure $ either (const Nothing) (\r ->
+        readJSON_ r.body >>= \(resp :: { releases :: Array MbReleaseStub }) ->
+        Just resp.releases
         ) result
 
 -- | Fetch a concrete release with its full track listing.
