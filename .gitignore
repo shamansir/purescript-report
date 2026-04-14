@@ -13,4 +13,5 @@
 web/app.js
 test/games-samples/games-collection.json
 test/games-samples/only-few-games.json
+test/fetched-data/
 .spec-results

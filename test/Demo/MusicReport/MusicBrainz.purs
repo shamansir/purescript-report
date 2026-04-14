@@ -5,8 +5,11 @@ import Prelude
 import Effect.Aff (Aff)
 
 -- import Control.Monad.ST.Internal (new)
-import Foreign (Foreign, F)
+import Foreign (Foreign, F, unsafeToForeign)
 import Foreign.Index (readProp)
+import Foreign.Object (fromFoldable) as FO
+
+import Data.Tuple (Tuple(..))
 
 import Data.Either (Either, either)
 import Data.Maybe (Maybe(..))
@@ -16,7 +19,7 @@ import Affjax.Node (Error, Response, request, defaultRequest, printError) as Aj
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat (string) as RF
 
-import Yoga.JSON (class ReadForeign, readImpl, readJSON_)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl, readJSON_, writeJSON)
 
 
 -- ─── API base & policy ───────────────────────────────────────────────────────
@@ -104,6 +107,17 @@ instance ReadForeign MbArtistJ where
         tags     <- readImpl =<< readProp "tags"      f
         pure $ MbArtistJ { id, name, sortName, country, area, lifeSpan, tags }
 
+instance WriteForeign MbArtistJ where
+    writeImpl (MbArtistJ a) = unsafeToForeign $ FO.fromFoldable
+        [ Tuple "id"        (writeImpl a.id)
+        , Tuple "name"      (writeImpl a.name)
+        , Tuple "sort-name" (writeImpl a.sortName)
+        , Tuple "country"   (writeImpl a.country)
+        , Tuple "area"      (writeImpl a.area)
+        , Tuple "life-span" (writeImpl a.lifeSpan)
+        , Tuple "tags"      (writeImpl a.tags)
+        ]
+
 
 -- | Artist search response wrapper.
 type MbArtistSearchResponse =
@@ -137,6 +151,15 @@ instance ReadForeign MbReleaseGroupJ where
         firstReleaseDate <- readImpl =<< readProp "first-release-date" f
         pure $ MbReleaseGroupJ { id, title, primaryType, secondaryTypes, firstReleaseDate }
 
+instance WriteForeign MbReleaseGroupJ where
+    writeImpl (MbReleaseGroupJ rg) = unsafeToForeign $ FO.fromFoldable
+        [ Tuple "id"                 (writeImpl rg.id)
+        , Tuple "title"              (writeImpl rg.title)
+        , Tuple "primary-type"       (writeImpl rg.primaryType)
+        , Tuple "secondary-types"    (writeImpl rg.secondaryTypes)
+        , Tuple "first-release-date" (writeImpl rg.firstReleaseDate)
+        ]
+
 
 -- | Paginated release-group list from /release-group?artist={mbid}
 type MbReleaseGroupsResponse =
@@ -154,6 +177,13 @@ instance ReadForeign MbReleaseGroupsResponseJ where
         releaseGroupCount  <- readImpl =<< readProp "release-group-count"  f
         releaseGroupOffset <- readImpl =<< readProp "release-group-offset" f
         pure $ MbReleaseGroupsResponseJ { releaseGroups, releaseGroupCount, releaseGroupOffset }
+
+instance WriteForeign MbReleaseGroupsResponseJ where
+    writeImpl (MbReleaseGroupsResponseJ r) = unsafeToForeign $ FO.fromFoldable
+        [ Tuple "release-groups"       (writeImpl r.releaseGroups)
+        , Tuple "release-group-count"  (writeImpl r.releaseGroupCount)
+        , Tuple "release-group-offset" (writeImpl r.releaseGroupOffset)
+        ]
 
 
 -- | One disc / side / medium in a release, with its track listing.
@@ -175,6 +205,14 @@ instance ReadForeign MbMediumJ where
         tracks     <- readImpl =<< readProp "tracks"      f
         pure $ MbMediumJ { position, format, trackCount, tracks }
 
+instance WriteForeign MbMediumJ where
+    writeImpl (MbMediumJ m) = unsafeToForeign $ FO.fromFoldable
+        [ Tuple "position"    (writeImpl m.position)
+        , Tuple "format"      (writeImpl m.format)
+        , Tuple "track-count" (writeImpl m.trackCount)
+        , Tuple "tracks"      (writeImpl m.tracks)
+        ]
+
 
 -- | A concrete release (pressing) with its full track listing.
 type MbRelease =
@@ -188,11 +226,13 @@ type MbRelease =
 
 newtype MbReleaseJ = MbReleaseJ MbRelease
 
+derive newtype instance WriteForeign MbReleaseJ
+
 instance ReadForeign MbReleaseJ where
     readImpl :: Foreign -> F MbReleaseJ
     readImpl f = do
-        id      <- readImpl =<< readProp "id"      f
-        title   <- readImpl =<< readProp "title"   f
+        id      <- readImpl =<< readProp "id"       f
+        title   <- readImpl =<< readProp "title"    f
         date    <- readImpl =<< readProp "date"     f
         country <- readImpl =<< readProp "country"  f
         status  <- readImpl =<< readProp "status"   f

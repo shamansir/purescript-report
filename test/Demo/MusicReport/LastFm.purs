@@ -5,12 +5,18 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Either (either)
 import Data.String (Pattern(..), Replacement(..), replaceAll)
+
 import Effect.Aff (Aff)
 
 import Affjax.Node (get) as Aj
 import Affjax.ResponseFormat (string) as Aj
 
-import Yoga.JSON (readJSON_)
+import Yoga.JSON (readJSON_, writeJSON)
+
+-- All types in this module are plain record type aliases, so Yoga.JSON's
+-- generic record machinery provides both ReadForeign and WriteForeign for
+-- them automatically — no explicit instances needed.
+-- Use `writeJSON :: WriteForeign a => a -> String` to serialise any value.
 
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────

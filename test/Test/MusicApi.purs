@@ -2,13 +2,25 @@ module Test.MusicApi where
 
 import Prelude
 
-import Data.Array (head, length) as Array
-import Data.Maybe (Maybe(..))
-import Data.Time.Duration (Milliseconds(..))
+import Control.Parallel (parTraverse)
+import Control.Applicative.Extra (whenJust, whenJustE)
+
 import Effect.Aff (delay)
 import Effect.Class (liftEffect)
 import Effect.Console (log) as Console
+
+import Data.Array (head, length, zip) as Array
+import Data.Foldable (for_)
+import Data.Maybe (Maybe(..), isNothing)
+import Data.Time.Duration (Milliseconds(..))
+import Data.Traversable (for)
+import Data.Tuple (Tuple(..))
+
 import Node.Process (lookupEnv)
+import Node.Encoding (Encoding(..))
+import Node.FS.Sync (writeTextFile)
+
+import Yoga.JSON (writePrettyJSON)
 
 import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldSatisfy, fail)
@@ -18,9 +30,10 @@ import Demo.MusicReport.MusicBrainz (MbArtistJ(..), MbReleaseGroupJ(..))
 import Demo.MusicReport.MusicBrainz as MB
 
 
--- | Artist used across all tests.
-testArtist :: String
-testArtist = "Radiohead"
+-- | Artists used across all tests.
+testArtists :: Array String
+testArtists = [ "Radiohead", "Massive Attack", "Portishead" ]
+
 
 
 spec :: Spec Unit
@@ -30,86 +43,89 @@ spec =
         -- ── last.fm ──────────────────────────────────────────────────────────
         -- Requires LASTFM_API_KEY env var; tests are skipped (with a log line)
         -- when it is absent so CI does not fail without credentials.
+        -- Multiple artists are fetched in parallel (no strict rate limit).
 
         describe "last.fm" do
 
-            it "artist.getInfo — name, stats, tags and bio are present" do
+            it "artist.getInfo — fetches bio, stats and tags for multiple artists in parallel" do
                 mbKey <- liftEffect $ lookupEnv "LASTFM_API_KEY"
                 case mbKey of
                     Nothing ->
                         liftEffect $ Console.log "    Skipping last.fm tests: LASTFM_API_KEY not set"
                     Just key -> do
-                        result <- LFM.fetchArtistInfo key testArtist
-                        result `shouldSatisfy` (_ /= Nothing)
-                        case result of
-                            Nothing -> fail "fetchArtistInfo returned Nothing"
-                            Just artist -> do
-                                artist.name           `shouldSatisfy` (_ /= "")
+                        results <- parTraverse (LFM.fetchArtistInfo key) testArtists
+                        for_ (Array.zip testArtists results) \(Tuple name result) -> do
+                            when (isNothing result) $
+                                fail $ "fetchArtistInfo returned Nothing for " <> name
+                            whenJust result \artist -> do
+                                artist.name            `shouldSatisfy` (_ /= "")
                                 artist.stats.listeners `shouldSatisfy` (_ /= "")
                                 Array.length artist.tags.tag `shouldSatisfy` (_ > 0)
-                                artist.bio.summary    `shouldSatisfy` (_ /= "")
+                                artist.bio.summary     `shouldSatisfy` (_ /= "")
+                                liftEffect $ writeTextFile UTF8 ("./test/fetched-data/artist-lastfm-info-" <> name <> ".json") $ writePrettyJSON 2 artist
 
-            it "artist.getTopAlbums — returns at least one album with a non-empty name" do
+
+            it "artist.getTopAlbums — returns albums for multiple artists in parallel" do
                 mbKey <- liftEffect $ lookupEnv "LASTFM_API_KEY"
                 case mbKey of
                     Nothing ->
                         liftEffect $ Console.log "    Skipping last.fm tests: LASTFM_API_KEY not set"
                     Just key -> do
-                        result <- LFM.fetchTopAlbums key testArtist 1
-                        result `shouldSatisfy` (_ /= Nothing)
-                        case result of
-                            Nothing -> fail "fetchTopAlbums returned Nothing"
-                            Just albums -> do
+                        results <- parTraverse (\name -> LFM.fetchTopAlbums key name 1) testArtists
+                        for_ (Array.zip testArtists results) \(Tuple name result) -> do
+                            when (isNothing result) $
+                                fail $ "fetchTopAlbums returned Nothing for " <> name
+                            whenJust result \albums -> do
                                 Array.length albums `shouldSatisfy` (_ > 0)
                                 case Array.head albums of
-                                    Nothing    -> fail "Album list was empty"
+                                    Nothing    -> fail $ "Album list was empty for " <> name
                                     Just album -> album.name `shouldSatisfy` (_ /= "")
+                                liftEffect $ writeTextFile UTF8 ("./test/fetched-data/artist-lastfm-albums-" <> name <> ".json") $ writePrettyJSON 2 albums
 
         -- ── MusicBrainz ──────────────────────────────────────────────────────
-        -- No API key needed; all requests must carry a User-Agent header
-        -- (handled inside MB.mbGet).  MusicBrainz rate-limits to 1 req/sec
-        -- for anonymous access.  Each test waits 1 s before its first request
-        -- so back-to-back tests stay within the limit; requests within the same
-        -- test are also separated by a 1 s delay.
+        -- No API key needed; rate-limited to 50 req/sec.
+        -- All requests are sequential with mbDelay between each.
 
         describe "MusicBrainz" do
 
-            it "artist search — finds artist and returns a non-empty MBID" do
-                delay mbDelay
-                result <- MB.fetchArtistSearch testArtist
-                result `shouldSatisfy` (_ /= Nothing)
-                case result of
-                    Nothing   -> fail "fetchArtistSearch returned Nothing"
-                    Just resp -> do
+            it "artist search — finds multiple artists sequentially with rate limiting" do
+                results <- for testArtists \name -> do
+                    delay mbDelay
+                    MB.fetchArtistSearch name
+                for_ (Array.zip testArtists results) \(Tuple name result) -> do
+                    when (isNothing result) $
+                        fail $ "fetchArtistSearch returned Nothing for " <> name
+                    whenJust result \resp -> do
                         Array.length resp.artists `shouldSatisfy` (_ > 0)
                         case Array.head resp.artists of
-                            Nothing             -> fail "Artist list was empty"
-                            Just (MbArtistJ a)  -> do
+                            Nothing            -> fail $ "Artist list was empty for " <> name
+                            Just (MbArtistJ a) -> do
                                 a.id   `shouldSatisfy` (_ /= "")
                                 a.name `shouldSatisfy` (_ /= "")
+                        liftEffect $ writeTextFile UTF8 ("./test/fetched-data/artists-mbrainz-" <> name <> ".json") $ writePrettyJSON 2 resp.artists
 
-            it "release groups — discography fetched via MBID from search result" do
-                -- Two chained requests: search → discography.
-                -- A 1 s delay is inserted before each request.
-                delay mbDelay
-                searchResult <- MB.fetchArtistSearch testArtist
-                case searchResult >>= \r -> Array.head r.artists of
-                    Nothing            -> fail "Could not obtain artist MBID from search"
-                    Just (MbArtistJ a) -> do
-                        delay mbDelay
-                        discog <- MB.fetchDiscography a.id 0
-                        discog `shouldSatisfy` (_ /= Nothing)
-                        case discog of
-                            Nothing   -> fail "fetchDiscography returned Nothing"
-                            Just resp -> do
+            it "release groups — fetches discography for multiple artists sequentially" do
+                for_ testArtists \name -> do
+                    delay mbDelay
+                    searchResult <- MB.fetchArtistSearch name
+                    case searchResult >>= \r -> Array.head r.artists of
+                        Nothing            ->
+                            fail $ "Could not get artist MBID for " <> name
+                        Just (MbArtistJ a) -> do
+                            delay mbDelay
+                            discog <- MB.fetchDiscography a.id 0
+                            when (isNothing discog) $
+                                fail $ "fetchDiscography returned Nothing for " <> name
+                            whenJust discog \resp -> do
                                 Array.length resp.releaseGroups `shouldSatisfy` (_ > 0)
                                 case Array.head resp.releaseGroups of
-                                    Nothing                   -> fail "Release-group list was empty"
+                                    Nothing                   -> fail $ "Release-group list was empty for " <> name
                                     Just (MbReleaseGroupJ rg) -> do
                                         rg.id    `shouldSatisfy` (_ /= "")
                                         rg.title `shouldSatisfy` (_ /= "")
+                                liftEffect $ writeTextFile UTF8 ("./test/fetched-data/artists-mbrainz-discography-" <> name <> ".json") $ writePrettyJSON 2 resp.releaseGroups
 
 
--- | Minimum gap between MusicBrainz requests: 1 request / second.
+-- | Minimum gap between MusicBrainz requests: 50 request / second, for safety make it bigger.
 mbDelay :: Milliseconds
 mbDelay = Milliseconds 300.0
