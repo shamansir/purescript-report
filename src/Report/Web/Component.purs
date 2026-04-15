@@ -96,6 +96,7 @@ type Flags =
     , readOnlyMode :: Boolean
     , debugEnabled :: Boolean
     , showSubjectNavNames :: Boolean
+    , showProgressPlates :: Boolean
     }
 
 
@@ -138,6 +139,7 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | CancelEditing
     | ToggleReadOnlyMode
     | ToggleDebugMode
+    | ToggleProgressPlates
     | TurnSubjectNavNamesOn
     | TurnSubjectNavNamesOff
     | EnableExport ExportTarget
@@ -347,6 +349,7 @@ component cfg =
             , readOnlyMode : true
             , debugEnabled : false
             , showSubjectNavNames : false
+            , showProgressPlates : false
             }
         }
 
@@ -362,7 +365,13 @@ component cfg =
                 -- , HE.onClick $ const ClearNavigation
                 ]
                 $
-                ( Tuple.uncurry (renderSubject @subj_id @subj_tag @item_tag_kind @item_tag state.navigatedTo state.collapsed)
+                ( Tuple.uncurry
+                    (renderSubject
+                        @subj_id @subj_tag @item_tag_kind @item_tag
+                        subjRenderOptions
+                        state.navigatedTo
+                        state.collapsed
+                    )
                     <$> selectedSubjects
                 )
                 <> pure menuButtons
@@ -397,6 +406,8 @@ component cfg =
 
             includeRule = Report.includeOnly state.subjects
 
+            subjRenderOptions = { showProgressPlates : state.flags.showProgressPlates }
+
             exportTextFor = case _ of
                 Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
                 Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
@@ -416,8 +427,9 @@ component cfg =
                             [ ]
                         )
                         <>
-                        [ { label : if state.flags.readOnlyMode then "🔒" else "🔓", onClick : const ToggleReadOnlyMode, enabled : state.flags.readOnlyMode }
-                        , { label : if state.flags.debugEnabled then "🛠" else "🛠", onClick : const ToggleDebugMode,    enabled : state.flags.debugEnabled }
+                        [ { label : if state.flags.readOnlyMode then "🔒" else "🔓",      onClick : const ToggleReadOnlyMode, enabled : state.flags.readOnlyMode }
+                        , { label : if state.flags.debugEnabled then "🛠" else "🛠",      onClick : const ToggleDebugMode,    enabled : state.flags.debugEnabled }
+                        , { label : if state.flags.showProgressPlates then "▦" else "▦", onClick : const ToggleProgressPlates, enabled : state.flags.showProgressPlates }
                         , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json  }
                         , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
                         , { label : "ORG",   onClick : const $ if exportSelected Org   then DisableExport else EnableExport Org,   enabled : exportSelected Org   }
@@ -776,6 +788,7 @@ component cfg =
             H.modify_ clearEditing
             H.modify_ $ withFlags \f -> f { readOnlyMode = not f.readOnlyMode }
         ToggleDebugMode -> H.modify_ $ withFlags \f -> f { debugEnabled = not f.debugEnabled }
+        ToggleProgressPlates -> H.modify_ $ withFlags \f -> f { showProgressPlates = not f.showProgressPlates }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
         TurnSubjectNavNamesOff -> H.modify_ $ withFlags _ { showSubjectNavNames = false }
@@ -848,6 +861,11 @@ component cfg =
         NoOp -> pure unit
 
 
+type SubjectRenderingOptions =
+    { showProgressPlates :: Boolean
+    }
+
+
 renderSubject
     :: forall @subj_id @subj_tag @item_tag_kind @item_tag subj group item slots m
      . Eq subj_id
@@ -865,12 +883,13 @@ renderSubject
     => R.HasStats group
     => R.HasTags subj_tag subj
     => R.HasTags item_tag item
-    => NavigatedTo subj_id
+    => SubjectRenderingOptions
+    -> NavigatedTo subj_id
     -> CollapseMap subj_id
     -> subj
     -> Array (group /\ Array item)
     -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) slots m
-renderSubject navigatedTo collapsedMap subj groupsArr =
+renderSubject options navigatedTo collapsedMap subj groupsArr =
     HH.div
         [ HP.style "padding: 10px 0 10px 20px;"
         , HP.id $ "subject-" <> subjUniqueId
@@ -932,7 +951,8 @@ renderSubject navigatedTo collapsedMap subj groupsArr =
                             ]
                         , case groupStats of
                                 R.SWithProgress _ (Just itemsProgress) ->
-                                    renderProgressPlates itemsProgress
+                                    if options.showProgressPlates then renderProgressPlates itemsProgress
+                                    else HH.text ""
                                 _ -> HH.text ""
                         ]
                     , if isCollapsed
