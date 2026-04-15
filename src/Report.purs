@@ -1,7 +1,7 @@
 module Report
     ( Report
     , empty
-    , build
+    , build, buildG
     , toTree
     , toBuilder, fromBuilder
     , unfold, unfoldAll
@@ -18,27 +18,16 @@ module Report
 
 import Prelude
 
-import Debug as Debug
-
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Set (toUnfoldable) as Set
-import Data.Map (Map)
-import Data.Map (empty, keys, fromFoldable, lookup, toUnfoldable, filterKeys, insert, values) as Map
-import Data.Map.Extra (lookupByEq, lookupByEq') as Map
-import Data.Array (index, catMaybes, updateAt, concat, filter, elem, sortWith, find, findMap, nub) as Array
-import Data.Array.Extra (groupExtBy) as Array
-import Data.List (toUnfoldable) as List
-import Data.Tuple (fst, snd) as Tuple
+import Data.Maybe (Maybe(..))
+import Data.Array (catMaybes, concat, elem, filter, find, index, nub)  as Array
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Bifunctor (lmap)
 
 
 import Yoga.Tree (Tree)
 
 import Report.GroupPath (GroupPath)
 import Report.Class
-import Report.Chain (Chain)
-import Report.Chain (Chain(..), toArray, last) as Chain
+import Report.Chain (toArray, last) as Chain
 import Report.Builder as B
 import Report.Builder
     ( Builder(..)
@@ -58,6 +47,7 @@ import Report.Builder
     {- Groups -}
     , mapGroups
     , allGroups, allGroupsC
+    , allGroupsOf, allGroupsOfC
     , filterGroups
     -- , withGroup, withGroupIdx
     -- , findGroup, findMapGroup
@@ -98,6 +88,10 @@ empty = Report B.empty
 
 build :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> Report subj group item
 build = Report <<< B.build
+
+
+buildG :: forall subj group item. IsGroup group => Array (subj /\ Array (group /\ Array item)) -> Report subj group item
+buildG = Report <<< B.buildG
 
 
 toBuilder :: forall subj group item. Report subj group item -> B.Builder subj group item

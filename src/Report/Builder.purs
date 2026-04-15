@@ -5,8 +5,8 @@ module Report.Builder
     , Item(..)
     , TreeNode(..)
     , empty
-    , build
-    , toBuilder, toBuilderC
+    , build, buildG
+    , toBuilder, toBuilderC, toBuilderG
     , unfold, unfoldC, unfoldAll
     , toTree, toTree_
     , nodeToString
@@ -41,13 +41,13 @@ import Prelude
 
 import Debug as Debug
 
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (head, concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap) as Array
+import Data.Array (head, concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, fromArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
@@ -61,6 +61,8 @@ import Data.Map as Map
 import Report.Class as RC
 import Report.Chain (Chain)
 import Report.Chain as Chain
+import Report.GroupPath (GroupPath)
+import Report.GroupPath as GP
 
 import Yoga.Tree (Tree)
 import Yoga.Tree.Extended (node, leaf, break, build, regroup, regroupByPath) as Tree
@@ -119,6 +121,10 @@ build :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> 
 build = toBuilder
 
 
+buildG :: forall subj group item. RC.IsGroup group => Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
+buildG = toBuilderG
+
+
 toBuilder :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
 toBuilder = map (map $ map $ lmap Chain.singleton) >>> toBuilderC
 
@@ -133,6 +139,24 @@ toBuilderC subjects =
         toGroupR :: Chain group /\ Array item -> Group group item
         toGroupR (group /\ itemsArr) =
             Group group (Item <$> itemsArr)
+
+
+toBuilderG :: forall subj group item. RC.IsGroup group => Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
+toBuilderG = map (map makeChains) >>> toBuilderC
+    where
+        makeChains :: Array (group /\ Array item) -> Array (Chain group /\ Array item)
+        makeChains groups =
+            let
+                groupWithPath grp = RC.g_path grp /\ grp
+                (pathToGroup :: Map GroupPath group) = Map.fromFoldable $ groupWithPath <$> Tuple.fst <$> groups
+                groupToChain :: group -> Chain group
+                groupToChain grp =
+                    let
+                        (curGroupPathChain :: Maybe (Chain String)) = Chain.fromArray $ GP.pathToArray $ RC.g_path grp
+                        (groupsOnTheWayRaw :: Array (Chain String)) = fromMaybe [] $ Chain.allIn <$> curGroupPathChain
+                        (groupsOnTheWay :: Array GroupPath) = (Chain.toArray >>> GP.pathFromArray) <$> groupsOnTheWayRaw
+                    in fromMaybe (Chain.singleton grp) $ Chain.fromArray $ Array.catMaybes $ flip Map.lookup pathToGroup <$> groupsOnTheWay
+            in lmap groupToChain <$> groups
 
 
 unfold :: forall subj group item. Builder subj group item -> Array (subj /\ Array (group /\ Array item))
@@ -339,7 +363,7 @@ mapGroupsWithItems mapFn = mapGroupsWithItemsC \subj groupC items -> flip (mapFn
 
 
 --| Changes only the last group in the chain, that's why it is impossible to change group type
-mapGroupsWithItemsE :: forall subj groupA group item. (subj -> group -> Array item -> group) -> Builder subj group item -> Builder subj group item
+mapGroupsWithItemsE :: forall subj group item. (subj -> group -> Array item -> group) -> Builder subj group item -> Builder subj group item
 mapGroupsWithItemsE mapFn = mapGroupsWithItemsC \subj groupC items ->
     let
         before /\ end = Chain.break groupC
@@ -442,7 +466,7 @@ regroupByMany ordFn itemToGroups = unwrap >>> map mapFn >>> wrap
 
 
 allGroups :: forall subj group item. Builder subj group item -> Array group
-allGroups = allGroupsC >>> map Chain.toArray >>> Array.concat
+allGroups = allGroupsC >>> map Chain.last
 
 
 allGroupsC :: forall subj group item. Builder subj group item -> Array (Chain group)
@@ -453,7 +477,7 @@ allGroupsC = unwrap >>> map extractGroups >>> Array.concat
 
 
 allGroupsOf :: forall subj_id subj group item. Eq subj_id => RC.IsSubjectId subj_id subj => subj_id -> Builder subj group item -> Array group
-allGroupsOf subjId = allGroupsOfC subjId >>> map Chain.toArray >>> Array.concat
+allGroupsOf subjId = allGroupsOfC subjId >>> map Chain.last
 
 
 allGroupsOfC :: forall subj_id subj group item. Eq subj_id => RC.IsSubjectId subj_id subj => subj_id -> Builder subj group item -> Array (Chain group)

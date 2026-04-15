@@ -310,12 +310,42 @@ spec = do
             report = RB.build reportSrc # Report.fromBuilder
         in (Report.unfold report) `shouldEqual` reportSrc
 
+    it "unfolds properly (group-chains)" $
+        let
+            reportSrc =
+                [ "subj" /\
+                    [ G [ "Analogue" ] /\ (A <$> [ ])
+                    , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+                    , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen" ])
+                    , G [ "Electronic" ] /\ (A <$> [ ])
+                    , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+                    , G [ "Test", "Test A", "Test B" ] /\ (A <$> [ "I1", "I2" ])
+                    , G [ "Test" ] /\ (A <$> [ "I3" ])
+                    ]
+                ]
+            report = RB.buildG reportSrc # Report.fromBuilder
+            -- [(Tuple "subj" [(Tuple ["Analogue"] []),(Tuple ["Analogue"] ["Queen","Rammstein"]),(Tuple ["Analogue","Rock"] ["Queen"]),(Tuple ["Electronic"] []),(Tuple ["Electronic"] ["NIN","Rammstein"]),(Tuple ["Test"] ["I1","I2"]),(Tuple ["Test"] ["I3"])])]
+            -- [(Tuple "subj" [(Tuple ["Analogue"] []),(Tuple ["Analogue","Rock"] ["Queen","Rammstein"]),(Tuple ["Analogue","Rock","Pop Rock"] ["Queen"]),(Tuple ["Electronic"] []),(Tuple ["Electronic","Industrial"] ["NIN","Rammstein"]),(Tuple ["Test","Test A","Test B"] ["I1","I2"]),(Tuple ["Test"] ["I3"])])]
+        in (Report.unfold report) `shouldEqual` reportSrc
+
+    it "unfolds properly (group-chains), p.2" $
+        let
+            reportSrc =
+                [ "subj" /\
+                    [ G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+                    , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen" ])
+                    , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+                    ]
+                ]
+            report = RB.buildG reportSrc # Report.fromBuilder
+        in (Report.unfold report) `shouldEqual` reportSrc
+
 
   describe "grouping by tag" $ do
     it "re-groups report by tag" $ do
         let
             report =
-                RB.build
+                RB.buildG
                     [ "subj" /\ [ G [ "root" ] /\ (TT1I <$> [ "item1", "item2", "item3", "item4" ]) ] ]
                     # Report.fromBuilder
         (report # Report.groupItemsByKind @BoolTag Truthful # Report.unfold)
@@ -328,7 +358,7 @@ spec = do
 
     let
         artistsReport =
-            RB.build
+            RB.buildG
                 [ "subj" /\
                     [ G [ "root" ] /\
                         (A <$>

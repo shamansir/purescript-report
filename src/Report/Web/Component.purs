@@ -44,7 +44,7 @@ import Report as R
 import Report.Builder as RB
 import Report.Class as R
 import Report.Chain (Chain)
-import Report.Chain (fromString, toString) as Chain
+import Report.Chain (fromString, toString, length) as Chain
 -- import Report.Core.Logic (EncodedValue(..))
 import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.GroupPath (GroupPath)
@@ -376,6 +376,7 @@ component cfg =
                 )
                 <> pure menuButtons
                 <> pure subjSelNavigation
+                -- <> pure groupSelNavigation
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
@@ -470,6 +471,23 @@ component cfg =
                         , HH.text "⦿"
                         ]
                     ]
+
+            groupSelNavigation =
+                let
+                    reportBuilder = R.toBuilder processedReport
+                in HH.div
+                    [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
+                        -- <> if state.flags.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
+                    ]
+                    $ groupsNavigationItems <$> flip RB.allGroupsOfC reportBuilder <$> state.subjects
+
+
+            -- groupsNavigationItems groups =
+            --     HH.text $ String.joinWith "--" $ R.g_title <$> groups
+
+            groupsNavigationItems groupsC =
+                HH.text $ (String.joinWith "-" $ show <$> Chain.length <$> groupsC ) <> ":" <> (String.joinWith "--" $ Chain.toString <$> map R.g_title <$> groupsC)
+
 
     subjectsToc state allSubjects =
         let

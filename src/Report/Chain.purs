@@ -5,13 +5,13 @@ import Prelude
 import Foreign (F, ForeignError(..), fail)
 
 -- import Control.Applicative (class Pure)
-import Data.Array ((:))
-import Data.Array (uncons, snoc) as Array
+import Data.Array ((:), (..))
+import Data.Array (uncons, snoc, cons, length, take, catMaybes) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (cons, uncons, snoc, snoc') as NEA
 import Data.List (List(..))
 import Data.Tuple (fst) as Tuple
-import Data.Foldable (class Foldable)
+import Data.Foldable (class Foldable, foldl)
 import Data.FunctorWithIndex (class FunctorWithIndex)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.String (joinWith, split, Pattern(..)) as String
@@ -212,3 +212,14 @@ instance ReadForeign (Chain String) where
             Just mbw -> pure mbw
             Nothing  -> fail $ ForeignError "Chain: cannot read from empty array"
 
+
+length :: forall a. Chain a -> Int
+length = toArray >>> Array.length
+
+
+allIn :: forall a. Chain a -> Array (Chain a)
+allIn theChain = Array.catMaybes $ fromArray <$> allParts
+    where
+        chainArr = toArray theChain
+        chainArrLen = Array.length chainArr
+        allParts = flip Array.take chainArr <$> 1 .. (chainArrLen - 1)
