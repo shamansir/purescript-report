@@ -14,6 +14,7 @@ import Data.Tuple (Tuple(..))
 import Data.Either (Either, either)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), Replacement(..), replaceAll)
+import Data.Newtype (unwrap, wrap, class Newtype)
 
 import Affjax.Node (Error, Response, request, defaultRequest, printError) as Aj
 import Affjax.RequestHeader (RequestHeader(..))
@@ -94,6 +95,7 @@ type MbArtist =
 newtype MbArtistJ = MbArtistJ MbArtist
 derive newtype instance Show MbArtistJ
 derive newtype instance Eq MbArtistJ
+derive instance Newtype MbArtistJ _
 
 instance ReadForeign MbArtistJ where
     readImpl :: Foreign -> F MbArtistJ
@@ -140,6 +142,7 @@ type MbReleaseGroup =
 newtype MbReleaseGroupJ = MbReleaseGroupJ MbReleaseGroup
 derive newtype instance Show MbReleaseGroupJ
 derive newtype instance Eq MbReleaseGroupJ
+derive instance Newtype MbReleaseGroupJ _
 
 instance ReadForeign MbReleaseGroupJ where
     readImpl :: Foreign -> F MbReleaseGroupJ
@@ -169,6 +172,7 @@ type MbReleaseGroupsResponse =
     }
 
 newtype MbReleaseGroupsResponseJ = MbReleaseGroupsResponseJ MbReleaseGroupsResponse
+derive instance Newtype MbReleaseGroupsResponseJ _
 
 instance ReadForeign MbReleaseGroupsResponseJ where
     readImpl :: Foreign -> F MbReleaseGroupsResponseJ
@@ -195,6 +199,7 @@ type MbMedium =
     }
 
 newtype MbMediumJ = MbMediumJ MbMedium
+derive instance Newtype MbMediumJ _
 
 instance ReadForeign MbMediumJ where
     readImpl :: Foreign -> F MbMediumJ
@@ -225,6 +230,7 @@ type MbRelease =
     }
 
 newtype MbReleaseJ = MbReleaseJ MbRelease
+derive instance Newtype MbReleaseJ _
 
 derive newtype instance WriteForeign MbReleaseJ
 

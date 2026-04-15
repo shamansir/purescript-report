@@ -131,20 +131,20 @@ spec =
                 searchResult <- MB.fetchArtistSearch artistName
                 case searchResult >>= \r -> Array.head r.artists of
                     Nothing            -> fail $ "Could not find artist " <> artistName
-                    Just (MbArtistJ a) -> do
+                    Just (MbArtistJ mbArtist) -> do
                         delay mbDelay
-                        discog <- MB.fetchDiscography a.id 0
+                        discog <- MB.fetchDiscography mbArtist.id 0
                         case discog of
                             Nothing   -> fail "fetchDiscography returned Nothing"
                             Just resp -> do
                                 let rgs = Array.take 2 resp.releaseGroups
                                 Array.length rgs `shouldSatisfy` (_ > 0)
-                                for_ rgs \(MbReleaseGroupJ rg) -> do
+                                _ <- for rgs \(MbReleaseGroupJ rg) -> do
                                     delay mbDelay
                                     releases <- MB.fetchReleasesByGroup rg.id
-                                    whenJust (releases >>= Array.head) \stub -> do
+                                    whenJust (releases >>= Array.head) \mbRelease -> do
                                         delay mbDelay
-                                        release <- MB.fetchRelease stub.id
+                                        release <- MB.fetchRelease mbRelease.id
                                         whenJust release \rel -> do
                                             Array.length rel.media `shouldSatisfy` (_ > 0)
                                             case Array.head rel.media of
@@ -157,6 +157,7 @@ spec =
                                             liftEffect $ writeTextFile UTF8
                                                 ("./test/fetched-data/release-tracks-" <> artistName <> "-" <> rg.title <> ".json")
                                                 (writePrettyJSON 2 rel)
+                                pure unit
 
 
 -- | Minimum gap between MusicBrainz requests: 50 request / second, for safety make it bigger.
