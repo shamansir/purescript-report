@@ -42,6 +42,9 @@ instance Eq a  => Eq  (Chain a) where eq ca cb      = toArray ca == toArray cb
 instance Ord a => Ord (Chain a) where compare ca cb = compare (toArray ca) (toArray cb)
 
 
+instance Show a => Show (Chain a) where show = map show >>> toString
+
+
 --| Get last link
 last :: forall a. Chain a -> a
 last =
@@ -222,4 +225,4 @@ allIn theChain = Array.catMaybes $ fromArray <$> allParts
     where
         chainArr = toArray theChain
         chainArrLen = Array.length chainArr
-        allParts = flip Array.take chainArr <$> 1 .. (chainArrLen - 1)
+        allParts = flip Array.take chainArr <$> 1 .. chainArrLen

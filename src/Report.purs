@@ -4,7 +4,7 @@ module Report
     , build, buildG
     , toTree
     , toBuilder, fromBuilder
-    , unfold, unfoldAll
+    , unfold, unfoldAll, unfoldC
     -- , fromTreeC
     , class ToReport, toReport
     , withGroup, withItem
@@ -27,6 +27,7 @@ import Yoga.Tree (Tree)
 
 import Report.GroupPath (GroupPath)
 import Report.Class
+import Report.Chain (Chain)
 import Report.Chain (toArray, last) as Chain
 import Report.Builder as B
 import Report.Builder
@@ -100,6 +101,10 @@ toBuilder (Report builder) = builder
 
 unfold :: forall subj group item. Report subj group item -> Array (subj /\ Array (group /\ Array item))
 unfold = toBuilder >>> B.unfold
+
+
+unfoldC :: forall subj group item. Report subj group item -> Array (subj /\ Array (Chain group /\ Array item))
+unfoldC = toBuilder >>> B.unfoldC
 
 
 unfoldAll :: forall subj group item. Ord group => Report subj group item -> Array (subj /\ Array (group /\ Array item))

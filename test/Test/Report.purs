@@ -18,6 +18,7 @@ import Data.String as String
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
 import Data.Array (reverse) as Array
+import Data.Array.NonEmpty as NEA
 import Data.Int (fromString) as Int
 
 import Test.Spec (Spec, it, itOnly, describe, pending')
@@ -324,8 +325,6 @@ spec = do
                     ]
                 ]
             report = RB.buildG reportSrc # Report.fromBuilder
-            -- [(Tuple "subj" [(Tuple ["Analogue"] []),(Tuple ["Analogue"] ["Queen","Rammstein"]),(Tuple ["Analogue","Rock"] ["Queen"]),(Tuple ["Electronic"] []),(Tuple ["Electronic"] ["NIN","Rammstein"]),(Tuple ["Test"] ["I1","I2"]),(Tuple ["Test"] ["I3"])])]
-            -- [(Tuple "subj" [(Tuple ["Analogue"] []),(Tuple ["Analogue","Rock"] ["Queen","Rammstein"]),(Tuple ["Analogue","Rock","Pop Rock"] ["Queen"]),(Tuple ["Electronic"] []),(Tuple ["Electronic","Industrial"] ["NIN","Rammstein"]),(Tuple ["Test","Test A","Test B"] ["I1","I2"]),(Tuple ["Test"] ["I3"])])]
         in (Report.unfold report) `shouldEqual` reportSrc
 
     it "unfolds properly (group-chains), p.2" $
@@ -339,6 +338,40 @@ spec = do
                 ]
             report = RB.buildG reportSrc # Report.fromBuilder
         in (Report.unfold report) `shouldEqual` reportSrc
+
+    it "unfolds properly (group-chains to chains)" $
+        let
+            reportSrc =
+                [ "subj" /\
+                    [ G [ "Analogue" ] /\ (A <$> [ ])
+                    , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
+                    , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen" ])
+                    , G [ "Electronic" ] /\ (A <$> [ ])
+                    , G [ "Electronic", "Industrial" ] /\ (A <$> [ "NIN", "Rammstein" ])
+                    , G [ "Test" ] /\ (A <$> [ ])
+                    , G [ "Test", "Test A" ] /\ (A <$> [ ]) -- FIXME: we have to have an empty group here or else grouping mechanics won't work (no path known for "Test A" since it's not in the set)
+                    , G [ "Test", "Test A", "Test B" ] /\ (A <$> [ "I1", "I2" ])
+                    , G [ "Test" ] /\ (A <$> [ "I3" ])
+                    ]
+                ]
+
+            reportTrg =
+                [ "subj" /\
+                    [ (C.End $ G [ "Analogue" ]) /\ (A <$> [ ])
+                    , (C.More (G [ "Analogue" ]) $ C.End $ G [ "Analogue", "Rock" ] ) /\ (A <$> [ "Queen", "Rammstein" ])
+                    , (C.More (G [ "Analogue" ]) $ C.More (G [ "Analogue", "Rock" ]) $ C.End $ G [ "Analogue", "Rock", "Pop Rock" ] ) /\ (A <$> [ "Queen" ])
+                    , (C.End $ G [ "Electronic" ]) /\ (A <$> [ ])
+                    , (C.More (G [ "Electronic" ]) $ C.End $  G [ "Electronic", "Industrial" ] ) /\ (A <$> [ "NIN", "Rammstein" ])
+                    , (C.End $ G [ "Test" ]) /\ (A <$> [ ])
+                    , (C.More (G [ "Test" ]) $ C.End $ G [ "Test", "Test A" ]) /\ (A <$> [ ])
+                    , (C.More (G [ "Test" ]) $ C.More (G [ "Test", "Test A" ]) $ C.End $ G [ "Test", "Test A", "Test B" ] ) /\ (A <$> [ "I1", "I2" ])
+                    , (C.End $ G [ "Test" ]) /\ (A <$> [ "I3" ])
+                    ]
+                ]
+            -- [(Tuple "subj" [(Tuple ["Analogue"] []),(Tuple ["Analogue"]::["Analogue","Rock"] ["Queen","Rammstein"]),(Tuple ["Analogue"]::["Analogue","Rock"]::["Analogue","Rock","Pop Rock"] ["Queen"]),(Tuple ["Electronic"] []),(Tuple ["Electronic"]::["Electronic","Industrial"] ["NIN","Rammstein"]),(Tuple ["Test"]::["Test","Test A","Test B"] ["I1","I2"]),(Tuple ["Test"] ["I3"])])]
+            -- [(Tuple "subj" [(Tuple ["Analogue"] []),(Tuple ["Analogue"]::["Analogue","Rock"] ["Queen","Rammstein"]),(Tuple ["Analogue"]::["Analogue","Rock"]::["Analogue","Rock","Pop Rock"] ["Queen"]),(Tuple ["Electronic"] []),(Tuple ["Electronic"]::["Electronic","Industrial"] ["NIN","Rammstein"]),(Tuple ["Test"]::["Test","Test A"]::["Test","Test A","Test B"] ["I1","I2"]),(Tuple ["Test"] ["I3"])])]
+            report = RB.buildG reportSrc # Report.fromBuilder
+        in (Report.unfoldC report) `shouldEqual` reportTrg
 
 
   describe "grouping by tag" $ do
