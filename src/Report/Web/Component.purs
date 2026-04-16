@@ -2,81 +2,72 @@ module Report.Web.Component where
 
 import Prelude
 
-import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Console as Console
-
-import Debug as Debug
-
 import Data.Array ((:))
 import Data.Array as Array
-import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int as Int
 import Data.Map (Map, SemigroupMap(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Maybe (isJust) as Maybe
+import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Set as Set
 import Data.String (length, contains, toLower, joinWith, split, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Newtype (class Newtype, wrap, unwrap)
-
-import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
-
-import Web.Event.Event (stopPropagation) as Event
-import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
-
-import Web.HTML (window) as Web
-import Web.HTML.Location (hash, setHash, search, setSearch) as Location
-import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history) as Window
-import Web.HTML.History (URL(..), DocumentTitle(..), state, pushState) as History
-import Web.Event.Event as E
-
+import Debug as Debug
+import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Console as Console
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event (eventListener)
-
 import Report as R
 import Report.Builder as RB
-import Report.Class as R
 import Report.Chain (Chain)
 import Report.Chain (fromString, toString, length, last, toArray) as Chain
--- import Report.Core.Logic (EncodedValue(..))
-import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
-import Report.GroupPath (GroupPath)
-import Report.GroupPath (howDeep, startsWithNotEq) as GP
-import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
-import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
-import Report.Decorators.Tags (TagAction(..))
-import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf, Stats(..)) as R
-import Report.Decorators.Class.ValueModify as VModify
-import Report.Decorators.Stats.Collect as Collect
-import Report.Modify (Location(..))
-import Report.Modify as Modify
-import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
+import Report.Class as R
+import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Generic (class ToExport, includeOnly) as Report
 import Report.Convert.Json (toJson) as Report
-import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Org (toOrg) as Report
-
+import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
+import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
+import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
+import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
+import Report.Decorators.Class.ValueModify as VModify
+import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf, Stats(..)) as R
+import Report.Decorators.Stats.Collect as Collect
+import Report.Decorators.Tags (TagAction(..))
+import Report.GroupPath (GroupPath)
+import Report.GroupPath (howDeep, startsWithNotEq) as GP
+import Report.Modify (Location(..), whatKeyOf)
+import Report.Modify as Modify
+import Report.Web.Component.RecalcBehavior as CRB
+import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
+import Report.Web.Decorators.EditInput as EI
+import Report.Web.Decorators.Stats (renderGroupStats, renderProgressPlates, gotTotalBadge)
+import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, itemTagKindBadge)
+import Report.Web.GroupPath (groupPathId) as GP
 import Report.Web.GroupPath (groupPathId, renderPath)
 import Report.Web.Helpers (qspacerSpan, qcolorSpan, qitemmarkerSpan, lineHeight, nestMargin, qemptySpan, H)
 import Report.Web.Helpers.InlineOrBlock as IoB
 import Report.Web.Helpers.UrlConfig as UC
-import Report.Web.Decorators.Stats (renderGroupStats, renderProgressPlates, gotTotalBadge)
-import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, itemTagKindBadge)
-import Report.Web.Decorators.EditInput as EI
+import Report.Web.Helpers.VisualState (selectOne, itemNameColor) as VStates
 import Report.Web.Navigation2 (NavigatedTo)
 import Report.Web.Navigation2 as Navigation
-import Report.Web.GroupPath (groupPathId) as GP
-import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
-import Report.Web.Helpers.VisualState (selectOne, itemNameColor) as VStates
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
-import Report.Web.Component.RecalcBehavior as CRB
+import Web.Event.Event (stopPropagation) as Event
+import Web.Event.Event as E
+import Web.HTML (window) as Web
+import Web.HTML.History (URL(..), DocumentTitle(..), state, pushState) as History
+import Web.HTML.Location (hash, setHash, search, setSearch) as Location
+import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history) as Window
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
+import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
 
 type Process item_tag_kind item_tag = TagAction item_tag_kind item_tag
@@ -92,12 +83,15 @@ data SubjectFilter
 
 
 type Flags =
-    { optionsPaneExpanded :: Boolean
-    , showItemsTags :: Boolean
-    , readOnlyMode :: Boolean
+    { readOnlyMode :: Boolean
     , debugEnabled :: Boolean
-    , showSubjectNavNames :: Boolean
-    , showProgressPlates :: Boolean
+    , showItemsTags :: Boolean
+    , optionsPaneExpanded :: Boolean
+    , subjectNavigationExpanded :: Boolean
+    , subjectNavigationPinned :: Boolean
+    , progressPlatesShown :: Boolean
+    , groupNavigationExpanded :: Boolean
+    , groupNavigationPinned :: Boolean
     }
 
 
@@ -141,8 +135,12 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | ToggleReadOnlyMode
     | ToggleDebugMode
     | ToggleProgressPlates
-    | TurnSubjectNavNamesOn
-    | TurnSubjectNavNamesOff
+    | ExpandSubjectNavigation
+    | CollapseSubjectNavigation
+    | ToggleSubjectNavigationPinned
+    | ExpandGroupNavigation
+    | CollapseGroupNavigation
+    | ToggleGroupNavigationPinned
     | EnableExport ExportTarget
     | DisableExport
     | AddToItemsFilter MouseEvent item_tag
@@ -349,8 +347,11 @@ component cfg =
             , showItemsTags : true
             , readOnlyMode : true
             , debugEnabled : false
-            , showSubjectNavNames : false
-            , showProgressPlates : false
+            , subjectNavigationExpanded : false
+            , subjectNavigationPinned : false
+            , groupNavigationExpanded : false
+            , groupNavigationPinned : false
+            , progressPlatesShown : false
             }
         }
 
@@ -408,7 +409,7 @@ component cfg =
 
             includeRule = Report.includeOnly state.subjects
 
-            subjRenderOptions = { showProgressPlates : state.flags.showProgressPlates }
+            subjRenderOptions = { progressPlatesShown : state.flags.progressPlatesShown }
 
             exportTextFor = case _ of
                 Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
@@ -431,7 +432,7 @@ component cfg =
                         <>
                         [ { label : if state.flags.readOnlyMode then "🔒" else "🔓",      onClick : const ToggleReadOnlyMode, enabled : state.flags.readOnlyMode }
                         , { label : if state.flags.debugEnabled then "🛠" else "🛠",      onClick : const ToggleDebugMode,    enabled : state.flags.debugEnabled }
-                        , { label : if state.flags.showProgressPlates then "▦" else "▦", onClick : const ToggleProgressPlates, enabled : state.flags.showProgressPlates }
+                        , { label : if state.flags.progressPlatesShown then "▦" else "▦", onClick : const ToggleProgressPlates, enabled : state.flags.progressPlatesShown }
                         , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json  }
                         , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
                         , { label : "ORG",   onClick : const $ if exportSelected Org   then DisableExport else EnableExport Org,   enabled : exportSelected Org   }
@@ -449,7 +450,9 @@ component cfg =
             subjSelNavigation =
                 HH.div
                     [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
-                        -- <> if state.flags.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
+                        -- <> if state.flags.subjectNavigationExpanded then "line-height: 1.6em;" else "line-height : 1.1em;"
+                    , HE.onMouseEnter $ const ExpandSubjectNavigation
+                    , HE.onMouseLeave $ const CollapseSubjectNavigation
                     ]
                     $ subjNavigationItem <$> state.subjects
 
@@ -461,10 +464,8 @@ component cfg =
                     []
                     [ HH.a
                         [ HP.href $ "#subject-" <> uniqueId, HP.style "color: darkgoldenrod; text-decoration: none;"
-                        , HE.onMouseEnter $ const TurnSubjectNavNamesOn
-                        , HE.onMouseLeave $ const TurnSubjectNavNamesOff
                         ]
-                        [ if state.flags.showSubjectNavNames
+                        [ if state.flags.subjectNavigationExpanded
                             then HH.span
                                 [ HP.style "color: black; margin-right: 5px; font-size: 0.7em; position: relative; top: -1px; margin-left: 4px; " ]
                                 [ HH.text subjName ]
@@ -474,36 +475,62 @@ component cfg =
                     ]
 
             groupSelNavigation =
-                let
-                    reportBuilder = R.toBuilder processedReport
-                in HH.div
-                    [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 20%; opacity: 0.5;max-height:400px;overflow:scroll;"
-                        -- <> if state.flags.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
-                    ]
-                    $ groupsNavigationItems <$> flip RB.allGroupsOfC reportBuilder <$> state.subjects
+                if state.flags.groupNavigationPinned || state.flags.groupNavigationExpanded then
+                    let
+                        reportBuilder = R.toBuilder processedReport
+                    in HH.div
+                        [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 15%; opacity: 0.8;max-height:400px;overflow:scroll;padding:9px;"
+                        , HE.onMouseEnter $ const ExpandGroupNavigation
+                        , HE.onMouseLeave $ const CollapseGroupNavigation
+                        ]
+                        $ HH.div [ HP.style "position:absolute;right:0;width:40px;" ]
+                            [ groupSelNavigationPinButton ]
+                        : (mapWithIndex groupsSelNavigationItems $ (\subjId -> subjId /\ RB.allGroupsOfC subjId reportBuilder) <$> state.subjects)
+                else
+                    HH.div
+                        [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 15%; opacity: 0.5;max-height:2.4em;overflow:scroll;min-height: 2.4em;"
+                            -- <> if state.flags.subjectNavigationExpanded then "line-height: 1.6em;" else "line-height : 1.1em;"
+                        , HE.onMouseEnter $ const ExpandGroupNavigation
+                        ]
+                        [ HH.span [ HP.style "position:absolute;right:40px;top:10px;"] [ HH.text "GROUPS" ]
+                        , HH.div [ HP.style "display: inline-block;position:absolute;right:0;width:40px;" ]
+                            [ groupSelNavigationPinButton ]
+                        ]
 
-            groupsNavigationItems groupsC =
-                HH.div
-                    [ ]
-                    $ groupsNavigationChain {- <$> Chain.toArray <$> map R.g_title -} <$> groupsC
-
-            groupsNavigationChain groupC =
+            groupsSelNavigationItems idx (subjId /\ groupsC) =
                 let
-                    -- chainLen =Chain.length groupC
+                    subjName = findSubjName subjId # fromMaybe "--"
+                    padding = if idx == 0 then "padding:0 0 5px 0;" else "padding:15px 0 5px 0;"
+                in
+                    HH.div
+                        [ ]
+                        $ HH.div [ HP.style $ "min-width:100%;text-align:start;font-weight:bold;" <> padding ] [ HH.text subjName ]
+                        : (groupsSelNavigationChain {- <$> Chain.toArray <$> map R.g_title -} <$> groupsC)
+
+            groupsSelNavigationChain groupC =
+                let
+                    chainLen = Chain.length groupC
                     -- thePadding = 5 + chainLen * 10
                     curGroupPath = R.g_path $ Chain.last groupC
                     renderGroupRep idx gtitle =
-                        if idx == 0
+                        if idx == chainLen - 1
                         then HH.span [] [ HH.text gtitle ]
-                        else HH.span [ HP.style "display: inline-block; width: 20px;" ] [ HH.text "<" ]
+                        else HH.span [ HP.style "display: inline-block; width: 20px;opacity:0.3;" ] [ HH.text ">" ]
 
                 in HH.div
-                    [ HP.style $ "display: list-item;" ]
-                    $ HH.a [ HP.style "padding-right: 5px;", HP.href $ "#" <> GP.groupPathId curGroupPath ] [ HH.text "#" ]
-                    : (mapWithIndex renderGroupRep {- (HH.text >>> pure >>> HH.span []) -} <$> Array.reverse $ Chain.toArray $ R.g_title <$> groupC)
+                    [ HP.style $ "min-width:100%;text-align:start;" ]
+                    $  (mapWithIndex renderGroupRep {- (HH.text >>> pure >>> HH.span []) -} <$> Chain.toArray $ R.g_title <$> groupC)
+                    <> (pure $ HH.a [ HP.style "padding-left: 5px;text-decoration:none;", HP.href $ "#" <> GP.groupPathId curGroupPath ] [ HH.text "#" ])
                 -- HH.div $
                 --     Chain.toString <$> map R.g_title <$> groupsC
                 --     HH.text $ (String.joinWith "-" $ show <$> Chain.length <$> groupsC ) <> ":" <> (String.joinWith "--" $ Chain.toString <$> map R.g_title <$> groupsC)
+
+            groupSelNavigationPinButton =
+                menuButton
+                    { enabled : state.flags.groupNavigationPinned
+                    , label   : if state.flags.groupNavigationPinned then "⚲" else "⌕" -- ⚘ 📌
+                    , onClick : const ToggleGroupNavigationPinned
+                    }
 
 
     subjectsToc state allSubjects =
@@ -823,11 +850,15 @@ component cfg =
             H.modify_ clearEditing
             H.modify_ $ withFlags \f -> f { readOnlyMode = not f.readOnlyMode }
         ToggleDebugMode -> H.modify_ $ withFlags \f -> f { debugEnabled = not f.debugEnabled }
-        ToggleProgressPlates -> H.modify_ $ withFlags \f -> f { showProgressPlates = not f.showProgressPlates }
+        ToggleProgressPlates -> H.modify_ $ withFlags \f -> f { progressPlatesShown = not f.progressPlatesShown }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
         DisableExport -> H.modify_ _ { mbExportTo = Nothing }
-        TurnSubjectNavNamesOff -> H.modify_ $ withFlags _ { showSubjectNavNames = false }
-        TurnSubjectNavNamesOn  -> H.modify_ $ withFlags _ { showSubjectNavNames = true }
+        CollapseSubjectNavigation -> H.modify_ $ withFlags _ { subjectNavigationExpanded = false }
+        ExpandSubjectNavigation   -> H.modify_ $ withFlags _ { subjectNavigationExpanded = true  }
+        CollapseGroupNavigation   -> H.modify_ $ withFlags _ { groupNavigationExpanded   = false }
+        ExpandGroupNavigation     -> H.modify_ $ withFlags _ { groupNavigationExpanded   = true  }
+        ToggleSubjectNavigationPinned -> H.modify_ $ withFlags \f -> f { subjectNavigationPinned = not f.subjectNavigationPinned }
+        ToggleGroupNavigationPinned   -> H.modify_ $ withFlags \f -> f { groupNavigationPinned   = not f.groupNavigationPinned   }
         AddToItemsFilter mevt itemTag -> do
             stopPropagation mevt
             H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag })
@@ -897,7 +928,7 @@ component cfg =
 
 
 type SubjectRenderingOptions =
-    { showProgressPlates :: Boolean
+    { progressPlatesShown :: Boolean
     }
 
 
@@ -987,7 +1018,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                             ]
                         , case groupStats of
                                 R.SWithProgress _ (Just itemsProgress) ->
-                                    if options.showProgressPlates then renderProgressPlates itemsProgress
+                                    if options.progressPlatesShown then renderProgressPlates itemsProgress
                                     else HH.text ""
                                 _ -> HH.text ""
                         ]
