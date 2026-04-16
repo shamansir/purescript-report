@@ -22,12 +22,12 @@ In works / Planned:
 * Improve loading from other formats to not obligatorily be backed by types;
 * Better examples, like tracking TV series or music discorgraphies etc...;
 
-[![Screen 1](/screens/screen-b01.png)]
-[![Screen 2](/screens/screen-b02.png)]
-[![Screen 3](/screens/screen-b03.png)]
-[![Screen 4](/screens/screen-b04.png)]
-[![Screen 5](/screens/screen-a01.png)]
-[![Screen 6](/screens/screen-a05.png)]
-[![Screen 7](/screens/screen-a07.png)]
-[![Screen 8](/screens/screen-a08.png)]
-[![Screen 9](/screens/screen-a09.png)]
+![Screen 1](/screens/screen-b01.png)
+![Screen 2](/screens/screen-b02.png)
+![Screen 3](/screens/screen-b03.png)
+![Screen 4](/screens/screen-b04.png)
+![Screen 5](/screens/screen-a01.png)
+![Screen 6](/screens/screen-a05.png)
+![Screen 7](/screens/screen-a07.png)
+![Screen 8](/screens/screen-a08.png)
+![Screen 9](/screens/screen-a09.png)
