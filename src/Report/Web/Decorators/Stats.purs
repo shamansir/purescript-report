@@ -81,7 +81,7 @@ renderProgressPlates itemsProgress =
     in
         HS.svg
             [ HA.width svgWidth, HA.height svgHeight
-            , HP.style "display: inline-block; position: relative; align-self: center; margin-left: 12px;" --  opacity: 0.8;
+            , HP.style "display: inline-block; position: relative; align-self: center; margin-left: 12px;border:1px solid lightblue;border-radius:3px;background-color:ghostwhite;" --  opacity: 0.8;
             ]
             $ mapWithIndex renderPlate itemsProgress
     where
