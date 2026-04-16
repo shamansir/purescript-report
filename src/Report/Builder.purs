@@ -121,6 +121,9 @@ build :: forall subj group item. Array (subj /\ Array (group /\ Array item)) -> 
 build = toBuilder
 
 
+--| Important: Uses `IsGroup` instance of `group` to build group chains (full consequent path to the item) inside,
+--| probably be should be used as the default building method.
+--| But if the group from the chain does not exist in the array, it will be missing in the path, I am looking for the solution
 buildG :: forall subj group item. RC.IsGroup group => Array (subj /\ Array (group /\ Array item)) -> Builder subj group item
 buildG = toBuilderG
 

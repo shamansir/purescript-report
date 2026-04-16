@@ -266,7 +266,7 @@ recalculate
     -> Report subj group item
 recalculate cfg =
     -- FIXME: check if group chains properly go back!
-    Report.toBuilder >>> RBuilder.unfoldAll >>> (map $ map updateGroups) >>> RBuilder.toBuilder >>> Report.fromBuilder
+    Report.toBuilder >>> RBuilder.unfoldAll >>> (map $ map updateGroups) >>> RBuilder.toBuilderG >>> Report.fromBuilder
     where
         belongsTo :: group -> group -> Boolean
         belongsTo grpA grpB = GPath.startsWith (g_path grpA) (g_path grpB)

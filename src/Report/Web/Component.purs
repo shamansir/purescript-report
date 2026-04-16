@@ -44,7 +44,7 @@ import Report as R
 import Report.Builder as RB
 import Report.Class as R
 import Report.Chain (Chain)
-import Report.Chain (fromString, toString, length) as Chain
+import Report.Chain (fromString, toString, length, last) as Chain
 -- import Report.Core.Logic (EncodedValue(..))
 import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.GroupPath (GroupPath)
@@ -376,7 +376,7 @@ component cfg =
                 )
                 <> pure menuButtons
                 <> pure subjSelNavigation
-                -- <> pure groupSelNavigation
+                <> pure groupSelNavigation
             , HH.div
                 [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
                 [ subjectsToc state allSubjects ]
@@ -476,7 +476,7 @@ component cfg =
                 let
                     reportBuilder = R.toBuilder processedReport
                 in HH.div
-                    [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
+                    [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 20%; opacity: 0.5;max-height:400px;overflow:scroll;"
                         -- <> if state.flags.showSubjectNavNames then "line-height: 1.6em;" else "line-height : 1.1em;"
                     ]
                     $ groupsNavigationItems <$> flip RB.allGroupsOfC reportBuilder <$> state.subjects
@@ -933,6 +933,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
 
             renderTree (group /\ groupItems) =
                 let
+                    -- group = Chain.last groupC
                     groupPath = R.g_path group
                     groupStats = R.i_stats group
                     isNavigatedTo = navigatedTo # Navigation.atGroup subjId groupPath

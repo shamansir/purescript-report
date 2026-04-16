@@ -8,7 +8,7 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report (Report, class ToReport)
-import Report (build) as Report
+import Report (buildG) as Report
 import Report.Group (Group)
 import Report.Convert.Generic (class ToExport)
 import Report.Web.Component as ForWeb
@@ -25,7 +25,7 @@ type GamesReport = Report Game Group Achievement
 
 instance ToReport Game Group Achievement RawAchievements where
     toReport :: RawAchievements -> GamesReport
-    toReport = unwrap >>> map unwrap >>> Map.toUnfoldable >>> map (map Map.toUnfoldable) >>> Report.build
+    toReport = unwrap >>> map unwrap >>> Map.toUnfoldable >>> map (map Map.toUnfoldable) >>> Report.buildG
 
 
 fromArray :: Array (Game /\ GameAchievements) -> RawAchievements
