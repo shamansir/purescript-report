@@ -44,7 +44,7 @@ import Report as R
 import Report.Builder as RB
 import Report.Class as R
 import Report.Chain (Chain)
-import Report.Chain (fromString, toString, length, last) as Chain
+import Report.Chain (fromString, toString, length, last, toArray) as Chain
 -- import Report.Core.Logic (EncodedValue(..))
 import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.GroupPath (GroupPath)
@@ -72,6 +72,7 @@ import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, item
 import Report.Web.Decorators.EditInput as EI
 import Report.Web.Navigation2 (NavigatedTo)
 import Report.Web.Navigation2 as Navigation
+import Report.Web.GroupPath (groupPathId) as GP
 import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
 import Report.Web.Helpers.VisualState (selectOne, itemNameColor) as VStates
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
@@ -481,12 +482,28 @@ component cfg =
                     ]
                     $ groupsNavigationItems <$> flip RB.allGroupsOfC reportBuilder <$> state.subjects
 
-
-            -- groupsNavigationItems groups =
-            --     HH.text $ String.joinWith "--" $ R.g_title <$> groups
-
             groupsNavigationItems groupsC =
-                HH.text $ (String.joinWith "-" $ show <$> Chain.length <$> groupsC ) <> ":" <> (String.joinWith "--" $ Chain.toString <$> map R.g_title <$> groupsC)
+                HH.div
+                    [ ]
+                    $ groupsNavigationChain {- <$> Chain.toArray <$> map R.g_title -} <$> groupsC
+
+            groupsNavigationChain groupC =
+                let
+                    -- chainLen =Chain.length groupC
+                    -- thePadding = 5 + chainLen * 10
+                    curGroupPath = R.g_path $ Chain.last groupC
+                    renderGroupRep idx gtitle =
+                        if idx == 0
+                        then HH.span [] [ HH.text gtitle ]
+                        else HH.span [ HP.style "display: inline-block; width: 20px;" ] [ HH.text "<" ]
+
+                in HH.div
+                    [ HP.style $ "display: list-item;" ]
+                    $ HH.a [ HP.style "padding-right: 5px;", HP.href $ "#" <> GP.groupPathId curGroupPath ] [ HH.text "#" ]
+                    : (mapWithIndex renderGroupRep {- (HH.text >>> pure >>> HH.span []) -} <$> Array.reverse $ Chain.toArray $ R.g_title <$> groupC)
+                -- HH.div $
+                --     Chain.toString <$> map R.g_title <$> groupsC
+                --     HH.text $ (String.joinWith "-" $ show <$> Chain.length <$> groupsC ) <> ":" <> (String.joinWith "--" $ Chain.toString <$> map R.g_title <$> groupsC)
 
 
     subjectsToc state allSubjects =
