@@ -201,6 +201,7 @@ toModification navigatedTo =
     navigatedTo.mbEditing >>=
         \({ what, value }) ->
             case what of
+                M.WKSubj -> Nothing
                 M.WKGroupName -> do
                     subjId <- navigatedTo.mbSubjectId
                     groupPath <- navigatedTo.mbGroup

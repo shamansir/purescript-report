@@ -14,7 +14,13 @@ import Report.GroupPath
 import Report.Decorator as Decorator
 
 
-nextSubject :: forall subj_id subj group item. Eq subj_id => R.IsSubjectId subj_id subj => subj_id -> Builder subj group item -> Maybe subj_id
+nextSubject
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => subj_id
+    -> Builder subj group item
+    -> Maybe subj_id
 nextSubject subjId builder =
     let
         subjects = Builder.allSubjects builder
@@ -26,7 +32,13 @@ nextSubject subjId builder =
             <#> R.s_id
 
 
-previousSubject :: forall subj_id subj group item. Eq subj_id => R.IsSubjectId subj_id subj => subj_id -> Builder subj group item -> Maybe subj_id
+previousSubject
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => subj_id
+    -> Builder subj group item
+    -> Maybe subj_id
 previousSubject subjId builder =
     let
         subjects = Builder.allSubjects builder
@@ -38,23 +50,85 @@ previousSubject subjId builder =
             <#> R.s_id
 
 
+nextGroup
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Builder subj group item
+    -> Maybe GroupPath
+nextGroup subjId groupPath builder =
+    let
+        groups = Builder.allGroupsOf subjId builder
+    in
+        groups
+             # Array.findIndex (\group -> R.g_path group == groupPath)
+            <#> (_ + 1)
+            >>= Array.index groups
+            <#> R.g_path
+
+
+previousGroup
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Builder subj group item
+    -> Maybe GroupPath
+previousGroup subjId groupPath builder =
+    let
+        groups = Builder.allGroupsOf subjId builder
+    in
+        groups
+             # Array.findIndex (\group -> R.g_path group == groupPath)
+            <#> (_ - 1)
+            >>= Array.index groups
+            <#> R.g_path
+
+
+nextItem
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Int
+    -> Builder subj group item
+    -> Maybe Int
+nextItem subjId groupPath itemIdx builder =
+    let
+        itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
+        itemsCount = Array.length itemsOfGroup
+        nextIdx = itemIdx + 1
+    in
+        if nextIdx < itemsCount && nextIdx >= 0 then Just nextIdx else Nothing
+
+
+previousItem
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Int
+    -> Builder subj group item
+    -> Maybe Int
+previousItem subjId groupPath itemIdx builder =
+    let
+        itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
+        itemsCount = Array.length itemsOfGroup
+        prevIdx = itemIdx - 1
+    in
+        if prevIdx < itemsCount && prevIdx >= 0 then Just prevIdx else Nothing
+
+
 {-
-nextGroup :: forall subj_id subj group item. subj_id -> GroupPath -> Builder subj group item -> Maybe GroupPath
-nextGroup = ?wh
-
-
-previousGroup :: forall subj_id subj group item. subj_id -> GroupPath -> Builder subj group item -> Maybe GroupPath
-previousGroup = ?wh
-
-
-nextItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int ->  Builder subj group item -> Maybe Int
-nextItem = ?wh
-
-
-previousItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Int
-previousItem = ?wh
-
-
 nextDecorator :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Decorator.Key -> Builder subj group item -> Maybe Decorator.Key
 nextDecorator = ?wg
 

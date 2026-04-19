@@ -49,7 +49,7 @@ import Report.Builder
     , mapGroups
     , allGroups, allGroupsC
     , allGroupsOf, allGroupsOfC
-    , filterGroups
+    , filterGroupsBy
     -- , withGroup, withGroupIdx
     -- , findGroup, findMapGroup
     , sortGroups, sortGroupsWith, sortGroupsBy
@@ -57,7 +57,7 @@ import Report.Builder
     {- Items -}
     , mapItems
     , allItems
-    , filterItems
+    , filterItems, filterItemsBy
     -- , withItem, withItemIdx
     , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
     -- , findItem, findMapItem, findMapItem'
@@ -197,7 +197,7 @@ findGroup
     -> Report subj group item
     -> Maybe group
 findGroup subjId groupPath = do
-    toBuilder >>> B.findMapGroup
+    toBuilder >>> B.findMapGroupBy
         \subj groupC ->
             if (s_id subj == subjId) then
                 Array.find (g_path >>> (_ == groupPath)) $ Chain.toArray groupC
@@ -215,7 +215,7 @@ findItem
     -> Report subj group item
     -> Maybe item
 findItem subjId groupPath itemIdx =
-    toBuilder >>> B.mapGroups g_path >>> B.findMapItems
+    toBuilder >>> B.mapGroups g_path >>> B.findMapItemsBy
         \subj groupC items ->
             if (s_id subj == subjId) && (Chain.last groupC == groupPath)
                 then Array.index items itemIdx
@@ -228,12 +228,23 @@ findItem subjId groupPath itemIdx =
     -}
 
 
-leaveOnly :: forall subj group item. Eq subj => Array subj -> Report subj group item -> Report subj group item
+leaveOnly
+    :: forall subj group item
+     . Eq subj
+    => Array subj
+    -> Report subj group item
+    -> Report subj group item
 leaveOnly toFilter =
     toBuilder >>> B.filterSubjects (flip Array.elem toFilter) >>> fromBuilder
 
 
-leaveOnlyById :: forall subj_id subj group item. Eq subj_id => IsSubjectId subj_id subj => Array subj_id -> Report subj group item -> Report subj group item
+leaveOnlyById
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => IsSubjectId subj_id subj
+    => Array subj_id
+    -> Report subj group item
+    -> Report subj group item
 leaveOnlyById toFilter =
     toBuilder >>> B.filterSubjects (s_id >>> flip Array.elem toFilter) >>> fromBuilder
 
@@ -266,7 +277,7 @@ filterItemsByTag
     -> Report subj group item
     -> Report subj group item
 filterItemsByTag itemTag =
-    toBuilder >>> B.filterItems (const $ const $ i_tags >>> Array.elem itemTag) >>> fromBuilder
+    toBuilder >>> B.filterItemsBy (const $ const $ i_tags >>> Array.elem itemTag) >>> fromBuilder
 
 
 sortItemsByKind

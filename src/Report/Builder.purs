@@ -21,20 +21,21 @@ module Report.Builder
     , mapGroups
     , allGroups, allGroupsC
     , allGroupsOf, allGroupsOfC
-    , filterGroups
+    , filterGroupsBy
     , withGroup, withGroupIdx
-    , findGroup, findMapGroup
+    , findGroupBy, findMapGroupBy
     , sortGroups, sortGroupsWith, sortGroupsBy
     , regroup, regroupBy, regroupByMany
     , mapGroupsWithItems, mapGroupsWithItemsE, mapGroupsWithItemsC
     {- Items -}
     , mapItems
     , allItems
-    , filterItems
+    , filterItems, filterItemsBy
     , withItem, withItemIdx
     , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
-    , findItem, findMapItem, findMapItems
-    , directItemsOf, allSubjectsItems, allSubjectsItems_, allGroupsItems, allGroupsItems_
+    , findItem, findItemBy, findMapItem, findMapItemBy, findMapItems,findMapItemsBy
+    , directItemsOf, directItemsOfBy, allSubjectsItemsBy, allSubjectsItemsBy_
+    , allGroupsItems, allGroupsItems_, allGroupsItemsBy, allGroupsItemsBy_
     ) where
 
 import Prelude
@@ -504,18 +505,18 @@ allGroupsWithItemsC = unwrap >>> map extractGroups >>> Array.concat
         extractGroupC (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
-filterGroups :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Builder subj group item
-filterGroups filterF = unwrap >>> map mapSubjectF >>> wrap
+filterGroupsBy :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Builder subj group item
+filterGroupsBy filterF = unwrap >>> map mapSubjectF >>> wrap
     where
         mapSubjectF (Subject s groups) = Subject s $ Array.filter (\(Group g _) -> filterF s g) groups
 
 
-findGroup :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Chain group)
-findGroup findF = findMapGroup (\s gc -> if findF s gc then Just gc else Nothing)
+findGroupBy :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Chain group)
+findGroupBy findF = findMapGroupBy (\s gc -> if findF s gc then Just gc else Nothing)
 
 
-findMapGroup :: forall subj group item a. (subj -> Chain group -> Maybe a) -> Builder subj group item -> Maybe a
-findMapGroup findF = unwrap >>> Array.findMap findSubjectF
+findMapGroupBy :: forall subj group item a. (subj -> Chain group -> Maybe a) -> Builder subj group item -> Maybe a
+findMapGroupBy findF = unwrap >>> Array.findMap findSubjectF
     where
         findSubjectF (Subject s groups) = Array.findMap (\(Group gc _) -> findF s gc) groups
 
@@ -574,35 +575,106 @@ allItems = unwrap >>> map extractGroups >>> map Array.concat >>> Array.concat
         extractGroupC (Group _ items) = unwrap <$> items
 
 
-filterItems :: forall subj group item. (subj -> Chain group -> item -> Boolean) -> Builder subj group item -> Builder subj group item
-filterItems filterF = unwrap >>> map mapSubjectF >>> wrap
+_locateGroup
+    :: forall subj_id subj group
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> (subj -> Chain group -> Boolean)
+_locateGroup subjId groupPath subj groupC = RC.s_id subj == subjId && RC.g_path (Chain.last groupC) == groupPath
+
+
+filterItems
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> (item -> Boolean)
+    -> Builder subj group item
+    -> Builder subj group item
+filterItems subjId groupPath filterItemF =
+    filterItemsBy \subj groupC item -> _locateGroup subjId groupPath subj groupC && filterItemF item
+
+
+filterItemsBy :: forall subj group item. (subj -> Chain group -> item -> Boolean) -> Builder subj group item -> Builder subj group item
+filterItemsBy filterF = unwrap >>> map mapSubjectF >>> wrap
     where
         mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
         mapGroupF s (Group gc items) = Group gc $ Array.filter (unwrap >>> filterF s gc) items
 
 
-findItem :: forall subj group item. (subj -> Chain group -> item -> Boolean) -> Builder subj group item -> Maybe item
-findItem findF = findMapItem \s gc item -> if findF s gc item then Just item else Nothing
+findItem
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> (item -> Boolean)
+    -> Builder subj group item
+    -> Maybe item
+findItem subjId groupPath findItemF =
+    findItemBy \subj groupC item -> _locateGroup subjId groupPath subj groupC && findItemF item
 
 
-findMapItem :: forall subj group item a. (subj -> Chain group -> item -> Maybe a) -> Builder subj group item -> Maybe a
-findMapItem findF = unwrap >>> Array.findMap findSubjectF
+findItemBy :: forall subj group item. (subj -> Chain group -> item -> Boolean) -> Builder subj group item -> Maybe item
+findItemBy findF = findMapItemBy \s gc item -> if findF s gc item then Just item else Nothing
+
+
+findMapItem
+    :: forall subj_id subj group item a
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> (item -> Maybe a)
+    -> Builder subj group item
+    -> Maybe a
+findMapItem subjId groupPath findItemF =
+    findMapItemBy \subj groupC item -> if _locateGroup subjId groupPath subj groupC then findItemF item else Nothing
+
+
+findMapItemBy :: forall subj group item a. (subj -> Chain group -> item -> Maybe a) -> Builder subj group item -> Maybe a
+findMapItemBy findF = unwrap >>> Array.findMap findSubjectF
     where
         findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> Array.findMap (unwrap >>> findF s gc) items) groups
 
 
-findMapItems :: forall subj group item a. (subj -> Chain group -> Array item -> Maybe a) -> Builder subj group item -> Maybe a
-findMapItems findF = unwrap >>> Array.findMap findSubjectF
+findMapItems
+    :: forall subj_id subj group item a
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> (Array item -> Maybe a)
+    -> Builder subj group item
+    -> Maybe a
+findMapItems subjId groupPath findItemsF =
+    findMapItemsBy \subj groupC items -> if _locateGroup subjId groupPath subj groupC then findItemsF items else Nothing
+
+
+findMapItemsBy :: forall subj group item a. (subj -> Chain group -> Array item -> Maybe a) -> Builder subj group item -> Maybe a
+findMapItemsBy findF = unwrap >>> Array.findMap findSubjectF
     where
         findSubjectF (Subject s groups) = Array.findMap (\(Group gc items) -> findF s gc $ unwrap <$> items) groups
 
 
-directItemsOf :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array item)
-directItemsOf predF = findMapItems $ \subj groupC items -> if predF subj groupC then Just items else Nothing
+directItemsOf :: forall subj_id subj group item. Eq subj_id => RC.IsSubjectId subj_id subj => RC.IsGroup group => subj_id -> GroupPath -> Builder subj group item -> Maybe (Array item)
+directItemsOf subjId groupPath = directItemsOfBy $ _locateGroup subjId groupPath
 
 
-allSubjectsItems :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
-allSubjectsItems subjPredF =
+directItemsOfBy :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array item)
+directItemsOfBy predF = findMapItemsBy $ \subj groupC items -> if predF subj groupC then Just items else Nothing
+
+
+allSubjectsItemsBy :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allSubjectsItemsBy subjPredF =
     unwrap
     >>> Array.filter (extractSubj >>> subjPredF)
     >>> case _ of
@@ -615,17 +687,30 @@ allSubjectsItems subjPredF =
         extractGroup (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
-allSubjectsItems_ :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Array item
-allSubjectsItems_ subjPredF =
-    allSubjectsItems subjPredF
+allSubjectsItemsBy_ :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Array item
+allSubjectsItemsBy_ subjPredF =
+    allSubjectsItemsBy subjPredF
     >>> fromMaybe []
     >>> map (Tuple.snd >>> map Tuple.snd)
     >>> map Array.concat
     >>> Array.concat
 
 
-allGroupsItems :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
-allGroupsItems groupPredF =
+allGroupsItems
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Builder subj group item
+    -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allGroupsItems subjId groupPath =
+    allGroupsItemsBy $ _locateGroup subjId groupPath
+
+
+allGroupsItemsBy :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Maybe (Array (subj /\ Array (Chain group /\ Array item)))
+allGroupsItemsBy groupPredF =
     unwrap
     >>> map extractGroups
     >>> map (\(subj /\ groups) -> subj /\ Array.filter (groupPredF subj <<< extractGroupC) groups)
@@ -638,9 +723,22 @@ allGroupsItems groupPredF =
         extractGroup (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
-allGroupsItems_ :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Array item
-allGroupsItems_ groupPredF =
-    allGroupsItems groupPredF
+allGroupsItems_
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => RC.IsSubjectId subj_id subj
+    => RC.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Builder subj group item
+    -> Array item
+allGroupsItems_ subjId groupPath =
+    allGroupsItemsBy_ $ _locateGroup subjId groupPath
+
+
+allGroupsItemsBy_ :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Array item
+allGroupsItemsBy_ groupPredF =
+    allGroupsItemsBy groupPredF
     >>> fromMaybe []
     >>> map (Tuple.snd >>> map Tuple.snd)
     >>> map Array.concat
