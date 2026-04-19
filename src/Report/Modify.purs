@@ -32,7 +32,8 @@ import Report.Convert.Text.Decorators.Tags (decodeTags) as Tags
 
 
 data What
-    = GroupName
+    = Subj
+    | GroupName
     -- | GroupStat -- TODO
     | ItemName Int
     | ItemDecorator Int Decorator.Key
@@ -44,7 +45,8 @@ data What
 
 
 data WhatKey
-    = WKGroupName
+    = WKSubj
+    | WKGroupName
     -- | WKGroupStat -- TODO
     | WKItemName
     | WKItemDecorator
@@ -60,6 +62,7 @@ derive instance Eq WhatKey
 
 data Location subj_id
     = Nowhere
+    | AtSubj      subj_id
     | AtGroup     subj_id GroupPath
     | AtItem      subj_id GroupPath Int
     | AtDecorator subj_id GroupPath Int Decorator.Key
@@ -114,6 +117,8 @@ modifyAt
     -> Report subj group item
     -> Report subj group item
 modifyAt { subjId, what, newValue, path } report = case what of
+    Subj ->
+        report
     GroupName -> do
         Report.withGroup subjId path (setGroupName $ unwrapEditable newValue) report
     -- GroupStat -> do
@@ -162,6 +167,7 @@ data RecalculateInclude
 whatOfLoc :: forall subj_id. Location subj_id -> Maybe What
 whatOfLoc = case _ of
     Nowhere -> Nothing
+    AtSubj _ -> Just Subj
     AtGroup _ _ -> Just GroupName
     AtItem _ _ itemIdx -> Just $ ItemName itemIdx
     AtDecorator _ _ itemIdx decKey -> Just $ ItemDecorator itemIdx decKey
@@ -171,6 +177,7 @@ whatOfLoc = case _ of
 
 whatKeyOf :: What -> WhatKey
 whatKeyOf = case _ of
+    Subj -> WKSubj
     GroupName -> WKGroupName
     -- GroupStat -> WKGroupStat
     ItemName _ -> WKItemName
@@ -185,6 +192,7 @@ whatKeyOf = case _ of
 whatKeyOfLoc :: forall subj_id. Location subj_id -> Maybe WhatKey
 whatKeyOfLoc location = case location of
     Nowhere -> Nothing
+    AtSubj _ -> Just WKSubj
     AtGroup _ _ -> Just WKGroupName
     AtItem _ _ _ -> Just WKItemName
     AtDecorator _ _ _ _ -> Just WKItemDecorator
@@ -289,3 +297,63 @@ recalculate cfg =
 -- loadDecoratorKey = case _ of
 --     ItemDecorator _ deckey -> Just deckey
 --     _ -> Nothing
+
+
+{-
+data Direction
+    = Up
+    | Down
+    | Right
+    | Left
+
+
+move :: forall subj_id subj group item. Report subj group item -> Location subj_id -> Direction -> Location subj_id
+move report loc dir =
+    let
+        builder = Report.toBuilder report
+    in case dir of
+        Up ->
+            case loc of
+                Nowhere -> Nowhere
+                AtSubj _ -> ?wh -- previous subj or stay there if there are no subjects before
+                AtGroup _ _ -> ?wh -- previous group or parent subj if there are no groups before
+                AtItem _ _ _ -> ?wh -- last tabular of the previous item or previous item or parent group
+                AtDecorator _ _ _ _ -> ?wh -- previous item inside this group or previous group if there are no items after this one in this group
+                    -- ...or the last decorator inside the next item
+                AtTag _ _ _ _ -> ?wh  -- previous item inside this group or next group if there are no items after this one in this group
+                    -- ...or the first tag inside the next item
+                AtTabular _ _ _ _ -> ?wh -- ...previous tabular inside this item or parent item
+        Down ->
+            case loc of
+                Nowhere -> ?wh -- first subj in the report
+                AtSubj _ -> ?wh -- first group inside this subj or next subj if there are no groups in this subj
+                AtGroup _ _ -> ?wh -- first item inside this group or next group if there are no items in this group
+                AtItem _ _ _ -> ?wh
+                    -- first tabular, if there are tabular values inside this item, else
+                    -- next item inside this group or next group if there are no items after this one in this group
+                AtDecorator _ _ _ _ -> ?wh -- next item inside this group or next group if there are no items after this one in this group
+                    -- ...or the first decorator inside the next item
+                AtTag _ _ _ _ -> ?wh -- next item inside this group or next group if there are no items after this one in this group
+                    -- ...or the first tag inside the next item
+                AtTabular _ _ _ _ -> ?wh
+                    -- ...next tabular inside this item or next item
+                    -- or the first tabular inside the next item
+        Left ->
+            case loc of
+                Nowhere -> Nowhere
+                AtSubj subjId -> AtSubj subjId
+                AtGroup subjId groupId -> AtGroup subjId groupId
+                AtItem _ _ _ -> ?wh -- first suffix decorator inside this item or just stay in the item
+                AtDecorator _ _ _ _ -> ?wh  -- next decorator inside this item, or item name, if it's the last prefix, or just stay in the item
+                AtTag _ _ _ _ -> ?wh  -- next tag inside this item, or next decorator, or just stay in the item
+                AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
+        Right ->
+            case loc of
+                Nowhere -> Nowhere
+                AtSubj subjId -> AtSubj subjId
+                AtGroup subjId groupId -> AtGroup subjId groupId
+                AtItem _ _ _ -> ?wh -- last prefix decorator inside this item or just stay in the item
+                AtDecorator _ _ _ _ -> ?wh  -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
+                AtTag _ _ _ _ -> ?wh  -- prev tag inside this item, or prev decorator, or just stay in the item
+                AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
+-}

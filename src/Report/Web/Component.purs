@@ -2,13 +2,19 @@ module Report.Web.Component where
 
 import Prelude
 
+import Debug as Debug
+
+import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Console as Console
+
+
 import Data.Array ((:))
 import Data.Array as Array
 import Data.Foldable (foldl)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int as Int
-import Data.Map (Map, SemigroupMap(..))
 import Data.Map as Map
+import Data.Map (Map, SemigroupMap(..))
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Maybe (isJust) as Maybe
 import Data.Newtype (class Newtype, wrap, unwrap)
@@ -16,24 +22,19 @@ import Data.Set as Set
 import Data.String (length, contains, toLower, joinWith, split, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Debug as Debug
-import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Console as Console
+
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event (eventListener)
+
 import Report as R
 import Report.Builder as RB
 import Report.Chain (Chain)
 import Report.Chain (fromString, toString, length, last, toArray) as Chain
 import Report.Class as R
-import Report.Convert.Dhall (toDhall) as Report
-import Report.Convert.Generic (class ToExport, includeOnly) as Report
-import Report.Convert.Json (toJson) as Report
-import Report.Convert.Org (toOrg) as Report
-import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
+
 import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
 import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
@@ -45,6 +46,13 @@ import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq) as GP
 import Report.Modify (Location(..), whatKeyOf)
 import Report.Modify as Modify
+
+import Report.Convert.Dhall (toDhall) as Report
+import Report.Convert.Generic (class ToExport, includeOnly) as Report
+import Report.Convert.Json (toJson) as Report
+import Report.Convert.Org (toOrg) as Report
+import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
+
 import Report.Web.Component.RecalcBehavior as CRB
 import Report.Web.Decorators (renderPrefixes, renderSuffixes, renderTags)
 import Report.Web.Decorators.EditInput as EI
@@ -59,6 +67,7 @@ import Report.Web.Helpers.VisualState (selectOne, itemNameColor) as VStates
 import Report.Web.Navigation2 (NavigatedTo)
 import Report.Web.Navigation2 as Navigation
 import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
+
 import Web.Event.Event (stopPropagation) as Event
 import Web.Event.Event as E
 import Web.HTML (window) as Web
@@ -67,6 +76,9 @@ import Web.HTML.Location (hash, setHash, search, setSearch) as Location
 import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history) as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
+import Web.UIEvent.KeyboardEvent (KeyboardEvent)
+import Web.UIEvent.KeyboardEvent (toEvent) as KE
+
 import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
 
@@ -129,6 +141,7 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | NextSort
     | ClearNavigation
     | NavigateTo MouseEvent (Location subj_id)
+    | NavigateWithKeyboard KeyboardEvent
     | EditAt (Location subj_id) CT.EncodedValue
     | StartEditing MouseEvent
     | CancelEditing
@@ -687,8 +700,11 @@ component cfg =
         ByWeight -> Alpha
         Alpha -> ByWeight
 
-    stopPropagation :: forall s a sl o. MouseEvent -> H.HalogenM s a o sl m Unit
-    stopPropagation mEvent = H.liftEffect $ Event.stopPropagation $ ME.toEvent mEvent
+    stopMEPropagation :: forall s a sl o. MouseEvent -> H.HalogenM s a o sl m Unit
+    stopMEPropagation mEvent = H.liftEffect $ Event.stopPropagation $ ME.toEvent mEvent
+
+    stopKEPropagation :: forall s a sl o. KeyboardEvent -> H.HalogenM s a o sl m Unit
+    stopKEPropagation kEvent = H.liftEffect $ Event.stopPropagation $ KE.toEvent kEvent
 
     clearCurrentActions = _ { navigatedTo = Navigation.clear }
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
@@ -737,7 +753,9 @@ component cfg =
 
         NavigateTo mevt location ->
             let
-                nextNavigation   = case location of
+                nextNavigation   = case location of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
+                    AtSubj subjId ->
+                                                Navigation.toSubj subjId
                     AtGroup subjId groupPath ->
                                                 Navigation.toGroup subjId groupPath
                     AtItem subjId groupPath itemIdx ->
@@ -750,7 +768,8 @@ component cfg =
                                                 Navigation.toTabular subjId groupPath itemIdx tabularIdx
                     Nowhere ->
                                                 Navigation.clear
-                editNavigation s = case location of
+                editNavigation s = case location of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
+                    AtSubj subjId ->            Navigation.toSubj subjId
                     AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
                                                 $ maybe (CT.EncodedValue "") (R.g_title >>> CT.EncodedValue)
                                                 $ R.findGroup subjId groupPath s.report
@@ -782,14 +801,26 @@ component cfg =
                             if not (processedReport s)
                             then s { navigatedTo = editNavigation s }
                             else s
-            in stopPropagation mevt <> H.modify_ navigateOrEdit
+            in stopMEPropagation mevt <> H.modify_ navigateOrEdit
+
+        NavigateWithKeyboard kevt ->
+            let
+                navigateUp s = s
+                navigateDown s = s
+                navigateRight s = s
+                navigateLeft s = s
+                navigateOrEdit s =
+                    if Navigation.isEditing s.navigatedTo then s else
+                    s
+            in stopKEPropagation kevt <> H.modify_ navigateOrEdit
 
         EditAt location encval ->
             let
                 nextReport :: R.Report subj group item -> R.Report subj group item
                 nextReport curReport
-                    = case location of
+                    = case location of -- FIXME: ensure it's not the same as `Navigation2.toModification`
                         Nowhere -> curReport
+                        AtSubj subjId -> curReport
                         AtGroup subjId groupPath ->
                             curReport
                                 # Modify.modifyAt @item_tag
@@ -844,7 +875,7 @@ component cfg =
                         H.modify_
                             \s -> s { report = nextReport s.report }
 
-        StartEditing mevt -> stopPropagation mevt -- <> H.modify_ _ { editingValue = true }
+        StartEditing mevt -> stopMEPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
         ToggleReadOnlyMode -> do
             H.modify_ clearEditing
@@ -860,22 +891,22 @@ component cfg =
         ToggleSubjectNavigationPinned -> H.modify_ $ withFlags \f -> f { subjectNavigationPinned = not f.subjectNavigationPinned }
         ToggleGroupNavigationPinned   -> H.modify_ $ withFlags \f -> f { groupNavigationPinned   = not f.groupNavigationPinned   }
         AddToItemsFilter mevt itemTag -> do
-            stopPropagation mevt
+            stopMEPropagation mevt
             H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag })
             H.modify_ $ withFlags _ { readOnlyMode = true }
             updateUrl
         SortItemsBy  mevt itemTagKind -> do
-            stopPropagation mevt
+            stopMEPropagation mevt
             H.modify_ $ \s -> s { process = Array.snoc s.process $ SortBy itemTagKind }
             H.modify_ $ withFlags _ { readOnlyMode = true }
             updateUrl
         GroupItemsBy mevt itemTagKind -> do
-            stopPropagation mevt
+            stopMEPropagation mevt
             H.modify_ $ \s -> s { process = Array.snoc s.process $ GroupBy itemTagKind }
             H.modify_ $ withFlags _ { readOnlyMode = true }
             updateUrl
         CancelProcess mevt process -> do
-            stopPropagation mevt
+            stopMEPropagation mevt
             s <- H.get
             let filteredProcess = Array.filter (_ /= process) s.process
             H.modify_ _ { process = filteredProcess }
@@ -1039,6 +1070,8 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     mbCurrentDecorator = if isNavigatedToItem then (Navigation._toNavigationRec navigatedTo).mbDecorator else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
+                    itemTitleSelectedStyle = "background-color: #fff8ff; border-radius: 3px;"
+                    itemTitleUsualStyle = ""
                     makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
                     makeDecoratorClickEvt decoratorKey mevt = NavigateTo mevt $ AtDecorator subjId groupPath itemIdx decoratorKey
                     makeDecoratorEditEvt decoratorKey = EditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
@@ -1112,7 +1145,10 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     : case itemTitle of
                         "" -> HH.text ""
                         _ ->
-                            HH.span_
+                            HH.span
+                                [ HP.style
+                                    $ if isNavigatedToItem then itemTitleSelectedStyle else itemTitleUsualStyle
+                                ]
                                 [ if hasPrefixes then qspacerSpan else qemptySpan
                                 , qitemmarkerSpan itemNameColor
                                 , qspacerSpan
@@ -1139,6 +1175,7 @@ navigationHint navigation =
         showSubjId = R.convertTo @String @subj_id
         hintText = case Navigation.toLocation navigation of
             Nowhere -> "-"
+            AtSubj subjId -> "S: " <> showSubjId subjId
             AtGroup subjId groupPath -> "G: " <> showSubjId subjId <> " / " <> show groupPath
             AtItem subjId groupPath itemIdx -> "I: " <> showSubjId subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ]"
             AtDecorator subjId groupPath itemIdx decoratorKey -> "X: " <> showSubjId subjId <> " / " <> show groupPath <> " [ " <> show itemIdx <> " ] . " <> Decorator.debugNavLabel decoratorKey

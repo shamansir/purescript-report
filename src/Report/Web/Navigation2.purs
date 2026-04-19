@@ -84,6 +84,11 @@ clearEditing = case _ of
     Editing location _ -> At location
 
 
+toSubj :: forall subj_id. subj_id -> NavigatedTo subj_id
+toSubj subj =
+    At $ AtSubj subj
+
+
 toGroup :: forall subj_id. subj_id -> GP.GroupPath -> NavigatedTo subj_id
 toGroup subj groupPath =
     At $ AtGroup subj groupPath
@@ -148,6 +153,8 @@ _toNavigationRec = case _ of
     where
         fillLocation = case _ of
             Nowhere -> initRec
+            AtSubj subj ->
+                initRec # _ { mbSubjectId = Just subj }
             AtGroup subj groupPath ->
                 initRec # _ { mbSubjectId = Just subj, mbGroup = Just groupPath }
             AtItem subj groupPath itemIdx ->
@@ -229,6 +236,7 @@ toModification = _toNavigationRec >>> \navigatedTo ->
     navigatedTo.mbEditing >>=
         \({ what, value }) ->
             case what of
+                M.WKSubj -> Nothing
                 M.WKGroupName -> do
                     subjId <- navigatedTo.mbSubjectId
                     groupPath <- navigatedTo.mbGroup

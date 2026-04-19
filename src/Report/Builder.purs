@@ -645,5 +645,3 @@ allGroupsItems_ groupPredF =
     >>> map (Tuple.snd >>> map Tuple.snd)
     >>> map Array.concat
     >>> Array.concat
-
-
