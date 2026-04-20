@@ -6,12 +6,81 @@ import Prelude
 import Data.Maybe
 import Data.Newtype
 import Data.Array as Array
+import Data.Array.Extra as Array
 
 import Report.Builder
 import Report.Builder as Builder
 import Report.Class as R
 import Report.GroupPath
 import Report.Decorator as Decorator
+import Report.Decorator (Key(..)) as D
+
+
+data PosKey
+    = PKRating
+    | PKPriority
+    | PKTask
+    | PKItemName
+    | PKProgress
+    | PKEarnedAt
+    | PKDescription
+    | PKReference
+    | PKTags
+
+
+derive instance Eq PosKey
+instance Ord PosKey where
+    compare pkA pkB = orderOf pkA `compare` orderOf pkB
+
+
+toPosKey :: Decorator.Key -> PosKey
+toPosKey = case _ of
+    D.KRating -> PKRating
+    D.KPriority -> PKPriority
+    D.KTask -> PKTask
+    D.KProgress _ -> PKProgress -- handle tasks inside progress?
+    D.KEarnedAt -> PKEarnedAt
+    D.KDescription -> PKDescription
+    D.KReference -> PKReference
+
+
+nextPos :: PosKey -> Maybe PosKey
+nextPos = case _ of
+    PKRating -> Just PKPriority
+    PKPriority -> Just PKTask
+    PKTask -> Just PKItemName
+    PKItemName -> Just PKProgress
+    PKProgress -> Just PKEarnedAt
+    PKEarnedAt -> Just PKDescription
+    PKDescription -> Just PKReference
+    PKReference -> Just PKTags
+    PKTags -> Nothing
+
+
+prevPos :: PosKey -> Maybe PosKey
+prevPos = case _ of
+    PKRating -> Nothing
+    PKPriority -> Just PKRating
+    PKTask -> Just PKPriority
+    PKItemName -> Just PKTask
+    PKProgress -> Just PKItemName
+    PKEarnedAt -> Just PKProgress
+    PKDescription -> Just PKEarnedAt
+    PKReference -> Just PKDescription
+    PKTags -> Just PKReference
+
+
+orderOf :: PosKey -> Int
+orderOf = case _ of
+    PKRating -> -3
+    PKPriority -> -2
+    PKTask -> -1
+    PKItemName -> 0
+    PKProgress -> 1
+    PKEarnedAt -> 2
+    PKDescription -> 3
+    PKReference -> 4
+    PKTags -> 5
 
 
 nextSubject
@@ -27,8 +96,7 @@ nextSubject subjId builder =
     in
         subjects
              # Array.findIndex (\subj -> R.s_id subj == subjId)
-            <#> (_ + 1)
-            >>= Array.index subjects
+            >>= flip Array.next subjects
             <#> R.s_id
 
 
@@ -45,8 +113,7 @@ previousSubject subjId builder =
     in
         subjects
              # Array.findIndex (\subj -> R.s_id subj == subjId)
-            <#> (_ - 1)
-            >>= Array.index subjects
+            >>= flip Array.prev subjects
             <#> R.s_id
 
 
@@ -65,8 +132,7 @@ nextGroup subjId groupPath builder =
     in
         groups
              # Array.findIndex (\group -> R.g_path group == groupPath)
-            <#> (_ + 1)
-            >>= Array.index groups
+            >>= flip Array.next groups
             <#> R.g_path
 
 
@@ -85,8 +151,7 @@ previousGroup subjId groupPath builder =
     in
         groups
              # Array.findIndex (\group -> R.g_path group == groupPath)
-            <#> (_ - 1)
-            >>= Array.index groups
+            >>= flip Array.prev groups
             <#> R.g_path
 
 
@@ -101,12 +166,7 @@ nextItem
     -> Builder subj group item
     -> Maybe Int
 nextItem subjId groupPath itemIdx builder =
-    let
-        itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
-        itemsCount = Array.length itemsOfGroup
-        nextIdx = itemIdx + 1
-    in
-        if nextIdx < itemsCount && nextIdx >= 0 then Just nextIdx else Nothing
+    Array.nextIndex itemIdx $ fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
 
 
 previousItem
@@ -120,31 +180,66 @@ previousItem
     -> Builder subj group item
     -> Maybe Int
 previousItem subjId groupPath itemIdx builder =
+    Array.prevIndex itemIdx $ fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
+
+
+itemMap
+    :: forall @item_tag item
+     . R.HasDecorators item
+    => R.HasTags item_tag item
+    => item
+    -> Array PosKey
+itemMap item =
+    let
+        decorators = R.i_decorators item
+        decoratorKeys = Decorator.keys decorators
+        tags = R.i_tags @item_tag item
+    in if Array.length tags > 0 then
+        {- Array.nub $ -} Array.insert PKItemName $ Array.insert PKTags $ toPosKey <$> decoratorKeys
+    else {- Array.nub $ -} Array.insert PKItemName $ toPosKey <$> decoratorKeys
+
+
+nextInlinePos
+    :: forall subj_id @item_tag subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => R.HasDecorators item
+    => R.HasTags item_tag item
+    => subj_id
+    -> GroupPath
+    -> Int
+    -> PosKey
+    -> Builder subj group item
+    -> Maybe PosKey
+nextInlinePos subjId groupPath itemIdx posKey builder =
     let
         itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
-        itemsCount = Array.length itemsOfGroup
-        prevIdx = itemIdx - 1
-    in
-        if prevIdx < itemsCount && prevIdx >= 0 then Just prevIdx else Nothing
+        mbCurrentItem = Array.index itemsOfGroup itemIdx
+    in mbCurrentItem >>= (Array.nextTo posKey <<< itemMap @item_tag)
+
+
+previousInlinePos
+    :: forall subj_id @item_tag subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => R.HasDecorators item
+    => R.HasTags item_tag item
+    => subj_id
+    -> GroupPath
+    -> Int
+    -> PosKey
+    -> Builder subj group item
+    -> Maybe PosKey
+previousInlinePos subjId groupPath itemIdx posKey builder =
+    let
+        itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
+        mbCurrentItem = Array.index itemsOfGroup itemIdx
+    in mbCurrentItem >>= (Array.prevTo posKey <<< itemMap @item_tag)
 
 
 {-
-nextDecorator :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Decorator.Key -> Builder subj group item -> Maybe Decorator.Key
-nextDecorator = ?wg
-
-
-previousDecorator :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Decorator.Key -> Builder subj group item -> Maybe Decorator.Key
-previousDecorator = ?wg
-
-
-nextTag :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Int -> Builder subj group item -> Maybe Int
-nextTag = ?wg
-
-
-previousTag :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Int -> Builder subj group item -> Maybe Int
-previousTag = ?wg
-
-
 nextTabular :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Int -> Builder subj group item -> Maybe Int
 nextTabular = ?wg
 
@@ -167,14 +262,6 @@ firstItemInGroup = ?wg
 
 lastItemInGroup :: forall subj_id subj group item. subj_id -> GroupPath -> Builder subj group item -> Maybe Int
 lastItemInGroup = ?wg
-
-
-firstDecoratorInItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Decorator.Key
-firstDecoratorInItem = ?wg
-
-
-lastDecoratorInItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Decorator.Key
-lastDecoratorInItem = ?wg
 
 
 firstTabularInItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Int

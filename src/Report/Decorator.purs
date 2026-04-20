@@ -8,6 +8,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Set as Set
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (isJust) as Maybe
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
@@ -267,10 +268,31 @@ orderOf = case _ of
         levelShift = 25
 
 
+{-
+nextSuffixKey :: Key -> Maybe Key
+nextSuffixKey = case _ of
+    KRating -> Just KPriority
+    KPriority -> Just KTask
+    KTask -> Nothing
+    _ -> Nothing
+
+
+nextPrefixKey :: Key -> Maybe Key
+nextPrefixKey = case _ of
+    KProgress _ -> Just KEarnedAt
+    KEarnedAt -> Just KDescription
+    KDescription -> Just KReference
+    _ -> Nothing
+-}
+
 
 allKeys :: Array Key
 allKeys =
     prefixesInOrder <> suffixesInOrder
+
+
+has :: Key -> Decorators -> Boolean
+has key = get key >>> Maybe.isJust
 
 
 getProgress :: P.PValueTag -> Decorators -> Maybe P.Progress

@@ -69,7 +69,7 @@ import Yoga.Tree (Tree)
 import Yoga.Tree.Extended (node, leaf, break, build, regroup, regroupByPath) as Tree
 
 
-newtype Builder s g i = Builder (Array (Subject s g i))
+newtype Builder s g i = Builder (Array (Subject s g i)) -- TODO: improve search speed for groups & items by backing up the structure using tree
 data Subject s g i = Subject s (Array (Group g i))
 data Group g i = Group (Chain g) (Array (Item i))
 newtype Item i = Item i
