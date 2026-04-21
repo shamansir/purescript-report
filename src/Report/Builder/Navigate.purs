@@ -292,6 +292,24 @@ previousTabular subjId groupPath itemIdx tabularIdx builder =
     >>= (R.i_tabular >>> Tab.items >>> Array.prevIndex tabularIdx)
 
 
+firstSubject
+    :: forall @subj_id subj group item
+     . R.IsSubjectId subj_id subj
+    => Builder subj group item
+    -> Maybe subj_id
+firstSubject =
+    Builder.allSubjects >>> Array.head >>> map R.s_id
+
+
+lastSubject
+    :: forall @subj_id subj group item
+     . R.IsSubjectId subj_id subj
+    => Builder subj group item
+    -> Maybe subj_id
+lastSubject =
+    Builder.allSubjects >>> Array.last >>> map R.s_id
+
+
 firstGroupInSubj
     :: forall subj_id subj group item
      . Eq subj_id
@@ -348,11 +366,34 @@ lastItemInGroup subjId groupPath builder =
     >>= (Array.length >>> \l -> if l > 0 then Just $ l - 1 else Nothing)
 
 
-{-
-firstTabularInItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Int
-firstTabularInItem = ?wg
+
+firstTabularInItem
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => R.HasTabular item
+    => subj_id
+    -> GroupPath
+    -> ItemIndex
+    -> Builder subj group item
+    -> Maybe TabularIndex
+firstTabularInItem subjId groupPath itemIdx builder =
+    _findItemByIndex subjId groupPath itemIdx builder
+    >>= (R.i_tabular >>> Tab.items >>> Array.length >>> \l -> if l > 0 then Just 0 else Nothing)
 
 
-lastTabularInItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Int
-lastTabularInItem = ?wg
--}
+lastTabularInItem
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => R.HasTabular item
+    => subj_id
+    -> GroupPath
+    -> ItemIndex
+    -> Builder subj group item
+    -> Maybe TabularIndex
+lastTabularInItem subjId groupPath itemIdx builder =
+    _findItemByIndex subjId groupPath itemIdx builder
+    >>= (R.i_tabular >>> Tab.items >>> Array.length >>> \l -> if l > 0 then Just $ l - 1 else Nothing)

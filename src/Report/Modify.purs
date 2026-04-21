@@ -14,6 +14,7 @@ import Yoga.Tree.Extended (break, build, node, leaf) as Tree
 import Report (Report)
 import Report.Builder (TreeNode(..))
 import Report.Builder as RBuilder
+import Report.Builder.Navigate as Nav
 import Report (toBuilder, fromBuilder, withGroup, withItem, toTree) as Report
 import Report.Class
 import Report.Chain (Chain)
@@ -299,7 +300,6 @@ recalculate cfg =
 --     _ -> Nothing
 
 
-{-
 data Direction
     = Up
     | Down
@@ -307,7 +307,16 @@ data Direction
     | Left
 
 
-move :: forall subj_id subj group item. Report subj group item -> Location subj_id -> Direction -> Location subj_id
+move
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => IsSubjectId subj_id subj
+    => IsGroup group
+    => HasTabular item
+    => Report subj group item
+    -> Location subj_id
+    -> Direction
+    -> Location subj_id
 move report loc dir =
     let
         builder = Report.toBuilder report
@@ -315,45 +324,137 @@ move report loc dir =
         Up ->
             case loc of
                 Nowhere -> Nowhere
-                AtSubj _ -> ?wh -- previous subj or stay there if there are no subjects before
-                AtGroup _ _ -> ?wh -- previous group or parent subj if there are no groups before
-                AtItem _ _ _ -> ?wh -- last tabular of the previous item or previous item or parent group
-                AtDecorator _ _ _ _ -> ?wh -- previous item inside this group or previous group if there are no items after this one in this group
-                    -- ...or the last decorator inside the next item
-                AtTag _ _ _ _ -> ?wh  -- previous item inside this group or next group if there are no items after this one in this group
-                    -- ...or the first tag inside the next item
-                AtTabular _ _ _ _ -> ?wh -- ...previous tabular inside this item or parent item
+                AtSubj subjId ->
+                    -- previous subj or stay there if there are no subjects before
+                    case Nav.previousSubject subjId builder of
+                        Just prevSubjId -> AtSubj prevSubjId
+                        Nothing -> AtSubj subjId
+                AtGroup subjId groupPath ->
+                    -- previous group or parent subj if there are no groups before
+                    case Nav.previousGroup subjId groupPath builder of
+                        Just nextGroupPath -> AtGroup subjId nextGroupPath
+                        Nothing -> AtSubj subjId
+                AtItem subjId groupPath itemIdx ->
+                    -- last tabular of the previous item or previous item or parent group
+                    case Nav.previousItem subjId groupPath itemIdx builder of
+                        Just prevItemIdx ->
+                            case Nav.lastTabularInItem subjId groupPath prevItemIdx builder of
+                                Just lastTabIdx -> AtTabular subjId groupPath prevItemIdx lastTabIdx
+                                Nothing -> AtItem subjId groupPath itemIdx
+                        Nothing ->
+                            AtGroup subjId groupPath
+                AtDecorator subjId groupPath itemIdx decKey ->
+                    -- previous item inside this group or previous group if there are no items before this one in this group
+                    -- ...or the last decorator inside the previous item
+                    case Nav.previousItem subjId groupPath itemIdx builder of
+                        Just prevItemIdx ->
+                            AtItem subjId groupPath itemIdx
+                        Nothing ->
+                            AtGroup subjId groupPath
+                AtTag subjId groupPath itemIdx tagIndex ->
+                    -- previous item inside this group or next group if there are no items before this one in this group
+                    -- ...or the first tag inside the previous item
+                    case Nav.previousItem subjId groupPath itemIdx builder of
+                        Just prevItemIdx ->
+                            AtItem subjId groupPath itemIdx
+                        Nothing ->
+                            AtGroup subjId groupPath
+                AtTabular subjId groupPath itemIdx tabularIdx ->
+                    -- ...previous tabular inside this item or parent item
+                    case Nav.previousTabular subjId groupPath itemIdx tabularIdx builder of
+                        Just prevTabularIdx ->
+                            AtTabular subjId groupPath itemIdx prevTabularIdx
+                        Nothing ->
+                            AtItem subjId groupPath itemIdx
         Down ->
             case loc of
-                Nowhere -> ?wh -- first subj in the report
-                AtSubj _ -> ?wh -- first group inside this subj or next subj if there are no groups in this subj
-                AtGroup _ _ -> ?wh -- first item inside this group or next group if there are no items in this group
-                AtItem _ _ _ -> ?wh
+                Nowhere ->
+                    -- first subj in the report
+                    case Nav.firstSubject builder of
+                        Just firstSubjId -> AtSubj firstSubjId
+                        Nothing -> Nowhere
+                AtSubj subjId ->
+                    -- first group inside this subj or next subj if there are no groups in this subj
+                    case Nav.firstGroupInSubj subjId builder of
+                        Just fistGroupPath -> AtGroup subjId fistGroupPath
+                        Nothing ->
+                            case Nav.nextSubject subjId builder of
+                                Just nextSubjId -> AtSubj nextSubjId
+                                Nothing -> AtSubj subjId
+                AtGroup subjId groupPath ->
+                     -- first item inside this group or next group if there are no items in this group
+                    case Nav.firstItemInGroup subjId groupPath builder of
+                        Just firstItemIdx -> AtItem subjId groupPath firstItemIdx
+                        Nothing -> case Nav.nextGroup subjId groupPath builder of
+                            Just nextGroupPath -> AtGroup subjId nextGroupPath
+                            Nothing -> AtGroup subjId groupPath
+                AtItem subjId groupPath itemIdx ->
                     -- first tabular, if there are tabular values inside this item, else
                     -- next item inside this group or next group if there are no items after this one in this group
-                AtDecorator _ _ _ _ -> ?wh -- next item inside this group or next group if there are no items after this one in this group
+                    case Nav.firstTabularInItem subjId groupPath itemIdx builder of
+                        Just firstTabularIdx -> AtTabular subjId groupPath itemIdx firstTabularIdx
+                        Nothing ->
+                            case Nav.nextItem subjId groupPath itemIdx builder of
+                                Just nextItemIdx -> AtItem subjId groupPath nextItemIdx
+                                Nothing -> case Nav.nextGroup subjId groupPath builder of
+                                    Just nextGroupPath -> AtGroup subjId nextGroupPath
+                                    Nothing -> case Nav.nextSubject subjId builder of
+                                        Just nextSubjId -> AtSubj nextSubjId
+                                        Nothing -> AtItem subjId groupPath itemIdx
+                AtDecorator subjId groupPath itemIdx decKey ->
+                    -- next item inside this group or next group if there are no items after this one in this group
                     -- ...or the first decorator inside the next item
-                AtTag _ _ _ _ -> ?wh -- next item inside this group or next group if there are no items after this one in this group
+                    case Nav.firstTabularInItem subjId groupPath itemIdx builder of
+                        Just fistTabularIdx -> AtTabular subjId groupPath itemIdx fistTabularIdx
+                        Nothing ->
+                            case Nav.nextItem subjId groupPath itemIdx builder of
+                                Just nextItemIdx -> AtItem subjId groupPath nextItemIdx
+                                Nothing -> case Nav.nextGroup subjId groupPath builder of
+                                    Just nextGroupPath -> AtGroup subjId nextGroupPath
+                                    Nothing -> case Nav.nextSubject subjId builder of
+                                        Just nextSubjId -> AtSubj nextSubjId
+                                        Nothing -> AtDecorator subjId groupPath itemIdx decKey
+                AtTag subjId groupPath itemIdx tagIdx ->
+                    -- next item inside this group or next group if there are no items after this one in this group
                     -- ...or the first tag inside the next item
-                AtTabular _ _ _ _ -> ?wh
+                    case Nav.firstTabularInItem subjId groupPath itemIdx builder of
+                        Just fistTabularIdx -> AtTabular subjId groupPath itemIdx fistTabularIdx
+                        Nothing ->
+                            case Nav.nextItem subjId groupPath itemIdx builder of
+                                Just nextItemIdx -> AtItem subjId groupPath nextItemIdx
+                                Nothing -> case Nav.nextGroup subjId groupPath builder of
+                                    Just nextGroupPath -> AtGroup subjId nextGroupPath
+                                    Nothing -> case Nav.nextSubject subjId builder of
+                                        Just nextSubjId -> AtSubj nextSubjId
+                                        Nothing -> AtTag subjId groupPath itemIdx tagIdx
+                AtTabular subjId groupPath itemIdx tabularIdx ->
                     -- ...next tabular inside this item or next item
                     -- or the first tabular inside the next item
+                    case Nav.nextTabular subjId groupPath itemIdx tabularIdx builder of
+                        Just nextTabularIdx -> AtTabular subjId groupPath itemIdx nextTabularIdx
+                        Nothing ->
+                            case Nav.nextItem subjId groupPath itemIdx builder of
+                                Just nextItemIdx -> AtItem subjId groupPath nextItemIdx
+                                Nothing -> case Nav.nextGroup subjId groupPath builder of
+                                    Just nextGroupPath -> AtGroup subjId nextGroupPath
+                                    Nothing -> case Nav.nextSubject subjId builder of
+                                        Just nextSubjId -> AtSubj nextSubjId
+                                        Nothing -> AtItem subjId groupPath itemIdx
         Left ->
             case loc of
                 Nowhere -> Nowhere
                 AtSubj subjId -> AtSubj subjId
                 AtGroup subjId groupId -> AtGroup subjId groupId
-                AtItem _ _ _ -> ?wh -- first suffix decorator inside this item or just stay in the item
-                AtDecorator _ _ _ _ -> ?wh  -- next decorator inside this item, or item name, if it's the last prefix, or just stay in the item
-                AtTag _ _ _ _ -> ?wh  -- next tag inside this item, or next decorator, or just stay in the item
+                AtItem _ _ _ -> Nowhere -- first suffix decorator inside this item or just stay in the item
+                AtDecorator _ _ _ _ -> Nowhere  -- next decorator inside this item, or item name, if it's the last prefix, or just stay in the item
+                AtTag _ _ _ _ -> Nowhere  -- next tag inside this item, or next decorator, or just stay in the item
                 AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
         Right ->
             case loc of
                 Nowhere -> Nowhere
                 AtSubj subjId -> AtSubj subjId
                 AtGroup subjId groupId -> AtGroup subjId groupId
-                AtItem _ _ _ -> ?wh -- last prefix decorator inside this item or just stay in the item
-                AtDecorator _ _ _ _ -> ?wh  -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
-                AtTag _ _ _ _ -> ?wh  -- prev tag inside this item, or prev decorator, or just stay in the item
+                AtItem _ _ _ -> Nowhere -- last prefix decorator inside this item or just stay in the item
+                AtDecorator _ _ _ _ -> Nowhere  -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
+                AtTag _ _ _ _ -> Nowhere  -- prev tag inside this item, or prev decorator, or just stay in the item
                 AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
--}
