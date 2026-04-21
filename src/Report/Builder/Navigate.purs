@@ -14,6 +14,11 @@ import Report.Class as R
 import Report.GroupPath
 import Report.Decorator as Decorator
 import Report.Decorator (Key(..)) as D
+import Report.Tabular (items) as Tab
+
+
+type ItemIndex = Int
+type TabularIndex = Int
 
 
 data PosKey
@@ -162,9 +167,9 @@ nextItem
     => R.IsGroup group
     => subj_id
     -> GroupPath
-    -> Int
+    -> ItemIndex
     -> Builder subj group item
-    -> Maybe Int
+    -> Maybe ItemIndex
 nextItem subjId groupPath itemIdx builder =
     Array.nextIndex itemIdx $ fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
 
@@ -176,20 +181,20 @@ previousItem
     => R.IsGroup group
     => subj_id
     -> GroupPath
-    -> Int
+    -> ItemIndex
     -> Builder subj group item
-    -> Maybe Int
+    -> Maybe ItemIndex
 previousItem subjId groupPath itemIdx builder =
     Array.prevIndex itemIdx $ fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
 
 
-itemMap
+_itemMap
     :: forall @item_tag item
      . R.HasDecorators item
     => R.HasTags item_tag item
     => item
     -> Array PosKey
-itemMap item =
+_itemMap item =
     let
         decorators = R.i_decorators item
         decoratorKeys = Decorator.keys decorators
@@ -197,6 +202,22 @@ itemMap item =
     in if Array.length tags > 0 then
         {- Array.nub $ -} Array.insert PKItemName $ Array.insert PKTags $ toPosKey <$> decoratorKeys
     else {- Array.nub $ -} Array.insert PKItemName $ toPosKey <$> decoratorKeys
+
+
+_findItemByIndex
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> ItemIndex
+    -> Builder subj group item
+    -> Maybe item
+_findItemByIndex subjId groupPath itemIdx =
+    Builder.directItemsOf subjId groupPath
+        >>> fromMaybe []
+        >>> flip Array.index itemIdx
 
 
 nextInlinePos
@@ -208,15 +229,13 @@ nextInlinePos
     => R.HasTags item_tag item
     => subj_id
     -> GroupPath
-    -> Int
+    -> ItemIndex
     -> PosKey
     -> Builder subj group item
     -> Maybe PosKey
 nextInlinePos subjId groupPath itemIdx posKey builder =
-    let
-        itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
-        mbCurrentItem = Array.index itemsOfGroup itemIdx
-    in mbCurrentItem >>= (Array.nextTo posKey <<< itemMap @item_tag)
+    _findItemByIndex subjId groupPath itemIdx builder
+    >>= (_itemMap @item_tag >>> Array.nextTo posKey)
 
 
 previousInlinePos
@@ -228,42 +247,108 @@ previousInlinePos
     => R.HasTags item_tag item
     => subj_id
     -> GroupPath
-    -> Int
+    -> ItemIndex
     -> PosKey
     -> Builder subj group item
     -> Maybe PosKey
 previousInlinePos subjId groupPath itemIdx posKey builder =
-    let
-        itemsOfGroup = fromMaybe [] $ Builder.directItemsOf subjId groupPath builder
-        mbCurrentItem = Array.index itemsOfGroup itemIdx
-    in mbCurrentItem >>= (Array.prevTo posKey <<< itemMap @item_tag)
+    _findItemByIndex subjId groupPath itemIdx builder
+    >>= (_itemMap @item_tag >>> Array.prevTo posKey)
+
+
+
+nextTabular
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => R.HasTabular item
+    => subj_id
+    -> GroupPath
+    -> ItemIndex
+    -> TabularIndex
+    -> Builder subj group item
+    -> Maybe TabularIndex
+nextTabular subjId groupPath itemIdx tabularIdx builder =
+    _findItemByIndex subjId groupPath itemIdx builder
+    >>= (R.i_tabular >>> Tab.items >>> Array.nextIndex tabularIdx)
+
+
+
+previousTabular
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => R.HasTabular item
+    => subj_id
+    -> GroupPath
+    -> ItemIndex
+    -> TabularIndex
+    -> Builder subj group item
+    -> Maybe TabularIndex
+previousTabular subjId groupPath itemIdx tabularIdx builder =
+    _findItemByIndex subjId groupPath itemIdx builder
+    >>= (R.i_tabular >>> Tab.items >>> Array.prevIndex tabularIdx)
+
+
+firstGroupInSubj
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> Builder subj group item
+    -> Maybe GroupPath
+firstGroupInSubj subjId builder =
+    Array.head (Builder.allGroupsOf subjId builder)
+    <#> R.g_path
+
+
+lastGroupInSubj
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> Builder subj group item
+    -> Maybe GroupPath
+lastGroupInSubj subjId builder =
+    Array.last (Builder.allGroupsOf subjId builder)
+    <#> R.g_path
+
+
+
+firstItemInGroup
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Builder subj group item
+    -> Maybe ItemIndex
+firstItemInGroup subjId groupPath builder =
+    Builder.directItemsOf subjId groupPath builder
+    >>= (Array.length >>> \l -> if l > 0 then Just 0 else Nothing)
+
+
+
+lastItemInGroup
+    :: forall subj_id subj group item
+     . Eq subj_id
+    => R.IsSubjectId subj_id subj
+    => R.IsGroup group
+    => subj_id
+    -> GroupPath
+    -> Builder subj group item
+    -> Maybe ItemIndex
+lastItemInGroup subjId groupPath builder =
+    Builder.directItemsOf subjId groupPath builder
+    >>= (Array.length >>> \l -> if l > 0 then Just $ l - 1 else Nothing)
 
 
 {-
-nextTabular :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Int -> Builder subj group item -> Maybe Int
-nextTabular = ?wg
-
-
-previousTabular :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Int -> Builder subj group item -> Maybe Int
-previousTabular = ?wg
-
-
-firstGroupInSubj :: forall subj_id subj group item. subj_id -> Builder subj group item -> Maybe GroupPath
-firstGroupInSubj = ?wg
-
-
-lastGroupInSubj :: forall subj_id subj group item. subj_id -> Builder subj group item -> Maybe GroupPath
-lastGroupInSubj = ?wg
-
-
-firstItemInGroup :: forall subj_id subj group item. subj_id -> GroupPath -> Builder subj group item -> Maybe Int
-firstItemInGroup = ?wg
-
-
-lastItemInGroup :: forall subj_id subj group item. subj_id -> GroupPath -> Builder subj group item -> Maybe Int
-lastItemInGroup = ?wg
-
-
 firstTabularInItem :: forall subj_id subj group item. subj_id -> GroupPath -> Int -> Builder subj group item -> Maybe Int
 firstTabularInItem = ?wg
 
