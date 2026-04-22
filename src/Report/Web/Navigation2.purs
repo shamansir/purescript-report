@@ -2,7 +2,7 @@ module Report.Web.Navigation2 where
 
 import Prelude
 
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), isJust, isNothing)
 import Data.Tuple.Nested ((/\))
 
 import Report.Core.Logic (EncodedValue)
@@ -167,6 +167,9 @@ _toNavigationRec = case _ of
                 initRec # _ { mbSubjectId = Just subj, mbGroup = Just groupPath, mbItem = Just itemIdx, mbTabular = Just tabularIdx }
 
 
+atSubjR :: forall subj_id. Eq subj_id => subj_id -> NavigatedToRec subj_id -> Boolean
+atSubjR subj = \navigatedTo
+    -> navigatedTo.mbSubjectId == Just subj
 atGroupR :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedToRec subj_id -> Boolean
 atGroupR subj groupPath = \navigatedTo
     -> navigatedTo.mbSubjectId == Just subj
@@ -175,6 +178,13 @@ atItemR :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Navig
 atItemR subj groupPath itemIdx = \navigatedTo
     -> atGroupR subj groupPath navigatedTo
     && navigatedTo.mbItem == Just itemIdx
+atItemNameR :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedToRec subj_id -> Boolean
+atItemNameR subj groupPath itemIdx = \navigatedTo
+    -> atGroupR subj groupPath navigatedTo
+    && navigatedTo.mbItem == Just itemIdx
+    && isNothing navigatedTo.mbDecorator
+    && isNothing navigatedTo.mbTag
+    && isNothing navigatedTo.mbTabular
 atDecoratorR :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Decorator.Key -> NavigatedToRec subj_id -> Boolean
 atDecoratorR subj groupPath itemIdx decoratorKey = \navigatedTo
     -> atItemR subj groupPath itemIdx navigatedTo
@@ -193,10 +203,14 @@ atTabularR subj groupPath itemIdx tabularIdx = \navigatedTo
     && navigatedTo.mbTabular == Just tabularIdx
 
 
+atSubj :: forall subj_id. Eq subj_id => subj_id -> NavigatedTo subj_id -> Boolean
+atSubj subj = _toNavigationRec >>> atSubjR subj
 atGroup :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> NavigatedTo subj_id -> Boolean
 atGroup subj groupPath = _toNavigationRec >>> atGroupR subj groupPath
 atItem :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean
 atItem subj groupPath itemIdx = _toNavigationRec >>> atItemR subj groupPath itemIdx
+atItemName :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean
+atItemName subj groupPath itemIdx = _toNavigationRec >>> atItemNameR subj groupPath itemIdx
 atDecorator :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> Decorator.Key -> NavigatedTo subj_id -> Boolean
 atDecorator subj groupPath itemIdx decoratorKey = _toNavigationRec >>> atDecoratorR subj groupPath itemIdx decoratorKey
 atTags :: forall subj_id. Eq subj_id => subj_id -> GP.GroupPath -> Int -> NavigatedTo subj_id -> Boolean

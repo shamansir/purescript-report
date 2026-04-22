@@ -1004,7 +1004,8 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
         , HP.id $ "subject-" <> subjUniqueId
         ]
         $ HH.div
-            [ HP.style "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
+            [ HP.style $ "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
+                <> if isNavigatedToSubj then subjSelectedStyle else subjUsualStyle
             , HE.onClick $ const ClearNavigation
             ]
             [ HH.text $ R.s_name @subj_id subj
@@ -1015,7 +1016,10 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
         where
             subjId = R.s_id subj
             subjUniqueId = R.convertTo @String subjId
+            isNavigatedToSubj = navigatedTo # Navigation.atSubj subjId
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
+            subjSelectedStyle = "background-color: cornsilk;" -- ghostwhite
+            subjUsualStyle = ""
             groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
             groupUsualStyle = "border: 1px dashed transparent;"
 
@@ -1034,7 +1038,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     [ HP.style $ "padding-bottom: 10px; line-height: "
                         <> show lineHeight <> "em; margin-left: "
                         <> (show $ marginFor groupPath) <> "px;"
-                        -- <> (if isNavigatedTo then " background-color: #f0f8ff;" else "")
+                        -- <> (if isNavigatedTo then " background-color: #2e9eff;" else "")
                     , HP.id $ groupPathId groupPath
                     , HE.onClick $ \mevt -> NavigateTo mevt $ AtGroup subjId groupPath
                     ]
@@ -1077,12 +1081,14 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                 let
                     itemTitle = R.i_title item
                     isNavigatedToItem = navigatedTo # Navigation.atItem subjId groupPath itemIdx
+                    isNavigatedToItemName = navigatedTo # Navigation.atItemName subjId groupPath itemIdx
                     isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
                     isEditingDecorator decorator = navigatedTo # Navigation.editingAtDecorator subjId groupPath itemIdx decorator
                     mbCurrentDecorator = if isNavigatedToItem then (Navigation._toNavigationRec navigatedTo).mbDecorator else Nothing
                     itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
                     itemUsualStyle = "background-color: transparent;"
-                    itemTitleSelectedStyle = "background-color: #fff8ff; border-radius: 3px;"
+                    -- itemTitleSelectedStyle = "background-color: #fff8ff; border-radius: 3px;"
+                    itemTitleSelectedStyle = "background-color: #fbd6fb; border-radius: 3px;"
                     itemTitleUsualStyle = ""
                     makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
                     makeDecoratorClickEvt decoratorKey mevt = NavigateTo mevt $ AtDecorator subjId groupPath itemIdx decoratorKey
@@ -1159,7 +1165,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                         _ ->
                             HH.span
                                 [ HP.style
-                                    $ if isNavigatedToItem then itemTitleSelectedStyle else itemTitleUsualStyle
+                                    $ if isNavigatedToItemName then itemTitleSelectedStyle else itemTitleUsualStyle
                                 ]
                                 [ if hasPrefixes then qspacerSpan else qemptySpan
                                 , qitemmarkerSpan itemNameColor
