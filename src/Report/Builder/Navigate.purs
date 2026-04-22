@@ -1,91 +1,23 @@
 module Report.Builder.Navigate where
 
-
 import Prelude
 
-import Data.Maybe
-import Data.Newtype
-import Data.Array as Array
-import Data.Array.Extra as Array
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Array (findIndex, head, index, insert, last, length)  as Array
+import Data.Array.Extra (next, nextIndex, nextTo, prev, prevIndex, prevTo) as Array
 
-import Report.Builder
+import Report.Builder (Builder)
 import Report.Builder as Builder
 import Report.Class as R
-import Report.GroupPath
+import Report.GroupPath (GroupPath)
 import Report.Decorator as Decorator
-import Report.Decorator (Key(..)) as D
+-- import Report.Decorator (Key(..)) as D
 import Report.Tabular (items) as Tab
+import Report.Builder.InlinePos (PosKey(..), toPosKey)
 
 
 type ItemIndex = Int
 type TabularIndex = Int
-
-
-data PosKey
-    = PKRating
-    | PKPriority
-    | PKTask
-    | PKItemName
-    | PKProgress
-    | PKEarnedAt
-    | PKDescription
-    | PKReference
-    | PKTags
-
-
-derive instance Eq PosKey
-instance Ord PosKey where
-    compare pkA pkB = orderOf pkA `compare` orderOf pkB
-
-
-toPosKey :: Decorator.Key -> PosKey
-toPosKey = case _ of
-    D.KRating -> PKRating
-    D.KPriority -> PKPriority
-    D.KTask -> PKTask
-    D.KProgress _ -> PKProgress -- handle tasks inside progress?
-    D.KEarnedAt -> PKEarnedAt
-    D.KDescription -> PKDescription
-    D.KReference -> PKReference
-
-
-nextPos :: PosKey -> Maybe PosKey
-nextPos = case _ of
-    PKRating -> Just PKPriority
-    PKPriority -> Just PKTask
-    PKTask -> Just PKItemName
-    PKItemName -> Just PKProgress
-    PKProgress -> Just PKEarnedAt
-    PKEarnedAt -> Just PKDescription
-    PKDescription -> Just PKReference
-    PKReference -> Just PKTags
-    PKTags -> Nothing
-
-
-prevPos :: PosKey -> Maybe PosKey
-prevPos = case _ of
-    PKRating -> Nothing
-    PKPriority -> Just PKRating
-    PKTask -> Just PKPriority
-    PKItemName -> Just PKTask
-    PKProgress -> Just PKItemName
-    PKEarnedAt -> Just PKProgress
-    PKDescription -> Just PKEarnedAt
-    PKReference -> Just PKDescription
-    PKTags -> Just PKReference
-
-
-orderOf :: PosKey -> Int
-orderOf = case _ of
-    PKRating -> -3
-    PKPriority -> -2
-    PKTask -> -1
-    PKItemName -> 0
-    PKProgress -> 1
-    PKEarnedAt -> 2
-    PKDescription -> 3
-    PKReference -> 4
-    PKTags -> 5
 
 
 nextSubject
@@ -205,7 +137,7 @@ _itemMap item =
 
 
 _findItemByIndex
-    :: forall subj_id subj group item
+    :: forall subj_id @subj @group item
      . Eq subj_id
     => R.IsSubjectId subj_id subj
     => R.IsGroup group

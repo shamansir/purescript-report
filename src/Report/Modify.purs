@@ -15,6 +15,7 @@ import Report (Report)
 import Report.Builder (TreeNode(..))
 import Report.Builder as RBuilder
 import Report.Builder.Navigate as Nav
+import Report.Builder.InlinePos as Nav
 import Report (toBuilder, fromBuilder, withGroup, withItem, toTree) as Report
 import Report.Class
 import Report.Chain (Chain)
@@ -23,12 +24,14 @@ import Report.Core.Logic (EncodedValue(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq, pathFromArray, startsWith, encode) as GPath
 import Report.Decorator as Decorator
+import Report.Decorator (Key(..)) as Dec
 import Report.Decorator (Decorator, Decorators)
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Tags (fromArray) as Tags
 import Report.Decorators.Class.ValueModify (fromEditable)
 import Report.Decorators.Stats.Collect (collectStats, CollectWhat)
+import Report.Decorators.Progress as P
 import Report.Convert.Text.Decorators.Tags (decodeTags) as Tags
 
 
@@ -308,10 +311,12 @@ data Direction
 
 
 move
-    :: forall subj_id subj group item
+    :: forall subj_id @item_tag subj group item
      . Eq subj_id
     => IsSubjectId subj_id subj
     => IsGroup group
+    => HasDecorators item
+    => HasTags item_tag item
     => HasTabular item
     => Report subj group item
     -> Location subj_id
@@ -321,7 +326,9 @@ move report loc dir =
     let
         builder = Report.toBuilder report
     in case dir of
+
         Up ->
+
             case loc of
                 Nowhere -> Nowhere
                 AtSubj subjId ->
@@ -366,7 +373,9 @@ move report loc dir =
                             AtTabular subjId groupPath itemIdx prevTabularIdx
                         Nothing ->
                             AtItem subjId groupPath itemIdx
+
         Down ->
+
             case loc of
                 Nowhere ->
                     -- first subj in the report
@@ -440,21 +449,62 @@ move report loc dir =
                                     Nothing -> case Nav.nextSubject subjId builder of
                                         Just nextSubjId -> AtSubj nextSubjId
                                         Nothing -> AtItem subjId groupPath itemIdx
+
         Left ->
+
             case loc of
                 Nowhere -> Nowhere
                 AtSubj subjId -> AtSubj subjId
-                AtGroup subjId groupId -> AtGroup subjId groupId
-                AtItem _ _ _ -> Nowhere -- first suffix decorator inside this item or just stay in the item
-                AtDecorator _ _ _ _ -> Nowhere  -- next decorator inside this item, or item name, if it's the last prefix, or just stay in the item
-                AtTag _ _ _ _ -> Nowhere  -- next tag inside this item, or next decorator, or just stay in the item
-                AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
+                AtGroup subjId groupPath -> AtGroup subjId groupPath
+                AtItem subjId groupPath itemIdx ->
+                    -- first suffix decorator inside this item or just stay in the item
+                    case Nav.nextInlinePos @item_tag subjId groupPath itemIdx Nav.PKItemName builder of
+                        Just nextPosKey -> posKeyToLocation subjId groupPath itemIdx nextPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtDecorator subjId groupPath itemIdx decKey ->
+                    -- next decorator inside this item, or item name, if it's the last prefix, or just stay in the item
+                    case Nav.nextInlinePos @item_tag subjId groupPath itemIdx (Nav.toPosKey decKey) builder of
+                        Just nextPosKey -> posKeyToLocation subjId groupPath itemIdx nextPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtTag subjId groupPath itemIdx tagIdx ->
+                    -- next tag inside this item, or next decorator, or just stay in the item
+                    case Nav.nextInlinePos @item_tag subjId groupPath itemIdx Nav.PKTags builder of
+                        Just nextPosKey -> posKeyToLocation subjId groupPath itemIdx nextPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtTabular subjId groupId itemIdx tabIdx ->
+                    AtTabular subjId groupId itemIdx tabIdx
+
         Right ->
+
             case loc of
                 Nowhere -> Nowhere
                 AtSubj subjId -> AtSubj subjId
                 AtGroup subjId groupId -> AtGroup subjId groupId
-                AtItem _ _ _ -> Nowhere -- last prefix decorator inside this item or just stay in the item
-                AtDecorator _ _ _ _ -> Nowhere  -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
-                AtTag _ _ _ _ -> Nowhere  -- prev tag inside this item, or prev decorator, or just stay in the item
+                AtItem subjId groupPath itemIdx ->
+                    -- last prefix decorator inside this item or just stay in the item
+                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx Nav.PKItemName builder of
+                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtDecorator subjId groupPath itemIdx decKey ->
+                    -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
+                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx (Nav.toPosKey decKey) builder of
+                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtTag subjId groupPath itemIdx tagIdx ->
+                    -- prev tag inside this item, or prev decorator, or just stay in the item
+                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx Nav.PKTags builder of
+                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
                 AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
+
+        where
+            posKeyToLocation subjId groupPath itemIdx = case _ of
+                Nav.PKRating ->           AtDecorator subjId groupPath itemIdx Dec.KRating
+                Nav.PKPriority ->         AtDecorator subjId groupPath itemIdx Dec.KPriority
+                Nav.PKTask ->             AtDecorator subjId groupPath itemIdx Dec.KTask
+                Nav.PKItemName ->         AtItem subjId groupPath itemIdx
+                Nav.PKProgress mbPvTag -> AtDecorator subjId groupPath itemIdx $ Dec.KProgress $ fromMaybe (P.PValueTag "UNK") mbPvTag
+                Nav.PKEarnedAt ->         AtDecorator subjId groupPath itemIdx Dec.KEarnedAt
+                Nav.PKDescription ->      AtDecorator subjId groupPath itemIdx Dec.KDescription
+                Nav.PKReference ->        AtDecorator subjId groupPath itemIdx Dec.KReference
+                Nav.PKTags ->             AtTag subjId groupPath itemIdx 0
