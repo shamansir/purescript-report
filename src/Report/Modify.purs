@@ -311,7 +311,7 @@ data Direction
 
 
 move
-    :: forall subj_id @item_tag subj group item
+    :: forall @subj_id @item_tag subj group item
      . Eq subj_id
     => IsSubjectId subj_id subj
     => IsGroup group
@@ -319,10 +319,10 @@ move
     => HasTags item_tag item
     => HasTabular item
     => Report subj group item
-    -> Location subj_id
     -> Direction
     -> Location subj_id
-move report loc dir =
+    -> Location subj_id
+move report dir loc =
     let
         builder = Report.toBuilder report
     in case dir of
@@ -347,7 +347,7 @@ move report loc dir =
                         Just prevItemIdx ->
                             case Nav.lastTabularInItem subjId groupPath prevItemIdx builder of
                                 Just lastTabIdx -> AtTabular subjId groupPath prevItemIdx lastTabIdx
-                                Nothing -> AtItem subjId groupPath itemIdx
+                                Nothing -> AtItem subjId groupPath prevItemIdx
                         Nothing ->
                             AtGroup subjId groupPath
                 AtDecorator subjId groupPath itemIdx decKey ->
@@ -355,7 +355,7 @@ move report loc dir =
                     -- ...or the last decorator inside the previous item
                     case Nav.previousItem subjId groupPath itemIdx builder of
                         Just prevItemIdx ->
-                            AtItem subjId groupPath itemIdx
+                            AtItem subjId groupPath prevItemIdx
                         Nothing ->
                             AtGroup subjId groupPath
                 AtTag subjId groupPath itemIdx tagIndex ->
@@ -455,6 +455,30 @@ move report loc dir =
             case loc of
                 Nowhere -> Nowhere
                 AtSubj subjId -> AtSubj subjId
+                AtGroup subjId groupId -> AtGroup subjId groupId
+                AtItem subjId groupPath itemIdx ->
+                    -- last prefix decorator inside this item or just stay in the item
+                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx Nav.PKItemName builder of
+                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtDecorator subjId groupPath itemIdx decKey ->
+                    -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
+                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx (Nav.toPosKey decKey) builder of
+                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtTag subjId groupPath itemIdx tagIdx ->
+                    -- prev tag inside this item, or prev decorator, or just stay in the item
+                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx Nav.PKTags builder of
+                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
+                        Nothing -> AtItem subjId groupPath itemIdx
+                AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
+
+
+        Right ->
+
+            case loc of
+                Nowhere -> Nowhere
+                AtSubj subjId -> AtSubj subjId
                 AtGroup subjId groupPath -> AtGroup subjId groupPath
                 AtItem subjId groupPath itemIdx ->
                     -- first suffix decorator inside this item or just stay in the item
@@ -474,28 +498,6 @@ move report loc dir =
                 AtTabular subjId groupId itemIdx tabIdx ->
                     AtTabular subjId groupId itemIdx tabIdx
 
-        Right ->
-
-            case loc of
-                Nowhere -> Nowhere
-                AtSubj subjId -> AtSubj subjId
-                AtGroup subjId groupId -> AtGroup subjId groupId
-                AtItem subjId groupPath itemIdx ->
-                    -- last prefix decorator inside this item or just stay in the item
-                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx Nav.PKItemName builder of
-                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
-                        Nothing -> AtItem subjId groupPath itemIdx
-                AtDecorator subjId groupPath itemIdx decKey ->
-                    -- previous decorator inside this item, or item name, if it's the first suffix, or just stay in the item
-                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx (Nav.toPosKey decKey) builder of
-                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
-                        Nothing -> AtItem subjId groupPath itemIdx
-                AtTag subjId groupPath itemIdx tagIdx ->
-                    -- prev tag inside this item, or prev decorator, or just stay in the item
-                    case Nav.previousInlinePos @item_tag subjId groupPath itemIdx Nav.PKTags builder of
-                        Just prevPosKey -> posKeyToLocation subjId groupPath itemIdx prevPosKey
-                        Nothing -> AtItem subjId groupPath itemIdx
-                AtTabular subjId groupId itemIdx tabIdx -> AtTabular subjId groupId itemIdx tabIdx
 
         where
             posKeyToLocation subjId groupPath itemIdx = case _ of

@@ -2,7 +2,7 @@ module Report.Web.Component where
 
 import Prelude
 
-import Debug as Debug
+-- import Debug as Debug
 
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as Console
@@ -77,7 +77,7 @@ import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, histor
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
 import Web.UIEvent.KeyboardEvent (KeyboardEvent)
-import Web.UIEvent.KeyboardEvent (toEvent) as KE
+import Web.UIEvent.KeyboardEvent (toEvent, code, key) as KE
 
 import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
@@ -141,7 +141,7 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | NextSort
     | ClearNavigation
     | NavigateTo MouseEvent (Location subj_id)
-    | NavigateWithKeyboard KeyboardEvent
+    | TryNavigateWithKeyboard KeyboardEvent
     | EditAt (Location subj_id) CT.EncodedValue
     | StartEditing MouseEvent
     | CancelEditing
@@ -374,7 +374,10 @@ component cfg =
     render :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) () m
     render state =
         HH.div
-            [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;" ]
+            [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;"
+            , HP.tabIndex 1
+            , HE.onKeyDown TryNavigateWithKeyboard
+            ]
             [ HH.div
                 [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;"
                 -- , HE.onClick $ const ClearNavigation
@@ -803,16 +806,25 @@ component cfg =
                             else s
             in stopMEPropagation mevt <> H.modify_ navigateOrEdit
 
-        NavigateWithKeyboard kevt ->
+        TryNavigateWithKeyboard kevt ->
             let
-                navigateUp s = s
-                navigateDown s = s
-                navigateRight s = s
-                navigateLeft s = s
+                navigateDir dir s = s { navigatedTo = Navigation.withLocation (Modify.move @subj_id @item_tag (s.report :: R.Report subj group item) dir) s.navigatedTo }
+                navigateUp = navigateDir Modify.Up
+                navigateDown = navigateDir Modify.Down
+                navigateLeft = navigateDir Modify.Left
+                navigateRight = navigateDir Modify.Right
                 navigateOrEdit s =
                     if Navigation.isEditing s.navigatedTo then s else
-                    s
-            in stopKEPropagation kevt <> H.modify_ navigateOrEdit
+                    let
+                        keyStr = {- Debug.spy "key" $ -} KE.key kevt
+                        codeStr = {- Debug.spy "code" $ -} KE.code kevt
+                    in case keyStr of
+                        "ArrowUp" -> navigateUp s
+                        "ArrowDown" -> navigateDown s
+                        "ArrowLeft" -> navigateLeft s
+                        "ArrowRight" -> navigateRight s
+                        _ -> s
+            in {- stopKEPropagation kevt <> -} H.modify_ navigateOrEdit
 
         EditAt location encval ->
             let

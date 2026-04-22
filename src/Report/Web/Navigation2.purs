@@ -295,3 +295,9 @@ toLocation :: forall subj_id. NavigatedTo subj_id -> Location subj_id
 toLocation = case _ of
     At location -> location
     Editing location _ -> location
+
+
+withLocation :: forall subj_id. (Location subj_id -> Location subj_id) -> NavigatedTo subj_id -> NavigatedTo subj_id
+withLocation f = case _ of
+    At location -> At $ f location
+    Editing location encVal -> Editing (f location) encVal
