@@ -104,12 +104,14 @@ type Flags =
     , progressPlatesShown :: Boolean
     , groupNavigationExpanded :: Boolean
     , groupNavigationPinned :: Boolean
+    , exportProcessedReport :: Boolean
     }
 
 
 type State subj_id subj_tag item_tag_kind item_tag report =
     { subjects :: Array subj_id
-    , report :: report
+    , sourceReport :: report
+    , processedReport :: report
     , filter :: SubjectFilter
     , tagFilter :: Array subj_tag
     , sortBy :: SubjectSort
@@ -346,8 +348,10 @@ component cfg =
     where
     initialState :: x -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
     initialState x =
+        let srcReport = R.toReport x in
         { subjects : cfg.preSelected
-        , report : R.toReport x
+        , sourceReport : srcReport
+        , processedReport : processReport cfg.preSelected [] srcReport
         , filter : NoSubjectFilter
         , tagFilter : []
         , sortBy : ByWeight
@@ -365,11 +369,28 @@ component cfg =
             , groupNavigationExpanded : false
             , groupNavigationPinned : false
             , progressPlatesShown : false
+            , exportProcessedReport : false
             }
         }
 
     s_id :: subj -> subj_id
     s_id subj = R.s_id subj
+
+    processReport :: Array subj_id -> Array (Process item_tag_kind item_tag) -> R.Report subj group item -> R.Report subj group item
+    processReport subjects process report =
+        R.toBuilder report
+            # RB.filterSubjects (s_id >>> flip Array.elem subjects)
+            # R.fromBuilder
+            # postProcess @item_tag_kind cfg.recalculate process
+
+    processSourceReportUsingState :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> R.Report subj group item
+    processSourceReportUsingState state = processReport state.subjects state.process state.sourceReport
+
+    updateReports :: R.Report subj group item -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
+    updateReports srcReport s = let nextState = s { sourceReport = srcReport } in nextState { processedReport = processSourceReportUsingState nextState }
+
+    updateProcessedReport :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
+    updateProcessedReport s = updateReports s.sourceReport s
 
     render :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) () m
     render state =
@@ -414,23 +435,26 @@ component cfg =
             ]
         where
 
-            processedReport =
-                R.toBuilder state.report
-                # RB.filterSubjects (s_id >>> flip Array.elem state.subjects)
-                # R.fromBuilder
-                # postProcess @item_tag_kind cfg.recalculate state.process
+            -- processedReport =
+            --     R.toBuilder state.report
+            --     # RB.filterSubjects (s_id >>> flip Array.elem state.subjects)
+            --     # R.fromBuilder
+            --     # postProcess @item_tag_kind cfg.recalculate state.process
+            processedReport = state.processedReport
             selectedSubjects = processedReport # R.unfoldAll
-            allSubjects = RB.allSubjects $ R.toBuilder state.report
+            allSubjects = RB.allSubjects $ R.toBuilder state.sourceReport
             selKeys = Map.fromFoldable $ (\subj -> s_id subj /\ subj) <$> allSubjects
 
             includeRule = Report.includeOnly state.subjects
 
             subjRenderOptions = { progressPlatesShown : state.flags.progressPlatesShown }
 
+            reportToExport = if not state.flags.exportProcessedReport then state.sourceReport else state.processedReport
+
             exportTextFor = case _ of
-                Json  -> state.report # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
-                Dhall -> state.report # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
-                Org   -> state.report # Report.toOrg   @x @subj_id @subj_tag @item_tag includeRule
+                Json  -> reportToExport # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
+                Dhall -> reportToExport # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
+                Org   -> reportToExport # Report.toOrg   @x @subj_id @subj_tag @item_tag includeRule
             exportSelected trg = state.mbExportTo == Just trg
 
             findSubjName :: subj_id -> Maybe String
@@ -634,7 +658,7 @@ component cfg =
         else
             [ processingButtons state.process ]
             <> (if state.flags.showItemsTags then
-                    case R.collectItemsTags $ R.leaveOnlyById state.subjects $ state.report of
+                    case R.collectItemsTags $ R.leaveOnlyById state.subjects $ state.processedReport of
                         [] -> [ HH.text "" ]
                         tags ->
                             [ HH.span
@@ -745,7 +769,7 @@ component cfg =
         AddSubjectToSelection subjId -> H.modify_ (\state -> state { subjects = Array.snoc state.subjects subjId }) *> updateUrl
         DeselectSubject subjId -> H.modify_ (\state -> state { subjects = Array.filter (_ /= subjId) state.subjects }) *> updateUrl
         DeselectAllSubjects -> H.modify_ _ { subjects = [ ] } *> updateUrl
-        Receive nextReport -> H.modify_ _ { report = nextReport }
+        Receive nextReport -> H.modify_ $ updateReports nextReport
         ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then FromUser filter else NoSubjectFilter } *> updateUrl
         IncludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.snoc state.tagFilter subjTag }) *> updateUrl
         ExcludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }) *> updateUrl
@@ -775,45 +799,48 @@ component cfg =
                     AtSubj subjId ->            Navigation.toSubj subjId
                     AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
                                                 $ maybe (CT.EncodedValue "") (R.g_title >>> CT.EncodedValue)
-                                                $ R.findGroup subjId groupPath s.report
+                                                $ R.findGroup subjId groupPath s.sourceReport
                     AtItem subjId groupPath itemIdx ->
                                                 Navigation.editItemName subjId groupPath itemIdx
                                                 $ maybe (CT.EncodedValue "") (R.i_title >>> CT.EncodedValue)
-                                                $ R.findItem subjId groupPath itemIdx s.report
+                                                $ R.findItem subjId groupPath itemIdx s.sourceReport
                     AtDecorator subjId groupPath itemIdx decoratorKey ->
                                                 Navigation.editDecorator subjId groupPath itemIdx decoratorKey
                                                 $ maybe (CT.EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
                                                 $ Decorator.get decoratorKey
                                                 =<< R.i_decorators
-                                                <$> R.findItem subjId groupPath itemIdx s.report
+                                                <$> R.findItem subjId groupPath itemIdx s.sourceReport
                     AtTag subjId groupPath itemIdx tagIdx ->
                                                 Navigation.editTag subjId groupPath itemIdx tagIdx
                                                 $ maybe (CT.EncodedValue "") (R.i_tags @item_tag >>> flip Array.index tagIdx >>> map (R.tagContent >>> Chain.toString >>> CT.EncodedValue) >>> fromMaybe (CT.EncodedValue ""))
-                                                $ R.findItem subjId groupPath itemIdx s.report
+                                                $ R.findItem subjId groupPath itemIdx s.sourceReport
                     AtTabular subjId groupPath itemIdx tabularIdx ->
                                                 Navigation.editTag subjId groupPath itemIdx tabularIdx
                                                 $ maybe (CT.EncodedValue "") (const $ CT.EncodedValue "") -- FIXME
-                                                $ R.findItem subjId groupPath itemIdx s.report
+                                                $ R.findItem subjId groupPath itemIdx s.sourceReport
                     Nowhere -> s.navigatedTo
                 processedReport s = processingCount s > 0
                 navigateOrEdit s =
                     if Navigation.isEditing s.navigatedTo then s else
-                    if s.flags.readOnlyMode || s.navigatedTo /= nextNavigation
+                    if (not $ processedReport s) && (s.flags.readOnlyMode || s.navigatedTo /= nextNavigation)
                         then s { navigatedTo = nextNavigation }
-                        else
-                            if not (processedReport s)
-                            then s { navigatedTo = editNavigation s }
-                            else s
+                        else s { navigatedTo = editNavigation s }
             in stopMEPropagation mevt <> H.modify_ navigateOrEdit
 
         TryNavigateWithKeyboard kevt ->
             let
-                navigateDir dir s = s { navigatedTo = Navigation.withLocation (Modify.move @subj_id @item_tag (s.report :: R.Report subj group item) dir) s.navigatedTo }
+                navigateDir dir s =
+                    s
+                    { navigatedTo =
+                        Navigation.withLocation
+                            (Modify.move @subj_id @item_tag (s.processedReport :: R.Report subj group item) dir)
+                        s.navigatedTo
+                    }
                 navigateUp = navigateDir Modify.Up
                 navigateDown = navigateDir Modify.Down
                 navigateLeft = navigateDir Modify.Left
                 navigateRight = navigateDir Modify.Right
-                navigateOrEdit s =
+                navigateIfNotEditing s =
                     if Navigation.isEditing s.navigatedTo then s else
                     let
                         keyStr = {- Debug.spy "key" $ -} KE.key kevt
@@ -824,7 +851,7 @@ component cfg =
                         "ArrowLeft" -> navigateLeft s
                         "ArrowRight" -> navigateRight s
                         _ -> s
-            in {- stopKEPropagation kevt <> -} H.modify_ navigateOrEdit
+            in {- stopKEPropagation kevt <> -} H.modify_ navigateIfNotEditing
 
         EditAt location encval ->
             let
@@ -880,18 +907,23 @@ component cfg =
                                     }
             in
                 case cfg.recalculate.onEdit of
-                    Just recCfg ->
-                        H.modify_
-                            \s -> s { report = Modify.recalculate recCfg $ nextReport s.report }
+                    Just recCfg -> do
+                        s <- H.get
+                        let theNextReport = nextReport s.sourceReport
+                        H.modify_ _
+                            { sourceReport = theNextReport
+                            , processedReport = Modify.recalculate recCfg theNextReport
+                            }
                     Nothing ->
                         H.modify_
-                            \s -> s { report = nextReport s.report }
+                            \s -> s { sourceReport = nextReport s.sourceReport }
 
         StartEditing mevt -> stopMEPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
         ToggleReadOnlyMode -> do
             H.modify_ clearEditing
-            H.modify_ $ withFlags \f -> f { readOnlyMode = not f.readOnlyMode }
+            s <- H.get
+            H.modify_ $ withFlags \f -> f { readOnlyMode = if Array.length s.process > 0 then true else not f.readOnlyMode }
         ToggleDebugMode -> H.modify_ $ withFlags \f -> f { debugEnabled = not f.debugEnabled }
         ToggleProgressPlates -> H.modify_ $ withFlags \f -> f { progressPlatesShown = not f.progressPlatesShown }
         EnableExport exportTarget -> H.modify_ _ { mbExportTo = Just exportTarget }
@@ -904,28 +936,33 @@ component cfg =
         ToggleGroupNavigationPinned   -> H.modify_ $ withFlags \f -> f { groupNavigationPinned   = not f.groupNavigationPinned   }
         AddToItemsFilter mevt itemTag -> do
             stopMEPropagation mevt
-            H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag })
+            H.modify_ (\s -> s { process = Array.snoc s.process $ FilterBy itemTag, collapsed = Map.empty })
             H.modify_ $ withFlags _ { readOnlyMode = true }
+            H.modify_ updateProcessedReport
             updateUrl
         SortItemsBy  mevt itemTagKind -> do
             stopMEPropagation mevt
-            H.modify_ $ \s -> s { process = Array.snoc s.process $ SortBy itemTagKind }
+            H.modify_ $ \s -> s { process = Array.snoc s.process $ SortBy itemTagKind, collapsed = Map.empty }
             H.modify_ $ withFlags _ { readOnlyMode = true }
+            H.modify_ updateProcessedReport
             updateUrl
         GroupItemsBy mevt itemTagKind -> do
             stopMEPropagation mevt
-            H.modify_ $ \s -> s { process = Array.snoc s.process $ GroupBy itemTagKind }
+            H.modify_ $ \s -> s { process = Array.snoc s.process $ GroupBy itemTagKind, collapsed = Map.empty }
             H.modify_ $ withFlags _ { readOnlyMode = true }
+            H.modify_ updateProcessedReport
             updateUrl
         CancelProcess mevt process -> do
             stopMEPropagation mevt
             s <- H.get
             let filteredProcess = Array.filter (_ /= process) s.process
-            H.modify_ _ { process = filteredProcess }
+            H.modify_ _ { process = filteredProcess, collapsed = Map.empty }
             H.modify_ $ withFlags \f -> f { readOnlyMode = if Array.length filteredProcess > 0 then true else f.readOnlyMode }
+            H.modify_ updateProcessedReport
             updateUrl
         ResetPostProcess -> do
-            H.modify_ _ { process = [] }
+            H.modify_ \s -> s { process = [], collapsed = Map.empty }
+            H.modify_ updateProcessedReport
             updateUrl
         ToggleGroupCollapse mevt subjId groupPath -> H.modify_ \s ->
             let
@@ -941,7 +978,7 @@ component cfg =
                                     else theMap)
                             subjCollapseMap
                             $ RB.allGroupsOf subjId
-                            $ R.toBuilder s.report
+                            $ R.toBuilder s.processedReport
                     else subjCollapseMap
                 newCollapsedStateOfThisSubj =
                     prevCollapsedStateOfThisSubj
