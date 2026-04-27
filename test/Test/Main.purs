@@ -29,7 +29,7 @@ main = do
         DhallDodo.spec
         OrgDodo.spec
         TextDodo.spec
-        -- RepDodo.spec
+        RepDodo.spec
         Report.spec
         ReportImpl.spec
         Groups.spec

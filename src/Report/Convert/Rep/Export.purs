@@ -66,6 +66,7 @@ markTri (TM marker) = D.text marker <> D.text ". "
 
 tabKW = SM "-" :: SymMarker
 decKW = SM ":" :: SymMarker
+tavKW = SM ";" :: SymMarker
 tagKW = SM "#" :: SymMarker
 pathKW = SM "//" :: SymMarker
 
@@ -119,24 +120,24 @@ toRep inclRule =
         decoratorsBlock fields =
             joinWith D.break $ decoratorLines <$> fields
 
-        decoratorLines :: (TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+        decoratorLines :: TriMarker /\ NonEmptyArray (Doc Unit) -> Doc Unit
         decoratorLines (tMarker /\ valueLines) =
-            (joinWith (D.break <> markSym decKW <> markTri tMarker) $ NEA.toArray valueLines)
+            D.break <> markSym decKW <> markTri tMarker <> (joinWith (D.break <> markSym decKW <> markTri tMarker) $ NEA.toArray valueLines)
 
         tagsBlock :: Array (Doc Unit) -> Doc Unit
         tagsBlock [] = mempty
         tagsBlock tags =
-            joinWith (D.break <> markSym tagKW) tags
+            D.break <> markSym tagKW <> joinWith (D.break <> markSym tagKW) tags
 
         tabularBlock :: Array (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
         tabularBlock [] = mempty
         tabularBlock fields =
             joinWith D.break $ tabularLines <$> fields
 
-        tabularLines :: (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+        tabularLines :: String /\ TriMarker /\ NonEmptyArray (Doc Unit) -> Doc Unit
         tabularLines (name /\ tMarker /\ valueLines) =
             markSym tabKW <> D.text name
-            <> D.break <> (joinWith (D.break <> markTri tMarker) $ NEA.toArray valueLines)
+            <> D.break <> markSym tavKW <> markTri tMarker <> (joinWith (D.break <> markSym tavKW <> markTri tMarker) $ NEA.toArray valueLines)
 
         -- makeHeading :: Int -> Doc Unit
         -- makeHeading level =
@@ -154,10 +155,10 @@ toRep inclRule =
                 indentGroup n doc = D.indent $ indentGroup (n - 1) doc
                 mbPathId = GroupPath.last groupRec.path
             in
-            indentGroup (GroupPath.howDeep groupRec.path + 1)
+            indentGroup (GroupPath.howDeep groupRec.path)
                 $ markTri groupKW <> D.text groupRec.title
                 <> case mbPathId of
-                    Just pathId -> D.space <> markSym pathKW <> (D.text $ show pathId)
+                    Just pathId -> D.space <> markSym pathKW <> (D.text $ unwrap pathId)
                     Nothing -> mempty
                 <> D.break <> tabularBlock
                     [ "Path"  /\ tmfp P.PTText /\ pure (convertPath groupRec.path)
@@ -171,10 +172,10 @@ toRep inclRule =
             D.text itemRec.title
             <> case itemRec.decorators of
                   [] -> mempty
-                  _ -> D.break <> (decoratorsBlock $ convertDecoratorToDocLine <$> itemRec.decorators)
+                  _ -> decoratorsBlock $ convertDecoratorToDocLine <$> itemRec.decorators
             <> case unwrap itemRec.tags of
                   [] -> mempty
-                  _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags)
+                  _ -> tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags
 
             {-
             let
