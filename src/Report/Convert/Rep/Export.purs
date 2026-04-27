@@ -1,4 +1,4 @@
-module Report.Convert.Org.Export where
+module Report.Convert.Rep.Export where
 
 import Prelude
 
@@ -14,6 +14,8 @@ import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Array ((:))
 import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NEA
 import Data.Foldable (fold)
 import Data.FunctorWithIndex (mapWithIndex)
 
@@ -35,7 +37,7 @@ import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag)
-import Report.Decorators.Progress (Progress(..)) as P
+import Report.Decorators.Progress (Progress(..), PTValueTag(..), _vtagFrom) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
 import Report.Decorators.Rating as Rating
@@ -50,13 +52,35 @@ import Dodo
 import Dodo as D
 
 
-toOrg
+newtype TriMarker = TM String -- marker from three letters
+newtype SymMarker = SM String -- marker from a symbol or two symbols
+
+
+subjKW = TM "SBJ" :: TriMarker
+groupKW = TM "GRP" :: TriMarker
+
+
+markTri :: TriMarker -> Doc Unit
+markTri (TM marker) = D.text marker <> D.text ". "
+
+
+tabKW = SM "-" :: SymMarker
+decKW = SM ":" :: SymMarker
+tagKW = SM "#" :: SymMarker
+pathKW = SM "//" :: SymMarker
+
+
+markSym :: SymMarker -> Doc Unit
+markSym (SM marker) = D.text marker <> D.space
+
+
+toRep
     :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToExport subj_id subj_tag item_tag subj group item x
     => Report.IncludeRule subj_id
     -> Report subj group item
     -> String
-toOrg inclRule =
+toRep inclRule =
     Report.toExport @x @subj_id @subj_tag @item_tag inclRule
         >>> unwrap
         >>> _.subjects
@@ -78,26 +102,26 @@ toOrg inclRule =
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            D.text "* " <> D.text subjectRec.name
-            <> D.break <> propertiesBlock
+            markTri subjKW <> D.text subjectRec.name
+            <> D.break <> tabularBlock
                 (Array.catMaybes
-                    [ Just $ "Id" /\ D.text (unwrap subjectRec.id)
-                    , Just $ "Platform" /\ D.text "TODO"
-                    , Just $ "Playtime" /\ D.text "TODO"
-                    , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ orgDate dateRec
+                    [ Just $ "Id" /\ tmfp P.PTText /\ (pure $ D.text $ unwrap subjectRec.id)
+                    , Just $ "Platform" /\ tmfp P.PTText /\ (pure $ D.text "TODO")
+                    , Just $ "Playtime" /\ tmfp P.PTText /\ (pure $ D.text "TODO")
+                    , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ tmfp P.PTOnDate /\ pure (orgDate dateRec)
                     ]
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
-        propertiesBlock :: Array (String /\ Doc Unit) -> Doc Unit
-        propertiesBlock [] = mempty
-        propertiesBlock fields =
-            D.text ":PROPERTIES:" <> D.break
-            <> (joinWith D.break $ propertyLine <$> fields)
-            <> D.break <> D.text ":END:"
+        tabularBlock :: Array (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+        tabularBlock [] = mempty
+        tabularBlock fields =
+            joinWith D.break $ tabularLines <$> fields
 
-        propertyLine :: (String /\ Doc Unit) -> Doc Unit
-        propertyLine (name /\ value) = D.text ":" <> D.text name <> D.text ": " <> value
+        tabularLines :: (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+        tabularLines (name /\ tMarker /\ valueLines) =
+            markSym tabKW <> D.text name
+            <> D.break <> (joinWith (D.break <> markTri tMarker) $ NEA.toArray valueLines)
 
         makeHeading :: Int -> Doc Unit
         makeHeading level =
@@ -114,15 +138,17 @@ toOrg inclRule =
                 groupHeadingPrefix = makeHeading $ GroupPath.howDeep groupRec.path + 1
             in
             groupHeadingPrefix <+> D.text groupRec.title
-            <> D.break <> propertiesBlock
-                [ "Path" /\ convertPath groupRec.path
-                , "Index" /\ D.text (show index)
+            <> D.break <> tabularBlock
+                [ "Path"  /\ tmfp P.PTText /\ pure (convertPath groupRec.path)
+                , "Index" /\ tmfp P.PTInt  /\ pure (D.text $ show index)
                 ]
             <> D.break
             <> (joinWith D.break $ convertItem groupRec.path <$> items)
 
         convertItem :: GroupPath -> ItemRec -> Doc Unit
         convertItem grpPath itemRec =
+            mempty
+            {-
             let
                 itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2
                 decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
@@ -142,17 +168,17 @@ toOrg inclRule =
                 propertiesBlockDoc =
                     case decoratorsProperties of
                         [] -> case mbTagsProperty of
-                            Just tagsProp -> D.break <> propertiesBlock ( titleProperty : pure tagsProp )
+                            Just tagsProp -> D.break <> tabularBlock ( titleProperty : pure tagsProp )
                             Nothing -> mempty
                         props -> case mbTagsProperty of
-                            Just tagsProp -> D.break <> propertiesBlock ( titleProperty : tagsProp : props )
-                            Nothing -> D.break <> propertiesBlock ( titleProperty : props )
+                            Just tagsProp -> D.break <> tabularBlock ( titleProperty : tagsProp : props )
+                            Nothing -> D.break <> tabularBlock ( titleProperty : props )
             in
             itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc
             <> case mbTagsSuffix of
                 Just tagsSuffix -> D.space <> tagsSuffix
                 Nothing -> mempty
-            <> propertiesBlockDoc
+            <> propertiesBlockDoc -}
 
         convertTagsToProperty :: Array RawTag -> Maybe (String /\ Doc Unit)
         convertTagsToProperty = case _ of
@@ -385,3 +411,56 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty
+
+
+tmf :: D.Key -> TriMarker
+tmf = triMarkerFor
+
+
+triMarkerFor :: D.Key -> TriMarker
+triMarkerFor = case _ of
+   D.KRating ->         TM "RAT"
+   D.KPriority ->       TM "PRI"
+   D.KTask ->           TM "TSK"
+   D.KProgress pvTag -> triMarkerForProgress $ P._vtagFrom pvTag
+   D.KEarnedAt ->       TM "ERN"
+   D.KDescription ->    TM "DSC"
+   D.KReference ->      TM "REF"
+
+
+tmfp :: P.PTValueTag -> TriMarker
+tmfp = triMarkerForProgress
+
+
+triMarkerForProgress :: P.PTValueTag -> TriMarker
+triMarkerForProgress = TM <<< case _ of
+    P.PTNone -> "NON"
+    P.PTUnknown -> "UNK"
+    P.PTInt -> "INT"
+    P.PTNumber -> "NUM"
+    P.PTText -> "TXT"
+    P.PTToComplete -> "CMP"
+    P.PTPercentI -> "PCI"
+    P.PTPercentN -> "PCN"
+    P.PTPercentSign -> "PCTX"
+    P.PTToGetI -> "GTI"
+    P.PTToGetN -> "GTN"
+    P.PTOnTime -> "TIM"
+    P.PTOnDate -> "DAT"
+    P.PTPerI -> "PPI"
+    P.PTPerN -> "PPN"
+    P.PTMeasuredI -> "MSI"
+    P.PTMeasuredN -> "MSN"
+    P.PTMeasuredSign -> "MSX"
+    P.PTRangeI -> "RGI"
+    P.PTRangeN -> "RGN"
+    P.PTTask -> "PRG" -- not to intersect with `TSK`
+    P.PTLevelsI -> "LVI"
+    P.PTLevelsN -> "LVN"
+    P.PTLevelsO -> "LVO"
+    P.PTLevelsS -> "LVS"
+    P.PTLevelsE -> "LVE"
+    P.PTLevelsP -> "LVP"
+    P.PTLevelsC -> "LVC"
+    P.PTRelTime -> "REL"
+    P.PTError -> "XXX"

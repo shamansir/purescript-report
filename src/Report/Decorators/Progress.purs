@@ -581,3 +581,142 @@ decodeRel = case _ of
     "=" -> REqual
     "<" -> RLessThan
     _   -> REqual
+
+
+
+data PTValueTag -- FIXME: use it everywhere above for consistency
+    = PTNone
+    | PTUnknown
+    | PTInt
+    | PTNumber
+    | PTText
+    | PTToComplete
+    | PTPercentI
+    | PTPercentN
+    | PTPercentSign
+    | PTToGetI
+    | PTToGetN
+    | PTOnTime
+    | PTOnDate
+    | PTPerI
+    | PTPerN
+    | PTMeasuredI
+    | PTMeasuredN
+    | PTMeasuredSign
+    | PTRangeI
+    | PTRangeN
+    | PTTask
+    | PTLevelsI
+    | PTLevelsO
+    | PTLevelsN
+    | PTLevelsS
+    | PTLevelsE
+    | PTLevelsP
+    | PTLevelsC
+    | PTRelTime
+    | PTError
+
+
+
+_vtagFrom :: PValueTag -> PTValueTag
+_vtagFrom (PValueTag str) = case str of
+    "E" -> PTNone
+    "UNK" -> PTUnknown
+    "I" -> PTInt
+    "N" -> PTNumber
+    "F" -> PTNumber
+    "T" -> PTText
+    "D" -> PTToComplete
+    "PCTI" -> PTPercentI
+    "PCT"  -> PTPercentN
+    "PCTX" -> PTPercentSign
+    "PI" -> PTToGetI
+    "PD" -> PTToGetN
+    "TIME" -> PTOnTime
+    "DATE" -> PTOnDate
+    "PERI" -> PTPerI
+    "PERD" -> PTPerN
+    "MESI" -> PTMeasuredI
+    "MESD" -> PTMeasuredN
+    "MESX" -> PTMeasuredSign
+    "RNGI" -> PTRangeI
+    "RNGD" -> PTRangeN
+    "PROC" -> PTTask
+    "LVLI" -> PTLevelsI
+    "LVLD" -> PTLevelsN
+    "LVLO" -> PTLevelsO
+    "LVLS" -> PTLevelsS
+    "LVLE" -> PTLevelsE
+    "LVLP" -> PTLevelsP
+    "LVLC" -> PTLevelsC
+    "RELT" -> PTRelTime
+    "X" -> PTError
+    _ -> PTUnknown
+
+
+_vtagTo :: PTValueTag -> PValueTag
+_vtagTo = PValueTag <<< case _ of
+    PTNone -> "E"
+    PTUnknown -> "UNK"
+    PTInt -> "I"
+    PTNumber -> "N"
+    PTText -> "T"
+    PTToComplete -> "D"
+    PTPercentI -> "PCTI"
+    PTPercentN -> "PCT"
+    PTPercentSign -> "PCTX"
+    PTToGetI -> "PI"
+    PTToGetN -> "PD"
+    PTOnTime -> "TIME"
+    PTOnDate -> "DATE"
+    PTPerI -> "PERI"
+    PTPerN -> "PERD"
+    PTMeasuredI -> "MESI"
+    PTMeasuredN -> "MESD"
+    PTMeasuredSign -> "MESX"
+    PTRangeI -> "RNGI"
+    PTRangeN -> "RNGD"
+    PTTask -> "PROC"
+    PTLevelsI -> "LVLI"
+    PTLevelsN -> "LVLD"
+    PTLevelsO -> "LVLO"
+    PTLevelsS -> "LVLS"
+    PTLevelsE -> "LVLE"
+    PTLevelsP -> "LVLP"
+    PTLevelsC -> "LVLC"
+    PTRelTime -> "RELT"
+    PTError -> "X"
+
+
+_vtagOf :: Progress -> PTValueTag
+_vtagOf = case _ of
+    None -> PTNone
+    Unknown -> PTUnknown
+    PInt _ -> PTInt
+    PNumber _ -> PTNumber
+    PText _ -> PTText
+    ToComplete _ -> PTToComplete
+    PercentI _ -> PTPercentI
+    PercentN _ -> PTPercentN
+    PercentSign _ -> PTPercentSign
+    ToGetI _ -> PTToGetI
+    ToGetN _ -> PTToGetN
+    OnTime _ -> PTOnTime
+    OnDate _ -> PTOnDate
+    PerI _ -> PTPerI
+    PerN _ -> PTPerN
+    MeasuredI _ -> PTMeasuredI
+    MeasuredN _ -> PTMeasuredN
+    MeasuredSign _ -> PTMeasuredSign
+    RangeI _ -> PTRangeI
+    RangeN _ -> PTRangeN
+    Task _ -> PTTask
+    LevelsI _ -> PTLevelsI
+    LevelsN _ -> PTLevelsN
+    LevelsO _ -> PTLevelsO
+    LevelsS _ -> PTLevelsS
+    LevelsP _ -> PTLevelsP
+    LevelsC _ -> PTLevelsC
+    LevelsE _ -> PTLevelsE
+    RelTime _ _ -> PTRelTime
+    Error _ -> PTError
