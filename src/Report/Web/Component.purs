@@ -373,13 +373,10 @@ component cfg =
             }
         }
 
-    s_id :: subj -> subj_id
-    s_id subj = R.s_id subj
-
     processReport :: Array subj_id -> Array (Process item_tag_kind item_tag) -> R.Report subj group item -> R.Report subj group item
     processReport subjects process report =
         R.toBuilder report
-            # RB.filterSubjects (s_id >>> flip Array.elem subjects)
+            # RB.filterSubjects (R.s_id >>> flip Array.elem subjects)
             # R.fromBuilder
             # postProcess @item_tag_kind cfg.recalculate process
 
@@ -440,10 +437,10 @@ component cfg =
             --     # RB.filterSubjects (s_id >>> flip Array.elem state.subjects)
             --     # R.fromBuilder
             --     # postProcess @item_tag_kind cfg.recalculate state.process
-            processedReport = state.processedReport
-            selectedSubjects = processedReport # R.unfoldAll
+            -- processedReport = state.processedReport
+            selectedSubjects = state.processedReport # R.unfoldAll
             allSubjects = RB.allSubjects $ R.toBuilder state.sourceReport
-            selKeys = Map.fromFoldable $ (\subj -> s_id subj /\ subj) <$> allSubjects
+            selKeys = Map.fromFoldable $ (\subj -> R.s_id subj /\ subj) <$> allSubjects
 
             includeRule = Report.includeOnly state.subjects
 
@@ -517,7 +514,7 @@ component cfg =
             groupSelNavigation =
                 if state.flags.groupNavigationPinned || state.flags.groupNavigationExpanded then
                     let
-                        reportBuilder = R.toBuilder processedReport
+                        reportBuilder = R.toBuilder state.processedReport
                     in HH.div
                         [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 15%; opacity: 0.8;max-height:400px;overflow:scroll;padding:9px;"
                         , HE.onMouseEnter $ const ExpandGroupNavigation
@@ -597,7 +594,7 @@ component cfg =
         FromUrl filterStr -> Just filterStr
         FromUser filterStr -> Just filterStr
 
-    applyFilter :: Array subj_tag -> SubjectSort -> SubjectFilter-> Array subj -> Array subj
+    applyFilter :: Array subj_tag -> SubjectSort -> SubjectFilter -> Array subj -> Array subj
     applyFilter tagFilter sortBy subjFilter subjects
         = subjects
             # Array.filter (makeTagFilter tagFilter)
@@ -698,7 +695,7 @@ component cfg =
 
     subjTocRow selectedSubjectsIds subj =
         let
-            subjId = s_id subj
+            subjId = R.s_id subj
             isSelected = Array.elem subjId selectedSubjectsIds
         in HH.div
             [ HP.style "margin: 5px 0;" ]
@@ -765,12 +762,12 @@ component cfg =
                     (E.target >=> (const $ Just HandleUrlChange))
 
             pure unit
-        SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] } *> updateUrl
-        AddSubjectToSelection subjId -> H.modify_ (\state -> state { subjects = Array.snoc state.subjects subjId }) *> updateUrl
-        DeselectSubject subjId -> H.modify_ (\state -> state { subjects = Array.filter (_ /= subjId) state.subjects }) *> updateUrl
-        DeselectAllSubjects -> H.modify_ _ { subjects = [ ] } *> updateUrl
+        SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] } *>  H.modify_ updateProcessedReport *> updateUrl
+        AddSubjectToSelection subjId -> H.modify_ (\state -> state { subjects = Array.snoc state.subjects subjId }) *> H.modify_ updateProcessedReport *> updateUrl
+        DeselectSubject subjId -> H.modify_ (\state -> state { subjects = Array.filter (_ /= subjId) state.subjects }) *> H.modify_ updateProcessedReport *> updateUrl
+        DeselectAllSubjects -> H.modify_ _ { subjects = [ ] } *> H.modify_ updateProcessedReport *> updateUrl
         Receive nextReport -> H.modify_ $ updateReports nextReport
-        ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then FromUser filter else NoSubjectFilter } *> updateUrl
+        ChangeListFilter filter -> H.modify_ _ { filter = if String.length filter > 0 then FromUser filter else NoSubjectFilter } *> H.modify_ updateProcessedReport *> updateUrl
         IncludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.snoc state.tagFilter subjTag }) *> updateUrl
         ExcludeTag subjTag -> H.modify_ (\state -> state { tagFilter = Array.filter (_ /= subjTag) state.tagFilter }) *> updateUrl
         ToggleOptionsPane -> H.modify_ $ withFlags \f -> f { optionsPaneExpanded = not f.optionsPaneExpanded }
@@ -912,11 +909,23 @@ component cfg =
                         let theNextReport = nextReport s.sourceReport
                         H.modify_ _
                             { sourceReport = theNextReport
-                            , processedReport = Modify.recalculate recCfg theNextReport
+                            , processedReport =
+                                R.toBuilder theNextReport
+                                # RB.filterSubjects (R.s_id >>> flip Array.elem s.subjects)
+                                # R.fromBuilder
+                                # Modify.recalculate recCfg
                             }
                     Nothing ->
                         H.modify_
-                            \s -> s { sourceReport = nextReport s.sourceReport }
+                            \s ->
+                                let theNextReport = nextReport s.sourceReport
+                                in s
+                                    { sourceReport = theNextReport
+                                    , processedReport =
+                                        R.toBuilder theNextReport
+                                        # RB.filterSubjects (R.s_id >>> flip Array.elem s.subjects)
+                                        # R.fromBuilder
+                                    }
 
         StartEditing mevt -> stopMEPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing
@@ -961,7 +970,7 @@ component cfg =
             H.modify_ updateProcessedReport
             updateUrl
         ResetPostProcess -> do
-            H.modify_ \s -> s { process = [], collapsed = Map.empty }
+            H.modify_ _ { process = [], collapsed = Map.empty }
             H.modify_ updateProcessedReport
             updateUrl
         ToggleGroupCollapse mevt subjId groupPath -> H.modify_ \s ->
@@ -1003,6 +1012,8 @@ component cfg =
                 pure nextCfg
 
             H.modify_ $ loadUrlConfig @item_tag_kind nextHashCfg
+
+            H.modify_ updateProcessedReport
 
         NoOp -> pure unit
 
