@@ -10,14 +10,15 @@ import Effect.Aff (runAff_)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 import Test.Spec.Reporter.Console (consoleReporter)
 
-import Test.DhallDodo as DhallDodo
-import Test.OrgDodo as OrgDodo
-import Test.TextDodo as TextDodo
 import Test.ReportImpl as ReportImpl
 import Test.Report as Report
 import Test.Groups as Groups
 import Test.ParseTree as ParseTree
 import Test.MusicApi as MusicApi
+import Test.Export.DhallDodo as DhallDodo
+import Test.Export.OrgDodo as OrgDodo
+import Test.Export.TextDodo as TextDodo
+import Test.Export.RepDodo as RepDodo
 
 
 main :: Effect Unit
@@ -28,8 +29,9 @@ main = do
         DhallDodo.spec
         OrgDodo.spec
         TextDodo.spec
+        -- RepDodo.spec
         Report.spec
         ReportImpl.spec
         Groups.spec
         ParseTree.spec
-    -- MusicApi.spec
+        -- MusicApi.spec

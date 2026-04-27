@@ -1,4 +1,4 @@
-module Test.DhallDodo where
+module Test.Export.DhallDodo where
 
 import Prelude
 

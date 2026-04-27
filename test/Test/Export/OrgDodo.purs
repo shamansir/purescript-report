@@ -1,4 +1,4 @@
-module Test.OrgDodo where
+module Test.Export.OrgDodo where
 
 import Prelude
 

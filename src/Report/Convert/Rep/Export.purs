@@ -113,6 +113,21 @@ toRep inclRule =
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
+
+        decoratorsBlock :: Array (TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+        decoratorsBlock [] = mempty
+        decoratorsBlock fields =
+            joinWith D.break $ decoratorLines <$> fields
+
+        decoratorLines :: (TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+        decoratorLines (tMarker /\ valueLines) =
+            (joinWith (D.break <> markSym decKW <> markTri tMarker) $ NEA.toArray valueLines)
+
+        tagsBlock :: Array (Doc Unit) -> Doc Unit
+        tagsBlock [] = mempty
+        tagsBlock tags =
+            joinWith (D.break <> markSym tagKW) tags
+
         tabularBlock :: Array (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
         tabularBlock [] = mempty
         tabularBlock fields =
@@ -123,9 +138,9 @@ toRep inclRule =
             markSym tabKW <> D.text name
             <> D.break <> (joinWith (D.break <> markTri tMarker) $ NEA.toArray valueLines)
 
-        makeHeading :: Int -> Doc Unit
-        makeHeading level =
-            D.text (String.joinWith "" (Array.replicate level "*"))
+        -- makeHeading :: Int -> Doc Unit
+        -- makeHeading level =
+        --     D.text (String.joinWith "" (Array.replicate level "*"))
 
         convertPath :: GroupPath -> Doc Unit
         convertPath path =
@@ -135,19 +150,32 @@ toRep inclRule =
         convertGroup index { group, items } =
             let
                 groupRec = unwrap group
-                groupHeadingPrefix = makeHeading $ GroupPath.howDeep groupRec.path + 1
+                indentGroup 0 doc = doc
+                indentGroup n doc = D.indent $ indentGroup (n - 1) doc
+                mbPathId = GroupPath.last groupRec.path
             in
-            groupHeadingPrefix <+> D.text groupRec.title
-            <> D.break <> tabularBlock
-                [ "Path"  /\ tmfp P.PTText /\ pure (convertPath groupRec.path)
-                , "Index" /\ tmfp P.PTInt  /\ pure (D.text $ show index)
-                ]
-            <> D.break
-            <> (joinWith D.break $ convertItem groupRec.path <$> items)
+            indentGroup (GroupPath.howDeep groupRec.path + 1)
+                $ markTri groupKW <> D.text groupRec.title
+                <> case mbPathId of
+                    Just pathId -> D.space <> markSym pathKW <> (D.text $ show pathId)
+                    Nothing -> mempty
+                <> D.break <> tabularBlock
+                    [ "Path"  /\ tmfp P.PTText /\ pure (convertPath groupRec.path)
+                    , "Index" /\ tmfp P.PTInt  /\ pure (D.text $ show index)
+                    ]
+                <> D.break
+                <> (joinWith D.break $ D.indent <$> convertItem groupRec.path <$> items)
 
         convertItem :: GroupPath -> ItemRec -> Doc Unit
         convertItem grpPath itemRec =
-            mempty
+            D.text itemRec.title
+            <> case itemRec.decorators of
+                  [] -> mempty
+                  _ -> D.break <> (decoratorsBlock $ convertDecoratorToDocLine <$> itemRec.decorators)
+            <> case unwrap itemRec.tags of
+                  [] -> mempty
+                  _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags)
+
             {-
             let
                 itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2
@@ -180,34 +208,33 @@ toRep inclRule =
                 Nothing -> mempty
             <> propertiesBlockDoc -}
 
-        convertTagsToProperty :: Array RawTag -> Maybe (String /\ Doc Unit)
-        convertTagsToProperty = case _ of
-            [] -> Nothing
-            tags ->
-                Just $ "Tags" /\ DH.joinWith D.space (D.text <$> MbW.toString <$> CT.loadRawId {- tagContent -} <$> tags)
+        convertTagToDocLine :: RawTag -> Doc Unit
+        convertTagToDocLine tag =
+            D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag
 
-        convertDecoratorToProperty :: DecoratorRec -> Array (String /\ Doc Unit)
-        convertDecoratorToProperty modRec =
+        convertDecoratorToDocLine :: DecoratorRec -> TriMarker /\ NonEmptyArray (Doc Unit)
+        convertDecoratorToDocLine modRec =
             DH.withImpl @D.Decorator
-                []
+                (tmfp P.PTError /\ pure (D.text "CONVERSION ERROR"))
                 (case _ of
                     D.PRating rating ->
-                        pure $ "Rating" /\ (D.text $ show $ Rating.toNumber rating)
+                        tmf D.KRating /\ (pure $ D.text $ show $ Rating.toNumber rating)
                     D.PPriority priority ->
-                        pure $ "Priority" /\ (D.text $ Priority.priorityChar priority)
+                        tmf D.KPriority /\ (pure $ D.text $ Priority.priorityChar priority)
                     D.PTask task ->
-                        pure $ "Task" /\ (D.text $ Task.taskPToString task)
+                        tmf D.KTask /\ (pure $ D.text $ Task.taskPToString task)
                     D.SProgress p ->
                         _progressProperties p
                     D.SEarnedAt ea ->
-                        pure $ "EarnedAt" /\ orgDate (CT.dateToRec ea)
+                        tmf D.KEarnedAt /\ (pure $ orgDate $ CT.dateToRec ea)
                     D.SDescription desc ->
-                        pure $ "Description" /\ D.text desc
+                        tmf D.KDescription /\ (pure $ D.text desc)
                     D.SReference path ->
-                        pure $ "Reference" /\ convertPath path
+                        tmf D.KReference /\ (pure $ convertPath path)
                 )
                 modRec.fvalue
 
+        {-
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
             DH.withImpl @D.Decorator -- TODO: export tags to strings beforehand
@@ -260,6 +287,7 @@ toRep inclRule =
                         -- <$> tagContent
                         <$> tagArr
                     )
+        -}
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
@@ -282,71 +310,74 @@ orgTime timeRec
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
 
 
-_progressProperties :: Progress -> Array ( String /\ Doc Unit )
+_progressProperties :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
 _progressProperties = case _ of
-    None -> mempty
-    Unknown -> mempty
-    PInt i -> pure $ "INTVAL" /\ D.text (show i)
-    PNumber n -> pure $ "NUMVAL" /\ D.text (show n)
-    PText text -> pure $ "TEXTVAL" /\ D.text text
-    ToComplete { done } -> pure $ "TOCOMPLETE" /\ D.text (if done then "true" else "false")
-    PercentI i -> pure $ "PERCENTI" /\ D.text (show i)
-    PercentN n -> pure $ "PERCENTN" /\ D.text (show n)
+    None -> tmfp P.PTNone /\ pure (D.text ".")
+    Unknown -> tmfp P.PTUnknown /\ pure (D.text ".")
+    PInt i -> tmfp P.PTInt /\ pure (D.text $ show i)
+    PNumber n -> tmfp P.PTNumber /\ pure (D.text $ show n)
+    PText text -> tmfp P.PTText /\ pure (D.text text)
+    ToComplete { done } -> tmfp P.PTToComplete /\ pure (D.text $ if done then "DONE" else "TODO")
+    PercentI i -> tmfp P.PTPercentI /\ pure (D.text (show i))
+    PercentN n -> tmfp P.PTPercentN /\ pure (D.text (show n))
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "PERCENTX" /\ D.text (sign_s <> " " <> show pct)
-    ToGetI { got, total } -> pure $
-        "TOGETI" /\ D.text (show got <> " " <> show total)
-    ToGetN { got, total } -> pure $
-        "TOGETN" /\ D.text (show got <> " " <> show total)
+        in tmfp P.PTPercentSign /\ pure (D.text $ sign_s <> " " <> show pct)
+    ToGetI { got, total } ->
+        tmfp P.PTToGetI /\ pure (D.text $ show got <> " " <> show total)
+    ToGetN { got, total } ->
+        tmfp P.PTToGetN /\ pure (D.text $ show got <> " " <> show total)
     OnTime timeRec ->
-        pure $ "ONTIME" /\ orgTime timeRec
+        tmfp P.PTOnTime /\ pure (orgTime timeRec)
     OnDate sdate ->
-        pure $ "ONDATE" /\ orgDate (CT.dateToRec sdate)
+        tmfp P.PTOnDate /\ pure (orgDate $ CT.dateToRec sdate)
     PerI { amount, per } ->
-        pure $ "PERI" /\ (D.text (show amount) <> D.text " " <> D.text per)
+        tmfp P.PTPerI /\ pure (D.text (show amount) <> D.text " " <> D.text per)
     PerN { amount, per } ->
-        pure $ "PERN" /\ (D.text (show amount) <> D.text " " <> D.text per)
+        tmfp P.PTPerN /\ pure (D.text (show amount) <> D.text " " <> D.text per)
     MeasuredI { amount, measure } ->
-        pure $ "MESI" /\ (D.text (show amount) <> D.text " " <> D.text measure)
+        tmfp P.PTMeasuredI /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredN { amount, measure } ->
-        pure $ "MESN" /\ (D.text (show amount) <> D.text " " <> D.text measure)
+        tmfp P.PTMeasuredN /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "MESX" /\ (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text "    " <> D.text measure)
+        in tmfp P.PTMeasuredSign /\ pure (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text "    " <> D.text measure)
     RangeI { from, to } ->
-        pure $ "RANGEI" /\ D.text (show from <> " " <> show to)
+        tmfp P.PTRangeI /\ pure (D.text $ show from <> " " <> show to)
     RangeN { from, to } ->
-        pure $ "RANGEN" /\ D.text (show from <> " " <> show to)
+        tmfp P.PTRangeN /\ pure (D.text $ show from <> " " <> show to)
     Task taskP ->
-        pure $ "TASK" /\ D.text (Task.taskPToString taskP)
+        tmfp P.PTTask /\ pure (D.text $ Task.taskPToString taskP)
     LevelsI { reached, levels } ->
-        mempty -- TODO
+        tmfp P.PTLevelsI /\ pure (D.text ".") -- TODO
     LevelsN { reached, levels } ->
-        mempty -- TODO
+        tmfp P.PTLevelsN /\ pure (D.text ".") -- TODO
     LevelsS { reached, levels } ->
-        mempty -- TODO
+        tmfp P.PTLevelsS /\ pure (D.text ".") -- TODO
     LevelsE levelsE ->
-        pure $ "LEVELSE" /\ D.text (show levelsE.reached <> " " <> show levelsE.total)
+        tmfp P.PTLevelsE /\ pure (D.text $ show levelsE.reached <> " " <> show levelsE.total)
     LevelsP { levels } ->
-        mempty -- TODO
+        tmfp P.PTLevelsP /\ pure (D.text ".") -- TODO
     LevelsC levelsC ->
+        tmfp P.PTLevelsC /\ pure (D.text ".") -- TODO
+        {-
         [ "LEVELSC_REACHED" /\ D.text (show levelsC.levelReached)
         , "LEVELSC_CURRENT" /\ D.text (show levelsC.reachedAtCurrent)
         , "LEVELSC_TOTAL" /\ D.text (show levelsC.totalLevels)
         , "LEVELSC_MAXCURRENT" /\ D.text (show levelsC.maximumAtCurrent)
         ]
+        -}
     LevelsO { reached, levels } ->
-        mempty -- TODO
+        tmfp P.PTLevelsO /\ pure (D.text ".") -- TODO
     RelTime rel timeRec ->
         let relText =
                 case rel of
                     RMoreThan -> "more_than"
                     REqual -> "equal"
                     RLessThan -> "less_than"
-        in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
+        in tmfp P.PTRelTime /\ pure (D.text relText <> D.space <> orgTime timeRec)
     Error err ->
-        mempty
+        tmfp P.PTError /\ pure (D.text err) -- TODO
 
 
 

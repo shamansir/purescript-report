@@ -1,4 +1,4 @@
-module Test.TextDodo where
+module Test.Export.TextDodo where
 
 import Prelude
 
@@ -46,8 +46,8 @@ spec =
             (\dhallGameCollection -> do
                 let gameCollection  = GL.dhallToAchievements dhallGameCollection
                 let (glReport :: GL.GamesReport) = toReport $ GL.fromArray gameCollection
-                let reportDhall = D.toText @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag R.includeAll glReport
-                reportDhall `U.shouldEqual` expectedDhallWithGroupStats
+                let reportText = D.toText @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag R.includeAll glReport
+                reportText `U.shouldEqual` expectedTextWithGroupStats
             )
             eDhallGameCollection
 
@@ -57,7 +57,7 @@ spec =
         --     reportDhall
 
 
-expectedDhallNoGroupStats = """# Astral Chain
+expectedTextNoGroupStats = """# Astral Chain
     - TrackedAt: 12-Aug-2025
 
     0. File 00-file
@@ -282,7 +282,7 @@ expectedDhallNoGroupStats = """# Astral Chain
 """ :: String
 
 
-expectedDhallWithGroupStats = """# Astral Chain 50/166
+expectedTextWithGroupStats = """# Astral Chain 50/166
     - TrackedAt: 12-Aug-2025
 
     0. File 00-file

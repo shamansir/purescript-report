@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.String (split, joinWith, Pattern(..)) as String
-import Data.Array (length, index) as Array
+import Data.Array (length, index, last, head) as Array
 import Data.FoldableWithIndex (foldlWithIndex)
 
 import Yoga.JSON (class ReadForeign, class WriteForeign)
@@ -54,6 +54,14 @@ path = pathFromArray
 
 ps :: String -> PathSegment
 ps = PathSegment
+
+
+head :: GroupPath -> Maybe PathSegment
+head = unwrap >>> Array.head
+
+
+last :: GroupPath -> Maybe PathSegment
+last = unwrap >>> Array.last
 
 
 startsWith :: GroupPath -> GroupPath -> Boolean
