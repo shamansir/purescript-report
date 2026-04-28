@@ -207,8 +207,8 @@ _progressProperties = case _ of
     PNumber n -> tmfp P.PTNumber /\ pure (D.text $ show n)
     PText text -> tmfp P.PTText /\ pure (D.text text)
     ToComplete { done } -> tmfp P.PTToComplete /\ pure (D.text $ if done then "DONE" else "TODO")
-    PercentI i -> tmfp P.PTPercentI /\ pure (D.text (show i))
-    PercentN n -> tmfp P.PTPercentN /\ pure (D.text (show n))
+    PercentI i -> tmfp P.PTPercentI /\ pure (D.text $ show i)
+    PercentN n -> tmfp P.PTPercentN /\ pure (D.text $ show n)
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
         in tmfp P.PTPercentSign /\ pure (D.text $ sign_s <> " " <> show pct)
@@ -238,17 +238,41 @@ _progressProperties = case _ of
     Task taskP ->
         tmfp P.PTTask /\ pure (D.text $ Task.taskPToString taskP)
     LevelsI { reached, levels } ->
-        tmfp P.PTLevelsI /\ pure (D.text ".") -- TODO
+        tmfp P.PTLevelsI /\
+        let
+            levelStr { date, maximum, name } =
+                D.text ">>>" <> D.space <> mbDateStr date <> D.text (show maximum) <> D.space <> D.text name
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     LevelsN { reached, levels } ->
-        tmfp P.PTLevelsN /\ pure (D.text ".") -- TODO
+        tmfp P.PTLevelsN /\
+        let
+            levelStr { date, maximum, name } =
+                D.text ">>>" <> D.space <> mbDateStr date <> D.text (show maximum) <> D.space <> D.text name
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     LevelsS { reached, levels } ->
-        tmfp P.PTLevelsS /\ pure (D.text ".") -- TODO
+        tmfp P.PTLevelsS /\
+        let
+            levelStr { gives, date } =
+                D.text ">>>" <> D.space <> mbDateStr date <> D.text gives
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     LevelsE levelsE ->
-        tmfp P.PTLevelsE /\ pure (D.text $ show levelsE.reached <> " " <> show levelsE.total)
+        tmfp P.PTLevelsE /\
+        pure (D.text $ show levelsE.reached <> " " <> show levelsE.total)
     LevelsP { levels } ->
-        tmfp P.PTLevelsP /\ pure (D.text ".") -- TODO
-    LevelsC levelsC ->
-        tmfp P.PTLevelsC /\ pure (D.text ".") -- TODO
+        tmfp P.PTLevelsP /\
+        let
+            levelStr { name, proc, date } =
+                D.text ">>>" <> D.space <> mbDateStr date <> (D.text $ Task.taskPToString proc) <> D.space <> D.text name
+        in pure $ D.text (show $ Array.length levels) <> D.break <> (joinWith D.break $ levelStr <$> levels)
+    LevelsC cRec ->
+        tmfp P.PTLevelsC /\ (
+        pure $ D.text (show cRec.levelReached) <> D.space
+            <> D.text (show cRec.totalLevels) <> D.space
+            <> D.text (show cRec.reachedAtCurrent) <> D.space
+            <> D.text (show cRec.maximumAtCurrent) <> case cRec.date of
+                Just dateRec -> D.space <> orgDate dateRec
+                Nothing -> mempty
+        )
         {-
         [ "LEVELSC_REACHED" /\ D.text (show levelsC.levelReached)
         , "LEVELSC_CURRENT" /\ D.text (show levelsC.reachedAtCurrent)
@@ -257,7 +281,11 @@ _progressProperties = case _ of
         ]
         -}
     LevelsO { reached, levels } ->
-        tmfp P.PTLevelsO /\ pure (D.text ".") -- TODO
+        tmfp P.PTLevelsO /\
+        let
+            levelStr { date, mbMaximum, name } =
+                D.text ">>>" <> D.space <> mbDateStr date <> mbIntStr mbMaximum <> D.text name
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     RelTime rel timeRec ->
         let relText =
                 case rel of
@@ -267,9 +295,20 @@ _progressProperties = case _ of
         in tmfp P.PTRelTime /\ pure (D.text relText <> D.space <> orgTime timeRec)
     Error err ->
         tmfp P.PTError /\ pure (D.text err) -- TODO
+    where
+        mbDateStr :: Maybe CT.SDateRec -> Doc Unit
+        mbDateStr = maybeSpaced orgDate
+        mbIntStr :: Maybe Int -> Doc Unit
+        mbIntStr = mbShowableStr
+        mbShowableStr :: forall x. Show x => Maybe x -> Doc Unit
+        mbShowableStr = maybeSpaced (D.text <<< show)
+        maybeSpaced :: forall a. (a -> Doc Unit) -> Maybe a -> Doc Unit
+        maybeSpaced toDoc = case _ of
+            Just value -> toDoc value <> D.space
+            Nothing -> mempty
 
 
-
+{-
 _progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
 _progressSuffixOneLiner = case _ of
     None -> mempty
@@ -307,21 +346,41 @@ _progressSuffixOneLiner = case _ of
     RangeN { from, to } ->
         pure $ D.text (show from <> "--" <> show to)
     Task taskP ->
-        mempty -- FIXME: goes as prefix
+        pure (D.text $ Task.taskPToString taskP)
     LevelsI { reached, levels } ->
-        mempty -- TODO
+        let
+            levelStr { date, maximum, name } =
+                D.text ">>>" <> D.space <> mbDateStr date <> D.text (show maximum) <> D.text name
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     LevelsN { reached, levels } ->
-        mempty-- TODO
+        let
+            levelStr { date, maximum, name } =
+                D.text ">>>" <> D.space <> mbDateStr date <> D.text (show maximum) <> D.text name
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     LevelsS { reached, levels } ->
-        mempty -- TODO
+        let
+            levelStr { gives, date } =
+                D.text ">>>" <> D.space <> mbDateStr date <> D.text gives
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     LevelsE levelsE ->
         pure $ D.text $ show levelsE.reached <> "/" <> show levelsE.total
     LevelsP { levels } ->
-        mempty -- TODO
-    LevelsC levelsC ->
-        mempty -- TODO
+        let
+            levelStr { name, proc, date } =
+                D.text ">>>" <> D.space <> mbDateStr date <> (D.text $ Task.taskPToString proc) <> D.text name
+        in pure $ D.text (show $ Array.length levels) <> D.break <> (joinWith D.break $ levelStr <$> levels)
+    LevelsC cRec ->
+        pure $ D.text (show cRec.levelReached) <> D.space
+            <> D.text (show cRec.totalLevels) <> D.space
+            <> D.text (show cRec.reachedAtCurrent) <> D.space
+            <> D.text (show cRec.maximumAtCurrent) <> case cRec.date of
+                Just dateRec -> D.space <> orgDate dateRec
+                Nothing -> mempty
     LevelsO { reached, levels } ->
-        mempty -- TODO
+        let
+            levelStr { date, mbMaximum, name } =
+                D.text ">>>" <> D.space <> mbDateStr date <> mbIntStr mbMaximum <> D.text name
+        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
     RelTime rel timeRec ->
         let relText =
                 case rel of
@@ -331,3 +390,15 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty
+    where
+        mbDateStr :: Maybe CT.SDateRec -> Doc Unit
+        mbDateStr = maybeSpaced orgDate
+        mbIntStr :: Maybe Int -> Doc Unit
+        mbIntStr = mbShowableStr
+        mbShowableStr :: forall x. Show x => Maybe x -> Doc Unit
+        mbShowableStr = maybeSpaced (D.text <<< show)
+        maybeSpaced :: forall a. (a -> Doc Unit) -> Maybe a -> Doc Unit
+        maybeSpaced toDoc = case _ of
+            Just value -> toDoc value <> D.space
+            Nothing -> mempty
+-}

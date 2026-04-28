@@ -133,20 +133,20 @@ progressTagFromTriMarker (TM marker) = case marker of
 
 triMarkerForTabular :: TV.TabValTypeKey -> TriMarker
 triMarkerForTabular = case _ of
-    TV.TVTString -> TM "TXT"
-    TV.TVTInt -> TM "INT"
-    TV.TVTID -> TM "UID"
-    TV.TVTYear -> TM "YER"
-    TV.TVTNumber -> TM "NUM"
+    TV.TVTString ->  TM "TXT"
+    TV.TVTInt ->     TM "INT"
+    TV.TVTID ->      TM "UID"
+    TV.TVTYear ->    TM "YER"
+    TV.TVTNumber ->  TM "NUM"
     TV.TVTBoolean -> TM "BOL"
-    TV.TVTTime -> TM "TIM"
-    TV.TVTDate -> TM "DAT"
-    TV.TVTDateRange -> TM "DTR"
-    TV.TVTDateTime -> TM "DTT"
-    TV.TVTTimeRange -> TM "TMR"
+    TV.TVTTime ->    TM "TIM"
+    TV.TVTDate ->    TM "DAT"
+    TV.TVTDateRange ->     TM "DTR"
+    TV.TVTDateTime ->      TM "DTT"
+    TV.TVTTimeRange ->     TM "TMR"
     TV.TVTDateTimeRange -> TM "DMR"
+    TV.TVTTags ->    TM "TAG"
     TV.TVTDecorator decKey -> triMarkerForDecorator decKey
-    TV.TVTTags -> TM "TAG"
 
 
 tftm :: TriMarker -> TV.TabValTypeKey

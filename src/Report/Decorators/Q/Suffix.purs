@@ -4,8 +4,8 @@ import Prelude
 
 import Report.Core as CT
 import Report.Decorators.Task (TaskP(..)) as T
-import Report.Decorators.Progress as P
-import Report.Decorators.Tags (Tags(..))
+import Report.Decorators.Progress (Progress(..), Relation) as P
+import Report.Decorators.Levels (LevelsC, LevelsE, LevelsI, LevelsN, LevelsO, LevelsP, LevelsS) as P
 import Report.GroupPath (GroupPath)
 import Report.Decorator (Decorator(..))
 

@@ -229,9 +229,17 @@ expectedRep = """SBJ. Astral Chain
             All Pure Platinum
             : GTI. 0 1
             Red Cases Closed
-            : LVI. .
+            : LVI. 90
+            >>> 1 Lvl. 1
+            >>> 25 Lvl. 2
+            >>> 50 Lvl. 3
+            >>> 131 Lvl. Max
             Blue Cases Closed
-            : LVI. .
+            : LVI. 68
+            >>> 1 Lvl. 1
+            >>> 25 Lvl. 2
+            >>> 50 Lvl. 3
+            >>> 87 Lvl. 4
             Sword Scholar
             : GTI. 0 1
             Sword Master
@@ -331,9 +339,14 @@ expectedRep = """SBJ. Astral Chain
         - Index
         ; INT. 8
             Chimeradicator
-            : LVI. .
+            : LVI. 781
+            >>> 100 Lvl. 1
+            >>> 800 Lvl. 2
+            >>> 3000 Lvl. 3
             Itemanical
-            : LVI. .
+            : LVI. 300
+            >>> 30 Lvl. 1
+            >>> 300 Lvl. 2
             Round Sword Master
             : GTI. 5 30
             Triple Sword Master
@@ -400,9 +413,14 @@ expectedRep = """SBJ. Astral Chain
         - Index
         ; INT. 9
             Supply Snatcher
-            : LVI. .
+            : LVI. 201
+            >>> 1 Lvl. 1
+            >>> 120 Lvl. 2
+            >>> 327 Max
             Finders Keepers
-            : LVI. .
+            : LVI. 69
+            >>> 1 Lvl. 1
+            >>> 152 Lvl. 2
             Red Matter Reducer
             : GTI. 1000 1000
             ???
@@ -410,7 +428,11 @@ expectedRep = """SBJ. Astral Chain
             ???
             : UNK. .
             Know Your Enemy
-            : LVI. .
+            : LVI. 14
+            >>> 1 Lvl. 1
+            >>> 30 Lvl. 2
+            >>> 80 Lvl. 3
+            >>> 167 Lvl. 4
             People Watcher
             : GTI. 1 20
             It's Who You Know
@@ -418,11 +440,20 @@ expectedRep = """SBJ. Astral Chain
             Ask Tourist
             : GTI. 2 28
             Blueshifter
-            : LVI. .
+            : LVI. 30
+            >>> 1 Lvl. 1
+            >>> 10 Lvl. 2
+            >>> 30 Lvl. 3
             Retirement Fund
-            : LVI. .
+            : LVI. 380128
+            >>> 10000 Lvl. 1
+            >>> 100000 Lvl. 2
+            >>> 500000 Lvl. 3
             Gene Code Glutton
-            : LVI. .
+            : LVI. 33814
+            >>> 1000 Lvl. 1
+            >>> 10000 Lvl. 2
+            >>> 100000 Lvl. 3
             Hard Worker
             : GTI. 100000 100000
             Model Officer
