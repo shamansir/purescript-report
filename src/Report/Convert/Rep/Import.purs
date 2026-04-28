@@ -98,15 +98,14 @@ subjectParser = do
 
 rawGroupParser :: Parser RawRepGroup
 rawGroupParser = do
-  leading <- SP.regex " *"
-  _       <- SP.string "GRP. "
-  let groupSpaces = String.length leading
+  leadingSpaces <- spacesCount
+  _             <- SP.string "GRP. "
   full    <- restOfLine
   eol
   let (title /\ pathId) = splitGroupTitle full
-  tabs    <- toArr <$> SP.many (SP.try $ tabularAtSpaces groupSpaces)
-  items   <- toArr <$> SP.many (SP.try $ itemAt groupSpaces)
-  pure { title, pathId, indent: groupSpaces, tabulars: tabs, items }
+  tabs    <- toArr <$> SP.many (SP.try $ tabularAtSpaces leadingSpaces)
+  items   <- toArr <$> SP.many (SP.try $ itemAt leadingSpaces)
+  pure { title, pathId, indent: leadingSpaces, tabulars: tabs, items }
 
 
 -- | Assign 1-based depth to each group by ranking their indent levels.
@@ -254,23 +253,21 @@ toArr = List.toUnfoldable
 -- Progress value parsers
 
 parseToGetI :: String -> Maybe Progress
-parseToGetI s = case String.split (String.Pattern " ") s of
-  [gotS, totS] -> do
-    got   <- Int.fromString gotS
-    total <- Int.fromString totS
-    pure $ ToGetI { got, total }
-  _ -> Nothing
+parseToGetI s = do
+  (gotS /\ totS) <- splitPair s
+  got   <- Int.fromString gotS
+  total <- Int.fromString totS
+  pure $ ToGetI { got, total }
 
 parseToGetN :: String -> Maybe Progress
-parseToGetN s = case String.split (String.Pattern " ") s of
-  [gotS, totS] -> do
-    got   <- Number.fromString gotS
-    total <- Number.fromString totS
-    pure $ ToGetN { got, total }
-  _ -> Nothing
+parseToGetN s = do
+  (gotS /\ totS) <- splitPair s
+  got   <- Number.fromString gotS
+  total <- Number.fromString totS
+  pure $ ToGetN { got, total }
 
 parsePercentSign :: String -> Maybe Progress
-parsePercentSign s = case String.split (String.Pattern " ") s of
+parsePercentSign s = case splitWithSpace s of
   [signS, pctS] -> do
     sign <- case signS of
       "+" -> Just 1
@@ -283,28 +280,28 @@ parsePercentSign s = case String.split (String.Pattern " ") s of
 
 parsePerI :: String -> Maybe Progress
 parsePerI s = do
-  idx    <- String.indexOf (String.Pattern " ") s
+  idx    <- indexOfSpace s
   amount <- Int.fromString (String.take idx s)
   let per = String.drop (idx + 1) s
   pure $ PerI { amount, per }
 
 parsePerN :: String -> Maybe Progress
 parsePerN s = do
-  idx    <- String.indexOf (String.Pattern " ") s
+  idx    <- indexOfSpace s
   amount <- Number.fromString (String.take idx s)
   let per = String.drop (idx + 1) s
   pure $ PerN { amount, per }
 
 parseMeasuredI :: String -> Maybe Progress
 parseMeasuredI s = do
-  idx    <- String.indexOf (String.Pattern " ") s
+  idx    <- indexOfSpace s
   amount <- Int.fromString (String.take idx s)
   let measure = String.drop (idx + 1) s
   pure $ MeasuredI { amount, measure }
 
 parseMeasuredN :: String -> Maybe Progress
 parseMeasuredN s = do
-  idx    <- String.indexOf (String.Pattern " ") s
+  idx    <- indexOfSpace s
   amount <- Number.fromString (String.take idx s)
   let measure = String.drop (idx + 1) s
   pure $ MeasuredN { amount, measure }
@@ -312,7 +309,7 @@ parseMeasuredN s = do
 -- MeasuredSign export uses 4-space separator: "<sign> <amount>    <measure>"
 parseMeasuredSign :: String -> Maybe Progress
 parseMeasuredSign s = do
-  spaceIdx     <- String.indexOf (String.Pattern " ") s
+  spaceIdx     <- indexOfSpace s
   let signS = String.take spaceIdx s
       rest  = String.drop (spaceIdx + 1) s
   sign         <- case signS of
@@ -326,7 +323,7 @@ parseMeasuredSign s = do
   pure $ MeasuredSign { sign, amount, measure }
 
 parseRangeI :: String -> Maybe Progress
-parseRangeI s = case String.split (String.Pattern " ") s of
+parseRangeI s = case splitWithSpace s of
   [fromS, toS] -> do
     from <- Int.fromString fromS
     to   <- Int.fromString toS
@@ -334,7 +331,7 @@ parseRangeI s = case String.split (String.Pattern " ") s of
   _ -> Nothing
 
 parseRangeN :: String -> Maybe Progress
-parseRangeN s = case String.split (String.Pattern " ") s of
+parseRangeN s = case splitWithSpace s of
   [fromS, toS] -> do
     from <- Number.fromString fromS
     to   <- Number.fromString toS
@@ -342,16 +339,15 @@ parseRangeN s = case String.split (String.Pattern " ") s of
   _ -> Nothing
 
 parseLevelsE :: String -> Maybe Progress
-parseLevelsE s = case String.split (String.Pattern " ") s of
-  [reachedS, totalS] -> do
-    reached <- Int.fromString reachedS
-    total   <- Int.fromString totalS
-    pure $ LevelsE { reached, total }
-  _ -> Nothing
+parseLevelsE s = do
+  (reachedS /\ totalS) <- splitPair s
+  reached <- Int.fromString reachedS
+  total   <- Int.fromString totalS
+  pure $ LevelsE { reached, total }
 
 parseRelTime :: String -> Maybe Progress
 parseRelTime s = do
-  idx  <- String.indexOf (String.Pattern " ") s
+  idx  <- indexOfSpace s
   let relS  = String.take idx s
       timeS = String.drop (idx + 1) s
   rel  <- case relS of
@@ -375,9 +371,15 @@ parseTime s = case String.split (String.Pattern ":") s of
     pure { hrs, min, sec }
   _ -> Nothing
 
--- Date format: <YYYY-MM-DD>
+-- Date format: <YYYY-MM-DD> or DD-Mon-YYYY
 parseDate :: String -> Maybe CT.SDate
-parseDate s =
+parseDate s
+  | String.take 1 s == "<" = parseAngleBracketDate s
+  | otherwise              = parseDayMonYear s
+
+-- <YYYY-MM-DD>
+parseAngleBracketDate :: String -> Maybe CT.SDate
+parseAngleBracketDate s =
   let inner = String.take (String.length s - 2) (String.drop 1 s)
   in case String.split (String.Pattern "-") inner of
     [yearS, monS, dayS] -> do
@@ -386,3 +388,50 @@ parseDate s =
       day  <- Int.fromString dayS
       pure $ CT.dateFromRec { day, mon, year }
     _ -> Nothing
+
+-- DD-Mon-YYYY  (Mon = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec)
+parseDayMonYear :: String -> Maybe CT.SDate
+parseDayMonYear s = case String.split (String.Pattern "-") s of
+  [dayS, monS, yearS] -> do
+    day  <- Int.fromString dayS
+    mon  <- monthFromThreeLetter monS
+    year <- Int.fromString yearS
+    pure $ CT.dateFromRec { day, mon, year }
+  _ -> Nothing
+
+-- Helpers
+
+-- | Split "a b" or "a/b" into Just (a /\ b); Nothing otherwise.
+splitPair :: String -> Maybe (String /\ String)
+splitPair s =
+  case splitWithSpace s of
+    [a, b] -> Just (a /\ b)
+    _ -> case String.split (String.Pattern "/") s of
+      [a, b] -> Just (a /\ b)
+      _      -> Nothing
+
+splitWithSpace :: String -> Array String
+splitWithSpace = String.split $ String.Pattern " "
+
+indexOfSpace :: String -> Maybe Int
+indexOfSpace = String.indexOf $ String.Pattern " "
+
+spacesCount :: Parser Int
+spacesCount = SP.regex " *" <#> String.length
+
+monthFromThreeLetter :: String -> Maybe Int
+monthFromThreeLetter = case _ of
+  "Jan" -> Just 1
+  "Feb" -> Just 2
+  "Mar" -> Just 3
+  "Apr" -> Just 4
+  "May" -> Just 5
+  "Jun" -> Just 6
+  "Jul" -> Just 7
+  "Aug" -> Just 8
+  "Sep" -> Just 9
+  "Oct" -> Just 10
+  "Nov" -> Just 11
+  "Dec" -> Just 12
+  _     -> Nothing
+

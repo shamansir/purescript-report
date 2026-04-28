@@ -19,19 +19,15 @@ import Data.Array.NonEmpty as NEA
 import Data.Foldable (fold)
 import Data.FunctorWithIndex (mapWithIndex)
 
-import Yoga.JSON (class WriteForeign, writePrettyJSON, class ReadForeign, readImpl)
-
 import Report (Report)
-import Report.Core as CT
+import Report.Core (SDateRec, STimeRec, dateToRec, toLeadingZero) as CT
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
 import Report.Chain as MbW
-import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent)
-import Report.Convert.Keyed (class EncodableKey, decodeKey)
-import Report.Convert.Types
+import Report.Convert.Types (DecoratorRec, ItemRec, Subject)
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
-import Report.Convert.Text.Decorators.Tags as CT
+import Report.Convert.Text.Decorators.Tags (loadRawId) as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
