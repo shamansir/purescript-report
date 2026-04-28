@@ -4,6 +4,7 @@ import Prelude
 
 import Report.Decorator (Key(..)) as D
 import Report.Decorators.Progress (PTValueTag(..), _vtagFrom, _vtagTo) as P
+import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
 
 
 newtype TriMarker = TM String -- marker from three letters
@@ -23,11 +24,11 @@ pathKW = SM "//" :: SymMarker
 
 
 tmf :: D.Key -> TriMarker
-tmf = triMarkerFor
+tmf = triMarkerForDecorator
 
 
-triMarkerFor :: D.Key -> TriMarker
-triMarkerFor = case _ of
+triMarkerForDecorator :: D.Key -> TriMarker
+triMarkerForDecorator = case _ of
    D.KRating ->         TM "RAT"
    D.KPriority ->       TM "PRI"
    D.KTask ->           TM "TSK"
@@ -79,8 +80,8 @@ ptftm :: TriMarker -> P.PTValueTag
 ptftm = progressTagFromTriMarker
 
 
-mbDecKeyFromTriMarker :: TriMarker -> D.Key
-mbDecKeyFromTriMarker (TM marker) = case marker of
+decoratorKeyFromTriMarker :: TriMarker -> D.Key
+decoratorKeyFromTriMarker (TM marker) = case marker of
     "RAT" -> D.KRating
     "PRI" -> D.KPriority
     "TSK" -> D.KTask
@@ -123,3 +124,39 @@ progressTagFromTriMarker (TM marker) = case marker of
     "REL" -> P.PTRelTime
     "XXX" -> P.PTError
     _     -> P.PTUnknown
+
+
+triMarkerForTabular :: TV.TabValTypeKey -> TriMarker
+triMarkerForTabular = case _ of
+    TV.TVTString -> TM "TXT"
+    TV.TVTInt -> TM "INT"
+    TV.TVTID -> TM "UID"
+    TV.TVTYear -> TM "YER"
+    TV.TVTNumber -> TM "NUM"
+    TV.TVTBoolean -> TM "BOL"
+    TV.TVTTime -> TM "TIM"
+    TV.TVTDate -> TM "DAT"
+    TV.TVTDateRange -> TM "DTR"
+    TV.TVTDateTime -> TM "DTT"
+    TV.TVTTimeRange -> TM "TMR"
+    TV.TVTDateTimeRange -> TM "DMR"
+    TV.TVTDecorator decKey -> triMarkerForDecorator decKey
+    TV.TVTTags -> TM "TAG"
+
+
+tabularFromTriMarker :: TriMarker -> TV.TabValTypeKey
+tabularFromTriMarker (TM marker) = case marker of
+    "TXT" -> TV.TVTString
+    "INT" -> TV.TVTInt
+    "UID" -> TV.TVTID
+    "YER" -> TV.TVTYear
+    "NUM" -> TV.TVTNumber
+    "BOL" -> TV.TVTBoolean
+    "TIM" -> TV.TVTTime
+    "DAT" -> TV.TVTDate
+    "DTR" -> TV.TVTDateRange
+    "DTT" -> TV.TVTDateTime
+    "TMR" -> TV.TVTTimeRange
+    "DMR" -> TV.TVTDateTimeRange
+    "TAG" -> TV.TVTTags
+    _     -> TV.TVTDecorator $ decoratorKeyFromTriMarker $ TM marker

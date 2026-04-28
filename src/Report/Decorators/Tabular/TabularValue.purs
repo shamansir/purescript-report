@@ -16,6 +16,7 @@ import Report.Core (Year, SDate, SDateRec, STimeRec)
 -- import Report.Prefix (Prefix)
 -- import Report.Suffix (Suffix(..))
 import Report.Decorator (Decorator(..))
+import Report.Decorator (Key) as Decorator
 import Report.Decorators.Tags (RawTag, RawTags)
 import Report.Decorators.Progress (Progress) as P
 import Report.Convert.Keyed as CK
@@ -273,3 +274,21 @@ dateRange = TVAtomic <<< TVDateRange
 
 tags :: RawTags -> TabularValue
 tags = TVAtomic <<< TVTags
+
+
+data TabValTypeKey
+    = TVTString
+    | TVTInt
+    | TVTID
+    | TVTYear
+    | TVTNumber
+    | TVTBoolean
+    | TVTTime
+    | TVTDate
+    | TVTDateTime
+    | TVTTimeRange
+    | TVTDateRange
+    | TVTDateTimeRange
+    | TVTDecorator Decorator.Key
+    | TVTTags
+

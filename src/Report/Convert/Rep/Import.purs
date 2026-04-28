@@ -22,7 +22,7 @@ import Report.Core as CT
 import Report.Decorator (Decorator)
 import Report.Tabular (Tabular)
 import Report.Tabular (Item) as Tab
-import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Tabular.TabularValue (TabularAtomicValue)
 import Report.Decorators.Progress (Progress(..), Relation(..))
 import Report.Decorators.Progress (PTValueTag(..)) as P
 import Report.Decorators.Task (taskPFromString)
@@ -36,7 +36,7 @@ type RepTabular =
   { name     :: String
   , marker   :: RE.TriMarker
   , rawValue :: String
-  , parsed   :: Maybe (Tab.Item TabularValue)
+  , parsed   :: Maybe (Tab.Item TabularAtomicValue) -- TODO support all kinds of TabularValues
   }
 
 type RepDecorator =
