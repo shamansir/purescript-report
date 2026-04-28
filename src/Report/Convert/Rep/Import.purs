@@ -194,8 +194,9 @@ tabularAtSpaces spaces = do
   continuations   <- continuationLines spaces
   eol
   let triMarker = RE.TM marker
-      parsedTabular = tabularFromRep triMarker raw <#> \v -> Tab.Item { key: name, label: name, value: v }
       rawNCont  = NEA.cons' raw continuations
+      parsedTabular = tabularFromRep triMarker rawNCont
+        <#> \v -> Tab.Item { key: name, label: name, value: v }
   pure { name, marker: triMarker, rawValue: rawNCont, parsed: parsedTabular }
 
 
@@ -227,8 +228,8 @@ decoratorAtSpaces spaces = do
   continuations   <- continuationLines spaces
   eol
   let triMarker = RE.TM marker
-      parsedDec = decoratorFromRep (RE.decoratorKeyFromTriMarker triMarker) raw
       rawNCont  = NEA.cons' raw continuations
+      parsedDec = decoratorFromRep (RE.decoratorKeyFromTriMarker triMarker) rawNCont
   pure { marker: triMarker, rawValue: rawNCont, parsed: parsedDec }
 
 
@@ -244,23 +245,24 @@ tagAtSpaces spaces = do
   pure t
 
 
-tabularFromRep :: RE.TriMarker -> String -> Maybe TabularAtomicValue
+tabularFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe TabularAtomicValue
 tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
-  TV.TVTString        -> Just $ TVString raw
-  TV.TVTInt           -> TVInt    <$> Int.fromString raw
-  TV.TVTID            -> TVID     <$> Int.fromString raw
-  TV.TVTYear          -> TVYear   <$> Int.fromString raw
-  TV.TVTNumber        -> TVNumber <$> Number.fromString raw
-  TV.TVTBoolean       -> parseBooleanAtomic raw
-  TV.TVTTime          -> TVTime   <$> parseTime raw
-  TV.TVTDate          -> TVDate   <$> parseDate raw
-  TV.TVTDateTime      -> uncurry TVDateTime <$> parseDateTime raw
-  TV.TVTTimeRange     -> TVTimeRange <$> toFromToRec <$> parseRange parseTime parseTime raw
-  TV.TVTDateRange     -> TVDateRange <$> toFromToRec <$> parseRange parseDate parseDate raw
-  TV.TVTDateTimeRange -> TVDateTimeRange <$> toFromToRec <$> bimap toDateTimeRec toDateTimeRec <$> parseRange parseDateTime parseDateTime raw
+  TV.TVTString        -> Just      $  TVString          fraw
+  TV.TVTInt           -> TVInt    <$> Int.fromString    fraw
+  TV.TVTID            -> TVID     <$> Int.fromString    fraw
+  TV.TVTYear          -> TVYear   <$> Int.fromString    fraw
+  TV.TVTNumber        -> TVNumber <$> Number.fromString fraw
+  TV.TVTBoolean       -> parseBooleanAtomic             fraw
+  TV.TVTTime          -> TVTime   <$> parseTime         fraw
+  TV.TVTDate          -> TVDate   <$> parseDate         fraw
+  TV.TVTDateTime      -> uncurry TVDateTime              <$> parseDateTime fraw
+  TV.TVTTimeRange     -> TVTimeRange     <$> toFromToRec <$> parseRange parseTime parseTime fraw
+  TV.TVTDateRange     -> TVDateRange     <$> toFromToRec <$> parseRange parseDate parseDate fraw
+  TV.TVTDateTimeRange -> TVDateTimeRange <$> toFromToRec <$> bimap toDateTimeRec toDateTimeRec <$> (parseRange parseDateTime parseDateTime fraw)
   TV.TVTDecorator dk  -> TVDecorator <$> decoratorFromRep dk raw
-  TV.TVTTags          -> Just $ TVTags $ RawTags $ parseTags raw
+  TV.TVTTags          -> Just $ TVTags $ RawTags $ parseTags fraw
   where
+    fraw = NEA.head raw
     toDateTimeRec :: (CT.SDate /\ CT.STimeRec) -> { date :: CT.SDate, time :: CT.STimeRec }
     toDateTimeRec (date /\ time) = { date, time }
     toFromToRec :: forall f t. (f /\ t) -> { from :: f, to :: t }
@@ -276,49 +278,53 @@ parseBooleanAtomic = String.toLower >>> case _ of
   _       -> Nothing
 
 
-decoratorFromRep :: Key -> String -> Maybe Decorator
+decoratorFromRep :: Key -> NonEmptyArray String -> Maybe Decorator
 decoratorFromRep dk raw = case dk of
   KProgress pvTag -> SProgress  <$> progressFromRep (RE.tmfp $ P._vtagFrom pvTag) raw
-  KDescription    -> Just        $ SDescription raw
-  KEarnedAt       -> SEarnedAt  <$> parseDate raw
-  KRating         -> PRating    <$> parseRating raw
-  KTask           -> Just        $ PTask $ taskPFromString raw
-  KReference      -> SReference <$> parseGroupPath raw
-  KPriority       -> PPriority  <$> Priority.fromString raw
+  KDescription    -> Just        $  SDescription fraw
+  KEarnedAt       -> SEarnedAt  <$> parseDate fraw
+  KRating         -> PRating    <$> parseRating fraw
+  KTask           -> Just        $  PTask $ taskPFromString fraw
+  KReference      -> SReference <$> parseGroupPath fraw
+  KPriority       -> PPriority  <$> Priority.fromString fraw
+  where
+    fraw = NEA.head raw
 
 
 -- | Reconstruct a Progress value from a Rep marker and raw value string.
 -- | Returns Nothing for unrecognised markers or malformed values.
 
-progressFromRep :: RE.TriMarker -> String -> Maybe Progress
+progressFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe Progress
 progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
   P.PTNone         -> Just None
   P.PTUnknown      -> Just Unknown
-  P.PTInt          -> PInt    <$> Int.fromString raw
-  P.PTNumber       -> PNumber <$> Number.fromString raw
-  P.PTText         -> Just $ PText raw
-  P.PTToComplete   -> Just $ ToComplete { done: (raw == "DONE") || (raw == "1") }
-  P.PTPercentI     -> PercentI <$> Int.fromString (stripPercent raw)
-  P.PTPercentN     -> PercentN <$> Number.fromString (stripPercent raw)
-  P.PTPercentSign  -> parsePercentSign raw
-  P.PTToGetI       -> parseToGetI raw
-  P.PTToGetN       -> parseToGetN raw
-  P.PTOnTime       -> OnTime <$> parseTime raw
-  P.PTOnDate       -> OnDate <$> parseDate raw
-  P.PTPerI         -> parsePerI raw
-  P.PTPerN         -> parsePerN raw
-  P.PTMeasuredI    -> parseMeasuredI raw
-  P.PTMeasuredN    -> parseMeasuredN raw
-  P.PTMeasuredSign -> parseMeasuredSign raw
-  P.PTRangeI       -> parseRangeI raw
-  P.PTRangeN       -> parseRangeN raw
-  P.PTTask         -> Just $ Task $ taskPFromString raw
+  P.PTInt          -> PInt    <$> Int.fromString fraw
+  P.PTNumber       -> PNumber <$> Number.fromString fraw
+  P.PTText         -> Just $ PText fraw
+  P.PTToComplete   -> Just $ ToComplete { done: (fraw == "DONE") || (fraw == "1") }
+  P.PTPercentI     -> PercentI <$> Int.fromString    (stripPercent fraw)
+  P.PTPercentN     -> PercentN <$> Number.fromString (stripPercent fraw)
+  P.PTPercentSign  -> parsePercentSign fraw
+  P.PTToGetI       -> parseToGetI fraw
+  P.PTToGetN       -> parseToGetN fraw
+  P.PTOnTime       -> OnTime <$> parseTime fraw
+  P.PTOnDate       -> OnDate <$> parseDate fraw
+  P.PTPerI         -> parsePerI fraw
+  P.PTPerN         -> parsePerN fraw
+  P.PTMeasuredI    -> parseMeasuredI fraw
+  P.PTMeasuredN    -> parseMeasuredN fraw
+  P.PTMeasuredSign -> parseMeasuredSign fraw
+  P.PTRangeI       -> parseRangeI fraw
+  P.PTRangeN       -> parseRangeN fraw
+  P.PTTask         -> Just $ Task $ taskPFromString fraw
   P.PTLevelsI      -> Just $ LevelsI { reached: 0, levels: [] }
   P.PTLevelsN      -> Just $ LevelsN { reached: 0.0, levels: [] }
-  P.PTLevelsE      -> parseLevelsE raw
-  P.PTRelTime      -> parseRelTime raw
-  P.PTError        -> Just (Error raw)
+  P.PTLevelsE      -> parseLevelsE fraw
+  P.PTRelTime      -> parseRelTime fraw
+  P.PTError        -> Just $ Error fraw
   _      -> Nothing
+  where
+    fraw = NEA.head raw
 
 
 -- Private parser helpers
