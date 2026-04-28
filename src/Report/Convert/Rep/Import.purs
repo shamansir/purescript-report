@@ -19,12 +19,13 @@ import StringParser (Parser, ParseError, runParser, fail)
 import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
 
 import Report.Core as CT
-import Report.Decorator (Decorator)
+import Report.Decorator (Decorator(..), Key(..))
 import Report.Tabular (Tabular)
 import Report.Tabular (Item) as Tab
-import Report.Decorators.Tabular.TabularValue (TabularAtomicValue)
+import Report.Decorators.Tabular.TabularValue (TabularAtomicValue(..))
+import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
 import Report.Decorators.Progress (Progress(..), Relation(..))
-import Report.Decorators.Progress (PTValueTag(..)) as P
+import Report.Decorators.Progress (PTValueTag(..), _vtagFrom) as P
 import Report.Decorators.Task (taskPFromString)
 
 import Report.Convert.Rep.Keys as RE
@@ -216,6 +217,41 @@ tagAtSpaces spaces = do
   t <- restOfLine
   eol
   pure t
+
+
+tabularFromRep :: RE.TriMarker -> String -> Maybe TabularAtomicValue
+tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
+  TV.TVTString        -> Just $ TVString raw
+  TV.TVTInt           -> TVInt    <$> Int.fromString raw
+  TV.TVTID            -> TVID     <$> Int.fromString raw
+  TV.TVTYear          -> TVYear   <$> Int.fromString raw
+  TV.TVTNumber        -> TVNumber <$> Number.fromString raw
+  TV.TVTBoolean       -> parseBooleanAtomic raw
+  TV.TVTTime          -> TVTime   <$> parseTime raw
+  TV.TVTDate          -> TVDate   <$> parseDate raw
+  TV.TVTDateTime      -> Nothing
+  TV.TVTTimeRange     -> Nothing
+  TV.TVTDateRange     -> Nothing
+  TV.TVTDateTimeRange -> Nothing
+  TV.TVTDecorator dk  -> TVDecorator <$> decoratorFromRep dk raw
+  TV.TVTTags          -> Nothing
+
+
+parseBooleanAtomic :: String -> Maybe TabularAtomicValue
+parseBooleanAtomic = case _ of
+  "true"  -> Just $ TVBoolean true
+  "false" -> Just $ TVBoolean false
+  "1"     -> Just $ TVBoolean true
+  "0"     -> Just $ TVBoolean false
+  _       -> Nothing
+
+
+decoratorFromRep :: Key -> String -> Maybe Decorator
+decoratorFromRep dk raw = case dk of
+  KProgress pvTag -> SProgress <$> progressFromRep (RE.tmfp $ P._vtagFrom pvTag) raw
+  KDescription    -> Just $ SDescription raw
+  KEarnedAt       -> SEarnedAt <$> parseDate raw
+  _               -> Nothing
 
 
 -- | Reconstruct a Progress value from a Rep marker and raw value string.

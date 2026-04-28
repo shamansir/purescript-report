@@ -10,6 +10,11 @@ import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
 newtype TriMarker = TM String -- marker from three letters
 newtype SymMarker = SM String -- marker from a symbol or two symbols
 
+derive newtype instance Show TriMarker
+derive newtype instance Eq TriMarker
+derive newtype instance Show SymMarker
+derive newtype instance Eq SymMarker
+
 
 subjKW = TM "SBJ" :: TriMarker
 groupKW = TM "GRP" :: TriMarker
@@ -142,6 +147,10 @@ triMarkerForTabular = case _ of
     TV.TVTDateTimeRange -> TM "DMR"
     TV.TVTDecorator decKey -> triMarkerForDecorator decKey
     TV.TVTTags -> TM "TAG"
+
+
+tftm :: TriMarker -> TV.TabValTypeKey
+tftm = tabularFromTriMarker
 
 
 tabularFromTriMarker :: TriMarker -> TV.TabValTypeKey

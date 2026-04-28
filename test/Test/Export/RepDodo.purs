@@ -32,6 +32,7 @@ import Report (toReport)
 import Report.Convert.Generic (includeAll) as R
 import Report.Convert.Rep (toRep) as D
 import Report.Convert.Rep.Import (fromRep) as I
+import Report.Convert.Rep.Keys (TriMarker(..)) as K
 
 
 onlyFewGamesFilePath = "test/games-samples/only-few-games.json" :: String
@@ -92,7 +93,7 @@ spec =
                       Nothing -> A.fail "No items in File group"
                       Just item0 -> do
                         item0.title `A.shouldEqual` "Time"
-                        (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just "TIM"
+                        (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just (K.TM "TIM")
                         (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "07:54:00"
                     case Array.last g0.items of
                       Nothing -> A.fail "No last item in File group"
@@ -111,7 +112,7 @@ spec =
                       Nothing -> A.fail "No items in Stats group"
                       Just item0 -> do
                         item0.title `A.shouldEqual` "Order Completion"
-                        (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just "GTI"
+                        (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just (K.TM "GTI")
                         (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "67 185"
                 -- depth-2 group carries path built from parent + self
                 case Array.index subj.groups 2 of
