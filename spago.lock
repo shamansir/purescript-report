@@ -17,6 +17,7 @@
             "newtype",
             "prelude",
             "record-extra",
+            "string-parsers",
             "strings",
             "tuples",
             "yoga-json",
@@ -85,6 +86,7 @@
             "refs",
             "safe-coerce",
             "st",
+            "string-parsers",
             "strings",
             "tailrec",
             "transformers",
@@ -2150,6 +2152,23 @@
         "prelude",
         "tailrec",
         "unsafe-coerce"
+      ]
+    },
+    "string-parsers": {
+      "type": "registry",
+      "version": "8.0.0",
+      "integrity": "sha256-xYexodEcW37sOLAw9R37uKTZjQFEolg3oti8E/sEry4=",
+      "dependencies": [
+        "arrays",
+        "bifunctors",
+        "control",
+        "either",
+        "foldable-traversable",
+        "lists",
+        "maybe",
+        "prelude",
+        "strings",
+        "tailrec"
       ]
     },
     "strings": {

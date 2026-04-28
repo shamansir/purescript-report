@@ -7,15 +7,19 @@ import Effect.Class (liftEffect)
 import Yoga.JSON (readJSON) as JSON
 import Foreign (ForeignError, renderForeignError) as F
 
-import Data.Either (Either, either)
+import Data.Array as Array
+import Data.Either (Either(..), either)
 import Data.List.NonEmpty as NEL
+import Data.Maybe (Maybe(..))
 import Data.String as String
 
 import Test.Spec (Spec, it, itOnly, describe)
-import Test.Spec.Assertions (fail)
+import Test.Spec.Assertions (fail, shouldEqual) as A
 
 import Node.Encoding (Encoding(..))
 import Node.FS.Sync (readTextFile)
+
+import StringParser (printParserError) as SP
 
 import Test.Utils (shouldEqual) as U
 
@@ -27,6 +31,7 @@ import GameLog.Types.Achievement (Tag) as GL
 import Report (toReport)
 import Report.Convert.Generic (includeAll) as R
 import Report.Convert.Rep (toRep) as D
+import Report.Convert.Rep.Import (fromRep) as I
 
 
 onlyFewGamesFilePath = "test/games-samples/only-few-games.json" :: String
@@ -38,11 +43,11 @@ type FE a = Either (NEL.NonEmptyList F.ForeignError) a
 spec :: Spec Unit
 spec =
     describe "convert" do
-      it "rep (plain)" do
+      it "to `rep` (plain)" do
         fileText <- liftEffect $ readTextFile UTF8 onlyFewGamesFilePath
         let (eDhallGameCollection :: FE GL.FromDhall) = JSON.readJSON fileText
         either
-            (\errors -> fail $ "Errors: " <> (String.joinWith "\n" $ F.renderForeignError <$> NEL.toUnfoldable errors))
+            (\errors -> A.fail $ "Errors: " <> (String.joinWith "\n" $ F.renderForeignError <$> NEL.toUnfoldable errors))
             (\dhallGameCollection -> do
                 let gameCollection  = GL.dhallToAchievements dhallGameCollection
                 let (glReport :: GL.GamesReport) = toReport $ GL.fromArray gameCollection
@@ -51,10 +56,68 @@ spec =
             )
             eDhallGameCollection
 
-        -- either
-        --     (\errors -> fail $ "Errors: " <> (String.joinWith "\n" $ F.renderForeignError <$> NEL.toUnfoldable errors))
-        --     (\achs -> "isAwesome" `U.shouldEqual` "isAwesome")
-        --     reportDhall
+      it "from `rep` (plain)" do
+        case I.fromRep expectedRep of
+          Left err ->
+            A.fail $ "Parse failed: " <> SP.printParserError err
+          Right subjects -> do
+            -- one subject
+            Array.length subjects `A.shouldEqual` 1
+            case Array.head subjects of
+              Nothing -> A.fail "No subjects parsed"
+              Just subj -> do
+                -- subject name and tabulars
+                subj.name `A.shouldEqual` "Astral Chain"
+                Array.length subj.tabulars `A.shouldEqual` 4
+                (_.name     <$> Array.head subj.tabulars) `A.shouldEqual` Just "Id"
+                (_.rawValue <$> Array.head subj.tabulars) `A.shouldEqual` Just "DHL:astral-chain"
+                (_.name     <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "TrackedAt"
+                (_.rawValue <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "<2025-08-12>"
+                -- 16 groups in flat list (subjects + nested all at same level)
+                Array.length subj.groups `A.shouldEqual` 16
+                -- first group: File
+                case Array.head subj.groups of
+                  Nothing -> A.fail "No groups parsed"
+                  Just g0 -> do
+                    g0.title  `A.shouldEqual` "File"
+                    g0.depth  `A.shouldEqual` 1
+                    g0.pathId `A.shouldEqual` Just "00-file"
+                    Array.length g0.tabulars `A.shouldEqual` 2
+                    (_.name     <$> Array.head g0.tabulars) `A.shouldEqual` Just "Path"
+                    (_.rawValue <$> Array.head g0.tabulars) `A.shouldEqual` Just "00-file"
+                    -- 8 items in File (no subgroups)
+                    Array.length g0.items `A.shouldEqual` 8
+                    case Array.head g0.items of
+                      Nothing -> A.fail "No items in File group"
+                      Just item0 -> do
+                        item0.title `A.shouldEqual` "Time"
+                        (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just "TIM"
+                        (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "07:54:00"
+                    case Array.last g0.items of
+                      Nothing -> A.fail "No last item in File group"
+                      Just item7 -> do
+                        item7.title `A.shouldEqual` "Play Style"
+                        (_.rawValue <$> Array.head item7.decorators) `A.shouldEqual` Just "Pt Standard"
+                -- Stats group: 1 item only (Hero/Weapons/… are separate groups in flat list)
+                case Array.index subj.groups 1 of
+                  Nothing -> A.fail "No Stats group"
+                  Just g1 -> do
+                    g1.title `A.shouldEqual` "Stats"
+                    g1.depth `A.shouldEqual` 1
+                    Array.length g1.items `A.shouldEqual` 1
+                    case Array.head g1.items of
+                      Nothing -> A.fail "No items in Stats group"
+                      Just item0 -> do
+                        item0.title `A.shouldEqual` "Order Completion"
+                        (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just "GTI"
+                        (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "67 185"
+                -- deepest groups at depth 3 carry correct depth field
+                case Array.index subj.groups 5 of
+                  Nothing -> A.fail "No Chapters group"
+                  Just g5 -> do
+                    g5.title `A.shouldEqual` "Chapters"
+                    g5.depth `A.shouldEqual` 3
+                    Array.length g5.items `A.shouldEqual` 11
 
 
 expectedRep = """SBJ. Astral Chain
