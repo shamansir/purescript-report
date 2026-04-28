@@ -21,7 +21,7 @@ import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
 import Report.Core as CT
 import Report.Decorator (Decorator(..), Key(..))
 import Report.Tabular (Tabular)
-import Report.Tabular (Item) as Tab
+import Report.Tabular (Item(..)) as Tab
 import Report.Decorators.Tabular.TabularValue (TabularAtomicValue(..))
 import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
 import Report.Decorators.Progress (Progress(..), Relation(..))
@@ -174,7 +174,8 @@ tabularAtSpaces spaces = do
   (marker /\ raw) <- markerAndValue
   eol
   let triMarker = RE.TM marker
-  pure { name, marker : triMarker, rawValue: raw, parsed : Nothing }
+      parsedTabular = tabularFromRep triMarker raw <#> \v -> Tab.Item { key: name, label: name, value: v }
+  pure { name, marker: triMarker, rawValue: raw, parsed: parsedTabular }
 
 
 -- | Item: leading spaces are read from the input and must exceed parentSpaces.
@@ -204,7 +205,8 @@ decoratorAtSpaces spaces = do
   (marker /\ raw) <- markerAndValue
   eol
   let triMarker = RE.TM marker
-  pure { marker : triMarker, rawValue: raw, parsed : Nothing }
+      parsedDec = decoratorFromRep (RE.decoratorKeyFromTriMarker triMarker) raw
+  pure { marker: triMarker, rawValue: raw, parsed: parsedDec }
 
 
 -- | Tag at exactly `spaces` leading spaces:
@@ -238,7 +240,7 @@ tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
 
 
 parseBooleanAtomic :: String -> Maybe TabularAtomicValue
-parseBooleanAtomic = case _ of
+parseBooleanAtomic = String.toLower >>> case _ of
   "true"  -> Just $ TVBoolean true
   "false" -> Just $ TVBoolean false
   "1"     -> Just $ TVBoolean true
@@ -380,20 +382,19 @@ parseMeasuredN s = do
   let measure = String.drop (idx + 1) s
   pure $ MeasuredN { amount, measure }
 
--- MeasuredSign export uses 4-space separator: "<sign> <amount>    <measure>"
 parseMeasuredSign :: String -> Maybe Progress
 parseMeasuredSign s = do
-  spaceIdx     <- indexOfSpace s
-  let signS = String.take spaceIdx s
-      rest  = String.drop (spaceIdx + 1) s
-  sign         <- case signS of
+  spaceIdx1 <- indexOfSpace s
+  let signS = String.take spaceIdx1 s
+      rest  = String.drop (spaceIdx1 + 1) s
+  sign      <- case signS of
     "+" -> Just 1
     "-" -> Just $ -1
     "*" -> Just 0
-    _    -> Nothing
-  fourSpaceIdx <- String.indexOf (String.Pattern "    ") rest
-  amount       <- Number.fromString (String.take fourSpaceIdx rest)
-  let measure = String.drop (fourSpaceIdx + 4) rest
+    _   -> Nothing
+  spaceIdx2 <- indexOfSpace rest
+  amount    <- Number.fromString (String.take spaceIdx2 rest)
+  let measure = String.drop (spaceIdx2 + 1) rest
   pure $ MeasuredSign { sign, amount, measure }
 
 parseRangeI :: String -> Maybe Progress

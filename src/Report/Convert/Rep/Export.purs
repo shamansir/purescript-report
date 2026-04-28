@@ -229,8 +229,8 @@ _progressProperties = case _ of
     MeasuredN { amount, measure } ->
         tmfp P.PTMeasuredN /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredSign { sign, amount, measure } ->
-        let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in tmfp P.PTMeasuredSign /\ pure (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text "    " <> D.text measure)
+        let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
+        in tmfp P.PTMeasuredSign /\ pure (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text " " <> D.text measure)
     RangeI { from, to } ->
         tmfp P.PTRangeI /\ pure (D.text $ show from <> " " <> show to)
     RangeN { from, to } ->
@@ -281,7 +281,7 @@ _progressSuffixOneLiner = case _ of
     PercentI i -> pure $ D.text (show i) <> D.text "%"
     PercentN n -> pure $ D.text (show n) <> D.text "%"
     PercentSign { sign, pct } ->
-        let sign_s = if sign > 0 then "" else if sign < 0 then "-" else ""
+        let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
         in pure $ D.text (sign_s <> show pct <> "%")
     ToGetI { got, total } ->
         pure $ D.text (show got <> "/" <> show total)
@@ -300,8 +300,8 @@ _progressSuffixOneLiner = case _ of
     MeasuredN { amount, measure } ->
         pure $ D.text (show amount) <> D.text measure
     MeasuredSign { sign, amount, measure } ->
-        let sign_s = if sign > 0 then "" else if sign < 0 then "-" else ""
-        in pure $ D.text sign_s <> D.text (show amount) <> D.text measure
+        let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
+        in pure $ D.text sign_s <> D.text (show amount) <> D.space <> D.text measure
     RangeI { from, to } ->
         pure $ D.text (show from <> "--" <> show to)
     RangeN { from, to } ->
