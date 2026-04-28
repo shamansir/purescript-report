@@ -8,6 +8,8 @@ import Yoga.JSON (readJSON) as JSON
 import Foreign (ForeignError, renderForeignError) as F
 
 import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NEA
 import Data.Either (Either(..), either)
 import Data.List.NonEmpty as NEL
 import Data.Maybe (Maybe(..))
@@ -58,6 +60,11 @@ spec =
             eDhallGameCollection
 
       it "from `rep` (plain)" do
+        let
+          __rawValue :: forall r. { rawValue :: NonEmptyArray String | r } -> String
+          __rawValue = _.rawValue >>> NEA.head
+          __rawValueN :: forall r. Int -> { rawValue :: NonEmptyArray String | r } -> Maybe String
+          __rawValueN n = _.rawValue >>> flip NEA.index n
         case I.fromRep expectedRep of
           Left err ->
             A.fail $ "Parse failed: " <> SP.printParserError err
@@ -71,9 +78,9 @@ spec =
                 subj.name `A.shouldEqual` "Astral Chain"
                 Array.length subj.tabulars `A.shouldEqual` 4
                 (_.name     <$> Array.head subj.tabulars) `A.shouldEqual` Just "Id"
-                (_.rawValue <$> Array.head subj.tabulars) `A.shouldEqual` Just "DHL:astral-chain"
+                (__rawValue <$> Array.head subj.tabulars) `A.shouldEqual` Just "DHL:astral-chain"
                 (_.name     <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "TrackedAt"
-                (_.rawValue <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "<2025-08-12>"
+                (__rawValue <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "<2025-08-12>"
                 -- 16 groups in flat list (subjects + nested all at same level)
                 Array.length subj.groups `A.shouldEqual` 16
                 -- first group: File
@@ -86,7 +93,7 @@ spec =
                     g0.path   `A.shouldEqual` ["00-file"]
                     Array.length g0.tabulars `A.shouldEqual` 2
                     (_.name     <$> Array.head g0.tabulars) `A.shouldEqual` Just "Path"
-                    (_.rawValue <$> Array.head g0.tabulars) `A.shouldEqual` Just "00-file"
+                    (__rawValue <$> Array.head g0.tabulars) `A.shouldEqual` Just "00-file"
                     -- 8 items in File (no subgroups)
                     Array.length g0.items `A.shouldEqual` 8
                     case Array.head g0.items of
@@ -94,12 +101,12 @@ spec =
                       Just item0 -> do
                         item0.title `A.shouldEqual` "Time"
                         (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just (K.TM "TIM")
-                        (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "07:54:00"
+                        (__rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "07:54:00"
                     case Array.last g0.items of
                       Nothing -> A.fail "No last item in File group"
                       Just item7 -> do
                         item7.title `A.shouldEqual` "Play Style"
-                        (_.rawValue <$> Array.head item7.decorators) `A.shouldEqual` Just "Pt Standard"
+                        (__rawValue <$> Array.head item7.decorators) `A.shouldEqual` Just "Pt Standard"
                 -- Stats group: 1 item only (Hero/Weapons/… are separate groups in flat list)
                 case Array.index subj.groups 1 of
                   Nothing -> A.fail "No Stats group"
@@ -113,7 +120,7 @@ spec =
                       Just item0 -> do
                         item0.title `A.shouldEqual` "Order Completion"
                         (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just (K.TM "GTI")
-                        (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "67 185"
+                        (__rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "67 185"
                 -- depth-2 group carries path built from parent + self
                 case Array.index subj.groups 2 of
                   Nothing -> A.fail "No Hero group"
@@ -121,6 +128,27 @@ spec =
                     g2.title `A.shouldEqual` "Hero"
                     g2.depth `A.shouldEqual` 2
                     g2.path  `A.shouldEqual` ["01-stats", "00-hero"]
+                -- depth-2 group carries path built from parent + self
+                case Array.index subj.groups 4 of
+                  Nothing -> A.fail "No Basic group"
+                  Just g4 -> do
+                    g4.title `A.shouldEqual` "Basic"
+                    g4.depth `A.shouldEqual` 2
+                    g4.path  `A.shouldEqual` ["01-stats", "02-basic"]
+                    case Array.index g4.items 1 of
+                      Nothing -> A.fail "No items in Basic group"
+                      Just item1 -> do
+                        item1.title `A.shouldEqual` "Red Cases Closed"
+                        (_.marker      <$> Array.head item1.decorators) `A.shouldEqual` Just (K.TM "LVI")
+                        (__rawValue    <$> Array.head item1.decorators) `A.shouldEqual` Just "90"
+                        (__rawValueN 1 =<< Array.head item1.decorators) `A.shouldEqual` Just "1 Lvl. 1"
+                        (__rawValueN 4 =<< Array.head item1.decorators) `A.shouldEqual` Just "131 Lvl. Max"
+                    case Array.index g4.items 3 of
+                      Nothing -> A.fail "No items in Basic group"
+                      Just item3 -> do
+                        item3.title `A.shouldEqual` "Sword Scholar"
+                        (_.marker   <$> Array.head item3.decorators) `A.shouldEqual` Just (K.TM "GTI")
+                        (__rawValue <$> Array.head item3.decorators) `A.shouldEqual` Just "0 1"
                 -- depth-3 group carries full three-segment path
                 case Array.index subj.groups 5 of
                   Nothing -> A.fail "No Chapters group"

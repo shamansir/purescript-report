@@ -3,6 +3,7 @@ module Report.Convert.Rep.Import where
 import Prelude
 
 import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Either (Either)
 import Data.Enum (fromEnum) as Enum
@@ -44,13 +45,13 @@ import Report.Convert.Rep.Keys as RE
 type RepTabular =
   { name     :: String
   , marker   :: RE.TriMarker
-  , rawValue :: String
+  , rawValue :: NonEmptyArray String
   , parsed   :: Maybe (Tab.Item TabularAtomicValue) -- TODO support all kinds of TabularValues
   }
 
 type RepDecorator =
   { marker   :: RE.TriMarker
-  , rawValue :: String
+  , rawValue :: NonEmptyArray String
   , parsed   :: Maybe Decorator
   }
 
@@ -166,6 +167,16 @@ titleToSlug s = CU.fromCharArray $ map slugChar $ CU.toCharArray $ String.toLowe
       let n = Enum.fromEnum c
       in if (n >= 97 && n <= 122) || (n >= 48 && n <= 57) then c else '-'
 
+continuationLines :: Int -> Parser (Array String)
+continuationLines spaces = do
+  contLines <- SP.many $ SP.try $ do
+    eol
+    matchingIndent spaces
+    _        <- SP.string ">>> "
+    contLine <- restOfLine
+    pure contLine
+  pure $ List.toUnfoldable contLines
+
 
 -- | Tabular entry at exactly `spaces` leading spaces:
 -- |   <spaces>- <name>
@@ -180,10 +191,12 @@ tabularAtSpaces spaces = do
   matchingIndent spaces
   _               <- SP.string "; "
   (marker /\ raw) <- markerAndValue
+  continuations   <- continuationLines spaces
   eol
   let triMarker = RE.TM marker
       parsedTabular = tabularFromRep triMarker raw <#> \v -> Tab.Item { key: name, label: name, value: v }
-  pure { name, marker: triMarker, rawValue: raw, parsed: parsedTabular }
+      rawNCont  = NEA.cons' raw continuations
+  pure { name, marker: triMarker, rawValue: rawNCont, parsed: parsedTabular }
 
 
 -- | Item: leading spaces are read from the input and must exceed parentSpaces.
@@ -211,10 +224,12 @@ decoratorAtSpaces spaces = do
   matchingIndent spaces
   _               <- SP.string ": "
   (marker /\ raw) <- markerAndValue
+  continuations   <- continuationLines spaces
   eol
   let triMarker = RE.TM marker
       parsedDec = decoratorFromRep (RE.decoratorKeyFromTriMarker triMarker) raw
-  pure { marker: triMarker, rawValue: raw, parsed: parsedDec }
+      rawNCont  = NEA.cons' raw continuations
+  pure { marker: triMarker, rawValue: rawNCont, parsed: parsedDec }
 
 
 -- | Tag at exactly `spaces` leading spaces:
