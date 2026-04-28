@@ -3,6 +3,7 @@ module Report.Convert.Rep.Import where
 import Prelude
 
 import Data.Array as Array
+import Data.Array.NonEmpty as NEA
 import Data.Either (Either)
 import Data.Enum (fromEnum) as Enum
 import Data.Foldable (fold)
@@ -13,7 +14,9 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number as Number
 import Data.String as String
 import Data.String.CodeUnits (toCharArray, fromCharArray) as CU
+import Data.Tuple (uncurry)
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Bifunctor (bimap)
 
 import StringParser (Parser, ParseError, runParser, fail)
 import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
@@ -27,6 +30,11 @@ import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
 import Report.Decorators.Progress (Progress(..), Relation(..))
 import Report.Decorators.Progress (PTValueTag(..), _vtagFrom) as P
 import Report.Decorators.Task (taskPFromString)
+import Report.Decorators.Rating (Rating(..))
+import Report.Decorators.Priority as Priority
+import Report.Decorators.Tags (RawTag(..), RawTags(..))
+import Report.GroupPath (GroupPath)
+import Report.GroupPath as GP
 
 import Report.Convert.Rep.Keys as RE
 
@@ -231,12 +239,17 @@ tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
   TV.TVTBoolean       -> parseBooleanAtomic raw
   TV.TVTTime          -> TVTime   <$> parseTime raw
   TV.TVTDate          -> TVDate   <$> parseDate raw
-  TV.TVTDateTime      -> Nothing
-  TV.TVTTimeRange     -> Nothing
-  TV.TVTDateRange     -> Nothing
-  TV.TVTDateTimeRange -> Nothing
+  TV.TVTDateTime      -> uncurry TVDateTime <$> parseDateTime raw
+  TV.TVTTimeRange     -> TVTimeRange <$> toFromToRec <$> parseRange parseTime parseTime raw
+  TV.TVTDateRange     -> TVDateRange <$> toFromToRec <$> parseRange parseDate parseDate raw
+  TV.TVTDateTimeRange -> TVDateTimeRange <$> toFromToRec <$> bimap toDateTimeRec toDateTimeRec <$> parseRange parseDateTime parseDateTime raw
   TV.TVTDecorator dk  -> TVDecorator <$> decoratorFromRep dk raw
-  TV.TVTTags          -> Nothing
+  TV.TVTTags          -> Just $ TVTags $ RawTags $ parseTags raw
+  where
+    toDateTimeRec :: (CT.SDate /\ CT.STimeRec) -> { date :: CT.SDate, time :: CT.STimeRec }
+    toDateTimeRec (date /\ time) = { date, time }
+    toFromToRec :: forall f t. (f /\ t) -> { from :: f, to :: t }
+    toFromToRec (from /\ to) = { from, to }
 
 
 parseBooleanAtomic :: String -> Maybe TabularAtomicValue
@@ -250,10 +263,13 @@ parseBooleanAtomic = String.toLower >>> case _ of
 
 decoratorFromRep :: Key -> String -> Maybe Decorator
 decoratorFromRep dk raw = case dk of
-  KProgress pvTag -> SProgress <$> progressFromRep (RE.tmfp $ P._vtagFrom pvTag) raw
-  KDescription    -> Just $ SDescription raw
-  KEarnedAt       -> SEarnedAt <$> parseDate raw
-  _               -> Nothing
+  KProgress pvTag -> SProgress  <$> progressFromRep (RE.tmfp $ P._vtagFrom pvTag) raw
+  KDescription    -> Just        $ SDescription raw
+  KEarnedAt       -> SEarnedAt  <$> parseDate raw
+  KRating         -> PRating    <$> parseRating raw
+  KTask           -> Just        $ PTask $ taskPFromString raw
+  KReference      -> SReference <$> parseGroupPath raw
+  KPriority       -> PPriority  <$> Priority.fromString raw
 
 
 -- | Reconstruct a Progress value from a Rep marker and raw value string.
@@ -267,8 +283,8 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
   P.PTNumber       -> PNumber <$> Number.fromString raw
   P.PTText         -> Just $ PText raw
   P.PTToComplete   -> Just $ ToComplete { done: (raw == "DONE") || (raw == "1") }
-  P.PTPercentI     -> PercentI <$> Int.fromString raw
-  P.PTPercentN     -> PercentN <$> Number.fromString raw
+  P.PTPercentI     -> PercentI <$> Int.fromString (stripPercent raw)
+  P.PTPercentN     -> PercentN <$> Number.fromString (stripPercent raw)
   P.PTPercentSign  -> parsePercentSign raw
   P.PTToGetI       -> parseToGetI raw
   P.PTToGetN       -> parseToGetN raw
@@ -350,7 +366,7 @@ parsePercentSign s = case splitWithSpace s of
       "-" -> Just $ -1
       "*" -> Just 0
       _    -> Nothing
-    pct <- Number.fromString pctS
+    pct <- Number.fromString (stripPercent pctS)
     pure $ PercentSign { sign, pct }
   _ -> Nothing
 
@@ -475,6 +491,60 @@ parseDayMonYear s = case String.split (String.Pattern "-") s of
     pure $ CT.SDate { day, month : mon, year }
   _ -> Nothing
 
+
+parseDateTime :: String -> Maybe (CT.SDate /\ CT.STimeRec)
+parseDateTime s = case splitWithSpace s of
+  [ dateStr, timeStr ] -> parseDT dateStr timeStr
+  _ -> case String.split (String.Pattern "@") s of
+    [ dateStr, timeStr ] -> parseDT dateStr timeStr
+    _ -> Nothing
+  where
+    parseDT dateStr timeStr = do
+      date <- parseDate dateStr
+      time <- parseTime timeStr
+      pure $ date /\ time
+
+
+parseRating :: String -> Maybe Rating
+parseRating s =
+  case splitPair s of
+    Just (valStr /\ maxStr) -> do
+      val <- Number.fromString valStr
+      max <- Int.fromString    maxStr
+      pure $ Rating { value : val, max }
+    Nothing -> Number.fromString s <#> \val -> Rating { value : val, max : 10 }
+
+
+parseGroupPath :: String -> Maybe GroupPath
+parseGroupPath s =
+  case String.split (String.Pattern "::") s of
+    [] -> Nothing
+    [ one ] -> case splitWithSpace one of
+      [] ->      Just $ GP.path [ one ]
+      spItems -> Just $ GP.path spItems
+    scItems ->   Just $ GP.path scItems
+
+
+parseTags :: String -> Array RawTag
+parseTags s =
+  case String.split (String.Pattern ",") s of
+    [ one ] -> Array.catMaybes $ parseTag <$> splitWithSpace one
+    some -> Array.catMaybes $ parseTag <$> some
+
+
+parseTag :: String -> Maybe RawTag
+parseTag s =
+  case Array.uncons $ String.split (String.Pattern "::") s of
+    Just { head, tail } -> Just $ RawTag { content : NEA.cons' head tail, id : NEA.cons' head tail }
+    Nothing -> Nothing
+
+
+parseRange :: forall from to. (String -> Maybe from) -> (String -> Maybe to) -> String -> Maybe (from /\ to)
+parseRange toFrom toTo s =
+  case String.split (String.Pattern "--") s of
+    [ from, to ] -> (/\) <$> toFrom from <*> toTo to
+    _ -> Nothing
+
 -- Helpers
 
 -- | Split "a b" or "a/b" into Just (a /\ b); Nothing otherwise.
@@ -488,6 +558,9 @@ splitPair s =
 
 splitWithSpace :: String -> Array String
 splitWithSpace = String.split $ String.Pattern " "
+
+stripPercent :: String -> String
+stripPercent s = fromMaybe s $ String.stripSuffix (String.Pattern "%") s
 
 indexOfSpace :: String -> Maybe Int
 indexOfSpace = String.indexOf $ String.Pattern " "
