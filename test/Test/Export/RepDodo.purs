@@ -82,6 +82,7 @@ spec =
                     g0.title  `A.shouldEqual` "File"
                     g0.depth  `A.shouldEqual` 1
                     g0.pathId `A.shouldEqual` Just "00-file"
+                    g0.path   `A.shouldEqual` ["00-file"]
                     Array.length g0.tabulars `A.shouldEqual` 2
                     (_.name     <$> Array.head g0.tabulars) `A.shouldEqual` Just "Path"
                     (_.rawValue <$> Array.head g0.tabulars) `A.shouldEqual` Just "00-file"
@@ -104,6 +105,7 @@ spec =
                   Just g1 -> do
                     g1.title `A.shouldEqual` "Stats"
                     g1.depth `A.shouldEqual` 1
+                    g1.path  `A.shouldEqual` ["01-stats"]
                     Array.length g1.items `A.shouldEqual` 1
                     case Array.head g1.items of
                       Nothing -> A.fail "No items in Stats group"
@@ -111,13 +113,28 @@ spec =
                         item0.title `A.shouldEqual` "Order Completion"
                         (_.marker   <$> Array.head item0.decorators) `A.shouldEqual` Just "GTI"
                         (_.rawValue <$> Array.head item0.decorators) `A.shouldEqual` Just "67 185"
-                -- deepest groups at depth 3 carry correct depth field
+                -- depth-2 group carries path built from parent + self
+                case Array.index subj.groups 2 of
+                  Nothing -> A.fail "No Hero group"
+                  Just g2 -> do
+                    g2.title `A.shouldEqual` "Hero"
+                    g2.depth `A.shouldEqual` 2
+                    g2.path  `A.shouldEqual` ["01-stats", "00-hero"]
+                -- depth-3 group carries full three-segment path
                 case Array.index subj.groups 5 of
                   Nothing -> A.fail "No Chapters group"
                   Just g5 -> do
                     g5.title `A.shouldEqual` "Chapters"
                     g5.depth `A.shouldEqual` 3
+                    g5.path  `A.shouldEqual` ["01-stats", "02-basic", "00-chapters"]
                     Array.length g5.items `A.shouldEqual` 11
+                -- depth-3 group under a different depth-2 parent has its own distinct path
+                case Array.index subj.groups 15 of
+                  Nothing -> A.fail "No Photo group"
+                  Just g15 -> do
+                    g15.title `A.shouldEqual` "Photo"
+                    g15.depth `A.shouldEqual` 3
+                    g15.path  `A.shouldEqual` ["01-stats", "05-unique", "06-photo"]
 
 
 expectedRep = """SBJ. Astral Chain

@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Either (Either)
+import Data.Enum (fromEnum) as Enum
 import Data.Foldable (fold)
 import Data.Int as Int
 import Data.List (List)
@@ -11,6 +12,7 @@ import Data.List (toUnfoldable) as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number as Number
 import Data.String as String
+import Data.String.CodeUnits (toCharArray, fromCharArray) as CU
 import Data.Tuple.Nested ((/\), type (/\))
 
 import StringParser (Parser, ParseError, runParser, fail)
@@ -43,7 +45,8 @@ type RepItem =
 type RepGroup =
   { title    :: String
   , pathId   :: Maybe String
-  , depth    :: Int   -- 1-based nesting level, derived from indent rank
+  , depth    :: Int         -- 1-based nesting level, derived from indent rank
+  , path     :: Array String  -- full path from root to this group (inclusive)
   , tabulars :: Array RepTabular
   , items    :: Array RepItem
   }
@@ -108,18 +111,42 @@ rawGroupParser = do
   pure { title, pathId, indent: leadingSpaces, tabulars: tabs, items }
 
 
--- | Assign 1-based depth to each group by ranking their indent levels.
--- | Groups with the smallest indent get depth 1, next get depth 2, etc.
--- | This makes depth meaningful regardless of whether 2, 4, or 8 spaces are used.
+-- | Assign 1-based depth and full path to each group.
+-- | Depth ranks unique indent levels (smallest indent = depth 1).
+-- | Path is built via a stack: each group's segment replaces the stack slot at its depth,
+-- | and the path is all stack slots from root to the group (inclusive).
 
 assignDepths :: Array RawRepGroup -> Array RepGroup
 assignDepths rawGroups =
   let
     sortedUnique = Array.nub $ Array.sort $ map _.indent rawGroups
     rankOf i = 1 + fromMaybe 0 (Array.findIndex (_ == i) sortedUnique)
+
+    step (stack /\ acc) g =
+      let depth    = rankOf g.indent
+          seg      = groupSegment g
+          newStack = Array.take (depth - 1) stack `Array.snoc` seg
+      in newStack /\ Array.snoc acc
+           { title: g.title, pathId: g.pathId, depth, path: newStack
+           , tabulars: g.tabulars, items: g.items }
+
+    _ /\ groups = Array.foldl step ([] /\ []) rawGroups
   in
-    map (\g -> { title: g.title, pathId: g.pathId, depth: rankOf g.indent
-               , tabulars: g.tabulars, items: g.items }) rawGroups
+    groups
+
+
+-- | Derive the path segment for a group: use explicit pathId when present,
+-- | otherwise slugify the title (lowercase, non-alphanumeric → '-').
+
+groupSegment :: RawRepGroup -> String
+groupSegment g = fromMaybe (titleToSlug g.title) g.pathId
+
+titleToSlug :: String -> String
+titleToSlug s = CU.fromCharArray $ map slugChar $ CU.toCharArray $ String.toLower s
+  where
+    slugChar c =
+      let n = Enum.fromEnum c
+      in if (n >= 97 && n <= 122) || (n >= 48 && n <= 57) then c else '-'
 
 
 -- | Tabular entry at exactly `spaces` leading spaces:

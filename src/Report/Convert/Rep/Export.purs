@@ -2,15 +2,8 @@ module Report.Convert.Rep.Export where
 
 import Prelude
 
-import Foreign (Foreign, F)
-import Control.Monad.Except (runExcept)
-
-import Data.Maybe (Maybe(..), maybe)
-import Data.Either (either)
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Tuple (uncurry) as Tuple
-import Data.String (joinWith, replaceAll, Pattern(..), Replacement(..)) as String
-import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Array ((:))
 import Data.Array as Array
@@ -30,11 +23,11 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags (loadRawId) as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
-import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (Tags, RawTag)
+import Report.Decorators.Progress (Progress(..), Relation(..))
+--import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Progress (Progress(..), PTValueTag(..), _vtagFrom) as P
-import Report.Tabular (Tabular)
+--import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
@@ -44,7 +37,7 @@ import Report.Decorators.Tabular.TabularValue as TV
 
 import Report.Convert.Dhall.Export as DH
 
-import Dodo
+import Dodo (Doc)
 import Dodo as D
 
 
