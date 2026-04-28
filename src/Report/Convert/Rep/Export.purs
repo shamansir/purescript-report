@@ -26,7 +26,7 @@ import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..), Relation(..))
 --import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
-import Report.Decorators.Progress (Progress(..), PTValueTag(..), _vtagFrom) as P
+import Report.Decorators.Progress (Progress(..), PTValueTag(..)) as P
 --import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
 import Report.Decorators.Rating as Rating
@@ -34,6 +34,7 @@ import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
 import Report.Decorators.Tabular.TabularValue as TV
 -- import Report.Convert.Text.Export as TextExport
+import Report.Convert.Rep.Keys
 
 import Report.Convert.Dhall.Export as DH
 
@@ -41,23 +42,8 @@ import Dodo (Doc)
 import Dodo as D
 
 
-newtype TriMarker = TM String -- marker from three letters
-newtype SymMarker = SM String -- marker from a symbol or two symbols
-
-
-subjKW = TM "SBJ" :: TriMarker
-groupKW = TM "GRP" :: TriMarker
-
-
 markTri :: TriMarker -> Doc Unit
 markTri (TM marker) = D.text marker <> D.text ". "
-
-
-tabKW = SM "-" :: SymMarker
-decKW = SM ":" :: SymMarker
-tavKW = SM ";" :: SymMarker
-tagKW = SM "#" :: SymMarker
-pathKW = SM "//" :: SymMarker
 
 
 markSym :: SymMarker -> Doc Unit
@@ -166,38 +152,6 @@ toRep inclRule =
                   [] -> mempty
                   _ -> tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags
 
-            {-
-            let
-                itemHeadingPrefix = makeHeading $ GroupPath.howDeep grpPath + 2
-                decoratorsPrefixes   = Array.catMaybes $ convertDecoratorToPrefix   <$> itemRec.decorators
-                decoratorsSuffixes   = Array.catMaybes $ convertDecoratorToSuffix   <$> itemRec.decorators
-                decoratorsProperties = Array.concat    $ convertDecoratorToProperty <$> itemRec.decorators
-                mbTagsSuffix         = convertTagsToSuffix $ unwrap itemRec.tags
-                mbTagsProperty       = convertTagsToProperty $ unwrap itemRec.tags
-                titleProperty = ("Title" /\ D.text itemRec.title)
-                decoratorsPrefixesDoc =
-                    case decoratorsPrefixes of
-                        [] -> mempty
-                        prefixes -> joinWith D.space prefixes <> D.space
-                decoratorsSuffixesDoc =
-                    case decoratorsSuffixes of
-                        [] -> mempty
-                        suffixes -> D.space <> joinWith D.space suffixes
-                propertiesBlockDoc =
-                    case decoratorsProperties of
-                        [] -> case mbTagsProperty of
-                            Just tagsProp -> D.break <> tabularBlock ( titleProperty : pure tagsProp )
-                            Nothing -> mempty
-                        props -> case mbTagsProperty of
-                            Just tagsProp -> D.break <> tabularBlock ( titleProperty : tagsProp : props )
-                            Nothing -> D.break <> tabularBlock ( titleProperty : props )
-            in
-            itemHeadingPrefix <+> decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc
-            <> case mbTagsSuffix of
-                Just tagsSuffix -> D.space <> tagsSuffix
-                Nothing -> mempty
-            <> propertiesBlockDoc -}
-
         convertTagToDocLine :: RawTag -> Doc Unit
         convertTagToDocLine tag =
             D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag
@@ -223,61 +177,6 @@ toRep inclRule =
                         tmf D.KReference /\ (pure $ convertPath path)
                 )
                 modRec.fvalue
-
-        {-
-        convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
-        convertDecoratorToPrefix modRec =
-            DH.withImpl @D.Decorator -- TODO: export tags to strings beforehand
-                mempty
-                (case _ of
-                    D.PRating rating ->
-                        Just $ D.text $ show $ Rating.toStars rating
-                    D.PPriority priority ->
-                        Just $ D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
-                    D.PTask task ->
-                        Just $ D.text $ Task.taskPToString task
-                    D.SProgress p ->
-                        case p of
-                            ToComplete { done } -> pure $ D.text $ if done then "[X]" else "[ ]"
-                            Task taskP -> pure $ D.text $ Task.taskPToString taskP
-                            _ -> mempty
-                    _ ->
-                        mempty
-                )
-                modRec.fvalue
-
-        convertDecoratorToSuffix :: DecoratorRec -> Maybe (Doc Unit)
-        convertDecoratorToSuffix modRec =
-            DH.withImpl @D.Decorator -- TODO: export tags to strings beforehand
-                mempty
-                (case _ of
-                    D.SProgress p ->
-                        _progressSuffixOneLiner p >>= \prg_item -> Just $ D.text ":" <+> prg_item
-                    D.SEarnedAt ea ->
-                        Just $ D.text " at " <> orgDate (CT.dateToRec ea)
-                    D.SDescription desc ->
-                        Just $ D.text "/ " <> D.text desc <> D.text " /"
-                    D.SReference _ ->
-                        Nothing
-                    _ -> mempty
-                )
-                modRec.fvalue
-
-        convertTagsToSuffix :: Array RawTag -> Maybe (Doc Unit)
-        convertTagsToSuffix rawTags =
-            case rawTags of
-                [] -> Nothing
-                tagArr ->
-                    Just $ D.text " #" <>
-                    ( joinWith (D.space <> D.text "#")
-                            $ D.text
-                        <$> String.replaceAll (String.Pattern " ") (String.Replacement "-")
-                        <$> MbW.toString
-                        <$> CT.loadRawId
-                        -- <$> tagContent
-                        <$> tagArr
-                    )
-        -}
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
@@ -432,56 +331,3 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty
-
-
-tmf :: D.Key -> TriMarker
-tmf = triMarkerFor
-
-
-triMarkerFor :: D.Key -> TriMarker
-triMarkerFor = case _ of
-   D.KRating ->         TM "RAT"
-   D.KPriority ->       TM "PRI"
-   D.KTask ->           TM "TSK"
-   D.KProgress pvTag -> triMarkerForProgress $ P._vtagFrom pvTag
-   D.KEarnedAt ->       TM "ERN"
-   D.KDescription ->    TM "DSC"
-   D.KReference ->      TM "REF"
-
-
-tmfp :: P.PTValueTag -> TriMarker
-tmfp = triMarkerForProgress
-
-
-triMarkerForProgress :: P.PTValueTag -> TriMarker
-triMarkerForProgress = TM <<< case _ of
-    P.PTNone -> "NON"
-    P.PTUnknown -> "UNK"
-    P.PTInt -> "INT"
-    P.PTNumber -> "NUM"
-    P.PTText -> "TXT"
-    P.PTToComplete -> "CMP"
-    P.PTPercentI -> "PCI"
-    P.PTPercentN -> "PCN"
-    P.PTPercentSign -> "PCTX"
-    P.PTToGetI -> "GTI"
-    P.PTToGetN -> "GTN"
-    P.PTOnTime -> "TIM"
-    P.PTOnDate -> "DAT"
-    P.PTPerI -> "PPI"
-    P.PTPerN -> "PPN"
-    P.PTMeasuredI -> "MSI"
-    P.PTMeasuredN -> "MSN"
-    P.PTMeasuredSign -> "MSX"
-    P.PTRangeI -> "RGI"
-    P.PTRangeN -> "RGN"
-    P.PTTask -> "PRG" -- not to intersect with `TSK`
-    P.PTLevelsI -> "LVI"
-    P.PTLevelsN -> "LVN"
-    P.PTLevelsO -> "LVO"
-    P.PTLevelsS -> "LVS"
-    P.PTLevelsE -> "LVE"
-    P.PTLevelsP -> "LVP"
-    P.PTLevelsC -> "LVC"
-    P.PTRelTime -> "REL"
-    P.PTError -> "XXX"

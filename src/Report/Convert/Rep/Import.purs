@@ -19,21 +19,30 @@ import StringParser (Parser, ParseError, runParser, fail)
 import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
 
 import Report.Core as CT
+import Report.Decorator (Decorator)
+import Report.Tabular (Tabular)
+import Report.Tabular (Item) as Tab
+import Report.Decorators.Tabular.TabularValue (TabularValue)
 import Report.Decorators.Progress (Progress(..), Relation(..))
+import Report.Decorators.Progress (PTValueTag(..)) as P
 import Report.Decorators.Task (taskPFromString)
+
+import Report.Convert.Rep.Keys as RE
 
 
 -- | Parsed intermediate types
 
 type RepTabular =
   { name     :: String
-  , marker   :: String
+  , marker   :: RE.TriMarker
   , rawValue :: String
+  , parsed   :: Maybe (Tab.Item TabularValue)
   }
 
 type RepDecorator =
-  { marker   :: String
+  { marker   :: RE.TriMarker
   , rawValue :: String
+  , parsed   :: Maybe Decorator
   }
 
 type RepItem =
@@ -163,7 +172,8 @@ tabularAtSpaces spaces = do
   _               <- SP.string "; "
   (marker /\ raw) <- markerAndValue
   eol
-  pure { name, marker, rawValue: raw }
+  let triMarker = RE.TM marker
+  pure { name, marker : triMarker, rawValue: raw, parsed : Nothing }
 
 
 -- | Item: leading spaces are read from the input and must exceed parentSpaces.
@@ -192,7 +202,8 @@ decoratorAtSpaces spaces = do
   _               <- SP.string ": "
   (marker /\ raw) <- markerAndValue
   eol
-  pure { marker, rawValue: raw }
+  let triMarker = RE.TM marker
+  pure { marker : triMarker, rawValue: raw, parsed : Nothing }
 
 
 -- | Tag at exactly `spaces` leading spaces:
@@ -210,34 +221,34 @@ tagAtSpaces spaces = do
 -- | Reconstruct a Progress value from a Rep marker and raw value string.
 -- | Returns Nothing for unrecognised markers or malformed values.
 
-progressFromRep :: String -> String -> Maybe Progress
-progressFromRep marker raw = case marker of
-  "NON"  -> Just None
-  "UNK"  -> Just Unknown
-  "INT"  -> PInt    <$> Int.fromString raw
-  "NUM"  -> PNumber <$> Number.fromString raw
-  "TXT"  -> Just $ PText raw
-  "CMP"  -> Just $ ToComplete { done: (raw == "DONE") || (raw == "1") }
-  "PCI"  -> PercentI <$> Int.fromString raw
-  "PCN"  -> PercentN <$> Number.fromString raw
-  "PCTX" -> parsePercentSign raw
-  "GTI"  -> parseToGetI raw
-  "GTN"  -> parseToGetN raw
-  "TIM"  -> OnTime <$> parseTime raw
-  "DAT"  -> OnDate <$> parseDate raw
-  "PPI"  -> parsePerI raw
-  "PPN"  -> parsePerN raw
-  "MSI"  -> parseMeasuredI raw
-  "MSN"  -> parseMeasuredN raw
-  "MSX"  -> parseMeasuredSign raw
-  "RGI"  -> parseRangeI raw
-  "RGN"  -> parseRangeN raw
-  "PRG"  -> Just $ Task $ taskPFromString raw
-  "LVI"  -> Just $ LevelsI { reached: 0, levels: [] }
-  "LVN"  -> Just $ LevelsN { reached: 0.0, levels: [] }
-  "LVE"  -> parseLevelsE raw
-  "REL"  -> parseRelTime raw
-  "XXX"  -> Just (Error raw)
+progressFromRep :: RE.TriMarker -> String -> Maybe Progress
+progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
+  P.PTNone         -> Just None
+  P.PTUnknown      -> Just Unknown
+  P.PTInt          -> PInt    <$> Int.fromString raw
+  P.PTNumber       -> PNumber <$> Number.fromString raw
+  P.PTText         -> Just $ PText raw
+  P.PTToComplete   -> Just $ ToComplete { done: (raw == "DONE") || (raw == "1") }
+  P.PTPercentI     -> PercentI <$> Int.fromString raw
+  P.PTPercentN     -> PercentN <$> Number.fromString raw
+  P.PTPercentSign  -> parsePercentSign raw
+  P.PTToGetI       -> parseToGetI raw
+  P.PTToGetN       -> parseToGetN raw
+  P.PTOnTime       -> OnTime <$> parseTime raw
+  P.PTOnDate       -> OnDate <$> parseDate raw
+  P.PTPerI         -> parsePerI raw
+  P.PTPerN         -> parsePerN raw
+  P.PTMeasuredI    -> parseMeasuredI raw
+  P.PTMeasuredN    -> parseMeasuredN raw
+  P.PTMeasuredSign -> parseMeasuredSign raw
+  P.PTRangeI       -> parseRangeI raw
+  P.PTRangeN       -> parseRangeN raw
+  P.PTTask         -> Just $ Task $ taskPFromString raw
+  P.PTLevelsI      -> Just $ LevelsI { reached: 0, levels: [] }
+  P.PTLevelsN      -> Just $ LevelsN { reached: 0.0, levels: [] }
+  P.PTLevelsE      -> parseLevelsE raw
+  P.PTRelTime      -> parseRelTime raw
+  P.PTError        -> Just (Error raw)
   _      -> Nothing
 
 
@@ -421,9 +432,10 @@ parseDayMonYear :: String -> Maybe CT.SDate
 parseDayMonYear s = case String.split (String.Pattern "-") s of
   [dayS, monS, yearS] -> do
     day  <- Int.fromString dayS
-    mon  <- monthFromThreeLetter monS
+    mon  <- CT.parseMonth monS
+    -- mon  <- monthFromThreeLetter monS
     year <- Int.fromString yearS
-    pure $ CT.dateFromRec { day, mon, year }
+    pure $ CT.SDate { day, month : mon, year }
   _ -> Nothing
 
 -- Helpers
@@ -446,19 +458,5 @@ indexOfSpace = String.indexOf $ String.Pattern " "
 spacesCount :: Parser Int
 spacesCount = SP.regex " *" <#> String.length
 
-monthFromThreeLetter :: String -> Maybe Int
-monthFromThreeLetter = case _ of
-  "Jan" -> Just 1
-  "Feb" -> Just 2
-  "Mar" -> Just 3
-  "Apr" -> Just 4
-  "May" -> Just 5
-  "Jun" -> Just 6
-  "Jul" -> Just 7
-  "Aug" -> Just 8
-  "Sep" -> Just 9
-  "Oct" -> Just 10
-  "Nov" -> Just 11
-  "Dec" -> Just 12
-  _     -> Nothing
-
+-- monthFromThreeLetter :: String -> Maybe Int
+-- monthFromThreeLetter = CT.parseMonth >>> map CT.monthToInt
