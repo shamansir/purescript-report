@@ -322,7 +322,7 @@ _progressProperties = case _ of
     PercentI i -> tmfp P.PTPercentI /\ pure (D.text (show i))
     PercentN n -> tmfp P.PTPercentN /\ pure (D.text (show n))
     PercentSign { sign, pct } ->
-        let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
+        let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
         in tmfp P.PTPercentSign /\ pure (D.text $ sign_s <> " " <> show pct)
     ToGetI { got, total } ->
         tmfp P.PTToGetI /\ pure (D.text $ show got <> " " <> show total)
@@ -373,9 +373,9 @@ _progressProperties = case _ of
     RelTime rel timeRec ->
         let relText =
                 case rel of
-                    RMoreThan -> "more_than"
-                    REqual -> "equal"
-                    RLessThan -> "less_than"
+                    RMoreThan -> ">"
+                    REqual -> "="
+                    RLessThan -> "<"
         in tmfp P.PTRelTime /\ pure (D.text relText <> D.space <> orgTime timeRec)
     Error err ->
         tmfp P.PTError /\ pure (D.text err) -- TODO

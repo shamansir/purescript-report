@@ -8,7 +8,7 @@ import Data.Foldable (fold)
 import Data.Int as Int
 import Data.List (List)
 import Data.List (toUnfoldable) as List
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number as Number
 import Data.String as String
 import Data.Tuple.Nested ((/\), type (/\))
@@ -43,7 +43,7 @@ type RepItem =
 type RepGroup =
   { title    :: String
   , pathId   :: Maybe String
-  , depth    :: Int
+  , depth    :: Int   -- 1-based nesting level, derived from indent rank
   , tabulars :: Array RepTabular
   , items    :: Array RepItem
   }
@@ -55,8 +55,19 @@ type RepSubject =
   }
 
 
+-- | Internal type carrying the raw space-count before depth is computed
+
+type RawRepGroup =
+  { title    :: String
+  , pathId   :: Maybe String
+  , indent   :: Int   -- actual leading-space count of the GRP. line
+  , tabulars :: Array RepTabular
+  , items    :: Array RepItem
+  }
+
+
 -- | Parse Rep-formatted text into structured data.
--- | Groups are returned flat with `depth` indicating hierarchy.
+-- | Groups are returned flat; `depth` reflects nesting rank regardless of indent size.
 
 fromRep :: String -> Either ParseError (Array RepSubject)
 fromRep = runParser repParser
@@ -69,84 +80,101 @@ repParser = do
   pure subjects
 
 
--- | Subject: SBJ. <name>, then tabular entries, then flat list of groups
+-- | Subject: SBJ. <name>, then tabular entries at column 0, then flat group list.
 
 subjectParser :: Parser RepSubject
 subjectParser = do
-  _      <- SP.string "SBJ. "
-  name   <- restOfLine
+  _         <- SP.string "SBJ. "
+  name      <- restOfLine
   eol
-  tabs   <- toArr <$> SP.many (SP.try $ tabularAt 0)
-  groups <- toArr <$> SP.many (SP.try groupParser)
-  pure { name, tabulars: tabs, groups }
+  tabs      <- toArr <$> SP.many (SP.try $ tabularAtSpaces 0)
+  rawGroups <- toArr <$> SP.many (SP.try rawGroupParser)
+  pure { name, tabulars: tabs, groups: assignDepths rawGroups }
 
 
--- | Group: leading spaces encode depth (4 spaces = 1 level).
+-- | Parse one group, recording its raw leading-space count.
 -- | GRP. <title> [// <pathId>]
--- | Followed by tabular entries at same indent, then items one level deeper.
+-- | Tabular entries follow at the same indent; items at any strictly greater indent.
 
-groupParser :: Parser RepGroup
-groupParser = do
+rawGroupParser :: Parser RawRepGroup
+rawGroupParser = do
   leading <- SP.regex " *"
   _       <- SP.string "GRP. "
-  let depth = String.length leading `div` 4
+  let groupSpaces = String.length leading
   full    <- restOfLine
   eol
   let (title /\ pathId) = splitGroupTitle full
-  tabs    <- toArr <$> SP.many (SP.try $ tabularAt depth)
-  items   <- toArr <$> SP.many (SP.try $ itemAt (depth + 1))
-  pure { title, pathId, depth, tabulars: tabs, items }
+  tabs    <- toArr <$> SP.many (SP.try $ tabularAtSpaces groupSpaces)
+  items   <- toArr <$> SP.many (SP.try $ itemAt groupSpaces)
+  pure { title, pathId, indent: groupSpaces, tabulars: tabs, items }
 
 
--- | Tabular entry at the given indent depth:
--- |   - <name>
--- |   ; <MARKER>. <value>
+-- | Assign 1-based depth to each group by ranking their indent levels.
+-- | Groups with the smallest indent get depth 1, next get depth 2, etc.
+-- | This makes depth meaningful regardless of whether 2, 4, or 8 spaces are used.
 
-tabularAt :: Int -> Parser RepTabular
-tabularAt depth = do
-  indentBy depth
+assignDepths :: Array RawRepGroup -> Array RepGroup
+assignDepths rawGroups =
+  let
+    sortedUnique = Array.nub $ Array.sort $ map _.indent rawGroups
+    rankOf i = 1 + fromMaybe 0 (Array.findIndex (_ == i) sortedUnique)
+  in
+    map (\g -> { title: g.title, pathId: g.pathId, depth: rankOf g.indent
+               , tabulars: g.tabulars, items: g.items }) rawGroups
+
+
+-- | Tabular entry at exactly `spaces` leading spaces:
+-- |   <spaces>- <name>
+-- |   <spaces>; <MARKER>. <value>
+
+tabularAtSpaces :: Int -> Parser RepTabular
+tabularAtSpaces spaces = do
+  matchingIndent spaces
   _               <- SP.string "- "
   name            <- restOfLine
   eol
-  indentBy depth
+  matchingIndent spaces
   _               <- SP.string "; "
   (marker /\ raw) <- markerAndValue
   eol
   pure { name, marker, rawValue: raw }
 
 
--- | Item at the given indent depth.
--- | Fails immediately if the line starts with "GRP. " (nested group follows).
+-- | Item: leading spaces are read from the input and must exceed parentSpaces.
+-- | Fails if the line starts with "GRP. " — that is a nested group, not an item.
+-- | Decorators and tags are parsed at the same indent as the item title.
 
 itemAt :: Int -> Parser RepItem
-itemAt depth = do
-  indentBy depth
+itemAt parentSpaces = do
+  leading <- SP.regex " +"
+  let itemSpaces = String.length leading
+  when (itemSpaces <= parentSpaces) $ fail "item not deeper than parent group"
   notFollowedBy (SP.string "GRP. ")
   title <- restOfLine
   eol
-  decs  <- toArr <$> SP.many (SP.try $ decoratorAt depth)
-  tags  <- toArr <$> SP.many (SP.try $ tagAt depth)
+  decs  <- toArr <$> SP.many (SP.try $ decoratorAtSpaces itemSpaces)
+  tags  <- toArr <$> SP.many (SP.try $ tagAtSpaces itemSpaces)
   pure { title, decorators: decs, tags }
 
 
--- | Item decorator at the given indent depth:
--- |   : <MARKER>. <value>
+-- | Item decorator at exactly `spaces` leading spaces:
+-- |   <spaces>: <MARKER>. <value>
 
-decoratorAt :: Int -> Parser RepDecorator
-decoratorAt depth = do
-  indentBy depth
+decoratorAtSpaces :: Int -> Parser RepDecorator
+decoratorAtSpaces spaces = do
+  matchingIndent spaces
   _               <- SP.string ": "
   (marker /\ raw) <- markerAndValue
   eol
   pure { marker, rawValue: raw }
 
 
--- | Tag at the given indent depth:
--- |   # <tag>
+-- | Tag at exactly `spaces` leading spaces:
+-- |   <spaces># <value>
 
-tagAt :: Int -> Parser String
-tagAt depth = do
-  indentBy depth
+tagAtSpaces :: Int -> Parser String
+tagAtSpaces spaces = do
+  matchingIndent spaces
   _ <- SP.string "# "
   t <- restOfLine
   eol
@@ -162,8 +190,8 @@ progressFromRep marker raw = case marker of
   "UNK"  -> Just Unknown
   "INT"  -> PInt    <$> Int.fromString raw
   "NUM"  -> PNumber <$> Number.fromString raw
-  "TXT"  -> Just (PText raw)
-  "CMP"  -> Just (ToComplete { done: raw == "DONE" })
+  "TXT"  -> Just $ PText raw
+  "CMP"  -> Just $ ToComplete { done: (raw == "DONE") || (raw == "1") }
   "PCI"  -> PercentI <$> Int.fromString raw
   "PCN"  -> PercentN <$> Number.fromString raw
   "PCTX" -> parsePercentSign raw
@@ -178,9 +206,9 @@ progressFromRep marker raw = case marker of
   "MSX"  -> parseMeasuredSign raw
   "RGI"  -> parseRangeI raw
   "RGN"  -> parseRangeN raw
-  "PRG"  -> Just (Task (taskPFromString raw))
-  "LVI"  -> Just (LevelsI { reached: 0, levels: [] })
-  "LVN"  -> Just (LevelsN { reached: 0.0, levels: [] })
+  "PRG"  -> Just $ Task $ taskPFromString raw
+  "LVI"  -> Just $ LevelsI { reached: 0, levels: [] }
+  "LVN"  -> Just $ LevelsN { reached: 0.0, levels: [] }
   "LVE"  -> parseLevelsE raw
   "REL"  -> parseRelTime raw
   "XXX"  -> Just (Error raw)
@@ -202,9 +230,10 @@ restOfLine = SP.regex "[^\n]*"
 eol :: Parser Unit
 eol = void $ SP.optionMaybe $ SP.string "\n"
 
-indentBy :: Int -> Parser Unit
-indentBy 0 = pure unit
-indentBy n = void $ SP.string $ fold $ Array.replicate n "    "
+-- | Match exactly n spaces (n > 0); no-op for n = 0.
+matchingIndent :: Int -> Parser Unit
+matchingIndent 0 = pure unit
+matchingIndent n = void $ SP.string $ fold $ Array.replicate n " "
 
 notFollowedBy :: forall a. Parser a -> Parser Unit
 notFollowedBy p =
@@ -244,9 +273,9 @@ parsePercentSign :: String -> Maybe Progress
 parsePercentSign s = case String.split (String.Pattern " ") s of
   [signS, pctS] -> do
     sign <- case signS of
-      "+1" -> Just 1
-      "-1" -> Just (-1)
-      "+0" -> Just 0
+      "+" -> Just 1
+      "-" -> Just $ -1
+      "*" -> Just 0
       _    -> Nothing
     pct <- Number.fromString pctS
     pure $ PercentSign { sign, pct }
@@ -268,15 +297,15 @@ parsePerN s = do
 
 parseMeasuredI :: String -> Maybe Progress
 parseMeasuredI s = do
-  idx     <- String.indexOf (String.Pattern " ") s
-  amount  <- Int.fromString (String.take idx s)
+  idx    <- String.indexOf (String.Pattern " ") s
+  amount <- Int.fromString (String.take idx s)
   let measure = String.drop (idx + 1) s
   pure $ MeasuredI { amount, measure }
 
 parseMeasuredN :: String -> Maybe Progress
 parseMeasuredN s = do
-  idx     <- String.indexOf (String.Pattern " ") s
-  amount  <- Number.fromString (String.take idx s)
+  idx    <- String.indexOf (String.Pattern " ") s
+  amount <- Number.fromString (String.take idx s)
   let measure = String.drop (idx + 1) s
   pure $ MeasuredN { amount, measure }
 
@@ -287,9 +316,9 @@ parseMeasuredSign s = do
   let signS = String.take spaceIdx s
       rest  = String.drop (spaceIdx + 1) s
   sign         <- case signS of
-    "+1" -> Just 1
-    "-1" -> Just (-1)
-    "+0" -> Just 0
+    "+" -> Just 1
+    "-" -> Just $ -1
+    "*" -> Just 0
     _    -> Nothing
   fourSpaceIdx <- String.indexOf (String.Pattern "    ") rest
   amount       <- Number.fromString (String.take fourSpaceIdx rest)
@@ -326,15 +355,19 @@ parseRelTime s = do
   let relS  = String.take idx s
       timeS = String.drop (idx + 1) s
   rel  <- case relS of
-    "more_than" -> Just RMoreThan
-    "equal"     -> Just REqual
-    "less_than" -> Just RLessThan
-    _           -> Nothing
+    ">" -> Just RMoreThan
+    "=" -> Just REqual
+    "<" -> Just RLessThan
+    _   -> Nothing
   timeRec <- parseTime timeS
   pure $ RelTime rel timeRec
 
 parseTime :: String -> Maybe CT.STimeRec
 parseTime s = case String.split (String.Pattern ":") s of
+  [hrsS, minS] -> do
+    hrs <- Int.fromString hrsS
+    min <- Int.fromString minS
+    pure { hrs, min, sec: 0 }
   [hrsS, minS, secS] -> do
     hrs <- Int.fromString hrsS
     min <- Int.fromString minS
