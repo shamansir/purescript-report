@@ -317,14 +317,101 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
   P.PTRangeI       -> parseRangeI fraw
   P.PTRangeN       -> parseRangeN fraw
   P.PTTask         -> Just $ Task $ taskPFromString fraw
-  P.PTLevelsI      -> Just $ LevelsI { reached: 0, levels: [] }
-  P.PTLevelsN      -> Just $ LevelsN { reached: 0.0, levels: [] }
+  P.PTLevelsI      -> parseLevelsI unit
+  P.PTLevelsN      -> parseLevelsN unit
+  P.PTLevelsO      -> parseLevelsO unit
+  P.PTLevelsS      -> parseLevelsS unit
+  P.PTLevelsP      -> parseLevelsP unit -- { reached: 0.0, levels: [] }
+  P.PTLevelsC      -> parseLevelsC unit -- { reached: 0.0, levels: [] }
   P.PTLevelsE      -> parseLevelsE fraw
   P.PTRelTime      -> parseRelTime fraw
   P.PTError        -> Just $ Error fraw
-  _      -> Nothing
   where
     fraw = NEA.head raw
+
+    parseLevelI str = case splitWithSpace str of
+      [ dateStr, maximumStr, name ] -> do
+        date <- parseDate dateStr
+        maximum <- Int.fromString maximumStr
+        pure { date : Just $ CT.dateToRec date, maximum, name }
+      [ maximumStr, name ] -> do
+        maximum <- Int.fromString maximumStr
+        pure { date : Nothing, maximum, name }
+      _ -> Nothing
+    parseLevelsI _ = do
+      reached <- Int.fromString fraw
+      let levels = Array.catMaybes $ parseLevelI <$> NEA.tail raw
+      pure $ LevelsI { reached, levels }
+
+    parseLevelN str = case splitWithSpace str of
+      [ dateStr, maximumStr, name ] -> do
+        date <- parseDate dateStr
+        maximum <- Number.fromString maximumStr
+        pure { date : Just $ CT.dateToRec date, maximum, name }
+      [ maximumStr, name ] -> do
+        maximum <- Number.fromString maximumStr
+        pure { date : Nothing, maximum, name }
+      _ -> Nothing
+    parseLevelsN _ = do
+      reached <- Number.fromString fraw
+      let levels = Array.catMaybes $ parseLevelN <$> NEA.tail raw
+      pure $ LevelsN { reached, levels }
+
+    parseLevelO str = case splitWithSpace str of
+      [ dateStr, maximumStr, name ] -> do
+        date <- parseDate dateStr
+        maximum <- Int.fromString maximumStr
+        pure { date : Just $ CT.dateToRec date, mbMaximum : Just maximum, name }
+      [ maximumStr, name ] -> do
+        maximum <- Int.fromString maximumStr
+        pure { date : Nothing, mbMaximum : Just maximum, name }
+      [ name ] ->
+        pure { date : Nothing, mbMaximum : Nothing, name }
+      _ -> Nothing
+    parseLevelsO _ = do
+      reached <- Int.fromString fraw
+      let levels = Array.catMaybes $ parseLevelO <$> NEA.tail raw
+      pure $ LevelsO { reached, levels }
+
+    parseLevelS str = case splitWithSpace str of
+      [ dateStr, gives ] -> do
+        date <- parseDate dateStr
+        pure { date : Just $ CT.dateToRec date, gives }
+      [ gives ] ->
+        pure { date : Nothing, gives }
+      _ -> Nothing
+    parseLevelsS _ = do
+      reached <- Int.fromString fraw
+      let levels = Array.catMaybes $ parseLevelS <$> NEA.tail raw
+      pure $ LevelsS { reached, levels }
+
+    parseLevelP str = case splitWithSpace str of
+      [ dateStr, taskStr, name ] -> do
+        date <- parseDate dateStr
+        let task = taskPFromString taskStr
+        pure { date : Just $ CT.dateToRec date, proc : task, name }
+      [ taskStr, name ] ->
+        pure { date : Nothing, proc : taskPFromString taskStr, name }
+      _ -> Nothing
+    parseLevelsP _ =
+      let levels = Array.catMaybes $ parseLevelP <$> NEA.tail raw
+      in Just $ LevelsP { levels }
+
+    parseLevelsC _ = case splitWithSpace fraw of
+      [ levelReachedStr, totalLevelsStr, reachedAtCurrentStr, maximumAtCurrentStr, dateStr ] -> do
+        levelReached     <- Int.fromString levelReachedStr
+        totalLevels      <- Int.fromString totalLevelsStr
+        reachedAtCurrent <- Int.fromString reachedAtCurrentStr
+        maximumAtCurrent <- Int.fromString maximumAtCurrentStr
+        date             <- parseDate dateStr
+        pure $ LevelsC { date : Just $ CT.dateToRec date, levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }
+      [ levelReachedStr, totalLevelsStr, reachedAtCurrentStr, maximumAtCurrentStr ] -> do
+        levelReached     <- Int.fromString levelReachedStr
+        totalLevels      <- Int.fromString totalLevelsStr
+        reachedAtCurrent <- Int.fromString reachedAtCurrentStr
+        maximumAtCurrent <- Int.fromString maximumAtCurrentStr
+        pure $ LevelsC { date : Nothing, levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }
+      _ -> Nothing
 
 
 -- Private parser helpers
