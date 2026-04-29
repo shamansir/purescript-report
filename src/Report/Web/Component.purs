@@ -51,6 +51,8 @@ import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Generic (class ToExport, includeOnly) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Org (toOrg) as Report
+import Report.Convert.Text (toText) as Report
+import Report.Convert.Rep (toRep) as Report
 import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
 
 import Report.Web.Component.RecalcBehavior as CRB
@@ -191,6 +193,8 @@ data ExportTarget
     = Json
     | Dhall
     | Org
+    | Rep
+    | Text
 
 
 derive instance Eq ExportTarget
@@ -452,6 +456,8 @@ component cfg =
                 Json  -> reportToExport # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
                 Dhall -> reportToExport # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
                 Org   -> reportToExport # Report.toOrg   @x @subj_id @subj_tag @item_tag includeRule
+                Rep   -> reportToExport # Report.toRep   @x @subj_id @subj_tag @item_tag includeRule
+                Text  -> reportToExport # Report.toText  @x @subj_id @subj_tag @item_tag includeRule
             exportSelected trg = state.mbExportTo == Just trg
 
             findSubjName :: subj_id -> Maybe String
@@ -473,6 +479,8 @@ component cfg =
                         , { label : "JSON",  onClick : const $ if exportSelected Json  then DisableExport else EnableExport Json,  enabled : exportSelected Json  }
                         , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
                         , { label : "ORG",   onClick : const $ if exportSelected Org   then DisableExport else EnableExport Org,   enabled : exportSelected Org   }
+                        , { label : "REP",   onClick : const $ if exportSelected Rep   then DisableExport else EnableExport Rep,   enabled : exportSelected Rep   }
+                        , { label : "TEXT",  onClick : const $ if exportSelected Text  then DisableExport else EnableExport Text,  enabled : exportSelected Text  }
                         ]
 
             menuButton { label, onClick, enabled } =

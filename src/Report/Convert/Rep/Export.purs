@@ -87,6 +87,9 @@ toRep inclRule =
                     , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ tmfp P.PTOnDate /\ pure (orgDate dateRec)
                     ]
                 )
+            <> case subjectRec.tags of
+                [] -> mempty
+                _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
 
@@ -97,12 +100,12 @@ toRep inclRule =
 
         decoratorLines :: TriMarker /\ NonEmptyArray (Doc Unit) -> Doc Unit
         decoratorLines (tMarker /\ valueLines) =
-            D.break <> markSym decKW <> markTri tMarker <> (joinWith (D.break <> markSym decKW <> markTri tMarker) $ NEA.toArray valueLines)
+            markSym decKW <> markTri tMarker <> (joinWith (D.break <> markSym decKW <> markTri tMarker) $ NEA.toArray valueLines)
 
         tagsBlock :: Array (Doc Unit) -> Doc Unit
         tagsBlock [] = mempty
         tagsBlock tags =
-            D.break <> markSym tagKW <> joinWith (D.break <> markSym tagKW) tags
+            markSym tagKW <> joinWith (D.break <> markSym tagKW) tags
 
         tabularBlock :: Array (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
         tabularBlock [] = mempty
@@ -147,10 +150,10 @@ toRep inclRule =
             D.text itemRec.title
             <> case itemRec.decorators of
                   [] -> mempty
-                  _ -> decoratorsBlock $ convertDecoratorToDocLine <$> itemRec.decorators
+                  _ -> D.break <> (decoratorsBlock $ convertDecoratorToDocLine <$> itemRec.decorators)
             <> case unwrap itemRec.tags of
                   [] -> mempty
-                  _ -> tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags
+                  _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags)
 
         convertTagToDocLine :: RawTag -> Doc Unit
         convertTagToDocLine tag =
@@ -306,99 +309,3 @@ _progressProperties = case _ of
         maybeSpaced toDoc = case _ of
             Just value -> toDoc value <> D.space
             Nothing -> mempty
-
-
-{-
-_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
-_progressSuffixOneLiner = case _ of
-    None -> mempty
-    Unknown -> mempty
-    PInt i -> pure $ D.text $ show i
-    PNumber n -> pure $ D.text $ show n
-    PText text -> pure $ D.text text
-    ToComplete { done } -> mempty -- FIXME: goes as prefix
-    PercentI i -> pure $ D.text (show i) <> D.text "%"
-    PercentN n -> pure $ D.text (show n) <> D.text "%"
-    PercentSign { sign, pct } ->
-        let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
-        in pure $ D.text (sign_s <> show pct <> "%")
-    ToGetI { got, total } ->
-        pure $ D.text (show got <> "/" <> show total)
-    ToGetN { got, total } ->
-        pure $ D.text (show got <> "/" <> show total)
-    OnTime timeRec ->
-        pure $ orgTime timeRec
-    OnDate sdate ->
-        pure $ orgDate (CT.dateToRec sdate)
-    PerI { amount, per } ->
-        pure $ D.text (show amount) <> D.text "/" <> D.text per
-    PerN { amount, per } ->
-        pure $ D.text (show amount) <> D.text "/" <> D.text per
-    MeasuredI { amount, measure } ->
-        pure $ D.text (show amount) <> D.text measure
-    MeasuredN { amount, measure } ->
-        pure $ D.text (show amount) <> D.text measure
-    MeasuredSign { sign, amount, measure } ->
-        let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
-        in pure $ D.text sign_s <> D.text (show amount) <> D.space <> D.text measure
-    RangeI { from, to } ->
-        pure $ D.text (show from <> "--" <> show to)
-    RangeN { from, to } ->
-        pure $ D.text (show from <> "--" <> show to)
-    Task taskP ->
-        pure (D.text $ Task.taskPToString taskP)
-    LevelsI { reached, levels } ->
-        let
-            levelStr { date, maximum, name } =
-                D.text ">>>" <> D.space <> mbDateStr date <> D.text (show maximum) <> D.text name
-        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
-    LevelsN { reached, levels } ->
-        let
-            levelStr { date, maximum, name } =
-                D.text ">>>" <> D.space <> mbDateStr date <> D.text (show maximum) <> D.text name
-        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
-    LevelsS { reached, levels } ->
-        let
-            levelStr { gives, date } =
-                D.text ">>>" <> D.space <> mbDateStr date <> D.text gives
-        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
-    LevelsE levelsE ->
-        pure $ D.text $ show levelsE.reached <> "/" <> show levelsE.total
-    LevelsP { levels } ->
-        let
-            levelStr { name, proc, date } =
-                D.text ">>>" <> D.space <> mbDateStr date <> (D.text $ Task.taskPToString proc) <> D.text name
-        in pure $ D.text (show $ Array.length levels) <> D.break <> (joinWith D.break $ levelStr <$> levels)
-    LevelsC cRec ->
-        pure $ D.text (show cRec.levelReached) <> D.space
-            <> D.text (show cRec.totalLevels) <> D.space
-            <> D.text (show cRec.reachedAtCurrent) <> D.space
-            <> D.text (show cRec.maximumAtCurrent) <> case cRec.date of
-                Just dateRec -> D.space <> orgDate dateRec
-                Nothing -> mempty
-    LevelsO { reached, levels } ->
-        let
-            levelStr { date, mbMaximum, name } =
-                D.text ">>>" <> D.space <> mbDateStr date <> mbIntStr mbMaximum <> D.text name
-        in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
-    RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    RMoreThan -> ">"
-                    REqual -> "="
-                    RLessThan -> "<"
-        in pure $ D.text relText <> D.space <> orgTime timeRec
-    Error err ->
-        mempty
-    where
-        mbDateStr :: Maybe CT.SDateRec -> Doc Unit
-        mbDateStr = maybeSpaced orgDate
-        mbIntStr :: Maybe Int -> Doc Unit
-        mbIntStr = mbShowableStr
-        mbShowableStr :: forall x. Show x => Maybe x -> Doc Unit
-        mbShowableStr = maybeSpaced (D.text <<< show)
-        maybeSpaced :: forall a. (a -> Doc Unit) -> Maybe a -> Doc Unit
-        maybeSpaced toDoc = case _ of
-            Just value -> toDoc value <> D.space
-            Nothing -> mempty
--}
