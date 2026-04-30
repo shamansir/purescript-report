@@ -131,6 +131,10 @@ progressTagFromTriMarker (TM marker) = case marker of
     _     -> P.PTUnknown
 
 
+tmft :: TV.TabValTypeKey -> TriMarker
+tmft = triMarkerForTabular
+
+
 triMarkerForTabular :: TV.TabValTypeKey -> TriMarker
 triMarkerForTabular = case _ of
     TV.TVTString ->  TM "TXT"

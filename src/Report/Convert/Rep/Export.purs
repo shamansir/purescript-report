@@ -18,11 +18,11 @@ import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
 import Report.Chain as MbW
-import Report.Convert.Types (DecoratorRec, ItemRec, Subject)
+import Report.Convert.Types (Subject, ItemRec, DecoratorRec, TabularRec)
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags (loadRawId) as CT
 
-import Report.Decorator (Key(..), Decorator(..)) as D
+import Report.Decorator (Key(..), Decorator(..), keyOf) as D
 import Report.Decorators.Progress (Progress(..), Relation(..))
 --import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
@@ -79,6 +79,9 @@ toRep inclRule =
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
             markTri subjKW <> D.text subjectRec.name
+            <> case subjectRec.tags of
+                [] -> mempty
+                _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)
             <> D.break <> tabularBlock
                 (Array.catMaybes
                     [ Just $ "Id" /\ tmfp P.PTText /\ (pure $ D.text $ unwrap subjectRec.id)
@@ -87,9 +90,6 @@ toRep inclRule =
                     , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ tmfp P.PTOnDate /\ pure (orgDate dateRec)
                     ]
                 )
-            <> case subjectRec.tags of
-                [] -> mempty
-                _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
 
@@ -154,10 +154,18 @@ toRep inclRule =
             <> case unwrap itemRec.tags of
                   [] -> mempty
                   _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags)
+            <> case itemRec.tabulars of
+                  [] -> mempty
+                  _ -> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> itemRec.tabulars)
 
         convertTagToDocLine :: RawTag -> Doc Unit
         convertTagToDocLine tag =
             D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag
+
+        convertTabularToDocLine :: TabularRec -> Maybe (String /\ TriMarker /\ NonEmptyArray (Doc Unit))
+        convertTabularToDocLine tabRec = case tabRec.value of
+            TV.TVAtomic atomicV -> Just $ tabRec.tlabel /\ tmft (_tabValKeyOf atomicV) /\ _tabularDocLines atomicV
+            _                   -> Nothing -- FIXME: TODO
 
         convertDecoratorToDocLine :: DecoratorRec -> TriMarker /\ NonEmptyArray (Doc Unit)
         convertDecoratorToDocLine modRec =
@@ -171,7 +179,7 @@ toRep inclRule =
                     D.PTask task ->
                         tmf D.KTask /\ (pure $ D.text $ Task.taskPToString task)
                     D.SProgress p ->
-                        _progressProperties p
+                        _progressDocLines p
                     D.SEarnedAt ea ->
                         tmf D.KEarnedAt /\ (pure $ orgDate $ CT.dateToRec ea)
                     D.SDescription desc ->
@@ -202,8 +210,8 @@ orgTime timeRec
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
 
 
-_progressProperties :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
-_progressProperties = case _ of
+_progressDocLines :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
+_progressDocLines = case _ of
     None -> tmfp P.PTNone /\ pure (D.text ".")
     Unknown -> tmfp P.PTUnknown /\ pure (D.text ".")
     PInt i -> tmfp P.PTInt /\ pure (D.text $ show i)
@@ -309,3 +317,27 @@ _progressProperties = case _ of
         maybeSpaced toDoc = case _ of
             Just value -> toDoc value <> D.space
             Nothing -> mempty
+
+
+_tabValKeyOf :: TV.TabularAtomicValue -> TV.TabValTypeKey
+_tabValKeyOf = case _ of
+    TV.TVString _ -> TV.TVTString
+    TV.TVInt _ -> TV.TVTInt
+    TV.TVID _ -> TV.TVTID
+    TV.TVYear _ -> TV.TVTYear
+    TV.TVNumber _ -> TV.TVTNumber
+    TV.TVBoolean _ -> TV.TVTBoolean
+    TV.TVTime _ -> TV.TVTTime
+    TV.TVDate _ -> TV.TVTDate
+    TV.TVDateTime _ _ -> TV.TVTDateTime
+    TV.TVTimeRange _ -> TV.TVTTimeRange
+    TV.TVDateRange _ -> TV.TVTDateRange
+    TV.TVDateTimeRange _ -> TV.TVTDateTimeRange
+    TV.TVDecorator dec -> TV.TVTDecorator $ D.keyOf dec
+    TV.TVTags _ -> TV.TVTTags
+
+
+_tabularDocLines :: TV.TabularAtomicValue -> NonEmptyArray (Doc Unit)
+_tabularDocLines = case _ of
+    TV.TVString text -> pure (D.text text)
+    _ -> pure mempty -- FIXME;

@@ -62,6 +62,7 @@ type RepItem =
   { title      :: String
   , decorators :: Array RepDecorator
   , tags       :: Array RawTag
+  , tabulars   :: Array RepTabular
   }
 
 type RepGroup =
@@ -113,8 +114,8 @@ subjectParser = do
   _         <- SP.string "SBJ. "
   name      <- restOfLine
   eol
-  tabs      <- toArr <$> SP.many (SP.try $ tabularAtSpaces 0)
   tags      <- toArr <$> SP.many (SP.try $ tagAtSpaces 0)
+  tabs      <- toArr <$> SP.many (SP.try $ tabularAtSpaces 0)
   rawGroups <- toArr <$> SP.many (SP.try rawGroupParser)
   pure { name, tabulars: tabs, groups: assignDepths rawGroups, tags : Array.catMaybes tags }
 
@@ -219,7 +220,8 @@ itemAt parentSpaces = do
   eol
   decs  <- toArr <$> SP.many (SP.try $ decoratorAtSpaces itemSpaces)
   tags  <- toArr <$> SP.many (SP.try $ tagAtSpaces itemSpaces)
-  pure { title, decorators: decs, tags : Array.catMaybes tags }
+  tabs  <- toArr <$> SP.many (SP.try $ tabularAtSpaces itemSpaces)
+  pure { title, decorators: decs, tags : Array.catMaybes tags, tabulars : tabs }
 
 
 -- | Item decorator at exactly `spaces` leading spaces:

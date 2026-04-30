@@ -166,6 +166,8 @@ spec =
 
 
 expectedRepAstralChain = """SBJ. Astral Chain
+# Dhall
+# Switch
 - Id
 ; TXT. DHL:astral-chain
 - Platform
@@ -174,8 +176,6 @@ expectedRepAstralChain = """SBJ. Astral Chain
 ; TXT. TODO
 - TrackedAt
 ; DAT. <2025-08-12>
-# Dhall
-# Switch
     GRP. File // 00-file
     - Path
     ; TXT. 00-file
