@@ -166,3 +166,6 @@ toExport inclRule =
                 }
         groupToExport :: Group -> Array ItemRec -> { group :: Group, items :: Array ItemRec }
         groupToExport group items = { group, items }
+
+
+class ToImport subj_id subj_tag item_tag subj group item (x :: Type)

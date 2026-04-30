@@ -21,8 +21,6 @@ import Test.Spec.Assertions (fail, shouldEqual) as A
 import Node.Encoding (Encoding(..))
 import Node.FS.Sync (readTextFile)
 
-import StringParser (printParserError) as SP
-
 import Test.Utils (shouldEqual) as U
 
 import GameLog.Dhall (FromDhall, dhallToAchievements) as GL
@@ -31,9 +29,10 @@ import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as
 import GameLog.Types.Achievement (Tag) as GL
 
 import Report (toReport)
+import Report.Convert.Types (ImportError, printImportError)
 import Report.Convert.Generic (includeAll) as R
 import Report.Convert.Rep (toRep) as D
-import Report.Convert.Rep.Import (fromRep) as I
+import Report.Convert.Rep.Import (fromRepP) as I
 import Report.Convert.Rep.Keys (TriMarker(..)) as K
 
 
@@ -55,7 +54,7 @@ spec =
                 let gameCollection  = GL.dhallToAchievements dhallGameCollection
                 let (glReport :: GL.GamesReport) = toReport $ GL.fromArray gameCollection
                 let reportRep = D.toRep @GL.RawAchievements @GL.GameId @GL.GameTag @GL.Tag R.includeAll glReport
-                reportRep `U.shouldEqual` expectedRep
+                reportRep `U.shouldEqual` expectedRepAstralChain
             )
             eDhallGameCollection
 
@@ -65,9 +64,9 @@ spec =
           __rawValue = _.rawValue >>> NEA.head
           __rawValueN :: forall r. Int -> { rawValue :: NonEmptyArray String | r } -> Maybe String
           __rawValueN n = _.rawValue >>> flip NEA.index n
-        case I.fromRep expectedRep of
+        case I.fromRepP expectedRepAstralChain of
           Left err ->
-            A.fail $ "Parse failed: " <> SP.printParserError err
+            A.fail $ "Parse failed: " <> printImportError err
           Right subjects -> do
             -- one subject
             Array.length subjects `A.shouldEqual` 1
@@ -166,7 +165,7 @@ spec =
                     g15.path  `A.shouldEqual` ["01-stats", "05-unique", "06-photo"]
 
 
-expectedRep = """SBJ. Astral Chain
+expectedRepAstralChain = """SBJ. Astral Chain
 - Id
 ; TXT. DHL:astral-chain
 - Platform
@@ -175,6 +174,8 @@ expectedRep = """SBJ. Astral Chain
 ; TXT. TODO
 - TrackedAt
 ; DAT. <2025-08-12>
+# Dhall
+# Switch
     GRP. File // 00-file
     - Path
     ; TXT. 00-file

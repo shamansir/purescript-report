@@ -60,14 +60,7 @@ data Key
 
 
 instance CK.Keyed Key Decorator where
-    keyOf = case _ of
-        PRating _ -> KRating
-        PPriority _ -> KPriority
-        PTask _ -> KTask
-        SProgress prog -> KProgress $ CK.keyOf prog
-        SEarnedAt _ -> KEarnedAt
-        SDescription _ -> KDescription
-        SReference _ -> KReference
+    keyOf = keyOf
 
 
 newtype Decorators = Decorators (Map Key Decorator) -- other names: `Adornments`, `Markers`, `Attributes, `Modifiers`
@@ -354,3 +347,14 @@ getTask :: Decorators ->  Maybe TaskP
 getTask pfx = get KTask pfx >>= case _ of
     PTask t -> Just t
     _ -> Nothing
+
+
+keyOf :: Decorator -> Key
+keyOf = case _ of
+    PRating _ -> KRating
+    PPriority _ -> KPriority
+    PTask _ -> KTask
+    SProgress prog -> KProgress $ CK.keyOf prog
+    SEarnedAt _ -> KEarnedAt
+    SDescription _ -> KDescription
+    SReference _ -> KReference

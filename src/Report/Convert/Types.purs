@@ -11,6 +11,8 @@ import Data.Newtype (class Newtype, unwrap)
 
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
+import StringParser (ParseError, printParserError) as SP
+
 import Report.Group (Group)
 import Report.Chain (Chain)
 import Report.Decorators.Stats (Stats)
@@ -77,3 +79,14 @@ derive newtype instance WriteForeign ExportVersion
 newtype ReportToExport = ReportToExport { version :: ExportVersion, subjects :: Array SubjectWithGroups }
 derive instance Newtype ReportToExport _
 derive newtype instance WriteForeign ReportToExport
+
+
+data ImportError
+    = FromParser SP.ParseError
+    | ImportError String
+
+
+printImportError :: ImportError -> String
+printImportError = case _ of
+    FromParser sperr -> SP.printParserError sperr
+    ImportError ierr -> ierr
