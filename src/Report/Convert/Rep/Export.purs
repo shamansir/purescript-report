@@ -3,6 +3,7 @@ module Report.Convert.Rep.Export where
 import Prelude
 
 import Data.Maybe (Maybe(..))
+import Data.Tuple (snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Newtype (unwrap)
 import Data.Array ((:))
@@ -121,10 +122,6 @@ toRep inclRule =
         -- makeHeading level =
         --     D.text (String.joinWith "" (Array.replicate level "*"))
 
-        convertPath :: GroupPath -> Doc Unit
-        convertPath path =
-            joinWith D.space $ D.text <$> (unwrap <$> unwrap path)
-
         convertGroup :: Int -> { group :: Group, items :: Array ItemRec } -> Doc Unit
         convertGroup index { group, items } =
             let
@@ -158,10 +155,6 @@ toRep inclRule =
                   [] -> mempty
                   _ -> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> itemRec.tabulars)
 
-        convertTagToDocLine :: RawTag -> Doc Unit
-        convertTagToDocLine tag =
-            D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag
-
         convertTabularToDocLine :: TabularRec -> Maybe (String /\ TriMarker /\ NonEmptyArray (Doc Unit))
         convertTabularToDocLine tabRec = case tabRec.value of
             TV.TVAtomic atomicV -> Just $ tabRec.tlabel /\ tmft (_tabValKeyOf atomicV) /\ _tabularDocLines atomicV
@@ -171,22 +164,7 @@ toRep inclRule =
         convertDecoratorToDocLine modRec =
             DH.withImpl @D.Decorator
                 (tmfp P.PTError /\ pure (D.text "CONVERSION ERROR"))
-                (case _ of
-                    D.PRating rating ->
-                        tmf D.KRating /\ (pure $ D.text $ show $ Rating.toNumber rating)
-                    D.PPriority priority ->
-                        tmf D.KPriority /\ (pure $ D.text $ Priority.priorityChar priority)
-                    D.PTask task ->
-                        tmf D.KTask /\ (pure $ D.text $ Task.taskPToString task)
-                    D.SProgress p ->
-                        _progressDocLines p
-                    D.SEarnedAt ea ->
-                        tmf D.KEarnedAt /\ (pure $ orgDate $ CT.dateToRec ea)
-                    D.SDescription desc ->
-                        tmf D.KDescription /\ (pure $ D.text desc)
-                    D.SReference path ->
-                        tmf D.KReference /\ (pure $ convertPath path)
-                )
+                _decoratorDocLines
                 modRec.fvalue
 
 
@@ -208,6 +186,16 @@ orgTime timeRec
     =  D.text (CT.toLeadingZero timeRec.hrs)
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.min)
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
+
+
+convertPath :: GroupPath -> Doc Unit
+convertPath path =
+    joinWith D.space $ D.text <$> (unwrap <$> unwrap path)
+
+
+convertTagToDocLine :: RawTag -> Doc Unit
+convertTagToDocLine tag =
+    D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag
 
 
 _progressDocLines :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
@@ -319,6 +307,25 @@ _progressDocLines = case _ of
             Nothing -> mempty
 
 
+_decoratorDocLines :: D.Decorator -> TriMarker /\ NonEmptyArray (Doc Unit)
+_decoratorDocLines =
+    case _ of
+        D.PRating rating ->
+            tmf D.KRating /\ (pure $ D.text $ show $ Rating.toNumber rating)
+        D.PPriority priority ->
+            tmf D.KPriority /\ (pure $ D.text $ Priority.priorityChar priority)
+        D.PTask task ->
+            tmf D.KTask /\ (pure $ D.text $ Task.taskPToString task)
+        D.SProgress p ->
+            _progressDocLines p
+        D.SEarnedAt ea ->
+            tmf D.KEarnedAt /\ (pure $ orgDate $ CT.dateToRec ea)
+        D.SDescription desc ->
+            tmf D.KDescription /\ (pure $ D.text desc)
+        D.SReference path ->
+            tmf D.KReference /\ (pure $ convertPath path)
+
+
 _tabValKeyOf :: TV.TabularAtomicValue -> TV.TabValTypeKey
 _tabValKeyOf = case _ of
     TV.TVString _ -> TV.TVTString
@@ -339,5 +346,17 @@ _tabValKeyOf = case _ of
 
 _tabularDocLines :: TV.TabularAtomicValue -> NonEmptyArray (Doc Unit)
 _tabularDocLines = case _ of
-    TV.TVString text -> pure (D.text text)
-    _ -> pure mempty -- FIXME;
+    TV.TVString text  -> pure $ D.text text
+    TV.TVInt i        -> pure $ D.text $ show i
+    TV.TVNumber n     -> pure $ D.text $ show n
+    TV.TVID id        -> pure $ D.text $ show id
+    TV.TVYear year    -> pure $ D.text $ show year
+    TV.TVTime timeRec -> pure $ orgTime timeRec
+    TV.TVBoolean bool -> pure $ D.text $ if bool then "true" else "one"
+    TV.TVDate sdate   -> pure $ orgDate $ CT.dateToRec sdate
+    TV.TVDateTime sdate timeRec -> pure $ (orgDate $ CT.dateToRec sdate) <> D.text "@" <> (orgTime timeRec)
+    TV.TVTimeRange { from, to } -> pure $ (orgTime from) <> D.text "--" <> (orgTime to)
+    TV.TVDateRange { from, to } -> pure $ (orgDate $ CT.dateToRec from) <> D.text "--" <> (orgDate $ CT.dateToRec to)
+    TV.TVDateTimeRange { from, to } -> pure $ (orgDate $ CT.dateToRec from.date) <> D.text "@" <> (orgTime from.time) <> D.text "--" <> (orgDate $ CT.dateToRec to.date) <> D.text "@" <> (orgTime to.time)
+    TV.TVDecorator dec -> Tuple.snd $ _decoratorDocLines dec
+    TV.TVTags rawTags -> pure $ joinWith (D.text ",") $ convertTagToDocLine <$> unwrap rawTags
