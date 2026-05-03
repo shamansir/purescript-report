@@ -12,6 +12,7 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Foldable (fold)
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.String as String
 
 import Report (Report)
 import Report.Core (SDateRec, STimeRec, dateToRec, toLeadingZero) as CT
@@ -29,7 +30,7 @@ import Report.Decorators.Progress (Progress(..), Relation(..))
 import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Progress (Progress(..), PTValueTag(..)) as P
 --import Report.Tabular (Tabular)
-import Report.Tabular (findV) as Tabular
+import Report.Tabular (findV, items, Item(..)) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
@@ -93,7 +94,6 @@ toRep inclRule =
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
-
         decoratorsBlock :: Array (TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
         decoratorsBlock [] = mempty
         decoratorsBlock fields =
@@ -108,15 +108,6 @@ toRep inclRule =
         tagsBlock tags =
             markSym tagKW <> joinWith (D.break <> markSym tagKW) tags
 
-        tabularBlock :: Array (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
-        tabularBlock [] = mempty
-        tabularBlock fields =
-            joinWith D.break $ tabularLines <$> fields
-
-        tabularLines :: String /\ TriMarker /\ NonEmptyArray (Doc Unit) -> Doc Unit
-        tabularLines (name /\ tMarker /\ valueLines) =
-            markSym tabKW <> D.text name
-            <> D.break <> markSym tavKW <> markTri tMarker <> (joinWith (D.break <> markSym tavKW <> markTri tMarker) $ NEA.toArray valueLines)
 
         -- makeHeading :: Int -> Doc Unit
         -- makeHeading level =
@@ -156,9 +147,17 @@ toRep inclRule =
                   _ -> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> itemRec.tabulars)
 
         convertTabularToDocLine :: TabularRec -> Maybe (String /\ TriMarker /\ NonEmptyArray (Doc Unit))
-        convertTabularToDocLine tabRec = case tabRec.value of
-            TV.TVAtomic atomicV -> Just $ tabRec.tlabel /\ tmft (_tabValKeyOf atomicV) /\ _tabularDocLines atomicV
-            _                   -> Nothing -- FIXME: TODO
+        convertTabularToDocLine tabRec =
+            _tabularValueDocLines tabRec.value <#>
+                (\docLines -> tabRec.tlabel /\ marker /\ docLines)
+            where
+                marker = case tabRec.value of
+                    TV.TVAtomic atomicV -> tmft $ _tabValKeyOf atomicV
+                    TV.TVValues _ -> TM "TVS"
+                    TV.TVPair _ _ -> TM "TVP"
+                    TV.TVValuesNest _ -> TM "TVN"
+                    TV.TVTabulars _ -> TM "TVT"
+                    TV.TVTabularsNest _ -> TM "TVX"
 
         convertDecoratorToDocLine :: DecoratorRec -> TriMarker /\ NonEmptyArray (Doc Unit)
         convertDecoratorToDocLine modRec =
@@ -166,6 +165,66 @@ toRep inclRule =
                 (tmfp P.PTError /\ pure (D.text "CONVERSION ERROR"))
                 _decoratorDocLines
                 modRec.fvalue
+
+
+_tabularValueDocLines :: TV.TabularValue -> Maybe (NonEmptyArray (Doc Unit))
+_tabularValueDocLines = case _ of
+    TV.TVAtomic atomicV -> Just $ _tabularDocLines atomicV
+    TV.TVValues atomicVs ->
+        Array.uncons atomicVs
+        <#> \{ head, tail } ->
+            NEA.cons
+                (prepend (SM "+++") $ D.text $ show $ Array.length atomicVs)
+                (join $ _tabularDocLines <$> NEA.cons' head tail)
+    TV.TVPair tabularA tabularB  ->
+        (\neaA neaB ->
+            NEA.cons
+                (prepend (SM "+++") $ D.text $ show 2)
+                $ neaA <> neaB
+        )
+            <$> _tabularValueDocLines tabularA
+            <*> _tabularValueDocLines tabularB
+    TV.TVValuesNest nestedValues ->
+        case nestedValues of
+            [] -> Nothing
+            _ ->
+                let
+                    sizesString = (show $ Array.length nestedValues) <> " -> " <> String.joinWith " " (show <$> Array.length <$> nestedValues)
+                in
+                    Just $ NEA.cons'
+                        (prepend (SM "+++") $ D.text sizesString)
+                        ((NEA.toArray >>> joinWith D.break) <$> _tabularDocLines <$> Array.concat nestedValues)
+    TV.TVTabulars tabulars ->
+        case tabulars of
+            [] -> Nothing
+            _  ->
+                let
+                    convertTabItem (Tabular.Item { key, label, value }) = label /\ (tmft $ _tabValKeyOf value) /\ _tabularDocLines value
+                    convertTabular tabs = tabularBlock $ convertTabItem <$> Tabular.items tabs
+                in
+                    Just $ NEA.cons'
+                        (prepend (SM "+++") $ D.text $ show $ Array.length tabulars)
+                        (convertTabular <$> tabulars)
+                        -- (pure $ tabularBlock $ ?wh $ map convertTabular <$> tabulars)
+    TV.TVTabularsNest { direct, parts } ->
+        Nothing
+        -- prepend (SM "+++") <$> (_tabularValueDocLines tabularA <> _tabularValueDocLines tabularB)
+
+
+tabularBlock :: Array (String /\ TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit
+tabularBlock [] = mempty
+tabularBlock fields =
+    joinWith D.break $ tabularLines <$> fields
+
+
+tabularLines :: String /\ TriMarker /\ NonEmptyArray (Doc Unit) -> Doc Unit
+tabularLines (name /\ tMarker /\ valueLines) =
+    markSym tabKW <> D.text name
+    <> D.break <> markSym tavKW <> markTri tMarker <> (joinWith (D.break <> markSym tavKW <> markTri tMarker) $ NEA.toArray valueLines)
+
+
+prepend :: SymMarker -> Doc Unit -> Doc Unit
+prepend sym doc = markSym sym <> doc
 
 
 joinWith :: forall a. Doc a -> Array (Doc a) -> Doc a
