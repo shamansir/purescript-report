@@ -190,10 +190,11 @@ _tabularValueDocLines = case _ of
             _ ->
                 let
                     sizesString = (show $ Array.length nestedValues) <> " -> " <> String.joinWith " " (show <$> Array.length <$> nestedValues)
+                    convertNestedValue (idx /\ atomicValue) = show idx /\ (tmft $ _tabValKeyOf atomicValue) /\ _tabularDocLines atomicValue
                 in
                     Just $ NEA.cons'
                         (prepend (SM "+++") $ D.text sizesString)
-                        ((NEA.toArray >>> joinWith D.break) <$> _tabularDocLines <$> Array.concat nestedValues)
+                        (tabularLines <$> convertNestedValue <$> Array.concat (mapWithIndex (/\) <$> nestedValues))
     TV.TVTabulars tabulars ->
         case tabulars of
             [] -> Nothing
@@ -207,7 +208,22 @@ _tabularValueDocLines = case _ of
                         (convertTabular <$> tabulars)
                         -- (pure $ tabularBlock $ ?wh $ map convertTabular <$> tabulars)
     TV.TVTabularsNest { direct, parts } ->
-        Nothing
+        let
+            sizesString =
+                (show $ Array.length direct) <> " -> " <> (show $ Array.length parts) <> " -> " <> (String.joinWith " " $ show <$> Array.length <$> Tuple.snd <$> parts)
+            convertTabItem (Tabular.Item { key, label, value }) = label /\ (tmft $ _tabValKeyOf value) /\ _tabularDocLines value
+            convertTabular tabs = tabularBlock $ convertTabItem <$> Tabular.items tabs
+            convertNestedValue (idx /\ atomicValue) = show idx /\ (tmft $ _tabValKeyOf atomicValue) /\ _tabularDocLines atomicValue
+            convertPart (idx /\ aValue /\ partTabs) =
+                tabularLines (convertNestedValue $ idx /\ aValue)
+                <> D.break
+                <> (prepend (SM "+++") $ D.text $ show $ Array.length partTabs)
+                <> D.break
+                <> joinWith D.break (convertTabular <$> partTabs)
+        in
+            Just $ NEA.cons'
+                (prepend (SM "+++") $ D.text sizesString)
+                $ (convertTabular <$> direct) <> (convertPart <$> mapWithIndex (/\) parts)
         -- prepend (SM "+++") <$> (_tabularValueDocLines tabularA <> _tabularValueDocLines tabularB)
 
 
