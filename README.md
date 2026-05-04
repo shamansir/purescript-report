@@ -31,3 +31,13 @@ In works / Planned:
 ![Screen 7](/screens/screen-a07.png)
 ![Screen 8](/screens/screen-a08.png)
 ![Screen 9](/screens/screen-a09.png)
+
+CLI:
+
+```
+sh ./run-cli.sh --help
+sh ./run-cli.sh -i ./some/file.rep
+sh ./run-cli.sh --file-in ./some/file.rep
+sh ./run-cli.sh -i ./some/file.rep -f TEXT
+sh ./run-cli.sh --convert -i ./some/file.dhall -f dhall -o ./some/file.json -t json
+```

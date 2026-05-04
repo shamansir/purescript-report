@@ -6,6 +6,8 @@ import Effect (Effect)
 import Effect.Console as Console
 
 import Data.Foldable (fold)
+import Data.String (toUpper) as String
+
 import Control.Alt ((<|>))
 
 import Options.Applicative
@@ -45,29 +47,32 @@ main = runProgram =<< execParser opts
 
 runProgram :: Options -> Effect Unit
 runProgram opts = do
-    Console.log "foo"
+    Console.log $ modeDescription opts
     pure unit
 
 
 optsParser :: Parser Options
 optsParser = ado
-    mode <- modeFlag
+    modeK <- modeFlag
 
     theInput <- input
-
     theOutput <- output
 
     from <- from
+    to <- to
 
-    in View theInput from
+    in case modeK of
+        FView -> View theInput from
+        FConvert -> Convert { from, to } { input : theInput, output : theOutput }
+
 
 
 input :: Parser Input
-input = fileInput <|> stdInput
+input = stdInput <|> fileInput <|> pure StdInput
 
 
 output :: Parser Output
-output = fileOutput <|> stdOutput
+output = stdOutput <|> fileOutput <|> pure StdOutput
 
 
 formatFromStr :: String -> ReportFormat
@@ -93,7 +98,7 @@ fileInput :: Parser Input
 fileInput = FileInput <$> strOption
     (  long "file-in"
     <> short 'i'
-    <> metavar "FILENAME"
+    <> metavar "IN-FILENAME"
     <> help "Input file" )
 
 
@@ -107,7 +112,7 @@ fileOutput :: Parser Output
 fileOutput = FileOutput <$> strOption
     (  long "file-out"
     <> short 'o'
-    <> metavar "FILENAME"
+    <> metavar "OUT-FILENAME"
     <> help "Input file" )
 
 
@@ -149,3 +154,18 @@ opts = info (optsParser <**> helper)
     ( fullDesc
     <> progDesc "Print a greeting for TARGET"
     <> header "hello - a test for purescript-optparse" )
+
+
+modeDescription :: Mode -> String
+modeDescription = case _ of
+    View input format -> "View " <> descInput input <> " in " <> descFormat format <> " format."
+    Convert { from, to } { input, output } -> "Convert " <> descInput input <> " from " <> descFormat from <> " to " <> descFormat to <> " and write it to " <> descOutput output
+    where
+        descInput = case _ of
+            FileInput path -> "file at " <> path
+            SampleIn -> "sample"
+            StdInput -> "`stdin`"
+        descOutput = case _ of
+            FileOutput path -> "file at " <> path
+            StdOutput -> "`stdout`"
+        descFormat = formatToStr >>> String.toUpper
