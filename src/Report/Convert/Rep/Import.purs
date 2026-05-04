@@ -9,12 +9,15 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (mapMaybe, catMaybes) as Array
 
 import Report (Report)
+import Report (mapSubjects, mapGroups, mapItems, toBuilder, fromBuilder) as Report
 import Report.Group (Group(..))
 import Report.GroupPath as GP
 import Report.Convert.Keyed (keyOf)
 import Report (empty, build) as Report
 import Report.Impl.Subject (Subject(..)) as Impl
+import Report.Impl.Subject (mapTags) as SubjImpl
 import Report.Impl.Item (Item(..)) as Impl
+import Report.Impl.Item (mapTags) as ItemImpl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag(..)) as Impl
 import Report.Decorator (keyOf) as Decorator
@@ -22,6 +25,7 @@ import Report.Decorator (fromArray) as Decorators
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats as Stats
 import Report.Convert.Generic (class ToImport) as Report
+import Report.Convert.Generic (convertItem, convertGroup, convertSubject, convertItemTag, convertSubjectTag, convertSubjectId) as Import
 import Report.Convert.Types (ImportError(..))
 import Report.Convert.Rep.Import.Parser as Parser
 import Report.Tabular
@@ -29,14 +33,28 @@ import Report.Tabular (empty, fromArray) as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 
 
-{-
 fromRep :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToImport subj_id subj_tag item_tag subj group item x
     => String
     -> Either ImportError (Report subj group item)
 fromRep =
-    fromRepP >>> map (map ?wh >>> Report.build)
--}
+    fromRepToImpl
+    (const $ Import.convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x)
+    >>> map
+        (Report.toBuilder
+            >>> Report.mapItems
+                ( ItemImpl.mapTags
+                    ( Import.convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x )
+                  >>> Import.convertItem    @subj_id @subj_tag @item_tag @subj @group @item @x
+                )
+            >>> Report.mapGroups ( Import.convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x )
+            >>> Report.mapSubjects
+                ( SubjImpl.mapTags
+                    ( Import.convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x )
+                  >>> Import.convertSubject    @subj_id @subj_tag @item_tag @subj @group @item @x
+                )
+            >>> Report.fromBuilder
+        )
 
 
 fromRepP :: String -> Either ImportError (Array Parser.RepSubject)

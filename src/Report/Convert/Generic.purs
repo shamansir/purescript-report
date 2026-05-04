@@ -22,9 +22,14 @@ import Report.Decorator (Key) as Decorator
 import Report.Tabular as Tabular
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 -- import Report.Decorators.Tabular.TabularValue as TabV
-import Report.Decorators.Tags (RawTags(..))
+import Report.Decorators.Tags (RawTag, RawTags(..))
 import Report.Convert.Text.Decorators.Tags as CT
 import Report.Convert.Types
+
+import Report.Impl.Subject (Subject(..)) as Impl
+import Report.Impl.Item (Item(..)) as Impl
+import Report.Impl.Group (Group) as Impl
+import Report.Impl.Tag (Tag(..)) as Impl
 
 
 exportVersion = ExportVersion 3 :: ExportVersion
@@ -168,4 +173,10 @@ toExport inclRule =
         groupToExport group items = { group, items }
 
 
-class ToImport subj_id subj_tag item_tag subj group item (x :: Type)
+class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
+    convertSubjectId :: String -> subj_id
+    convertSubjectTag :: RawTag -> subj_tag
+    convertSubject :: Impl.Subject subj_id subj_tag -> subj
+    convertGroup :: Impl.Group -> group
+    convertItem :: Impl.Item item_tag -> item
+    convertItemTag :: RawTag -> item_tag

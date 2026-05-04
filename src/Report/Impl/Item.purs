@@ -30,6 +30,10 @@ newtype Item item_tag = Item (ItemRec item_tag)
 derive instance Newtype (Item item_tag) _
 
 
+instance Functor Item where
+    map = mapTags
+
+
 instance IsItem (Item item_tag) where
     i_title = _.title <<< unwrap
 
@@ -85,6 +89,11 @@ from item =
         , tabular: i_tabular item
         , tags: Tags.fromArray $ i_tags item
         }
+
+
+mapTags :: forall item_tag_a item_tag_b. (item_tag_a -> item_tag_b) -> Item item_tag_a -> Item item_tag_b
+mapTags mapF (Item itemRec) =
+    Item $ itemRec { tags = mapF <$> itemRec.tags }
 
 
 derive newtype instance ReadForeign  (Item Tags.RawTag)

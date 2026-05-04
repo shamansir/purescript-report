@@ -19,11 +19,10 @@ toRep
 toRep inclRule =
     Export.toRep @x @subj_id @subj_tag @item_tag inclRule
 
-{-
+
 fromRep :: forall @x @subj_id @subj_tag @item_tag subj group item
      . Report.ToImport subj_id subj_tag item_tag subj group item x
     => String
     -> Either ImportError (Report subj group item)
 fromRep =
     Import.fromRep @x @subj_id @subj_tag @item_tag
--}

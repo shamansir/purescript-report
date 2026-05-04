@@ -105,5 +105,10 @@ from subj =
         }
 
 
+mapTags :: forall subj_id subj_tag_a subj_tag_b. (subj_tag_a -> subj_tag_b) -> Subject subj_id subj_tag_a -> Subject subj_id subj_tag_b
+mapTags mapF (Subject subjRec) =
+    Subject $ subjRec { tags = mapF <$> subjRec.tags }
+
+
 derive newtype instance (ReadForeign subj_id)  => ReadForeign  (Subject subj_id String)
 derive newtype instance (WriteForeign subj_id) => WriteForeign (Subject subj_id String)
