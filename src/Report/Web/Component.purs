@@ -34,6 +34,7 @@ import Report.Builder as RB
 import Report.Chain (Chain)
 import Report.Chain (fromString, toString, length, last, toArray) as Chain
 import Report.Class as R
+import Report.Core (ReportFormat(..))
 
 import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdit, ViewOrEdit) as CT
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
@@ -118,7 +119,7 @@ type State subj_id subj_tag item_tag_kind item_tag report =
     , tagFilter :: Array subj_tag
     , sortBy :: SubjectSort
     , flags :: Flags
-    , mbExportTo :: Maybe ExportTarget
+    , mbExportTo :: Maybe ReportFormat
     , navigatedTo :: NavigatedTo subj_id
     , process :: Array (Process item_tag_kind item_tag)
     , collapsed :: CollapseMap subj_id
@@ -158,7 +159,7 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | ExpandGroupNavigation
     | CollapseGroupNavigation
     | ToggleGroupNavigationPinned
-    | EnableExport ExportTarget
+    | EnableExport ReportFormat
     | DisableExport
     | AddToItemsFilter MouseEvent item_tag
     | CancelProcess MouseEvent (Process item_tag_kind item_tag)
@@ -187,17 +188,6 @@ derive instance Ord SortKey
 
 
 type Version = Int
-
-
-data ExportTarget
-    = Json
-    | Dhall
-    | Org
-    | Rep
-    | Text
-
-
-derive instance Eq ExportTarget
 
 
 type Config subj_id =

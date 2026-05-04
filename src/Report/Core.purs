@@ -390,3 +390,16 @@ parseMonth = case _ of
     "Nov" -> Just Nov
     "Dec" -> Just Dec
     _ -> Nothing
+
+
+data ReportFormat
+    = Json
+    | Dhall
+    | Org
+    | Rep
+    | Text
+    -- | Tree -- TODO
+
+
+derive instance Eq ReportFormat
+

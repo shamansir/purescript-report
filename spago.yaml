@@ -11,6 +11,7 @@ package:
     - halogen-svg-elems
     - maybe
     - newtype
+    - optparse
     - prelude
     - record-extra
     - string-parsers
@@ -20,6 +21,13 @@ package:
     - yoga-tree-utils
     # - yoga-tree-svg
     # - play
+  run:
+    main: Report.Cli
+    # execArgs:
+    #   - "-t"
+    #   - "starter"
+    #   - "-f"
+    #   - "./ndf/starter.v0.1.ndf"
   test:
     main: Test.Main
     dependencies:
