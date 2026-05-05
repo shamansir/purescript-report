@@ -183,7 +183,14 @@ class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
     convertItemTag :: RawTag -> item_tag
 
 
-data RR = RR
+newtype RR = RR (Report (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag))
+
+
+instance ToReport (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
+    toReport (RR report) = report
+
+
+instance ToExport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR
 
 
 instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where

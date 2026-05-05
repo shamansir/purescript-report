@@ -5,7 +5,7 @@ import Prelude
 import Effect (Effect)
 import Effect.Console as Console
 
-import Data.Either (Either(..), either)
+import Data.Either (Either(..), either, hush, note)
 import Data.Maybe (Maybe(..))
 import Data.Foldable (fold)
 import Data.String (toUpper) as String
@@ -30,13 +30,19 @@ import Report.Convert.Types
 import Report.Decorators.Tags (RawTag, RawTagKind, TagAction(..))
 -- import Report.Convert.Rep.Import
 import Report.Convert.Rep as Report
-import Report.Convert.Generic (class ToImport, RR)
+import Report.Convert.Generic (class ToImport, RR, IncludeRule(..))
 import Report.Impl.Subject (Subject(..)) as Impl
 import Report.Impl.Subject (mapTags) as SubjImpl
 import Report.Impl.Item (Item(..)) as Impl
 import Report.Impl.Item (mapTags) as ItemImpl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag(..)) as Impl
+import Report.Convert.Dhall (toDhall) as Report
+import Report.Convert.Json (toJson) as Report
+import Report.Convert.Org (toOrg) as Report
+import Report.Convert.Text (toText) as Report
+import Report.Convert.Rep (toRep) as Report
+
 
 
 type Process = TagAction RawTagKind RawTag
@@ -80,6 +86,11 @@ runProgram opts = do
                 FileInput filePath -> Just <$> readTextFile UTF8 filePath
                 SampleIn -> pure Nothing
                 StdInput -> readStdin
+            let eConvertedReport = readReport srcFormat <$> note (ImportError "Failed to Read Input") mbReportStr
+            case eConvertedReport of
+                Right theReport ->
+                    pure unit
+                Left importError -> Console.log $ printImportError importError
             pure unit
         Convert fmt pipe _ -> pure unit
     Console.log $ modeDescription opts
@@ -209,12 +220,12 @@ modeDescription = case _ of
 
 readStdin :: Effect (Maybe String)
 readStdin = do
-  Stream.readString Process.stdin UTF8
+    Stream.readString Process.stdin UTF8
 
 
 writeStdout :: String -> Effect Boolean
 writeStdout = do
-  Stream.writeString Process.stdout UTF8
+    Stream.writeString Process.stdout UTF8
 
 
 readReport :: ReportFormat -> String -> Either ImportError RawReport
@@ -224,9 +235,12 @@ readReport format source =
         _ -> Left $ ImportError "Unsupported format"
 
 
--- exportTextFor = case _ of
---                 Json  -> reportToExport # Report.toJson  @x @subj_id @subj_tag @item_tag includeRule
---                 Dhall -> reportToExport # Report.toDhall @x @subj_id @subj_tag @item_tag includeRule
---                 Org   -> reportToExport # Report.toOrg   @x @subj_id @subj_tag @item_tag includeRule
---                 Rep   -> reportToExport # Report.toRep   @x @subj_id @subj_tag @item_tag includeRule
---                 Text  -> reportToExport # Report.toText  @x @subj_id @subj_tag @item_tag includeRule
+convertReport :: ReportFormat -> RawReport -> String
+convertReport format rawReport = case format of
+    Json  -> rawReport # Report.toJson  @RR @SubjectId @RawTag @RawTag IncludeAll
+    Dhall -> rawReport # Report.toDhall @RR @SubjectId @RawTag @RawTag IncludeAll
+    Org   -> rawReport # Report.toOrg   @RR @SubjectId @RawTag @RawTag IncludeAll
+    Rep   -> rawReport # Report.toRep   @RR @SubjectId @RawTag @RawTag IncludeAll
+    Text  -> rawReport # Report.toText  @RR @SubjectId @RawTag @RawTag IncludeAll
+
+

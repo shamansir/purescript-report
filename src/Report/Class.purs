@@ -99,6 +99,11 @@ instance ConvertFrom (Chain String) Unit where
     convertFrom s = if s == End "." then Just unit else Nothing
 
 
+
+instance ConvertTo (Chain String) RawTag where
+    convertTo = unwrap >>> _.id >>> Chain.fromNEArray
+
+
 class Same k where -- alternative to `Eq`, not strict equality, but "same kind of thing", e.g. same tag type, same rating type, same platform type, etc.
     same :: k -> k -> Boolean
 

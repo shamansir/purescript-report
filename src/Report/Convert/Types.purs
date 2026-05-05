@@ -14,6 +14,7 @@ import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 import StringParser (ParseError, printParserError) as SP
 
 import Report (Report)
+import Report.Class (class ConvertFrom, class ConvertTo)
 import Report.Group (Group)
 import Report.Chain (Chain)
 import Report.Decorators.Stats (Stats)
@@ -27,6 +28,7 @@ import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag(..)) as Impl
 import Report.Decorators.Tags (RawTag, RawTags)
 import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Convert.Keyed (class EncodableKey)
 
 
 type DecoratorRec =
@@ -52,8 +54,12 @@ type ItemRec =
 
 newtype SubjectId = SubjectId String
 derive instance Newtype SubjectId _
+derive newtype instance Eq SubjectId
+derive newtype instance ConvertFrom String SubjectId
+derive newtype instance ConvertTo String SubjectId
 derive newtype instance ReadForeign SubjectId
 derive newtype instance WriteForeign SubjectId
+derive newtype instance EncodableKey SubjectId
 
 
 type SubjectRec =
