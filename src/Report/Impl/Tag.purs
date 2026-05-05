@@ -9,12 +9,15 @@ import Foreign (F, Foreign, fail, ForeignError(..))
 
 import Yoga.JSON (readImpl, writeImpl)
 
-import Report.Decorators.Tags (RawTag)
+import Report.Decorators.Tags (RawTag, RawTagKind)
 import Report.Class (TagColors)
 import Report.Chain as MbW
 
 
 type Tag = RawTag
+
+
+type TagKind = RawTagKind
 
 
 altDefaultColors :: TagColors

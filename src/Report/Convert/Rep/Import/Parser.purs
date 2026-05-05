@@ -37,6 +37,7 @@ import Report.Decorators.Tags (RawTag(..), RawTags(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GP
 
+import Report.Convert.Types (SubjectId(..))
 import Report.Convert.Rep.Keys as RE
 
 
@@ -76,6 +77,7 @@ type RepGroup =
 
 type RepSubject =
   { name     :: String
+  , id       :: Maybe SubjectId
   , tabulars :: Array RepTabular
   , groups   :: Array RepGroup
   , tags     :: Array RawTag
@@ -112,12 +114,18 @@ repParser = do
 subjectParser :: Parser RepSubject
 subjectParser = do
   _         <- SP.string "SBJ. "
-  name      <- restOfLine
+  rol       <- restOfLine
+  let (name /\ mbId)
+            = case String.split (String.Pattern "%%") rol of
+                [ ]      -> "" /\ Nothing
+                [ name ] -> String.trim name /\ Nothing
+                [ name, id ] -> String.trim name /\ Just (SubjectId id)
+                _        -> "" /\ Nothing
   eol
   tags      <- toArr <$> SP.many (SP.try $ tagAtSpaces 0)
   tabs      <- toArr <$> SP.many (SP.try $ tabularAtSpaces 0)
   rawGroups <- toArr <$> SP.many (SP.try rawGroupParser)
-  pure { name, tabulars: tabs, groups: assignDepths rawGroups, tags : Array.catMaybes tags }
+  pure { name, tabulars: tabs, groups: assignDepths rawGroups, tags : Array.catMaybes tags, id : mbId }
 
 
 -- | Parse one group, recording its raw leading-space count.

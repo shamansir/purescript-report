@@ -13,11 +13,18 @@ import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
 import StringParser (ParseError, printParserError) as SP
 
+import Report (Report)
 import Report.Group (Group)
 import Report.Chain (Chain)
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Progress (DateRec)
 import Report.Tabular (Tabular)
+import Report.Impl.Subject (Subject(..)) as Impl
+import Report.Impl.Subject (mapTags) as SubjImpl
+import Report.Impl.Item (Item(..)) as Impl
+import Report.Impl.Item (mapTags) as ItemImpl
+import Report.Impl.Group (Group) as Impl
+import Report.Impl.Tag (Tag(..)) as Impl
 import Report.Decorators.Tags (RawTag, RawTags)
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 
@@ -90,3 +97,7 @@ printImportError :: ImportError -> String
 printImportError = case _ of
     FromParser sperr -> SP.printParserError sperr
     ImportError ierr -> ierr
+
+
+type RawReport' subj_id = Report (Impl.Subject subj_id Impl.Tag) Impl.Group (Impl.Item Impl.Tag)
+type RawReport = RawReport' SubjectId

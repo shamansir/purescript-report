@@ -7,6 +7,7 @@ import Data.Newtype (unwrap)
 import Data.Tuple (curry, uncurry) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (filter, elem) as Array
+import Data.Either (Either, either)
 
 import Yoga.JSON (writeImpl)
 
@@ -174,9 +175,27 @@ toExport inclRule =
 
 
 class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
-    convertSubjectId :: String -> subj_id
+    convertSubjectId :: Int -> Either String SubjectId -> subj_id
     convertSubjectTag :: RawTag -> subj_tag
     convertSubject :: Impl.Subject subj_id subj_tag -> subj
     convertGroup :: Impl.Group -> group
     convertItem :: Impl.Item item_tag -> item
     convertItemTag :: RawTag -> item_tag
+
+
+data RR = RR
+
+
+instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
+    convertSubjectId :: Int -> Either String SubjectId -> SubjectId
+    convertSubjectId = const $ either SubjectId identity
+    convertSubjectTag :: RawTag -> RawTag
+    convertSubjectTag = identity
+    convertSubject :: Impl.Subject SubjectId RawTag -> Impl.Subject SubjectId RawTag
+    convertSubject = identity
+    convertGroup :: Impl.Group -> Impl.Group
+    convertGroup = identity
+    convertItem :: Impl.Item RawTag -> Impl.Item RawTag
+    convertItem = identity
+    convertItemTag :: RawTag -> RawTag
+    convertItemTag = identity

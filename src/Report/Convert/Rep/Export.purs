@@ -23,6 +23,7 @@ import Report.Chain as MbW
 import Report.Convert.Types (Subject, ItemRec, DecoratorRec, TabularRec)
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags (loadRawId) as CT
+import Report.Convert.Keyed (encodeKey)
 
 import Report.Decorator (Key(..), Decorator(..), keyOf) as D
 import Report.Decorators.Progress (Progress(..), Relation(..))
@@ -80,7 +81,7 @@ toRep inclRule =
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
-            markTri subjKW <> D.text subjectRec.name
+            markTri subjKW <> D.text subjectRec.name <> D.space <> markSym subjIDKW <> D.text (unwrap subjectRec.id)
             <> case subjectRec.tags of
                 [] -> mempty
                 _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)

@@ -50,3 +50,11 @@ newtype RawTags = RawTags (Array RawTag)
 derive instance Newtype RawTags _
 derive newtype instance WriteForeign RawTags
 derive newtype instance ReadForeign  RawTags
+
+
+newtype RawTagKind = RawTagKind (NonEmptyArray String)
+derive instance Newtype RawTagKind _
+derive newtype instance Eq RawTagKind
+derive newtype instance Ord RawTagKind
+derive newtype instance WriteForeign RawTagKind
+derive newtype instance ReadForeign  RawTagKind
