@@ -86,10 +86,10 @@ runProgram opts = do
                 FileInput filePath -> Just <$> readTextFile UTF8 filePath
                 SampleIn -> pure Nothing
                 StdInput -> readStdin
-            let eConvertedReport = readReport srcFormat <$> note (ImportError "Failed to Read Input") mbReportStr
+            let eConvertedReport = readReport srcFormat =<< note (ImportError "Failed to Read Input") mbReportStr
             case eConvertedReport of
                 Right theReport ->
-                    pure unit
+                    Console.log $ convertReport srcFormat theReport
                 Left importError -> Console.log $ printImportError importError
             pure unit
         Convert fmt pipe _ -> pure unit

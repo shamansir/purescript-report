@@ -40,4 +40,5 @@ sh ./run-cli.sh -i ./some/file.rep
 sh ./run-cli.sh --file-in ./some/file.rep
 sh ./run-cli.sh -i ./some/file.rep -f TEXT
 sh ./run-cli.sh --convert -i ./some/file.dhall -f dhall -o ./some/file.json -t json
+sh ./run-cli.sh -i ./test/games-samples/AstralChain.rep
 ```
