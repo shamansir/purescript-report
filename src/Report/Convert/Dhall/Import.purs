@@ -56,14 +56,24 @@ instance ReadForeign DhallProperty where
 
 
 type DhallSubjectRec =
-    { name :: String
-    , id :: SubjectId
+    { id :: SubjectId
+    , name :: String
     , properties :: Array DhallProperty
     , tags :: Array String
-    , tabular :: Tabular TabularValue
+    , tabular :: Array DhallTabularRec
+    }
+
+
+type DhallTabularRec =
+    { key :: String
+    , value ::
+        { t :: String
+        , v :: Foreign
+        }
     }
 
 
 newtype DhallImport = DhallImport (Array { collection :: Array DhallSubjectRec })
+
 
 derive newtype instance ReadForeign DhallImport

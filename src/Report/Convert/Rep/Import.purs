@@ -24,7 +24,8 @@ import Report.Decorator (keyOf) as Decorator
 import Report.Decorator (fromArray) as Decorators
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats as Stats
-import Report.Convert.Generic (class ToImport) as Report
+import Report.Convert.Generic (SubjectName)
+import Report.Convert.Generic (class ToImport, toImport') as Report
 import Report.Convert.Generic (convertItem, convertGroup, convertSubject, convertItemTag, convertSubjectTag, convertSubjectId) as Import
 import Report.Convert.Types (ImportError(..), RawReport', SubjectId)
 import Report.Convert.Rep.Import.Parser as Parser
@@ -39,36 +40,19 @@ fromRep :: forall @x @subj_id @subj_tag @item_tag subj group item
     -> Either ImportError (Report subj group item)
 fromRep =
     fromRepToImpl
-    (\idx mbSubjId name ->
-        Import.convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx
-            $ maybe (Left name) Right mbSubjId
-    )
-    >>> map
-        (Report.toBuilder
-            >>> Report.mapItems
-                ( ItemImpl.mapTags
-                    ( Import.convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x )
-                  >>> Import.convertItem    @subj_id @subj_tag @item_tag @subj @group @item @x
-                )
-            >>> Report.mapGroups ( Import.convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x )
-            >>> Report.mapSubjects
-                ( SubjImpl.mapTags
-                    ( Import.convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x )
-                  >>> Import.convertSubject    @subj_id @subj_tag @item_tag @subj @group @item @x
-                )
-            >>> Report.fromBuilder
-        )
+    (Import.convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x)
+    >>> map (Report.toImport' @x @subj_id @subj_tag @item_tag @subj @group @item)
 
 
 fromRepP :: String -> Either ImportError (Array Parser.RepSubject)
 fromRepP = Parser.fromRep >>> lmap FromParser
 
 
-fromRepToImpl :: forall @subj_id. (Int -> Maybe SubjectId -> String -> subj_id) -> String -> Either ImportError (RawReport' subj_id)
+fromRepToImpl :: forall @subj_id. (Int -> SubjectName -> Maybe SubjectId -> subj_id) -> String -> Either ImportError (RawReport' subj_id)
 fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex convertSubj >>> Report.build)
   where
     convertSubj idx subjRec =
-        let subjId = nameToSubjIdF idx subjRec.id subjRec.name in
+        let subjId = nameToSubjIdF idx subjRec.name subjRec.id in
         Impl.Subject
         { id : subjId
         , name : subjRec.name

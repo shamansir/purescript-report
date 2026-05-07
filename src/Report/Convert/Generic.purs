@@ -2,6 +2,7 @@ module Report.Convert.Generic where
 
 import Prelude
 
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Map (toUnfoldable) as Map
 import Data.Newtype (unwrap)
 import Data.Tuple (curry, uncurry) as Tuple
@@ -32,7 +33,9 @@ import Report.Convert.Text.Decorators.Tags as CT
 import Report.Convert.Types
 
 import Report.Impl.Subject (Subject(..)) as Impl
+import Report.Impl.Subject (mapTags, mapId) as SubjImpl
 import Report.Impl.Item (Item(..)) as Impl
+import Report.Impl.Item (mapTags) as ItemImpl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag(..)) as Impl
 
@@ -178,8 +181,11 @@ toExport inclRule =
         groupToExport group items = { group, items }
 
 
+type SubjectName = String
+
+
 class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
-    convertSubjectId :: Int -> Either String SubjectId -> subj_id
+    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> subj_id
     convertSubjectTag :: RawTag -> subj_tag
     convertSubject :: Impl.Subject subj_id subj_tag -> subj
     convertGroup :: Impl.Group -> group
@@ -198,8 +204,8 @@ instance ToExport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.G
 
 
 instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
-    convertSubjectId :: Int -> Either String SubjectId -> SubjectId
-    convertSubjectId = const $ either subjectIdFromName identity
+    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> SubjectId
+    convertSubjectId _ name mbSubjId = fromMaybe (subjectIdFromName name) mbSubjId
     convertSubjectTag :: RawTag -> RawTag
     convertSubjectTag = identity
     convertSubject :: Impl.Subject SubjectId RawTag -> Impl.Subject SubjectId RawTag
@@ -223,3 +229,37 @@ nameToId name =
 subjectIdFromName :: String -> SubjectId
 subjectIdFromName name =
     SubjectId $ nameToId name
+
+
+toImport :: forall @x @subj_id @subj_tag @item_tag subj group item
+     . ToImport subj_id subj_tag item_tag subj group item x
+    => (SubjectId -> subj_id)
+    -> RawReport
+    -> Report subj group item
+toImport toSubjId =
+    Report.toBuilder
+        >>> Report.mapSubjects (SubjImpl.mapId toSubjId)
+        >>> Report.fromBuilder
+        >>> toImport' @x @subj_id @subj_tag @item_tag @subj @group @item
+
+
+toImport' :: forall @x @subj_id @subj_tag @item_tag @subj @group @item
+     . ToImport subj_id subj_tag item_tag subj group item x
+    => RawReport' subj_id
+    -> Report subj group item
+toImport' =
+    Report.toBuilder
+        >>> Report.mapItems
+            ( ItemImpl.mapTags
+                ( convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x )
+                >>> convertItem  @subj_id @subj_tag @item_tag @subj @group @item @x
+            )
+        >>> Report.mapGroups ( convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x )
+        >>> Report.mapSubjects
+            ( SubjImpl.mapTags
+                ( convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x )
+                >>> convertSubject  @subj_id @subj_tag @item_tag @subj @group @item @x
+            )
+        >>> Report.fromBuilder
+
+

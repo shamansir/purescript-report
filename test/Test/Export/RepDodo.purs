@@ -75,13 +75,16 @@ spec =
               Just subj -> do
                 -- subject name and tabulars
                 subj.name `A.shouldEqual` "Astral Chain"
-                Array.length subj.tabulars `A.shouldEqual` 4
-                (_.name     <$> Array.head subj.tabulars) `A.shouldEqual` Just "Id"
-                (_.id       <$> Array.head subj.tabulars) `A.shouldEqual` Just (Just "id")
-                (__rawValue <$> Array.head subj.tabulars) `A.shouldEqual` Just "DHL:astral-chain"
-                (_.name     <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "Tracked At"
-                (_.id       <$> Array.index subj.tabulars 3) `A.shouldEqual` Just (Just "trackedAt")
-                (__rawValue <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "<2025-08-12>"
+                Array.length subj.tabulars `A.shouldEqual` 3
+                (_.name     <$> Array.head subj.tabulars) `A.shouldEqual` Just "Platform"
+                (_.id       <$> Array.head subj.tabulars) `A.shouldEqual` Just (Just "platform")
+                (__rawValue <$> Array.head subj.tabulars) `A.shouldEqual` Just "Switch"
+                -- (_.name     <$> Array.index subj.tabulars 1) `A.shouldEqual` Just "Id"
+                -- (_.id       <$> Array.index subj.tabulars 1) `A.shouldEqual` Just (Just "id")
+                -- (__rawValue <$> Array.index subj.tabulars 1) `A.shouldEqual` Just "DHL:astral-chain"
+                (_.name     <$> Array.index subj.tabulars 2) `A.shouldEqual` Just "Tracked At"
+                (_.id       <$> Array.index subj.tabulars 2) `A.shouldEqual` Just (Just "trackedAt")
+                (__rawValue <$> Array.index subj.tabulars 2) `A.shouldEqual` Just "<2025-08-12>"
                 -- 16 groups in flat list (subjects + nested all at same level)
                 Array.length subj.groups `A.shouldEqual` 16
                 -- first group: File
@@ -172,6 +175,8 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
 # Switch
 - Platform // platform
 ; TXT. Switch
+- Playtime // playtime
+; REL. > 40:00:00
 - Tracked At // trackedAt
 ; DAT. <2025-08-12>
     GRP. File // 00-file

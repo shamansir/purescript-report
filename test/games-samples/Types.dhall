@@ -80,6 +80,11 @@ let Relation =
     >
 
 
+let RawRelation =
+      \(t : Type) ->
+      { rel : Text, focus : t }
+
+
 let Value =
     < E
     | UNK
@@ -109,10 +114,10 @@ let Value =
     | LVLP : LVLP -- levels : total / done
     | LVLIO : LVLIO -- levels : optional int -- TODO: "== only current" sometimes?
     | PROC : PROC
-    | RELN : Relation Natural
-    | RELI : Relation Integer
-    | RELD : Relation Double
-    | RELT : Relation TIME
+    | RELN : RawRelation Natural
+    | RELI : RawRelation Integer
+    | RELD : RawRelation Double
+    | RELT : RawRelation TIME
     >
 
 
@@ -152,10 +157,10 @@ let tag
         , LVLP = \(x : LVLP) -> { t = "LVLP", v = v }
         , LVLIO = \(x : LVLIO) -> { t = "LVLIO", v = v }
         , PROC = \(x : PROC) -> { t = "PROC", v = v }
-        , RELI = \(x : Relation Integer) -> { t = "RELI", v = v }
-        , RELN = \(x : Relation Natural) -> { t = "RELN", v = v }
-        , RELD = \(x : Relation Double) -> { t = "RELD", v = v }
-        , RELT = \(x : Relation TIME) -> { t = "RELT", v = v }
+        , RELI = \(x : RawRelation Integer) -> { t = "RELI", v = v }
+        , RELN = \(x : RawRelation Natural) -> { t = "RELN", v = v }
+        , RELD = \(x : RawRelation Double)  -> { t = "RELD", v = v }
+        , RELT = \(x : RawRelation TIME)    -> { t = "RELT", v = v }
         }
         v
 
@@ -276,6 +281,16 @@ let KVR/setDate
     : DATE -> KeyValRec -> KeyValRec
     = \(date : DATE) -> \(kvr : KeyValRec) ->
         kvr // { date = Some date }
+
+
+let Relation/rawify =
+    \(a : Type) -> \(r : Relation a) ->
+        merge
+            { MoreThan = \(v : a) -> { rel = ">", focus = v }
+            , LessThan = \(v : a) -> { rel = "<", focus = v }
+            , Exact =    \(v : a) -> { rel = "=", focus = v }
+            }
+            r
 
 
 let inj/date
@@ -452,10 +467,10 @@ let v_pct_mes : Integer -> Value = \(i : Integer) -> v_mes i "%"
 let v_pct_mesd : Double -> Value = \(d : Double) -> v_mesd d "%"
 let v_mesx : Integer -> Double -> Text -> Value = \(sign : Integer) -> \(d : Double) -> \(text : Text)  -> Value.MESX { d = d, measure = text, sign = sign }
 let v_pct_mesx : Integer -> Double -> Value = \(sign : Integer) -> \(d : Double) -> v_mesx sign d "%"
-let v_reln : Relation Natural -> Value = Value.RELN
-let v_reli : Relation Integer -> Value = Value.RELI
-let v_reld : Relation Double -> Value = Value.RELD
-let v_relt : Relation TIME -> Value = Value.RELT
+let v_reln : Relation Natural -> Value = \(r : Relation Natural) -> Value.RELN (Relation/rawify Natural r)
+let v_reli : Relation Integer -> Value = \(r : Relation Integer) -> Value.RELI (Relation/rawify Integer r)
+let v_reld : Relation Double  -> Value = \(r : Relation Double)  -> Value.RELD (Relation/rawify Double r)
+let v_relt : Relation TIME    -> Value = \(r : Relation TIME)    -> Value.RELT (Relation/rawify TIME r)
 let v_unk : Value = Value.UNK
 
 

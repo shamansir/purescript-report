@@ -55,6 +55,8 @@ data Progress
     | LevelsE LevelsE -- exact levels are unknown, we only have a value of levels achieved and total level count
     | LevelsC LevelsC -- exact levels are unknown, we only have a value of levels achieved, total level count, and a value reached at current level and maximum value at current level
     | LevelsP LevelsP -- every level has task inside, name and probably a date when was achieved, reached value is not stored and intended to be calculated from the task data
+    -- | RelN Relation Number -- TODO
+    -- | RelI Relation Integer -- TODO
     | RelTime Relation TimeRec
     | Error String
 
@@ -286,7 +288,7 @@ _writeProgress = case _ of
     LevelsC levelsC ->
         { t : pvt "LVLC", v : writeImpl $ convertLevelsC levelsC }
     RelTime rel timeRec ->
-        { t : pvt "RELT", v : writeImpl { rel : encodeRel rel, time : timeRec } }
+        { t : pvt "RELT", v : writeImpl { rel : encodeRel rel, focus : timeRec } }
     Error err ->
         { t : pvt "X", v : writeImpl err }
     where
@@ -333,7 +335,7 @@ _readProgress (PValueTag atag) frgn =
         "LVLP" -> LevelsP <$> (readImpl frgn :: F LevelsP)
         "LVLC" -> LevelsC <$> convertLevelsC <$> (readImpl frgn :: F { reached :: Int, levels :: Int, current :: Int, maxcurrent :: Int, date :: Maybe DateRec })
         "RELT" ->
-            (readImpl frgn :: F { rel :: String, time :: TimeRec }) <#> \{ rel, time } -> RelTime (decodeRel rel) time
+            (readImpl frgn :: F { rel :: String, focus :: TimeRec }) <#> \{ rel, focus } -> RelTime (decodeRel rel) focus
         "X" -> Error <$> (readImpl frgn :: F String)
         _ -> pure None
     where

@@ -33,7 +33,7 @@ import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.Decorator (Decorator(..), Key(..)) as D
 import Report.Core as CT
 import Report.Core.Logic as CT
-import Report.Convert.Dhall.Import (DhallItemRec)
+import Report.Convert.Dhall.Import (DhallSubjectRec, DhallItemRec, DhallTabularRec)
 
 import GameLog.Types as GLT
 import GameLog.Types.Achievement (Achievement(..), collectStatsRaw, getProgress)
@@ -73,31 +73,22 @@ type DhallGameJson =
     }
 -}
 
-type DhallTabular =
-    Array
-        { key :: String
-        , value ::
-            { t :: String
-            , v :: Foreign
-            }
-        }
 
-
-type DhallSubjectJson =
+type DhallSubjectRecAlt =
     { id :: String
     , name :: String
     , properties :: Array DhallAchRec
     , tags :: Array String
-    , tabular :: DhallTabular
+    , tabular :: Array DhallTabularRec
     }
 
 
 type DhallJson =
-    { collection :: Array DhallSubjectJson
+    { collection :: Array DhallSubjectRecAlt
     }
 
 
-loadTabular :: DhallTabular -> Tabular Progress
+loadTabular :: Array DhallTabularRec -> Tabular Progress
 loadTabular = Tabular.fromArray <<< map loadProgress
     where
         loadProgress { key, value } =
@@ -119,7 +110,7 @@ instance ReadForeign FromDhall where
 instance ReadForeign DhallGame where
     readImpl :: Foreign -> F DhallGame
     readImpl frgn = do
-        (dhallGameJSON :: DhallSubjectJson) <- readImpl frgn
+        (dhallGameJSON :: DhallSubjectRecAlt) <- readImpl frgn
         pure $ processGame dhallGameJSON -- $ foldl insertByRef Map.empty dhallJSON.properties
 
 
@@ -152,7 +143,7 @@ findProgressInTabular keyName = -- FIXME: move to `Report.Tabular`
         >>> flip bind ( Progress.rawToProgressJson >>> Progress.fromJson)
 
 
-processGame :: DhallSubjectJson -> DhallGame
+processGame :: DhallSubjectRecAlt -> DhallGame
 processGame subject =
     DhallGame $ let
         gameAchievements = fillSelfRefs $ fillWithStats $ groupAchievements collectedAchievements

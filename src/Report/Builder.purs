@@ -11,7 +11,7 @@ module Report.Builder
     , toTree, toTree_
     , nodeToString
     {- Subjects -}
-    , mapSubjects
+    , mapSubjects, mapSubjectsIndexed
     , allSubjects
     , filterSubjects
     , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
@@ -290,6 +290,13 @@ mapSubjects mapSubj = unwrap >>> map mapFn >>> wrap
     where
         mapFn :: Subject subjA group item -> Subject subjB group item
         mapFn (Subject s groups) = Subject (mapSubj s) groups
+
+
+mapSubjectsIndexed :: forall subjA subjB group item. (Int -> subjA -> subjB) -> Builder subjA group item -> Builder subjB group item
+mapSubjectsIndexed mapSubj = unwrap >>> mapWithIndex mapFn >>> wrap
+    where
+        mapFn :: Int -> Subject subjA group item -> Subject subjB group item
+        mapFn idx (Subject s groups) = Subject (mapSubj idx s) groups
 
 
 sortSubjects :: forall subj group item. Ord subj => Builder subj group item -> Builder subj group item
