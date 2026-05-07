@@ -1,0 +1,211 @@
+================================================================================
+Full REP document — subject, groups, items, continuations
+NOTE: same-indent sibling groups are nested in the prior group (grammar
+limitation: no indent-depth tracking without an external scanner).
+================================================================================
+
+SBJ. Astral Chain // DHL:astral-chain
+# Dhall
+# Switch
+- Id // id
+; TXT. DHL:astral-chain
+- Tracked At // trackedAt
+; DAT. <2025-08-12>
+    GRP. File // 00-file
+    - Path // path
+    ; TXT. 00-file
+    - Index // index
+    ; INT. 0
+        Time
+        : TIM. 07:54:00
+        Duration
+        : TIM. 36:48:56
+        Name
+        : TXT. File 11
+    GRP. Stats // 01-stats
+    - Path // path
+    ; TXT. 01-stats
+    - Index // index
+    ; INT. 1
+        Order Completion
+        : GTI. 67 185
+        GRP. Hero // 00-hero
+        - Path // path
+        ; TXT. 01-stats 00-hero
+        - Index // index
+        ; INT. 2
+            Health
+            : RGI. 1200 1200
+            ATK
+            : INT. 50
+        GRP. Basic // 02-basic
+        - Path // path
+        ; TXT. 01-stats 02-basic
+        - Index // index
+        ; INT. 4
+            Red Cases Closed
+            : LVI. 90
+            >>> 1 Lvl. 1
+            >>> 25 Lvl. 2
+            >>> 131 Lvl. Max
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name)
+      id: (id_clause
+        value: (identifier)))
+    (subject_tag
+      content: (tag_content))
+    (subject_tag
+      content: (tag_content))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      group: (group
+        header: (group_header
+          title: (group_title)
+          path_id: (id_clause
+            value: (identifier)))
+        tabular: (tabular_entry
+          header: (tabular_header
+            label: (label_text)
+            id: (id_clause
+              value: (identifier)))
+          value: (tabular_value_line
+            marker: (tri_marker)
+            value: (value_text)))
+        tabular: (tabular_entry
+          header: (tabular_header
+            label: (label_text)
+            id: (id_clause
+              value: (identifier)))
+          value: (tabular_value_line
+            marker: (tri_marker)
+            value: (value_text)))
+        item: (item
+          title: (item_title
+            text: (item_title_text))
+          decorator: (decorator
+            marker: (tri_marker)
+            value: (value_text)))
+        group: (group
+          header: (group_header
+            title: (group_title)
+            path_id: (id_clause
+              value: (identifier)))
+          tabular: (tabular_entry
+            header: (tabular_header
+              label: (label_text)
+              id: (id_clause
+                value: (identifier)))
+            value: (tabular_value_line
+              marker: (tri_marker)
+              value: (value_text)))
+          tabular: (tabular_entry
+            header: (tabular_header
+              label: (label_text)
+              id: (id_clause
+                value: (identifier)))
+            value: (tabular_value_line
+              marker: (tri_marker)
+              value: (value_text)))
+          item: (item
+            title: (item_title
+              text: (item_title_text))
+            decorator: (decorator
+              marker: (tri_marker)
+              value: (value_text)))
+          item: (item
+            title: (item_title
+              text: (item_title_text))
+            decorator: (decorator
+              marker: (tri_marker)
+              value: (value_text)))
+          group: (group
+            header: (group_header
+              title: (group_title)
+              path_id: (id_clause
+                value: (identifier)))
+            tabular: (tabular_entry
+              header: (tabular_header
+                label: (label_text)
+                id: (id_clause
+                  value: (identifier)))
+              value: (tabular_value_line
+                marker: (tri_marker)
+                value: (value_text)))
+            tabular: (tabular_entry
+              header: (tabular_header
+                label: (label_text)
+                id: (id_clause
+                  value: (identifier)))
+              value: (tabular_value_line
+                marker: (tri_marker)
+                value: (value_text)))
+            item: (item
+              title: (item_title
+                text: (item_title_text))
+              decorator: (decorator
+                marker: (tri_marker)
+                value: (value_text)
+                continuation: (continuation_line
+                  content: (continuation_text))
+                continuation: (continuation_line
+                  content: (continuation_text))
+                continuation: (continuation_line
+                  content: (continuation_text))))))))))

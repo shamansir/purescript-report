@@ -1,0 +1,311 @@
+================================================================================
+Item with decorator
+================================================================================
+
+SBJ. Report
+    GRP. File // 00-file
+    - Index // index
+    ; INT. 0
+        Time
+        : TIM. 07:54:00
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Item with multiple decorators
+================================================================================
+
+SBJ. Report
+    GRP. File // 00-file
+    - Index // index
+    ; INT. 0
+        Time
+        : TIM. 07:54:00
+        Duration
+        : TIM. 36:48:56
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Item with tag
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 0
+        My Achievement
+        # done
+        : GTI. 1 1
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        tag: (item_tag
+          content: (tag_content))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Decorator with continuation lines (levels)
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 0
+        Red Cases Closed
+        : LVI. 90
+        >>> 1 Lvl. 1
+        >>> 25 Lvl. 2
+        >>> 131 Lvl. Max
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)
+          continuation: (continuation_line
+            content: (continuation_text))
+          continuation: (continuation_line
+            content: (continuation_text))
+          continuation: (continuation_line
+            content: (continuation_text)))))))
+
+================================================================================
+Tabular value with continuation lines
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 0
+        Progress
+        : LVI. 3
+        >>> 1 Level One
+        >>> 2 Level Two
+        >>> 3 Level Three
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)
+          continuation: (continuation_line
+            content: (continuation_text))
+          continuation: (continuation_line
+            content: (continuation_text))
+          continuation: (continuation_line
+            content: (continuation_text)))))))
+
+================================================================================
+Item title with spaces and special characters
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 0
+        Ted's Best Customer
+        : GTI. 0 5
+        Armed & Dangerous
+        : GTI. 5 10
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Multiple items in a group
+================================================================================
+
+SBJ. Report
+    GRP. Weapons // 01-weapons
+    - Index // index
+    ; INT. 3
+        X-Baton Level
+        : INT. 6
+        Baton Atk
+        : INT. 130
+        Blaster Atk
+        : INT. 58
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))

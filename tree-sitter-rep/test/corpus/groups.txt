@@ -1,0 +1,171 @@
+================================================================================
+Group with path ID and tabulars
+================================================================================
+
+SBJ. Report
+    GRP. File // 00-file
+    - Path // path
+    ; TXT. 00-file
+    - Index // index
+    ; INT. 0
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Group without ID
+================================================================================
+
+SBJ. Report
+    GRP. Stats
+    - Path // path
+    ; TXT. 01-stats
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Nested groups (depth 2)
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Path // path
+    ; TXT. 01-stats
+        GRP. Hero // 00-hero
+        - Path // path
+        ; TXT. 01-stats 00-hero
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      group: (group
+        header: (group_header
+          title: (group_title)
+          path_id: (id_clause
+            value: (identifier)))
+        tabular: (tabular_entry
+          header: (tabular_header
+            label: (label_text)
+            id: (id_clause
+              value: (identifier)))
+          value: (tabular_value_line
+            marker: (tri_marker)
+            value: (value_text)))))))
+
+================================================================================
+Nested groups (depth 3)
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 1
+        GRP. Basic // 02-basic
+        - Index // index
+        ; INT. 4
+            GRP. Chapters // 00-chapters
+            - Index // index
+            ; INT. 5
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      group: (group
+        header: (group_header
+          title: (group_title)
+          path_id: (id_clause
+            value: (identifier)))
+        tabular: (tabular_entry
+          header: (tabular_header
+            label: (label_text)
+            id: (id_clause
+              value: (identifier)))
+          value: (tabular_value_line
+            marker: (tri_marker)
+            value: (value_text)))
+        group: (group
+          header: (group_header
+            title: (group_title)
+            path_id: (id_clause
+              value: (identifier)))
+          tabular: (tabular_entry
+            header: (tabular_header
+              label: (label_text)
+              id: (id_clause
+                value: (identifier)))
+            value: (tabular_value_line
+              marker: (tri_marker)
+              value: (value_text))))))))

@@ -1,0 +1,132 @@
+================================================================================
+Subject header only
+================================================================================
+
+SBJ. My Report
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))))
+
+================================================================================
+Subject header with ID
+================================================================================
+
+SBJ. My Report // my-report
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name)
+      id: (id_clause
+        value: (identifier)))))
+
+================================================================================
+Subject with tags
+================================================================================
+
+SBJ. My Report // my-report
+# TagOne
+# TagTwo
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name)
+      id: (id_clause
+        value: (identifier)))
+    (subject_tag
+      content: (tag_content))
+    (subject_tag
+      content: (tag_content))))
+
+================================================================================
+Subject with tabular entries
+================================================================================
+
+SBJ. My Report // my-report
+- Id // id
+; TXT. some-id
+- Platform // platform
+; TXT. PC
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name)
+      id: (id_clause
+        value: (identifier)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))))
+
+================================================================================
+Subject tabular without ID
+================================================================================
+
+SBJ. Plain Subject
+- Score
+; INT. 42
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))))
+
+================================================================================
+Subject with tracked-at date tabular
+================================================================================
+
+SBJ. Astral Chain // DHL:astral-chain
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-08-12>
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name)
+      id: (id_clause
+        value: (identifier)))
+    (subject_tag
+      content: (tag_content))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))))

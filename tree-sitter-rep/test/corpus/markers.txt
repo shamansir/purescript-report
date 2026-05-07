@@ -1,0 +1,255 @@
+================================================================================
+Progress markers: integers
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 1
+        Score
+        : INT. 42
+        Goals
+        : GTI. 67 185
+        Progress
+        : GTN. 3.5 10.0
+        Count
+        : NON. .
+        Unknown
+        : UNK. .
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Progress markers: time and date
+================================================================================
+
+SBJ. Report
+    GRP. File // 00-file
+    - Index // index
+    ; INT. 0
+        Time
+        : TIM. 07:54:00
+        Date
+        : DAT. <2001-01-11>
+        EarnedAt
+        : ERN. <2025-08-12>
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Progress markers: percent, measured, range
+================================================================================
+
+SBJ. Report
+    GRP. Stats // 01-stats
+    - Index // index
+    ; INT. 0
+        Resonance
+        : PCN. 1.0
+        Money
+        : MSI. 628 G
+        Health
+        : RGI. 1200 1200
+        Ratio
+        : PCX. + 75
+        Funds
+        : MSX. + 50 gold
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name))
+    (group
+      header: (group_header
+        title: (group_title)
+        path_id: (id_clause
+          value: (identifier)))
+      tabular: (tabular_entry
+        header: (tabular_header
+          label: (label_text)
+          id: (id_clause
+            value: (identifier)))
+        value: (tabular_value_line
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text)))
+      item: (item
+        title: (item_title
+          text: (item_title_text))
+        decorator: (decorator
+          marker: (tri_marker)
+          value: (value_text))))))
+
+================================================================================
+Tabular markers: various types
+================================================================================
+
+SBJ. My Report // my-report
+- Score // score
+; INT. 42
+- Name // name
+; TXT. Alice
+- Active // active
+; BOL. true
+- Born // born
+; DAT. <1990-05-01>
+- Start // start
+; TIM. 09:00:00
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (subject
+    (subject_header
+      name: (subject_name)
+      id: (id_clause
+        value: (identifier)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))
+    (subject_tabular
+      header: (subject_tabular_header
+        label: (label_text)
+        id: (id_clause
+          value: (identifier)))
+      value: (tabular_value_line
+        marker: (tri_marker)
+        value: (value_text)))))
