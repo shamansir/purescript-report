@@ -77,8 +77,10 @@ spec =
                 subj.name `A.shouldEqual` "Astral Chain"
                 Array.length subj.tabulars `A.shouldEqual` 4
                 (_.name     <$> Array.head subj.tabulars) `A.shouldEqual` Just "Id"
+                (_.id       <$> Array.head subj.tabulars) `A.shouldEqual` Just (Just "id")
                 (__rawValue <$> Array.head subj.tabulars) `A.shouldEqual` Just "DHL:astral-chain"
-                (_.name     <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "TrackedAt"
+                (_.name     <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "Tracked At"
+                (_.id       <$> Array.index subj.tabulars 3) `A.shouldEqual` Just (Just "trackedAt")
                 (__rawValue <$> Array.index subj.tabulars 3) `A.shouldEqual` Just "<2025-08-12>"
                 -- 16 groups in flat list (subjects + nested all at same level)
                 Array.length subj.groups `A.shouldEqual` 16
@@ -168,13 +170,13 @@ spec =
 expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
 # Dhall
 # Switch
-- Id
+- Id // id
 ; TXT. DHL:astral-chain
-- Platform
+- Platform // platform
 ; TXT. TODO
-- Playtime
+- Playtime // playtime
 ; TXT. TODO
-- TrackedAt
+- Tracked At // trackedAt
 ; DAT. <2025-08-12>
     GRP. File // 00-file
     - Path

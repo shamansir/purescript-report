@@ -103,6 +103,10 @@ insert :: forall v. String -> v -> Tabular v -> Tabular v
 insert s v (Tabular vs) = Tabular $ Array.snoc vs $ wrap { key : s, label : s, value : v }
 
 
+insert' :: forall v. String -> String -> v -> Tabular v -> Tabular v
+insert' s l v (Tabular vs) = Tabular $ Array.snoc vs $ wrap { key : s, label : l, value : v }
+
+
 fromRec :: forall rl row v. RL.RowToList row rl => Record.Keys rl => TabularRow rl row v => Record row -> Tabular v
 fromRec record = toTabularBase (Proxy :: _ v) (Proxy :: _ rl) record empty
 

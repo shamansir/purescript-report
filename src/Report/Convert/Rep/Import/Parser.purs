@@ -36,6 +36,7 @@ import Report.Decorators.Priority as Priority
 import Report.Decorators.Tags (RawTag(..), RawTags(..))
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GP
+import Report.Convert.Generic (nameToId) as CG
 
 import Report.Convert.Types (SubjectId(..))
 import Report.Convert.Rep.Keys as RE
@@ -48,6 +49,7 @@ import Report.Convert.Rep.Keys as RE
 
 type RepTabular =
   { name     :: String
+  , id       :: Maybe String
   , marker   :: RE.TriMarker
   , rawValue :: NonEmptyArray String
   , parsed   :: Maybe (Tab.Item TabularAtomicValue) -- TODO support all kinds of TabularValues
@@ -200,7 +202,13 @@ tabularAtSpaces :: Int -> Parser RepTabular
 tabularAtSpaces spaces = do
   matchingIndent spaces
   _               <- SP.string "- "
-  name            <- restOfLine
+  rol             <- restOfLine
+  let (name /\ mbId)
+            = case String.split (String.Pattern "//") rol of
+                [ ]      -> "" /\ Nothing
+                [ name ] -> String.trim name /\ Nothing
+                [ name, id ] -> String.trim name /\ Just (String.trim id)
+                _        -> "" /\ Nothing
   eol
   matchingIndent spaces
   _               <- SP.string "; "
@@ -210,8 +218,8 @@ tabularAtSpaces spaces = do
   let triMarker = RE.TM marker
       rawNCont  = NEA.cons' raw continuations
       parsedTabular = tabularFromRep triMarker rawNCont
-        <#> \v -> Tab.Item { key: name, label: name, value: v }
-  pure { name, marker: triMarker, rawValue: rawNCont, parsed: parsedTabular }
+        <#> \v -> Tab.Item { key: fromMaybe (CG.nameToId name) mbId, label: name, value: v }
+  pure { name, id : mbId, marker: triMarker, rawValue: rawNCont, parsed: parsedTabular }
 
 
 -- | Item: leading spaces are read from the input and must exceed parentSpaces.

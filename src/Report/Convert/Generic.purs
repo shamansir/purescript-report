@@ -212,10 +212,14 @@ instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.G
     convertItemTag = identity
 
 
-subjectIdFromName :: String -> SubjectId
-subjectIdFromName name =
-    SubjectId
-         $ String.toLower
+nameToId :: String -> String
+nameToId name =
+    String.toLower
          $ CP.fromCodePointArray
          $ (\cp -> if CP.isAlphaNum cp then cp else CP.codePointFromChar '-')
         <$> CP.toCodePointArray name
+
+
+subjectIdFromName :: String -> SubjectId
+subjectIdFromName name =
+    SubjectId $ nameToId name
