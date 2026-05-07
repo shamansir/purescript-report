@@ -2,8 +2,6 @@ module Report.Web.Component where
 
 import Prelude
 
--- import Debug as Debug
-
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as Console
 

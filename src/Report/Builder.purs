@@ -40,8 +40,6 @@ module Report.Builder
 
 import Prelude
 
-import Debug as Debug
-
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)

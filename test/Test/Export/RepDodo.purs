@@ -170,18 +170,14 @@ spec =
 expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
 # Dhall
 # Switch
-- Id // id
-; TXT. DHL:astral-chain
 - Platform // platform
-; TXT. TODO
-- Playtime // playtime
-; TXT. TODO
+; TXT. Switch
 - Tracked At // trackedAt
 ; DAT. <2025-08-12>
     GRP. File // 00-file
-    - Path
+    - Path // path
     ; TXT. 00-file
-    - Index
+    - Index // index
     ; INT. 0
         Time
         : TIM. 07:54:00
@@ -200,16 +196,16 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
         Play Style
         : TXT. Pt Standard
     GRP. Stats // 01-stats
-    - Path
+    - Path // path
     ; TXT. 01-stats
-    - Index
+    - Index // index
     ; INT. 1
         Order Completion
         : GTI. 67 185
         GRP. Hero // 00-hero
-        - Path
+        - Path // path
         ; TXT. 01-stats 00-hero
-        - Index
+        - Index // index
         ; INT. 2
             Health
             : RGI. 1200 1200
@@ -226,9 +222,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
             Order Completion
             : PCN. 0.36
         GRP. Weapons // 01-weapons
-        - Path
+        - Path // path
         ; TXT. 01-stats 01-weapons
-        - Index
+        - Index // index
         ; INT. 3
             X-Baton Level
             : INT. 6
@@ -253,9 +249,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
             Additional AED Batteries
             : INT. 1
         GRP. Basic // 02-basic
-        - Path
+        - Path // path
         ; TXT. 01-stats 02-basic
-        - Index
+        - Index // index
         ; INT. 4
             All Pure Platinum
             : GTI. 0 1
@@ -298,9 +294,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
             Legatus Master
             : GTI. 0 0
             GRP. Chapters // 00-chapters
-            - Path
+            - Path // path
             ; TXT. 01-stats 02-basic 00-chapters
-            - Index
+            - Index // index
             ; INT. 5
                 Startup
                 : GTI. 1 1
@@ -325,9 +321,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 Reckoning
                 : GTI. 1 1
             GRP. S+ // 01-s-plus
-            - Path
+            - Path // path
             ; TXT. 01-stats 02-basic 01-s-plus
-            - Index
+            - Index // index
             ; INT. 6
                 Startup
                 : GTI. 0 1
@@ -352,9 +348,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 Reckoning
                 : GTI. 0 1
             GRP. Rank // 03-rank
-            - Path
+            - Path // path
             ; TXT. 01-stats 02-basic 03-rank
-            - Index
+            - Index // index
             ; INT. 7
                 Silver
                 : GTI. 0 0
@@ -365,9 +361,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 Pure Platinum
                 : GTI. 0 0
         GRP. Combat // 03-combat
-        - Path
+        - Path // path
         ; TXT. 01-stats 03-combat
-        - Index
+        - Index // index
         ; INT. 8
             Chimeradicator
             : LVI. 781
@@ -439,9 +435,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
             Ted's Best Customer
             : GTI. 0 5
         GRP. Collection // 04-collection
-        - Path
+        - Path // path
         ; TXT. 01-stats 04-collection
-        - Index
+        - Index // index
         ; INT. 9
             Supply Snatcher
             : LVI. 201
@@ -500,9 +496,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
             Fashionista
             : GTI. 13 39
             GRP. Red Matter Remover // 00-red-matter
-            - Path
+            - Path // path
             ; TXT. 01-stats 04-collection 00-red-matter
-            - Index
+            - Index // index
             ; INT. 10
                 File 01
                 : GTI. 0 1
@@ -527,9 +523,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 File 11
                 : GTI. 0 1
             GRP. Slime Splatter // 01-slime
-            - Path
+            - Path // path
             ; TXT. 01-stats 04-collection 01-slime
-            - Index
+            - Index // index
             ; INT. 11
                 File 01
                 : GTI. 0 1
@@ -554,9 +550,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 File 11
                 : GTI. 0 1
             GRP. Feline Friend // 02-feline
-            - Path
+            - Path // path
             ; TXT. 01-stats 04-collection 02-feline
-            - Index
+            - Index // index
             ; INT. 12
                 File 01
                 : GTI. 0 1
@@ -581,9 +577,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 File 11
                 : GTI. 0 1
             GRP. Nature Calls // 03-nature
-            - Path
+            - Path // path
             ; TXT. 01-stats 04-collection 03-nature
-            - Index
+            - Index // index
             ; INT. 13
                 HQ
                 : CMP. TODO
@@ -610,9 +606,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
                 File 11
                 : GTI. 1 1
         GRP. Unique // 05-unique
-        - Path
+        - Path // path
         ; TXT. 01-stats 05-unique
-        - Index
+        - Index // index
         ; INT. 14
             A Who's Who of Hermits
             : GTI. 0 0
@@ -639,9 +635,9 @@ expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
             Astral Perfection
             : GTI. 0 0
             GRP. Photo // 06-photo
-            - Path
+            - Path // path
             ; TXT. 01-stats 05-unique 06-photo
-            - Index
+            - Index // index
             ; INT. 15
                 I See You!
                 : GTI. 0 0

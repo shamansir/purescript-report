@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.String as String
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested ((/\), type (/\))
 import Data.Int as Int
 
 import Yoga.JSON (class WriteForeign, writeImpl)
@@ -17,7 +17,9 @@ import Report.Chain as Chain
 import Report.Decorators.Stats (Stats)
 import Report.Convert.Keyed (class EncodableKey, encodeKey, decodeKey)
 import Report.Tabular as Tabular
+import Report.Decorator (Decorator(..))
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Decorators.Progress (Progress(..), Relation)
 
 import GameLog.Types as GLT
 
@@ -57,6 +59,7 @@ newtype Game =
         , mbPlatform :: Maybe GLT.Platform
         , mbSource :: Maybe Source
         , mbTrackedAt :: Maybe CT.SDate
+        , mbPlaytime :: Maybe (Relation /\ CT.STimeRec)
         , stats :: Stats
         }
 
@@ -182,6 +185,14 @@ instance HasTabular Game where
     i_tabular (Game gameRec) =
         Tabular.empty
             -- # Tabular.insert "name" (TV.TVString gameRec.name)
+            # case gameRec.mbPlatform of
+                Nothing -> identity
+                Just thePlatform ->
+                    Tabular.insert' "platform" "Platform" $ TV.TVAtomic $ TV.TVString $ GLT.encodePlatform thePlatform
+            # case gameRec.mbPlaytime of
+                Nothing -> identity
+                Just (relation /\ thePlaytime) ->
+                    Tabular.insert' "playtime" "Playtime" $ TV.TVAtomic $ TV.TVDecorator $ SProgress $ RelTime relation thePlaytime
             # case gameRec.mbTrackedAt of
                 Nothing -> identity
                 Just trackedAt ->

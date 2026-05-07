@@ -6,9 +6,6 @@ import Prelude
 
 import Effect.Class (liftEffect)
 
-import Debug as Debug
-
-
 import Data.Either (either)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Map (empty) as Map

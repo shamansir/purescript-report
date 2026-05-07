@@ -2,9 +2,6 @@ module Report.Utils.Grouping where
 
 import Prelude
 
-import Debug as Debug
-
-
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\), type (/\))

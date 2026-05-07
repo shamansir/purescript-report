@@ -2,8 +2,6 @@ module Report.Convert.Rep.Export where
 
 import Prelude
 
-import Debug as Debug
-
 import Data.Maybe (Maybe(..))
 import Data.Tuple (snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
@@ -137,8 +135,8 @@ toRep inclRule =
                     Just pathId -> D.space <> markSym pathKW <> (D.text $ unwrap pathId)
                     Nothing -> mempty
                 <> D.break <> tabularBlock
-                    [ { id : "Path",  label : "Path",  marker : tmfp P.PTText, valueLines : pure $ convertPath groupRec.path }
-                    , { id : "Index", label : "Index", marker : tmfp P.PTInt, valueLines : pure $ D.text $ show index        }
+                    [ { id : "path",  label : "Path",  marker : tmfp P.PTText, valueLines : pure $ convertPath groupRec.path }
+                    , { id : "index", label : "Index", marker : tmfp P.PTInt, valueLines : pure $ D.text $ show index        }
                     ]
                 <> D.break
                 <> (joinWith D.break $ D.indent <$> convertItem groupRec.path <$> items)

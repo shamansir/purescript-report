@@ -163,6 +163,9 @@ processGame subject =
                 , name : subject.name
                 , mbPlatform : platformFromDhall $ loadProgressTextValue =<< findProgressInTabular "platform" subject.tabular
                 , mbSource : Just S_Dhall
+                , mbPlaytime : findProgressInTabular "playtime" subject.tabular >>= case _ of
+                    RelTime relation playtime -> Just (relation /\ playtime)
+                    _ -> Nothing
                 , mbTrackedAt : gameTabluar # Tabular.findV "trackedAt" >>= case _ of
                     OnDate sdate -> Just sdate
                     _ -> Nothing
