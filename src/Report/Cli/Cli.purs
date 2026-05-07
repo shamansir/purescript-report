@@ -12,7 +12,7 @@ import Data.String (toUpper) as String
 
 import Node.Encoding (Encoding(..))
 -- import Node.FS.Sync (readTextFile)
-import Node.FS.Sync (readTextFile)
+import Node.FS.Sync (readTextFile, writeTextFile)
 -- import Node.FS.Sync (inp)
 import Node.Stream (Readable)
 import Node.Stream as Stream
@@ -60,9 +60,8 @@ data Output
     | FileOutput String
 
 
-data Mode
-    = View Input Output ReportFormat (Array Process)
-    | Convert { from :: ReportFormat, to :: ReportFormat } { input :: Input, output :: Output } (Array Process)
+data Command
+    = Convert { from :: ReportFormat, to :: ReportFormat } { input :: Input, output :: Output } (Array Process)
     -- | Edit
 
 
@@ -71,7 +70,7 @@ data ModeFlag
     | FConvert
 
 
-type Options = Mode
+type Options = Command
 
 
 main :: Effect Unit
@@ -80,36 +79,36 @@ main = runProgram =<< execParser opts
 
 runProgram :: Options -> Effect Unit
 runProgram opts = do
+    Console.log $ commandDescription opts
+    Console.log "------------------------------"
+    Console.log "------------------------------"
     case opts of
-        View theInput theOutput srcFormat _ -> do
-            mbReportStr <- case theInput of
+        Convert fmt pipe _ -> do
+            mbReportStr <- case pipe.input of
                 FileInput filePath -> Just <$> readTextFile UTF8 filePath
                 SampleIn -> pure Nothing
                 StdInput -> readStdin
-            let eConvertedReport = readReport srcFormat =<< note (ImportError "Failed to Read Input") mbReportStr
+            let eConvertedReport = readReport fmt.from =<< note (ImportError "Failed to Read Input") mbReportStr
             case eConvertedReport of
                 Right theReport ->
-                    Console.log $ convertReport srcFormat theReport
+                    case pipe.output of
+                        Screen -> Console.log $ convertReport fmt.to theReport
+                        StdOutput -> writeStdout (convertReport fmt.to theReport) *> pure unit
+                        FileOutput filePath -> do
+                            writeTextFile UTF8 filePath (convertReport fmt.to theReport)
                 Left importError -> Console.log $ printImportError importError
-            pure unit
-        Convert fmt pipe _ -> pure unit
-    Console.log $ modeDescription opts
-    pure unit
+    Console.log "\n------------------------------\n"
 
 
 optsParser :: Parser Options
 optsParser = ado
-    modeK <- modeFlag
-
     theInput <- input
     theOutput <- output
 
     from <- from
     to <- to
 
-    in case modeK of
-        FView -> View theInput theOutput from [] -- TODO
-        FConvert -> Convert { from, to } { input : theInput, output : theOutput } [] -- TODO
+    in Convert { from, to } { input : theInput, output : theOutput } [] -- TODO
 
 
 input :: Parser Input
@@ -185,15 +184,6 @@ to = formatFromStr <$> strOption
     <> help "Output format" )
 
 
-modeFlag :: Parser ModeFlag
-modeFlag =
-    flag FView FConvert
-    ( long "convert"
-    <> short 'c'
-    <> help "Convert instead of just viewing"
-    )
-
-
 opts :: ParserInfo Options
 opts = info (optsParser <**> helper)
     ( fullDesc
@@ -201,10 +191,12 @@ opts = info (optsParser <**> helper)
     <> header "hello - a test for purescript-optparse" )
 
 
-modeDescription :: Mode -> String
-modeDescription = case _ of
-    View input output format process -> "View " <> descInput input <> " in " <> descFormat format <> " format and show it in " <> descOutput output <> ". " <> descProcess process
-    Convert { from, to } { input, output } process -> "Convert " <> descInput input <> " from " <> descFormat from <> " to " <> descFormat to <> " and write it to " <> descOutput output <> ". " <> descProcess process
+commandDescription :: Command -> String
+commandDescription = case _ of
+    Convert fmt pipe process ->
+        if (fmt.from == fmt.to)
+            then "View " <> descInput pipe.input <> " in " <> descFormat fmt.from <> " format and show it in " <> descOutput pipe.output <> ". " <> descProcess process
+            else "Convert " <> descInput pipe.input <> " from " <> descFormat fmt.from <> " to " <> descFormat fmt.to <> " and write it to " <> descOutput pipe.output <> ". " <> descProcess process
     where
         descInput = case _ of
             FileInput path -> "file at " <> path
@@ -232,7 +224,7 @@ readReport :: ReportFormat -> String -> Either ImportError RawReport
 readReport format source =
     case format of
         Rep -> Report.fromRep @RR @SubjectId @RawTag @RawTag source
-        _ -> Left $ ImportError "Unsupported format"
+        _ -> Left $ ImportError $ "Unsupported format to read from: " <> show format
 
 
 convertReport :: ReportFormat -> RawReport -> String

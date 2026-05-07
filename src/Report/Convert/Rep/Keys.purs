@@ -25,7 +25,7 @@ decKW = SM ":" :: SymMarker
 tavKW = SM ";" :: SymMarker
 tagKW = SM "#" :: SymMarker
 pathKW = SM "//" :: SymMarker
-subjIDKW = SM "%%" :: SymMarker
+subjIDKW = SM "//" :: SymMarker
 
 
 

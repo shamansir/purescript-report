@@ -70,7 +70,7 @@ toRep inclRule =
         -- >>> Array.concat
         -- >>> String.joinWith "\n"
     where
-        mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
+        mbTrackedAt tabular = Tabular.findV "TrackedAt" tabular >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
             TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
@@ -85,6 +85,7 @@ toRep inclRule =
             <> case subjectRec.tags of
                 [] -> mempty
                 _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)
+            -- <> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> ?wh <$> Tabular.items subjectRec.tabular)
             <> D.break <> tabularBlock
                 (Array.catMaybes
                     [ Just $ "Id" /\ tmfp P.PTText /\ (pure $ D.text $ unwrap subjectRec.id)

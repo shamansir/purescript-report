@@ -165,7 +165,7 @@ spec =
                     g15.path  `A.shouldEqual` ["01-stats", "05-unique", "06-photo"]
 
 
-expectedRepAstralChain = """SBJ. Astral Chain
+expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain
 # Dhall
 # Switch
 - Id

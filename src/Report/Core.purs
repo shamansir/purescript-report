@@ -401,5 +401,14 @@ data ReportFormat
     -- | Tree -- TODO
 
 
+instance Show ReportFormat where
+    show = case _ of
+        Json -> "JSON"
+        Dhall -> "DHALL"
+        Org -> "ORG"
+        Rep -> "REP"
+        Text -> "TEXT"
+
+
 derive instance Eq ReportFormat
 

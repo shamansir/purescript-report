@@ -2,6 +2,7 @@ module Report.Convert.Rep.Import.Parser where
 
 import Prelude
 
+import Control.Alt ((<|>))
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
@@ -24,7 +25,6 @@ import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
 
 import Report.Core as CT
 import Report.Decorator (Decorator(..), Key(..))
-import Report.Tabular (Tabular)
 import Report.Tabular (Item(..)) as Tab
 import Report.Decorators.Tabular.TabularValue (TabularAtomicValue(..))
 import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
@@ -116,10 +116,10 @@ subjectParser = do
   _         <- SP.string "SBJ. "
   rol       <- restOfLine
   let (name /\ mbId)
-            = case String.split (String.Pattern "%%") rol of
+            = case String.split (String.Pattern "//") rol of
                 [ ]      -> "" /\ Nothing
                 [ name ] -> String.trim name /\ Nothing
-                [ name, id ] -> String.trim name /\ Just (SubjectId id)
+                [ name, id ] -> String.trim name /\ Just (SubjectId $ String.trim id)
                 _        -> "" /\ Nothing
   eol
   tags      <- toArr <$> SP.many (SP.try $ tagAtSpaces 0)
@@ -344,70 +344,83 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
   where
     fraw = NEA.head raw
 
-    parseLevelI str = case splitWithSpace str of
-      [ dateStr, maximumStr, name ] -> do
-        date <- parseDate dateStr
-        maximum <- Int.fromString maximumStr
-        pure { date : Just $ CT.dateToRec date, maximum, name }
-      [ maximumStr, name ] -> do
-        maximum <- Int.fromString maximumStr
-        pure { date : Nothing, maximum, name }
-      _ -> Nothing
+    -- Peel an optional date token from the front of a level entry string,
+    -- parsing it with parseDate. For '<…>' tokens the bracketed content is
+    -- extracted; for plain tokens the first space-separated word is tried.
+    -- Returns (Just date /\ rest) when a date is found, (Nothing /\ original)
+    -- when the first token does not parse as a date.
+    peelDate :: String -> Maybe CT.SDate /\ String
+    peelDate s
+      | String.take 1 s == "<" =
+          case String.indexOf (String.Pattern "> ") s of
+            Just idx -> parseDate (String.take (idx + 1) s) /\ String.drop (idx + 2) s
+            Nothing  -> Nothing /\ s
+      | otherwise =
+          case indexOfSpace s of
+            Just spIdx ->
+              let tok  = String.take spIdx s
+                  rest = String.drop (spIdx + 1) s
+              in case parseDate tok of
+                Just date -> Just date /\ rest
+                Nothing   -> Nothing /\ s
+            Nothing -> Nothing /\ s
+
+    parseLevelI str = do
+      let (date /\ rest) = peelDate str
+      spIdx   <- indexOfSpace rest
+      maximum <- Int.fromString (String.take spIdx rest)
+      let name = String.drop (spIdx + 1) rest
+      pure { date: CT.dateToRec <$> date, maximum, name }
     parseLevelsI _ = do
       reached <- Int.fromString fraw
       let levels = Array.catMaybes $ parseLevelI <$> NEA.tail raw
       pure $ LevelsI { reached, levels }
 
-    parseLevelN str = case splitWithSpace str of
-      [ dateStr, maximumStr, name ] -> do
-        date <- parseDate dateStr
-        maximum <- Number.fromString maximumStr
-        pure { date : Just $ CT.dateToRec date, maximum, name }
-      [ maximumStr, name ] -> do
-        maximum <- Number.fromString maximumStr
-        pure { date : Nothing, maximum, name }
-      _ -> Nothing
+    parseLevelN str = do
+      let (date /\ rest) = peelDate str
+      spIdx   <- indexOfSpace rest
+      maximum <- Number.fromString (String.take spIdx rest)
+      let name = String.drop (spIdx + 1) rest
+      pure { date: CT.dateToRec <$> date, maximum, name }
     parseLevelsN _ = do
       reached <- Number.fromString fraw
       let levels = Array.catMaybes $ parseLevelN <$> NEA.tail raw
       pure $ LevelsN { reached, levels }
 
-    parseLevelO str = case splitWithSpace str of
-      [ dateStr, maximumStr, name ] -> do
-        date <- parseDate dateStr
-        maximum <- Int.fromString maximumStr
-        pure { date : Just $ CT.dateToRec date, mbMaximum : Just maximum, name }
-      [ maximumStr, name ] -> do
-        maximum <- Int.fromString maximumStr
-        pure { date : Nothing, mbMaximum : Just maximum, name }
-      [ name ] ->
-        pure { date : Nothing, mbMaximum : Nothing, name }
-      _ -> Nothing
+    -- maximum is optional: if the first remaining token parses as Int it is
+    -- the maximum, otherwise the whole remaining string is the name.
+    parseLevelO str =
+      let (date /\ rest1) = peelDate str
+      in Just $ case indexOfSpace rest1 of
+        Just spIdx ->
+          let tok   = String.take spIdx rest1
+              rest2 = String.drop (spIdx + 1) rest1
+          in case Int.fromString tok of
+            Just maximum -> { date: CT.dateToRec <$> date, mbMaximum: Just maximum, name: rest2 }
+            Nothing      -> { date: CT.dateToRec <$> date, mbMaximum: Nothing,      name: rest1 }
+        Nothing ->
+          { date: CT.dateToRec <$> date, mbMaximum: Nothing, name: rest1 }
     parseLevelsO _ = do
       reached <- Int.fromString fraw
       let levels = Array.catMaybes $ parseLevelO <$> NEA.tail raw
       pure $ LevelsO { reached, levels }
 
-    parseLevelS str = case splitWithSpace str of
-      [ dateStr, gives ] -> do
-        date <- parseDate dateStr
-        pure { date : Just $ CT.dateToRec date, gives }
-      [ gives ] ->
-        pure { date : Nothing, gives }
-      _ -> Nothing
+    -- After the optional date the rest is the entire `gives` string.
+    parseLevelS str =
+      let (date /\ rest) = peelDate str
+      in Just { date: CT.dateToRec <$> date, gives: rest }
     parseLevelsS _ = do
       reached <- Int.fromString fraw
       let levels = Array.catMaybes $ parseLevelS <$> NEA.tail raw
       pure $ LevelsS { reached, levels }
 
-    parseLevelP str = case splitWithSpace str of
-      [ dateStr, taskStr, name ] -> do
-        date <- parseDate dateStr
-        let task = taskPFromString taskStr
-        pure { date : Just $ CT.dateToRec date, proc : task, name }
-      [ taskStr, name ] ->
-        pure { date : Nothing, proc : taskPFromString taskStr, name }
-      _ -> Nothing
+    -- After the optional date: first token = task status, rest = name.
+    parseLevelP str = do
+      let (date /\ rest) = peelDate str
+      spIdx <- indexOfSpace rest
+      let taskStr = String.take spIdx rest
+          name    = String.drop (spIdx + 1) rest
+      pure { date: CT.dateToRec <$> date, proc: taskPFromString taskStr, name }
     parseLevelsP _ =
       let levels = Array.catMaybes $ parseLevelP <$> NEA.tail raw
       in Just $ LevelsP { levels }
@@ -585,22 +598,23 @@ parseTime s = case String.split (String.Pattern ":") s of
     pure { hrs, min, sec }
   _ -> Nothing
 
--- Date format: <YYYY-MM-DD> or DD-Mon-YYYY
+-- Date format: <YYYY-MM-DD> or <DD-Mon-YYYY> or DD-Mon-YYYY
 parseDate :: String -> Maybe CT.SDate
 parseDate s
   | String.take 1 s == "<" = parseAngleBracketDate s
   | otherwise              = parseDayMonYear s
 
--- <YYYY-MM-DD>
+-- <YYYY-MM-DD> or <DD-Mon-YYYY>
 parseAngleBracketDate :: String -> Maybe CT.SDate
 parseAngleBracketDate s =
   let inner = String.take (String.length s - 2) (String.drop 1 s)
   in case String.split (String.Pattern "-") inner of
-    [yearS, monS, dayS] -> do
-      year <- Int.fromString yearS
-      mon  <- Int.fromString monS
-      day  <- Int.fromString dayS
-      pure $ CT.dateFromRec { day, mon, year }
+    [aS, bS, cS] ->
+      (do year <- Int.fromString aS
+          mon  <- Int.fromString bS
+          day  <- Int.fromString cS
+          pure $ CT.dateFromRec { day, mon, year })
+      <|> parseDayMonYear inner
     _ -> Nothing
 
 -- DD-Mon-YYYY  (Mon = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec)
@@ -693,3 +707,5 @@ spacesCount = SP.regex " *" <#> String.length
 
 -- monthFromThreeLetter :: String -> Maybe Int
 -- monthFromThreeLetter = CT.parseMonth >>> map CT.monthToInt
+
+

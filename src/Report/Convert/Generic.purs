@@ -8,6 +8,10 @@ import Data.Tuple (curry, uncurry) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array (filter, elem) as Array
 import Data.Either (Either, either)
+import Data.String as String
+import Data.String.CodeUnits (toCharArray, fromCharArray) as CU
+import Data.String.CodePoints (codePointFromChar, toCodePointArray, fromCodePointArray) as CP
+import Data.CodePoint.Unicode (isAlphaNum) as CP
 
 import Yoga.JSON (writeImpl)
 
@@ -195,7 +199,7 @@ instance ToExport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.G
 
 instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
     convertSubjectId :: Int -> Either String SubjectId -> SubjectId
-    convertSubjectId = const $ either SubjectId identity
+    convertSubjectId = const $ either subjectIdFromName identity
     convertSubjectTag :: RawTag -> RawTag
     convertSubjectTag = identity
     convertSubject :: Impl.Subject SubjectId RawTag -> Impl.Subject SubjectId RawTag
@@ -206,3 +210,12 @@ instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.G
     convertItem = identity
     convertItemTag :: RawTag -> RawTag
     convertItemTag = identity
+
+
+subjectIdFromName :: String -> SubjectId
+subjectIdFromName name =
+    SubjectId
+         $ String.toLower
+         $ CP.fromCodePointArray
+         $ (\cp -> if CP.isAlphaNum cp then cp else CP.codePointFromChar '-')
+        <$> CP.toCodePointArray name

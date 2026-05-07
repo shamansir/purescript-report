@@ -48,8 +48,8 @@ import Report.GroupPath (howDeep, startsWithNotEq) as GP
 import Report.Modify (Location(..), whatKeyOf)
 import Report.Modify as Modify
 
-import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Generic (class ToExport, includeOnly) as Report
+import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
