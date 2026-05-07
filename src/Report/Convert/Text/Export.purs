@@ -100,7 +100,7 @@ toTextWith cfg inclRule =
         -- >>> Array.concat
         -- >>> String.joinWith "\n"
     where
-        mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
+        mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
             TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
@@ -115,7 +115,7 @@ toTextWith cfg inclRule =
             <> D.break <> D.indent (_tabularsBlock
                 $ Array.catMaybes
                     [ {- Just $ "Id" /\ D.text (unwrap subjectRec.id)
-                    , -} mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ textDate dateRec
+                    , -} mbTrackedAt subjectRec.tabulars <#> \dateRec -> "TrackedAt" /\ textDate dateRec
                     ]
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)

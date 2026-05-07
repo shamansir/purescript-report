@@ -127,7 +127,7 @@ toExport inclRule =
             -- , trackedAt : Nothing -- TODO
             -- , properties : [] -- collectModifiers @subj_tag subj
             -- , tabular : Tabular.empty
-            , tabular : i_tabular subj
+            , tabulars : collectTabulars subj
             }
         collectGroup :: group -> Group
         collectGroup group =

@@ -61,7 +61,7 @@ toDhall inclRule =
         -- >>> Array.concat
         -- >>> String.joinWith "\n"
     where
-        mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
+        mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
             TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
@@ -81,36 +81,50 @@ toDhall inclRule =
                 , D.text ", platform = " <> D.text "GT.Platform.<TODO>"
                 , D.text ", playtime = " <> D.text "GT.Playtime.<TODO>"
                 , D.text "}"
-                , (D.enclose (D.text "(") (D.text ")") $ mbdaterec $ mbTrackedAt subjectRec.tabular) <> D.space <> D.text "("
+                , (D.enclose (D.text "(") (D.text ")") $ mbdaterec $ mbTrackedAt subjectRec.tabulars) <> D.space <> D.text "("
                 ]
-            <> fold (mapWithIndex convertGroup groups)
+                -- (pure $ alignDecorators $ Array.catMaybes $ mapWithIndex convertTabular subjectRec.tabulars)
+            <> fold (mapWithIndex convertGroupRec groups)
             <> D.break <> D.break <> D.indent (D.text ")")
+
+
+        convertTabular :: Int -> TabularRec -> Maybe (RenderedAs (Doc Unit))
+        convertTabular index { tkey, tlabel, value } =
+            case value of
+                TV.TVAtomic atomicV ->
+                    case convertTabularAV atomicV of
+                        OneLine oneLineV -> Just $ OneLine $ (D.text $ if index == 0 then "[" else ",") <> D.space <> D.text tkey <> D.space <> D.text "=" <> D.space <> oneLineV
+                        MutliLine multiLineV  -> Just $ MutliLine $
+                            [ (D.text $ if index == 0 then "[" else ",") <> D.space <> D.text tkey <> D.space <> D.text "="
+                            ] <> (D.indent <$> multiLineV)
+                _ -> Nothing
+
 
             -- <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
             -- <> [ indent <> ")" ]
 
-        convertGroup :: Int -> { group :: Group, items :: Array ItemRec } -> Doc Unit
-        convertGroup index { group, items } =
+        convertGroupRec :: Int -> { group :: Group, items :: Array ItemRec } -> Doc Unit
+        convertGroupRec index { group, items } =
             let groupRec = unwrap group in
             D.break <> D.break <> D.indent
                 (  (if index == 0 then mempty else D.text "#" <> D.space)
                 <> D.text "T.group" <> D.space <> quote groupRec.title <> D.space <> ilarrayD (quote <$> unwrap <$> unwrap groupRec.path)
                 )
-                <> D.break <> D.indent (D.indent $ joinWith D.break $ arrayD $ convertItem <$> items)
+                <> D.break <> D.indent (D.indent $ joinWith D.break $ arrayD $ convertItemRec <$> items)
             -- [ indent <> "( T.group " <> quote groupRec.title <> " " <> ilarray (quote <$> unwrap <$> unwrap groupRec.path)
             -- ]
             -- <> pure (array (indent <> indent) (convertItem <$> items))
             -- <> [ indent <> ")"
             --    ]
 
-        convertItem :: ItemRec -> Doc Unit
-        convertItem itemRec =
+        convertItemRec :: ItemRec -> Doc Unit
+        convertItemRec itemRec =
             D.text "T.kv_" <> D.space <> quote itemRec.title <>
                 (case itemRec.tags of
                     RawTags [] -> mempty
                     RawTags tags -> convertTags tags <> D.space
                 )
-                <> (alignDecorators $ convertDecorator <$> itemRec.decorators)
+                <> (alignDecorators $ convertDecoratorRec <$> itemRec.decorators)
 
 
         convertTags :: Array RawTag -> Doc Unit
@@ -119,29 +133,32 @@ toDhall inclRule =
                 >>> ilarrayD
                 >>> prefixD "// T.inj/tags"
 
-        convertDecorator :: DecoratorRec -> RenderedAs (Doc Unit)
-        convertDecorator decRec =
+        convertDecorator :: D.Decorator -> RenderedAs (Doc Unit)
+        convertDecorator = case _ of
+            D.PRating rating ->
+                _ol $ D.text "p_rating " -- <> quote (decRec.value)
+            D.PPriority priority ->
+                _ol $ D.text "p_priority " -- <> quote (decRec.value)
+            D.PTask task ->
+                _ol $ D.text "p_task " -- <> quote (decRec.value)
+            D.SProgress p ->
+                _progressToDhall p
+            D.SEarnedAt ea ->
+                ea # sdaterec # prefixD "// T.inj/date" # _ol
+            D.SDescription desc ->
+                desc # quote # prefixD "// T.inj/det" # _ol
+            D.SReference path ->
+                unwrap path
+                    # map (unwrap >>> quote)
+                    # ilarrayD
+                    # prefixD "// T.inj/self"
+                    # _ol
+
+
+        convertDecoratorRec :: DecoratorRec -> RenderedAs (Doc Unit)
+        convertDecoratorRec decRec =
             withImplRA @D.Decorator
-                (case _ of
-                    D.PRating rating ->
-                        _ol $ D.text "p_rating " -- <> quote (decRec.value)
-                    D.PPriority priority ->
-                        _ol $ D.text "p_priority " -- <> quote (decRec.value)
-                    D.PTask task ->
-                        _ol $ D.text "p_task " -- <> quote (decRec.value)
-                    D.SProgress p ->
-                        _progressToDhall p
-                    D.SEarnedAt ea ->
-                        ea # sdaterec # prefixD "// T.inj/date" # _ol
-                    D.SDescription desc ->
-                        desc # quote # prefixD "// T.inj/det" # _ol
-                    D.SReference path ->
-                        unwrap path
-                            # map (unwrap >>> quote)
-                            # ilarrayD
-                            # prefixD "// T.inj/self"
-                            # _ol
-                )
+                convertDecorator
                 decRec.fvalue
 
 
@@ -156,6 +173,26 @@ toDhall inclRule =
                             (fromnl $ D.indent $ joinWith D.break $ dhead) <> alignDecorators tail
                 Nothing ->
                     mempty
+
+
+        convertTabularAV :: TV.TabularAtomicValue -> RenderedAs (Doc Unit)
+        convertTabularAV = case _ of
+            TV.TVString t -> OneLine $ quote t
+            TV.TVNumber n -> OneLine $ D.text $ show n
+            TV.TVInt i -> OneLine $ D.text $ show i
+            TV.TVDecorator dec -> convertDecorator dec
+            TV.TVID id -> OneLine $ D.text $ show id
+            TV.TVYear y -> OneLine $ D.text $ show y
+            TV.TVBoolean b -> OneLine $ D.text $ if b then "True" else "False"
+            TV.TVTime timeRec -> OneLine $ timereccf timeRec
+            TV.TVDate sdate -> OneLine $ sdaterec sdate
+            TV.TVDateTime dtRec timeRec -> OneLine $ mempty -- TODO
+            TV.TVTimeRange tRange -> OneLine $ mempty -- TODO
+            TV.TVDateTimeRange dtRange -> OneLine $ mempty -- TODO
+            TV.TVDateRange dRange -> OneLine $ mempty -- TODO
+            TV.TVTags tags -> OneLine $ convertTags $ unwrap tags
+
+
 
 
 withImpl :: forall @t x. ReadForeign t => x -> (t -> x) -> Foreign -> x

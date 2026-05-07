@@ -31,6 +31,26 @@ import Report.Decorators.Tabular.TabularValue (TabularValue)
 import Report.Convert.Keyed (class EncodableKey)
 
 
+type SubjectRec =
+    { name :: String
+    , id :: SubjectId
+    , stats :: Stats
+    -- , trackedAt :: Maybe DateRec -- TODO
+    -- , properties :: Array DecoratorRec
+    , tags :: Array RawTag
+    , tabulars :: Array TabularRec
+    }
+
+
+type ItemRec =
+    { title :: String
+    , decorators :: Array DecoratorRec
+    , tabulars :: Array TabularRec
+    , tags :: RawTags
+    }
+
+
+
 type DecoratorRec =
     { mkey :: String
     , fvalue :: Foreign
@@ -44,14 +64,6 @@ type TabularRec =
     }
 
 
-type ItemRec =
-    { title :: String
-    , decorators :: Array DecoratorRec
-    , tabulars :: Array TabularRec
-    , tags :: RawTags
-    }
-
-
 newtype SubjectId = SubjectId String
 derive instance Newtype SubjectId _
 derive newtype instance Eq SubjectId
@@ -60,17 +72,6 @@ derive newtype instance ConvertTo String SubjectId
 derive newtype instance ReadForeign SubjectId
 derive newtype instance WriteForeign SubjectId
 derive newtype instance EncodableKey SubjectId
-
-
-type SubjectRec =
-    { name :: String
-    , id :: SubjectId
-    , stats :: Stats
-    -- , trackedAt :: Maybe DateRec -- TODO
-    -- , properties :: Array DecoratorRec
-    , tags :: Array RawTag
-    , tabular :: Tabular TabularValue
-    }
 
 
 newtype Subject = Subject SubjectRec

@@ -85,15 +85,16 @@ toRep inclRule =
             <> case subjectRec.tags of
                 [] -> mempty
                 _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)
-            -- <> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> ?wh <$> Tabular.items subjectRec.tabular)
-            <> D.break <> tabularBlock
-                (Array.catMaybes
+            <> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> subjectRec.tabulars)
+            {-
+            <> D.break <>
+                tabularBlock (Array.catMaybes
                     [ Just $ "Id" /\ tmfp P.PTText /\ (pure $ D.text $ unwrap subjectRec.id)
                     , Just $ "Platform" /\ tmfp P.PTText /\ (pure $ D.text "TODO")
                     , Just $ "Playtime" /\ tmfp P.PTText /\ (pure $ D.text "TODO")
                     , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ tmfp P.PTOnDate /\ pure (orgDate dateRec)
                     ]
-                )
+                ) -}
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
         decoratorsBlock :: Array (TriMarker /\ NonEmptyArray (Doc Unit)) -> Doc Unit

@@ -67,7 +67,7 @@ toOrg inclRule =
         -- >>> Array.concat
         -- >>> String.joinWith "\n"
     where
-        mbTrackedAt tabular = Tabular.findV "trackedAt" tabular >>= case _ of
+        mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
             TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
@@ -84,7 +84,7 @@ toOrg inclRule =
                     [ Just $ "Id" /\ D.text (unwrap subjectRec.id)
                     , Just $ "Platform" /\ D.text "TODO"
                     , Just $ "Playtime" /\ D.text "TODO"
-                    , mbTrackedAt subjectRec.tabular <#> \dateRec -> "TrackedAt" /\ orgDate dateRec
+                    , mbTrackedAt subjectRec.tabulars <#> \dateRec -> "TrackedAt" /\ orgDate dateRec
                     ]
                 )
             <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
