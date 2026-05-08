@@ -38,7 +38,7 @@ import Report.Impl.Item (mapTags) as ItemImpl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag(..)) as Impl
 import Report.Convert.Dhall (toDhall) as Report
-import Report.Convert.Json (toJson) as Report
+import Report.Convert.Json (toJson, fromJson) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
 import Report.Convert.Rep (toRep) as Report
@@ -211,7 +211,8 @@ writeStdout = do
 readReport :: ReportFormat -> String -> Either ImportError RawReport
 readReport format source =
     case format of
-        Rep -> Report.fromRep @RR @SubjectId @RawTag @RawTag source
+        Rep  -> Report.fromRep  @RR @SubjectId @RawTag @RawTag source
+        Json -> Report.fromJson @RR @SubjectId @RawTag @RawTag source
         _ -> Left $ UnsupportedFormat format
 
 
