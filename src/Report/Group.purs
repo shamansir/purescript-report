@@ -21,7 +21,7 @@ import Report.Modify (class GroupModify, class StatsModify)
 import Report.Chain (Chain(..))
 import Report.Chain (toArray, toNEArray, fromNEArray) as Chain
 
-import Yoga.JSON (class WriteForeign)
+import Yoga.JSON (class WriteForeign, class ReadForeign)
 
 {- Group -}
 
@@ -42,6 +42,7 @@ instance Ord Group where
     compare (Group groupA) (Group groupB) = compare groupA.path groupB.path
 
 derive newtype instance WriteForeign Group
+derive newtype instance ReadForeign Group
 
 
 instance Show Group where

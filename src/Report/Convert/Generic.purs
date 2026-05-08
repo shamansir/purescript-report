@@ -2,19 +2,23 @@ module Report.Convert.Generic where
 
 import Prelude
 
-import Data.Maybe (Maybe, fromMaybe)
+import Foreign (F)
+
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Map (toUnfoldable) as Map
-import Data.Newtype (unwrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Tuple (curry, uncurry) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Array (filter, elem) as Array
+import Data.Array (filter, elem, catMaybes) as Array
 import Data.Either (Either, either)
+import Data.FunctorWithIndex (mapWithIndex)
+import Data.Bifunctor (bimap, lmap, rmap)
 import Data.String as String
 import Data.String.CodeUnits (toCharArray, fromCharArray) as CU
 import Data.String.CodePoints (codePointFromChar, toCodePointArray, fromCodePointArray) as CP
 import Data.CodePoint.Unicode (isAlphaNum) as CP
 
-import Yoga.JSON (writeImpl)
+import Yoga.JSON (class WriteForeign, class ReadForeign, E, writeImpl, readImpl, readJSON)
 
 import Report (Report, class ToReport)
 import Report.Group (Group(..))
@@ -24,7 +28,8 @@ import Report as Report
 import Report.Builder as ReportB
 import Report.Convert.Keyed (class EncodableKey, encodeKey)
 import Report.Decorator (Decorator)
-import Report.Decorator (Key) as Decorator
+import Report.Decorator (Key, decodeKey, decodeWithKey') as Decorator
+import Report.Decorator (fromArray, fromArray') as Decorators
 import Report.Tabular as Tabular
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 -- import Report.Decorators.Tabular.TabularValue as TabV
@@ -231,12 +236,30 @@ subjectIdFromName name =
     SubjectId $ nameToId name
 
 
+
 toImport :: forall @x @subj_id @subj_tag @item_tag subj group item
+     . ToImport subj_id subj_tag item_tag subj group item x
+    => RawReport
+    -> Report subj group item
+toImport =
+    Report.toBuilder
+        >>> ReportB.mapSubjectsIndexed (\idx subj ->
+                SubjImpl.mapId
+                    (Just
+                        >>> convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx (s_name @SubjectId subj)
+                    )
+                    subj
+            )
+        >>> Report.fromBuilder
+        >>> toImport' @x @subj_id @subj_tag @item_tag @subj @group @item
+
+
+toImport_ :: forall @x @subj_id @subj_tag @item_tag subj group item
      . ToImport subj_id subj_tag item_tag subj group item x
     => (SubjectId -> subj_id)
     -> RawReport
     -> Report subj group item
-toImport toSubjId =
+toImport_ toSubjId =
     Report.toBuilder
         >>> Report.mapSubjects (SubjImpl.mapId toSubjId)
         >>> Report.fromBuilder
@@ -254,12 +277,59 @@ toImport' =
                 ( convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x )
                 >>> convertItem  @subj_id @subj_tag @item_tag @subj @group @item @x
             )
-        >>> Report.mapGroups ( convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x )
+        >>> Report.mapGroups
+            ( convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x )
         >>> Report.mapSubjects
             ( SubjImpl.mapTags
                 ( convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x )
                 >>> convertSubject  @subj_id @subj_tag @item_tag @subj @group @item @x
+            -- >>> Report.mapId (convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x)
             )
         >>> Report.fromBuilder
 
 
+toImportJson :: forall @x @subj_id @subj_tag @item_tag subj group item
+     . ToImport subj_id subj_tag item_tag subj group item x
+    => String
+    -> Either ImportError (Report subj group item)
+toImportJson jsonStr =
+    (readJSON jsonStr :: E ReportToImport) # bimap FromJson (unwrap >>> _.subjects >>> mapWithIndex jsonConvertSubjectWGroups >>> Report.build)
+    where
+        jsonConvertSubjectWGroups :: Int -> SubjectWithGroups -> subj /\ Array (group /\ Array item)
+        jsonConvertSubjectWGroups idx (SubjectWithGroups { subject : Subject subjectRec, groups }) =
+            jsonConvertSubject idx subjectRec
+            /\
+            ((\{ group, items } -> jsonConvertGroup group /\ (jsonConvertItem <$> items)) <$> groups)
+        jsonConvertSubject :: Int -> SubjectRec -> subj
+        jsonConvertSubject idx = jsonAdaptSubject idx >>> convertSubject @subj_id @subj_tag @item_tag @subj @group @item @x
+        jsonConvertGroup :: Group -> group
+        jsonConvertGroup = convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
+        jsonConvertItem :: ItemRec -> item
+        jsonConvertItem = convertItem @subj_id @subj_tag @item_tag @subj @group @item @x <<< jsonAdaptItem
+        jsonAdaptSubject :: Int -> SubjectRec -> Impl.Subject subj_id subj_tag
+        jsonAdaptSubject idx subjectRec =
+            Impl.Subject
+                { name    : subjectRec.name
+                , id      : convertSubjectId  @subj_id @subj_tag @item_tag @subj @group @item @x idx subjectRec.name $ Just subjectRec.id
+                , tags    : convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x <$> subjectRec.tags
+                , stats   : subjectRec.stats
+                , tabular : Tabular.fromItems $ jsonAdaptTabular <$> subjectRec.tabulars
+                }
+        jsonAdaptItem :: ItemRec -> Impl.Item item_tag
+        jsonAdaptItem itemRec =
+            Impl.Item
+                { title      : itemRec.title
+                , decorators : Decorators.fromArray' $ Array.catMaybes $ jsonAdaptDecorator <$> itemRec.decorators
+                , tabular    : Tabular.fromItems     $ jsonAdaptTabular <$> itemRec.tabulars
+                , tags       : wrap $ convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x <$> unwrap itemRec.tags
+                }
+        jsonAdaptDecorator :: DecoratorRec -> Maybe Decorator
+        jsonAdaptDecorator dRec = do
+            Decorator.decodeKey dRec.mkey >>= \theKey -> Decorator.decodeWithKey' theKey dRec.fvalue
+        jsonAdaptTabular :: TabularRec -> Tabular.Item TabularValue
+        jsonAdaptTabular tabularRec =
+            Tabular.Item
+                { key   : tabularRec.tkey
+                , label : tabularRec.tlabel
+                , value : tabularRec.value
+                }

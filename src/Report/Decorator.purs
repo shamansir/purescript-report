@@ -16,6 +16,7 @@ import Data.Array (catMaybes, elemIndex, filter, findMap) as Array
 import Data.String (Pattern(..), stripPrefix) as String
 
 import Report.Core as CT
+import Report.Core.Logic as CT
 import Report.GroupPath (GroupPath) as GP
 import Report.Decorators.Progress as P
 import Report.Decorators.Priority (Priority)
@@ -104,8 +105,15 @@ toArray :: Decorators -> Array (Key /\ Decorator)
 toArray = unwrap >>> Map.toUnfoldable
 
 
-fromArray :: Ord Key => Array (Key /\ Decorator) -> Decorators
+fromArray :: Array (Key /\ Decorator) -> Decorators
 fromArray = wrap <<< Map.fromFoldable
+
+
+fromArray' :: Array Decorator -> Decorators
+fromArray' = map toTuple >>> fromArray
+    where
+        toTuple :: Decorator -> Key /\ Decorator
+        toTuple decorator = CK.keyOf decorator /\ decorator
 
 
 prefixes :: Decorators -> Array (Key /\ Decorator)
@@ -151,6 +159,10 @@ decodeWithKey key f = case key of
     KEarnedAt -> SEarnedAt <$> readImpl f
     KDescription -> SDescription <$> readImpl f
     KReference -> SReference <$> readImpl f
+
+
+decodeWithKey' :: Key -> Foreign -> Maybe Decorator
+decodeWithKey' key = decodeWithKey key >>> CT.foreignToMaybe
 
 
 writeValue :: Decorator -> Foreign

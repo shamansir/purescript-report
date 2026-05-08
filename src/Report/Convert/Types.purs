@@ -3,11 +3,14 @@ module Report.Convert.Types where
 import Prelude
 
 import Foreign (Foreign, fail)
-import Foreign (fail, ForeignError(..)) as F
+import Foreign (fail, ForeignError(..), renderForeignError) as F
 
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.List.NonEmpty (NonEmptyList)
+import Data.List.NonEmpty (toUnfoldable) as NEL
+import Data.String (joinWith) as String
 
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 
@@ -15,6 +18,7 @@ import StringParser (ParseError, printParserError) as SP
 
 import Report (Report)
 import Report.Class (class ConvertFrom, class ConvertTo)
+import Report.Core (ReportFormat(..))
 import Report.Group (Group)
 import Report.Chain (Chain)
 import Report.Decorators.Stats (Stats)
@@ -79,15 +83,23 @@ derive instance Newtype Subject _
 
 --derive newtype instance ReadForeign Subject
 derive newtype instance WriteForeign Subject
+derive newtype instance ReadForeign Subject
 
 
 newtype SubjectWithGroups = SubjectWithGroups { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } }
 derive instance Newtype SubjectWithGroups _
 derive newtype instance WriteForeign SubjectWithGroups
+derive newtype instance ReadForeign  SubjectWithGroups
 
 
 newtype ExportVersion = ExportVersion Int
 derive newtype instance WriteForeign ExportVersion
+derive newtype instance ReadForeign  ExportVersion
+
+
+newtype ImportVersion = ImportVersion Int
+derive newtype instance WriteForeign ImportVersion
+derive newtype instance ReadForeign  ImportVersion
 
 
 newtype ReportToExport = ReportToExport { version :: ExportVersion, subjects :: Array SubjectWithGroups }
@@ -95,15 +107,41 @@ derive instance Newtype ReportToExport _
 derive newtype instance WriteForeign ReportToExport
 
 
+newtype ReportToImport = ReportToImport { version :: ImportVersion, subjects :: Array SubjectWithGroups }
+derive instance Newtype ReportToImport _
+derive newtype instance ReadForeign ReportToImport
+
+
+data Input
+    = FileInput String
+    | SampleIn {- which -}
+    | StdInput
+
+
+data Output
+    = Screen
+    | StdOutput
+    | FileOutput String
+
+
 data ImportError
     = FromParser SP.ParseError
-    | ImportError String
+    | FromJson (NonEmptyList F.ForeignError)
+    | FailedToReadInput Input
+    | UnsupportedFormat ReportFormat
+    -- | ImportError String
 
 
 printImportError :: ImportError -> String
 printImportError = case _ of
     FromParser sperr -> SP.printParserError sperr
-    ImportError ierr -> ierr
+    FromJson ferr -> String.joinWith "; " $ F.renderForeignError <$> NEL.toUnfoldable ferr
+    FailedToReadInput input -> "Failed to read input: " <> case input of
+        FileInput filePath -> "File: " <> filePath
+        SampleIn -> "Sample Input"
+        StdInput -> "Standard Input"
+    UnsupportedFormat fmt -> "Unsupported format: " <> show fmt
+    -- ImportError ierr -> ierr
 
 
 type RawReport' subj_id = Report (Impl.Subject subj_id Impl.Tag) Impl.Group (Impl.Item Impl.Tag)

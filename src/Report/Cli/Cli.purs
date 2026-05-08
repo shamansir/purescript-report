@@ -48,18 +48,6 @@ import Report.Convert.Rep (toRep) as Report
 type Process = TagAction RawTagKind RawTag
 
 
-data Input
-    = FileInput String
-    | SampleIn {- which -}
-    | StdInput
-
-
-data Output
-    = Screen
-    | StdOutput
-    | FileOutput String
-
-
 data Command
     = Convert { from :: ReportFormat, to :: ReportFormat } { input :: Input, output :: Output } (Array Process)
     -- | Edit
@@ -88,7 +76,7 @@ runProgram opts = do
                 FileInput filePath -> Just <$> readTextFile UTF8 filePath
                 SampleIn -> pure Nothing
                 StdInput -> readStdin
-            let eConvertedReport = readReport fmt.from =<< note (ImportError "Failed to Read Input") mbReportStr
+            let eConvertedReport = readReport fmt.from =<< note (FailedToReadInput pipe.input) mbReportStr
             case eConvertedReport of
                 Right theReport ->
                     case pipe.output of
@@ -224,7 +212,7 @@ readReport :: ReportFormat -> String -> Either ImportError RawReport
 readReport format source =
     case format of
         Rep -> Report.fromRep @RR @SubjectId @RawTag @RawTag source
-        _ -> Left $ ImportError $ "Unsupported format to read from: " <> show format
+        _ -> Left $ UnsupportedFormat format
 
 
 convertReport :: ReportFormat -> RawReport -> String
