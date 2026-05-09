@@ -3,7 +3,7 @@ module Data.Array.Extra where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Data.Array (index, length, elemIndex, groupAllBy) as Array
+import Data.Array (elemIndex, groupAllBy, index, length)  as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (toArray, head) as NEA
 
