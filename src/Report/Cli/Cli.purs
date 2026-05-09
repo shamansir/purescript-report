@@ -5,46 +5,34 @@ import Prelude
 import Effect (Effect)
 import Effect.Console as Console
 
-import Data.Either (Either(..), either, hush, note)
+import Data.Either (Either(..), note)
 import Data.Maybe (Maybe(..))
-import Data.Foldable (fold)
 import Data.String (toUpper) as String
 
 import Node.Encoding (Encoding(..))
 -- import Node.FS.Sync (readTextFile)
 import Node.FS.Sync (readTextFile, writeTextFile)
 -- import Node.FS.Sync (inp)
-import Node.Stream (Readable)
 import Node.Stream as Stream
-import Node.EventEmitter (on_)
 import Node.Process as Process
 import Node.ChildProcess (execSync)
 import Node.Buffer (toString) as Buffer
-import Node.Encoding (Encoding(..))
 
 import Control.Alt ((<|>))
 
 import Options.Applicative
-import Data.Semigroup ((<>))
 
 import Report.Class
 import Report.Core (ReportFormat(..))
 import Report.Convert.Types
-import Report.Decorators.Tags (RawTag, RawTagKind, TagAction(..))
+import Report.Decorators.Tags (RawTag, RawTagKind, TagAction)
 -- import Report.Convert.Rep.Import
-import Report.Convert.Rep as Report
-import Report.Convert.Generic (class ToImport, RR, IncludeRule(..))
-import Report.Impl.Subject (Subject(..)) as Impl
-import Report.Impl.Subject (mapTags) as SubjImpl
-import Report.Impl.Item (Item(..)) as Impl
-import Report.Impl.Item (mapTags) as ItemImpl
-import Report.Impl.Group (Group) as Impl
-import Report.Impl.Tag (Tag(..)) as Impl
+import Report.Convert.Generic (RR, IncludeRule(..))
 import Report.Convert.Dhall (toDhall, fromDhall) as Report
 import Report.Convert.Json (toJson, fromJson) as Report
+import Report.Convert.Rep (toRep, fromRep) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
-import Report.Convert.Rep (toRep) as Report
 
 
 
@@ -81,7 +69,6 @@ runProgram opts = do
                         Dhall -> do
                             jsonFromDhallBuf <- execSync $ "dhall-to-json --file " <> filePath
                             jsonFromDhallText <- Buffer.toString UTF8 jsonFromDhallBuf
-                            -- Console.log jsonFromDhallText
                             pure $ Just jsonFromDhallText
                         _ -> Just <$> readTextFile UTF8 filePath
                 SampleIn -> pure Nothing

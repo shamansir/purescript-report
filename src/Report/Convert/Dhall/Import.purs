@@ -6,12 +6,12 @@ import Foreign (F, Foreign)
 
 import Control.Alt ((<|>))
 
-import Data.Array (cons, concat, index, length, elemIndex, findMap, mapMaybe, catMaybes, groupAllBy) as Array
+import Data.Array (cons, concat, index, length, elemIndex, findMap, mapMaybe, catMaybes, groupAllBy, singleton) as Array
 import Data.Array.Extra (groupExtBy) as ArrayX
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (toArray, head) as NEA
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Either (Either(..), hush, blush, isLeft, isRight)
+import Data.Either (Either(..), either, hush, blush, isLeft, isRight)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Bifunctor (bimap)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -106,7 +106,7 @@ type DhallTabularRec =
     }
 
 
-newtype DhallImport = DhallImport (Array { collection :: Array DhallSubjectRec })
+newtype DhallImport = DhallImport { collection :: Array DhallSubjectRec }
 
 
 derive newtype instance ReadForeign DhallImport
@@ -117,10 +117,11 @@ fromDhall :: forall @x @subj_id @subj_tag @item_tag subj group item
     => String
     -> Either ImportError (Report subj group item)
 fromDhall jsonStr =
-    (readJSON jsonStr :: E DhallImport) # bimap FromJson (mergeSubjects >>> mapWithIndex dhallCollectSubject >>> Report.build)
+    let eSubjects =
+                ((readJSON jsonStr :: E DhallImport)     <#> \(DhallImport { collection }) -> collection)
+            <|> ((readJSON jsonStr :: E DhallSubjectRec) <#> Array.singleton)
+    in eSubjects # bimap FromJson (mapWithIndex dhallCollectSubject >>> Report.build)
     where
-        mergeSubjects :: DhallImport -> Array DhallSubjectRec
-        mergeSubjects (DhallImport collections) = Array.concat $ _.collection <$> collections
         dhallCollectSubject :: Int ->  DhallSubjectRec -> subj /\ Array (group /\ Array item)
         dhallCollectSubject idx subjectRec =
             dhallConvertSubject idx subjectRec
@@ -128,11 +129,11 @@ fromDhall jsonStr =
         collectGroupsWithItems :: Array DhallProperty -> Array (group /\ Array item)
         collectGroupsWithItems = map dhallCollectProperty >>> foldGroups >>> map (bimap dhallConvertGroup $ map dhallConvertItem)
         foldGroups :: Array (Either DhallGroupRec DhallItemRec) -> Array (DhallGroupRec /\ Array DhallItemRec)
-        foldGroups = _groupExtByKey (bimap _.ref _.ref) identity
+        foldGroups = _groupExtByKey (either _.ref _.ref) identity
         dhallCollectProperty :: DhallProperty -> Either DhallGroupRec DhallItemRec
         dhallCollectProperty = case _ of
             HoldsGroup groupRec -> Left  groupRec
-            HoldsItem itemRec   -> Right itemRec
+            HoldsItem  itemRec  -> Right itemRec
         dhallConvertSubject :: Int -> DhallSubjectRec -> subj
         dhallConvertSubject idx subjectRec =
             let
@@ -161,7 +162,7 @@ fromDhall jsonStr =
         dhallConvertItem itemRec =
             convertItem @subj_id @subj_tag @item_tag @subj @group @item @x
                 (Impl.Item
-                    { title : fromMaybe "???" itemRec.title
+                    { title : fromMaybe (fromMaybe "???" itemRec.title) itemRec.key
                     , decorators :
                         Decorators.fromArray
                             $ Array.catMaybes
