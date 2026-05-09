@@ -29,7 +29,7 @@ import Report.Convert.Generic (includeAll) as R
 import Report.Convert.Text (toText) as D
 
 
-onlyFewGamesFilePath = "test/games-samples/only-few-games.json" :: String
+onlyFewGamesFilePath = "test/games-samples/only-few-games.fromDhall.json" :: String
 
 
 type FE a = Either (NEL.NonEmptyList F.ForeignError) a

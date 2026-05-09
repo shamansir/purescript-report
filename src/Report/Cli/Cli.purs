@@ -18,6 +18,9 @@ import Node.Stream (Readable)
 import Node.Stream as Stream
 import Node.EventEmitter (on_)
 import Node.Process as Process
+import Node.ChildProcess (execSync)
+import Node.Buffer (toString) as Buffer
+import Node.Encoding (Encoding(..))
 
 import Control.Alt ((<|>))
 
@@ -37,7 +40,7 @@ import Report.Impl.Item (Item(..)) as Impl
 import Report.Impl.Item (mapTags) as ItemImpl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag(..)) as Impl
-import Report.Convert.Dhall (toDhall) as Report
+import Report.Convert.Dhall (toDhall, fromDhall) as Report
 import Report.Convert.Json (toJson, fromJson) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
@@ -73,7 +76,14 @@ runProgram opts = do
     case opts of
         Convert fmt pipe _ -> do
             mbReportStr <- case pipe.input of
-                FileInput filePath -> Just <$> readTextFile UTF8 filePath
+                FileInput filePath ->
+                    case fmt.from of
+                        Dhall -> do
+                            jsonFromDhallBuf <- execSync $ "dhall-to-json --file " <> filePath
+                            jsonFromDhallText <- Buffer.toString UTF8 jsonFromDhallBuf
+                            -- Console.log jsonFromDhallText
+                            pure $ Just jsonFromDhallText
+                        _ -> Just <$> readTextFile UTF8 filePath
                 SampleIn -> pure Nothing
                 StdInput -> readStdin
             let eConvertedReport = readReport fmt.from =<< note (FailedToReadInput pipe.input) mbReportStr
@@ -84,7 +94,9 @@ runProgram opts = do
                         StdOutput -> writeStdout (convertReport fmt.to theReport) *> pure unit
                         FileOutput filePath -> do
                             writeTextFile UTF8 filePath (convertReport fmt.to theReport)
-                Left importError -> Console.log $ printImportError importError
+                Left importError -> do
+                    Console.log "Errors:\n"
+                    Console.log $ printImportError importError
     Console.log "\n------------------------------\n"
 
 
@@ -175,8 +187,8 @@ to = formatFromStr <$> strOption
 opts :: ParserInfo Options
 opts = info (optsParser <**> helper)
     ( fullDesc
-    <> progDesc "Print a greeting for TARGET"
-    <> header "hello - a test for purescript-optparse" )
+    <> progDesc "Convert reports from one format to another, or just view them"
+    <> header "purescript-report - unified format for displaying and manipulating different kinds of structured reports" )
 
 
 commandDescription :: Command -> String
@@ -211,8 +223,9 @@ writeStdout = do
 readReport :: ReportFormat -> String -> Either ImportError RawReport
 readReport format source =
     case format of
-        Rep  -> Report.fromRep  @RR @SubjectId @RawTag @RawTag source
-        Json -> Report.fromJson @RR @SubjectId @RawTag @RawTag source
+        Rep   -> Report.fromRep  @RR @SubjectId @RawTag @RawTag source
+        Json  -> Report.fromJson @RR @SubjectId @RawTag @RawTag source
+        Dhall -> Report.fromDhall @RR @SubjectId @RawTag @RawTag source
         _ -> Left $ UnsupportedFormat format
 
 

@@ -15,6 +15,7 @@
             "halogen-svg-elems",
             "maybe",
             "newtype",
+            "node-child-process",
             "optparse",
             "prelude",
             "record-extra",
@@ -74,7 +75,11 @@
             "media-types",
             "newtype",
             "node-buffer",
+            "node-child-process",
             "node-event-emitter",
+            "node-fs",
+            "node-os",
+            "node-path",
             "node-process",
             "node-streams",
             "nonempty",
@@ -1712,6 +1717,24 @@
         "unsafe-coerce"
       ]
     },
+    "node-child-process": {
+      "type": "registry",
+      "version": "11.1.0",
+      "integrity": "sha256-Um7g75gXKEX51ZlviJWocTjUENUW1qHgqGqhYKkka74=",
+      "dependencies": [
+        "exceptions",
+        "foreign",
+        "foreign-object",
+        "functions",
+        "node-event-emitter",
+        "node-fs",
+        "node-os",
+        "node-streams",
+        "nullable",
+        "posix-types",
+        "unsafe-coerce"
+      ]
+    },
     "node-event-emitter": {
       "type": "registry",
       "version": "3.0.0",
@@ -1747,6 +1770,32 @@
         "partial",
         "prelude",
         "strings",
+        "unsafe-coerce"
+      ]
+    },
+    "node-os": {
+      "type": "registry",
+      "version": "5.1.0",
+      "integrity": "sha256-UtQiPiZy5ouV832ubww/U8KlpVYny9xsW8WWfYOEgtA=",
+      "dependencies": [
+        "arrays",
+        "bifunctors",
+        "console",
+        "control",
+        "datetime",
+        "effect",
+        "either",
+        "exceptions",
+        "foldable-traversable",
+        "foreign",
+        "foreign-object",
+        "functions",
+        "maybe",
+        "node-buffer",
+        "nullable",
+        "partial",
+        "posix-types",
+        "prelude",
         "unsafe-coerce"
       ]
     },

@@ -36,7 +36,7 @@ import Report.Convert.Rep.Import (fromRepP) as I
 import Report.Convert.Rep.Keys (TriMarker(..)) as K
 
 
-onlyFewGamesFilePath = "test/games-samples/only-few-games.json" :: String
+onlyFewGamesFilePath = "test/games-samples/only-few-games.fromDhall.json" :: String
 
 
 type FE a = Either (NEL.NonEmptyList F.ForeignError) a

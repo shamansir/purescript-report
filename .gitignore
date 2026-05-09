@@ -11,7 +11,7 @@
 /dist
 /.parcel-cache
 web/app.js
-test/games-samples/games-collection.json
-test/games-samples/only-few-games.json
+test/games-samples/games-collection.fromDhall.json
+test/games-samples/only-few-games.fromDhall.json
 test/fetched-data/
 .spec-results
