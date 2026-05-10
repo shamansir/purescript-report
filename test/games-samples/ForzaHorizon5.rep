@@ -716,7 +716,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 01-expeditions 01-jungle
             - Index // index
             ; INT. 15
-
             GRP. Baja Expedition // 02-baja
             - Path // path
             ; TXT. 01-accolades 01-expeditions 02-baja
@@ -763,13 +762,11 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 01-expeditions 03-guanajuto
             - Index // index
             ; INT. 17
-
             GRP. Canyon Expedition // 04-canyon
             - Path // path
             ; TXT. 01-accolades 01-expeditions 04-canyon
             - Index // index
             ; INT. 18
-
         GRP. Festival Playlist // 02-festival
         - Path // path
         ; TXT. 01-accolades 02-festival
@@ -1239,7 +1236,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 07-creative 00-painting
             - Index // index
             ; INT. 27
-
             GRP. Tuning // 01-tuning
             - Path // path
             ; TXT. 01-accolades 07-creative 01-tuning
@@ -1258,7 +1254,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 07-creative 02-test-track
             - Index // index
             ; INT. 29
-
             GRP. Photo // 03-photo
             - Path // path
             ; TXT. 01-accolades 07-creative 03-photo
@@ -1292,7 +1287,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 07-creative 05-super7
             - Index // index
             ; INT. 32
-
         GRP. Hot Wheels // 08-hot-wheels
         - Path // path
         ; TXT. 01-accolades 08-hot-wheels
@@ -1544,7 +1538,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 09-festivals 02-wilds
             - Index // index
             ; INT. 37
-
             GRP. Horizon Baja Outpost // 03-baja
             - Path // path
             ; TXT. 01-accolades 09-festivals 03-baja
@@ -1599,13 +1592,11 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 09-festivals 04-streets
             - Index // index
             ; INT. 39
-
             GRP. Horizon Rush Outpost // 05-rush
             - Path // path
             ; TXT. 01-accolades 09-festivals 05-rush
             - Index // index
             ; INT. 40
-
         GRP. Stories // 10-stories
         - Path // path
         ; TXT. 01-accolades 10-stories
@@ -1652,7 +1643,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 10-stories 00-el-camino
             - Index // index
             ; INT. 42
-
             GRP. Vocho // 01-vocho
             - Path // path
             ; TXT. 01-accolades 10-stories 01-vocho
@@ -1670,25 +1660,21 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 10-stories 02-test-driver
             - Index // index
             ; INT. 44
-
             GRP. Lucha de Carreteras // 03-lucha
             - Path // path
             ; TXT. 01-accolades 10-stories 03-lucha
             - Index // index
             ; INT. 45
-
             GRP. Born Fast // 04-born-fast
             - Path // path
             ; TXT. 01-accolades 10-stories 04-born-fast
             - Index // index
             ; INT. 46
-
             GRP. V10 // 05-v10
             - Path // path
             ; TXT. 01-accolades 10-stories 05-v10
             - Index // index
             ; INT. 47
-
             GRP. Donut Media Hi Low // 06-donut-media-hi-low
             - Path // path
             ; TXT. 01-accolades 10-stories 06-donut-media-hi-low
@@ -1730,31 +1716,26 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 10-stories 07-donut-media-horizon
             - Index // index
             ; INT. 49
-
             GRP. Horizon Origins // 08-horizon-origins
             - Path // path
             ; TXT. 01-accolades 10-stories 08-horizon-origins
             - Index // index
             ; INT. 50
-
             GRP. Made in Mexico // 09-made-in-mexico
             - Path // path
             ; TXT. 01-accolades 10-stories 09-made-in-mexico
             - Index // index
             ; INT. 51
-
             GRP. Drift Club // 10-drift-club
             - Path // path
             ; TXT. 01-accolades 10-stories 10-drift-club
             - Index // index
             ; INT. 52
-
             GRP. Icons of Speed // 11-icons-of-speed
             - Path // path
             ; TXT. 01-accolades 10-stories 11-icons-of-speed
             - Index // index
             ; INT. 53
-
         GRP. Evolving World // 11-evolving-world
         - Path // path
         ; TXT. 01-accolades 11-evolving-world
@@ -1783,25 +1764,21 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 11-evolving-world 00-horizon-realms
             - Index // index
             ; INT. 55
-
             GRP. Evolving World // 01-evolving-world
             - Path // path
             ; TXT. 01-accolades 11-evolving-world 01-evolving-world
             - Index // index
             ; INT. 56
-
             GRP. New Cars // 02-new-cars
             - Path // path
             ; TXT. 01-accolades 11-evolving-world 02-new-cars
             - Index // index
             ; INT. 57
-
             GRP. Pathfinder // 03-pathfinder
             - Path // path
             ; TXT. 01-accolades 11-evolving-world 03-pathfinder
             - Index // index
             ; INT. 58
-
             GRP. Oval Track // 04-oval-track
             - Path // path
             ; TXT. 01-accolades 11-evolving-world 04-oval-track
@@ -1816,7 +1793,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 11-evolving-world 05-hoonigan
             - Index // index
             ; INT. 60
-
         GRP. Online // 12-online
         - Path // path
         ; TXT. 01-accolades 12-online
@@ -1870,19 +1846,16 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 12-online 01-horizont-tour
             - Index // index
             ; INT. 63
-
             GRP. The Eliminator // 02-eliminator
             - Path // path
             ; TXT. 01-accolades 12-online 02-eliminator
             - Index // index
             ; INT. 64
-
             GRP. Hide & Seek // 03-hide-and-seek
             - Path // path
             ; TXT. 01-accolades 12-online 03-hide-and-seek
             - Index // index
             ; INT. 65
-
             GRP. Horizon Open // 04-horizon-open
             - Path // path
             ; TXT. 01-accolades 12-online 04-horizon-open
@@ -1900,7 +1873,6 @@ SBJ. Forza Horizon 5 // forza-horizon-5
             ; TXT. 01-accolades 12-online 05-rivals
             - Index // index
             ; INT. 67
-
         GRP. Rally Adventure // 13-rally
         - Path // path
         ; TXT. 01-accolades 13-rally

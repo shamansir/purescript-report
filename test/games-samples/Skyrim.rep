@@ -71,7 +71,6 @@ SBJ. Elder Scrolls V: Skyrim // elder-scrolls-5-skyrim
     ; TXT. 01-stats
     - Index // index
     ; INT. 2
-
         GRP. Stats: General // 00-general
         - Path // path
         ; TXT. 01-stats 00-general

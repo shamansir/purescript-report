@@ -217,7 +217,6 @@ SBJ. Starlink: Battle of Atlas // starlink-battle-of-atlas
     ; TXT. 05-planets
     - Index // index
     ; INT. 12
-
         GRP. Ashar // 00-ashar
         - Path // path
         ; TXT. 05-planets 00-ashar
@@ -468,7 +467,6 @@ SBJ. Starlink: Battle of Atlas // starlink-battle-of-atlas
     ; TXT. 06-ship
     - Index // index
     ; INT. 34
-
         GRP. Zenith // 00-zenith
         - Path // path
         ; TXT. 06-ship 00-zenith

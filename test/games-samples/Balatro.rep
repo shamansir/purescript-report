@@ -50,7 +50,6 @@ SBJ. Balatro+ // balatro-ios
     ; TXT. 01-cards-stats
     - Index // index
     ; INT. 1
-
         GRP. Cards Stats: Jockers // 00-jockers
         - Path // path
         ; TXT. 01-cards-stats 00-jockers
@@ -148,7 +147,6 @@ SBJ. Balatro+ // balatro-ios
         ; TXT. 01-cards-stats 04-spectrals
         - Index // index
         ; INT. 6
-
         GRP. Cards Stats: Vouchers // 05-vouchers
         - Path // path
         ; TXT. 01-cards-stats 05-vouchers
@@ -618,7 +616,6 @@ SBJ. Balatro+ // balatro-ios
         ; TXT. 02-collection 03-consumables
         - Index // index
         ; INT. 12
-
             GRP. Tarot Cards // 00-tarots
             - Path // path
             ; TXT. 02-collection 03-consumables 00-tarots

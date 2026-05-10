@@ -114,7 +114,6 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
     ; TXT. 03-weapons
     - Index // index
     ; INT. 7
-
         GRP. Blood Rusted Sword // 00-blood-rusted-sword
         - Path // path
         ; TXT. 03-weapons 00-blood-rusted-sword
@@ -150,7 +149,6 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
     ; TXT. 04-quests
     - Index // index
     ; INT. 10
-
         GRP. Active // 00-active
         - Path // path
         ; TXT. 04-quests 00-active
@@ -193,7 +191,6 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
     ; TXT. 06-blueprints-recipes
     - Index // index
     ; INT. 14
-
         GRP. Weapons // 00-weapons
         - Path // path
         ; TXT. 06-blueprints-recipes 00-weapons

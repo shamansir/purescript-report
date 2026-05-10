@@ -139,7 +139,6 @@ SBJ. Doom: Dark Ages // doom-dark-ages-manual
         ; TXT. 01-chapters 02-barrier-core
         - Index // index
         ; INT. 5
-
         GRP. Chapter 04: Sentinel Barracks // 03-sentinel-barracks
         - Path // path
         ; TXT. 01-chapters 03-sentinel-barracks
@@ -570,7 +569,6 @@ SBJ. Doom: Dark Ages // doom-dark-ages-manual
         ; TXT. 01-chapters 20-final-battle
         - Index // index
         ; INT. 23
-
         GRP. Chapter 22: Reconing // 21-reconing
         - Path // path
         ; TXT. 01-chapters 21-reconing

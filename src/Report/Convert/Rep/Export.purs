@@ -138,8 +138,9 @@ toRep inclRule =
                     [ { id : "path",  label : "Path",  marker : tmfp P.PTText, valueLines : pure $ convertPath groupRec.path }
                     , { id : "index", label : "Index", marker : tmfp P.PTInt, valueLines : pure $ D.text $ show index        }
                     ]
-                <> D.break
-                <> (joinWith D.break $ D.indent <$> convertItem groupRec.path <$> items)
+                <> case items of
+                    [] -> mempty
+                    _ -> D.break <> (joinWith D.break $ D.indent <$> convertItem groupRec.path <$> items)
 
         convertItem :: GroupPath -> ItemRec -> Doc Unit
         convertItem grpPath itemRec =

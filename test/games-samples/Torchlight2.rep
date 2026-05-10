@@ -75,7 +75,6 @@ SBJ. Torchlight II // torchlight-2
     ; TXT. 02-total
     - Index // index
     ; INT. 2
-
         GRP. Strength // 00-strength
         - Path // path
         ; TXT. 02-total 00-strength
@@ -301,7 +300,6 @@ SBJ. Torchlight II // torchlight-2
     ; TXT. 08-skills
     - Index // index
     ; INT. 17
-
         GRP. Hunter // 00-hunter
         - Path // path
         ; TXT. 08-skills 00-hunter
@@ -391,13 +389,11 @@ SBJ. Torchlight II // torchlight-2
         ; TXT. 09-stats 00-effect
         - Index // index
         ; INT. 22
-
             GRP. Strength // 00-strength
             - Path // path
             ; TXT. 09-stats 00-effect 00-strength
             - Index // index
             ; INT. 23
-
                 GRP. Weapon Damage // 00-weapon
                 - Path // path
                 ; TXT. 09-stats 00-effect 00-strength 00-weapon
