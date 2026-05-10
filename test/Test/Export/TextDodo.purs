@@ -58,7 +58,10 @@ spec =
 
 
 expectedTextNoGroupStats = """# Astral Chain
-    - TrackedAt: 12-Aug-2025
+     #Dhall #Switch
+    - Platform: Switch
+    - Playtime: > 40:00:00
+    - Tracked At: 12-Aug-2025
 
     0. File 00-file
         Time : 07:54:00
@@ -283,7 +286,10 @@ expectedTextNoGroupStats = """# Astral Chain
 
 
 expectedTextWithGroupStats = """# Astral Chain 50/166
-    - TrackedAt: 12-Aug-2025
+     #Dhall #Switch
+    - Platform: Switch
+    - Playtime: > 40:00:00
+    - Tracked At: 12-Aug-2025
 
     0. File 00-file
         Time : 07:54:00
@@ -323,7 +329,15 @@ expectedTextWithGroupStats = """# Astral Chain 50/166
         4. Basic 3/16 01-stats::02-basic
             All Pure Platinum : 0/1
             Red Cases Closed
+                ◉ 1 Lvl. 1
+                ◉ 25 Lvl. 2
+                ◉ 50 Lvl. 3
+                ◌ 131 Lvl. Max
             Blue Cases Closed
+                ◉ 1 Lvl. 1
+                ◉ 25 Lvl. 2
+                ◉ 50 Lvl. 3
+                ◌ 87 Lvl. 4
             Sword Scholar : 0/1
             Sword Master : 0/1
             Arrow Scholar : 1/1
@@ -372,7 +386,12 @@ expectedTextWithGroupStats = """# Astral Chain 50/166
 
         8. Combat 10/32 01-stats::03-combat
             Chimeradicator
+                ◉ 100 Lvl. 1
+                ◌ 800 Lvl. 2
+                ◌ 3000 Lvl. 3
             Itemanical
+                ◉ 30 Lvl. 1
+                ◉ 300 Lvl. 2
             Round Sword Master : 5/30
             Triple Sword Master : 0/30
             Slow Shot Master : 7/30
@@ -406,17 +425,35 @@ expectedTextWithGroupStats = """# Astral Chain 50/166
 
         9. Collection 4/19 01-stats::04-collection
             Supply Snatcher
+                ◉ 1 Lvl. 1
+                ◉ 120 Lvl. 2
+                ◌ 327 Max
             Finders Keepers
+                ◉ 1 Lvl. 1
+                ◌ 152 Lvl. 2
             Red Matter Reducer : 1000/1000
             ???
             ???
             Know Your Enemy
+                ◉ 1 Lvl. 1
+                ◌ 30 Lvl. 2
+                ◌ 80 Lvl. 3
+                ◌ 167 Lvl. 4
             People Watcher : 1/20
             It's Who You Know : 1/40
             Ask Tourist : 2/28
             Blueshifter
+                ◉ 1 Lvl. 1
+                ◉ 10 Lvl. 2
+                ◉ 30 Lvl. 3
             Retirement Fund
+                ◉ 10000 Lvl. 1
+                ◉ 100000 Lvl. 2
+                ◌ 500000 Lvl. 3
             Gene Code Glutton
+                ◉ 1000 Lvl. 1
+                ◉ 10000 Lvl. 2
+                ◌ 100000 Lvl. 3
             Hard Worker : 100000/100000
             Model Officer : 465057/500000
             Long Arm of the Law : 465057/2000000

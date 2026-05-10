@@ -124,8 +124,8 @@ writeStdout = do
 readReport :: ReportFormat -> String -> Either ImportError RawReport
 readReport format source =
     case format of
-        Rep   -> Report.fromRep  @RR @SubjectId @RawTag @RawTag source
-        Json  -> Report.fromJson @RR @SubjectId @RawTag @RawTag source
+        Rep   -> Report.fromRep   @RR @SubjectId @RawTag @RawTag source
+        Json  -> Report.fromJson  @RR @SubjectId @RawTag @RawTag source
         Dhall -> Report.fromDhall @RR @SubjectId @RawTag @RawTag source
         _ -> Left $ UnsupportedFormat format
 

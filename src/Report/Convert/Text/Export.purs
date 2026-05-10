@@ -8,7 +8,7 @@ import Prelude
 import Foreign (Foreign, F)
 import Control.Monad.Except (runExcept)
 
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe, isJust)
 import Data.Either (either)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Tuple (uncurry) as Tuple
@@ -100,10 +100,10 @@ toTextWith cfg inclRule =
         -- >>> Array.concat
         -- >>> String.joinWith "\n"
     where
-        mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
-            TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
-            _ -> Nothing
+        -- mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
+        --     TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
+        --     TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+        --     _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
         --     _ -> Nothing
@@ -112,13 +112,15 @@ toTextWith cfg inclRule =
         convertSubject { subject, groups } =
             let subjectRec = unwrap subject in
             D.text "#" <> D.space <> D.text subjectRec.name <> D.space <> maybe mempty identity (renderStats subjectRec.stats)
-            <> D.break <> D.indent (_tabularsBlock
-                $ Array.catMaybes
-                    [ {- Just $ "Id" /\ D.text (unwrap subjectRec.id)
-                    , -} mbTrackedAt subjectRec.tabulars <#> \dateRec -> "TrackedAt" /\ textDate dateRec
-                    ]
-                )
-            <> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
+            <> case subjectRec.tags of
+                [] -> mempty
+                _ -> D.break <> D.indent (tags subjectRec.tags)
+            <> case subjectRec.tabulars of
+                [] -> mempty
+                _ -> D.break <> D.indent (_tabularsBlock $ _convertTabularToDoc  <$> subjectRec.tabulars)
+            <> case groups of
+                [] -> mempty
+                _  -> D.break <> joinWith D.break (mapWithIndex convertGroup groups)
 
         addIndent :: Int -> Doc Unit -> Doc Unit
         addIndent level toWhat =
@@ -137,8 +139,9 @@ toTextWith cfg inclRule =
             in
             groupIndent (D.text (show index) <> D.text "." <+> D.text groupRec.title <+> maybe mempty addPostfixSpace (renderStats groupRec.stats) <> convertPath groupRec.path)
             <> D.break
-            <> (joinWith D.break $ convertItem groupRec.path <$> items)
-            <> D.break
+            <> case items of
+                [] -> mempty
+                _  -> (joinWith D.break $ convertItem groupRec.path <$> items) <> D.break
 
         convertItem :: GroupPath -> ItemRec -> Doc Unit
         convertItem grpPath itemRec =
@@ -157,12 +160,36 @@ toTextWith cfg inclRule =
                     case decoratorsSuffixes of
                         [] -> mempty
                         suffixes -> D.space <> joinWith D.space suffixes
+                decoratorRestLines _ = Array.concat $ convertDecoratorToRestLines <$> itemRec.decorators
             in
             itemIndent (decoratorsPrefixesDoc <> D.text itemRec.title <> decoratorsSuffixesDoc)
+            <> case itemRec.decorators of
+                [] -> mempty
+                _  -> case decoratorRestLines unit of
+                        [] -> mempty
+                        _  -> D.break <> (joinWith D.break $ D.indent <$> itemIndent <$> decoratorRestLines unit)
             <> case itemRec.tags of
                 RawTags [] -> mempty
                 RawTags tags' -> D.space <> tags tags'
             <> if cfg.renderTabulars then (itemIndent $ _tabularsBlockDoc tabulars) else mempty
+
+        convertDecoratorToRestLines :: DecoratorRec -> Array (Doc Unit)
+        convertDecoratorToRestLines modRec =
+            DH.withImpl @D.Decorator
+                mempty
+                (case _ of
+                    D.PRating rating ->
+                        []
+                    D.PPriority priority ->
+                        []
+                    D.PTask task ->
+                        []
+                    D.SProgress p ->
+                        _progressRestLines p
+                    _ ->
+                        mempty
+                )
+                modRec.fvalue
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
         convertDecoratorToPrefix modRec =
@@ -359,7 +386,14 @@ _progressSuffixOneLiner = case _ of
     LevelsP { levels } ->
         mempty -- TODO
     LevelsC levelsC ->
-        mempty -- TODO
+        pure
+            $ (D.text
+                $ show levelsC.levelReached <> "/" <> show levelsC.totalLevels
+                <> " :: " <> show levelsC.reachedAtCurrent <> "/" <> show levelsC.maximumAtCurrent
+              )
+            <> case levelsC.date of
+                Just theDate -> D.space <> textDate theDate
+                Nothing -> mempty
     LevelsO { reached, levels } ->
         mempty -- TODO
     RelTime rel timeRec ->
@@ -371,6 +405,103 @@ _progressSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> textTime timeRec
     Error err ->
         mempty
+
+
+levelDone = "◉" :: String -- • * ⦿ ◉ ●
+levelTodo = "◌" :: String -- ◦ ◌
+levelMark = "-" :: String
+
+
+_progressRestLines :: Progress -> Array (Doc Unit)
+_progressRestLines = case _ of
+    None -> []
+    Unknown -> []
+    PInt _ -> []
+    PNumber _ -> []
+    PText _ -> []
+    ToComplete _ -> []
+    PercentI _ -> []
+    PercentN _ -> []
+    PercentSign _ -> []
+    ToGetI _ -> []
+    ToGetN _ -> []
+    OnTime  _ -> []
+    OnDate _ -> []
+    PerI _ -> []
+    PerN _ -> []
+    MeasuredI _ -> []
+    MeasuredN _ -> []
+    MeasuredSign _ -> []
+    RangeI _ -> []
+    RangeN _ -> []
+    Task _ -> []
+    LevelsI { reached, levels } ->
+        let
+            renderLevelI { date, maximum, name } =
+                D.text (if reached >= maximum then levelDone else levelTodo) <> D.space
+                <> D.text (show maximum) <> D.space
+                <> D.text name
+                <> case date of
+                    Just theDate -> D.space <> textDate theDate
+                    Nothing -> mempty
+        in renderLevelI <$> levels
+    LevelsN { reached, levels } ->
+        let
+            renderLevelN { date, maximum, name } =
+                D.text (if reached >= maximum then levelDone else levelTodo) <> D.space
+                <> D.text (show maximum) <> D.space
+                <> D.text name
+                <> case date of
+                    Just theDate -> D.space <> textDate theDate
+                    Nothing -> mempty
+        in renderLevelN <$> levels
+    LevelsS { reached, levels } ->
+        let
+            renderLevelS index { date, gives } =
+                D.text (if reached >= index then levelDone else levelTodo) <> D.space
+                <> D.text gives
+                <> case date of
+                    Just theDate -> D.space <> textDate theDate
+                    Nothing -> mempty
+        in mapWithIndex renderLevelS levels
+    LevelsE _ ->
+        []
+    LevelsP { levels } ->
+        let
+            procMark = case _ of
+                TTodo -> levelTodo
+                TDone -> levelDone
+                TDoing -> "*"
+                TWait -> "⏲"
+                TCanceled -> "X"
+                TNow -> "!"
+                TLater -> "~"
+            renderLevelP { date, name, proc } =
+                D.text (procMark proc) <> D.space
+                <> D.text name
+                <> case date of
+                    Just theDate -> D.space <> textDate theDate
+                    Nothing -> mempty
+        in renderLevelP <$> levels
+    LevelsC _ ->
+        []
+    LevelsO { reached, levels } ->
+        let
+            levelOMark = case _ of
+                Just maximum -> if reached >= maximum then levelDone else levelTodo
+                Nothing -> "?"
+            renderLevelO { date, mbMaximum, name } =
+                D.text (levelOMark mbMaximum) <> D.space
+                <> case mbMaximum of
+                    Just maximum -> D.text (show maximum) <> D.space
+                    Nothing -> mempty
+                <> D.text name
+                <> case date of
+                    Just theDate -> D.space <> textDate theDate
+                    Nothing -> mempty
+        in renderLevelO <$> levels
+    RelTime _ _ -> []
+    Error _ -> []
 
 
 renderStats :: Stats -> Maybe (Doc Unit)

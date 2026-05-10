@@ -43,4 +43,5 @@ sh ./run-cli.sh --convert -i ./some/file.dhall -f dhall -o ./some/file.json -t j
 sh ./run-cli.sh -i ./test/games-samples/AstralChain.rep
 sh ./run-cli.sh -i ./test/games-samples/AstralChain.dhall --from dhall
 sh ./run-cli.sh -i ./test/games-samples/AstralChain.dhall --from dhall --to rep -o ./test/games-samples/AstralChain.rep
+sh ./run-cli.sh -i ./test/games-samples/AstralChain.rep --from rep --to text
 ```
