@@ -122,6 +122,7 @@ data Output
     = Screen
     | StdOutput
     | FileOutput String
+    | NullOutput
 
 
 data ImportError

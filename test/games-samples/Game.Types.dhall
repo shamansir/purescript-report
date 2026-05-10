@@ -53,6 +53,7 @@ let AD/collectTabular
     = \(ach : AchievementsData) ->
         [
             { key = "trackedAt"
+            , label = Some "Tracked At"
             , value =
                 T.tag (
                     merge
@@ -64,6 +65,7 @@ let AD/collectTabular
             }
         ,
             { key = "playtime"
+            , label = Some "Playtime"
             , value =
                 T.tag (
                     merge
@@ -78,6 +80,7 @@ let AD/collectTabular
             }
         ,
             { key = "platform"
+            , label = Some "Platform"
             , value = T.tag (T.v_t (platformToTag ach.game.platform))
             }
         ]

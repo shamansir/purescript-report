@@ -119,6 +119,10 @@ fromArray :: forall v. Array (String /\ v) -> Tabular v
 fromArray arr = Tabular $ (\(k /\ v) -> Item { key: k, label: k, value: v }) <$> arr
 
 
+fromArray' :: forall v. Array { key :: String, label :: String, value :: v } -> Tabular v
+fromArray' arr = Tabular $ (\itemRec -> Item itemRec) <$> arr
+
+
 -- reorder :: forall v. (String -> Int) -> Tabular v -> Tabular v
 -- reorder f (Tabular vs) = Tabular $ Array.sortWith (Tuple.fst >>> _.key >>> f) vs
 

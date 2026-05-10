@@ -24,7 +24,7 @@ import Report.Chain as Chain
 import Report.Convert.Generic
 import Report.Convert.Types (SubjectId, ImportError(..))
 import Report.Tabular (Tabular(..))
-import Report.Tabular (empty, fromArray) as Tabular
+import Report.Tabular (empty, fromArray, fromArray') as Tabular
 import Report.Group (Group(..)) as Impl
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (pathFromArray) as GP
@@ -99,6 +99,7 @@ type DhallSubjectRec =
 
 type DhallTabularRec =
     { key :: String
+    , label :: Maybe String
     , value ::
         { t :: String
         , v :: Foreign
@@ -184,15 +185,17 @@ fromDhall jsonStr =
         pathFromRef :: Ref -> GroupPath
         pathFromRef = GP.pathFromArray
         loadTabular :: Array DhallTabularRec -> Tabular Progress
-        loadTabular = Tabular.fromArray <<< map loadProgress
+        loadTabular = Tabular.fromArray' <<< map loadProgress
             where
-                loadProgress { key, value } =
-                    key /\
-                        (Progress.rawToProgressJson value
+                loadProgress { key, label, value } =
+                    { key
+                    , label : fromMaybe key label
+                    , value :
+                        Progress.rawToProgressJson value
                             # Progress.fromJson
                             # fromMaybe Unknown
                             -- # maybe (TV.TVString "---") (TV.TVSuffix <<< S.SProgress)
-                            )
+                    }
 
 
 -- a function to find a group in the list of either groups or items

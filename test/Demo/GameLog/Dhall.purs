@@ -136,7 +136,7 @@ loadProgressTextValue = case _ of
     _ -> Nothing
 
 
-findProgressInTabular :: String -> Array { key :: String, value :: { t :: String, v :: Foreign } } -> Maybe Progress
+findProgressInTabular :: forall r. String -> Array { key :: String, value :: { t :: String, v :: Foreign } | r } -> Maybe Progress
 findProgressInTabular keyName = -- FIXME: move to `Report.Tabular`
     Array.find (_.key >>> (_ == keyName))
         >>> map _.value

@@ -99,7 +99,6 @@ toDhall inclRule =
                             ] <> (D.indent <$> multiLineV)
                 _ -> Nothing
 
-
             -- <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
             -- <> [ indent <> ")" ]
 

@@ -181,6 +181,7 @@ let TabularValue
 
 let TabularKVR =
     { key : Text
+    , label : Optional Text
     , value : TabularValue
     }
 
@@ -345,7 +346,12 @@ let inj/tabs
 
 let inj/tab
     : Text -> Value -> { tabular : List TabularKVR }
-    = \(key : Text) -> \(value : Value) -> inj/tabs [ { key, value = tag value } ]
+    = \(key : Text) -> \(value : Value) -> inj/tabs [ { key, label = None Text, value = tag value } ]
+
+
+let inj/ltab
+    : Text -> Text -> Value -> { tabular : List TabularKVR }
+    = \(key : Text) -> \(label : Text) -> \(value : Value) -> inj/tabs [ { key, label = Some label, value = tag value } ]
 
 
 let kv_
@@ -559,7 +565,7 @@ in
     , v_per, v_perd
     , v_reli, v_reld, v_reln, v_relt
     , v_empty, v_unk
-    , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tag, inj/tags, inj/tab, inj/tabs
+    , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tag, inj/tags, inj/tab, inj/ltab, inj/tabs
     , collapse, introduce
     , p_todo, p_doing, p_done, p_now, p_later, p_canceled, p_wait, p_locked
     , p_todo_, p_doing_, p_done_, p_now_, p_later_, p_canceled_, p_wait_, p_locked_

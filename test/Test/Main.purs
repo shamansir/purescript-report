@@ -19,6 +19,7 @@ import Test.Export.DhallDodo as DhallDodo
 import Test.Export.OrgDodo as OrgDodo
 import Test.Export.TextDodo as TextDodo
 import Test.Export.RepDodo as RepDodo
+import Test.Export.Converter as Converter
 
 
 main :: Effect Unit
@@ -34,4 +35,5 @@ main = do
         ReportImpl.spec
         Groups.spec
         ParseTree.spec
+        Converter.spec
         -- MusicApi.spec
