@@ -1,0 +1,2692 @@
+SBJ. Super Mario: Odissey // super-mario-odissey
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-08-14>
+- Playtime // playtime
+; REL. > 50:00:00
+- Platform // platform
+; TXT. Switch
+    GRP. Power Moons // 00-pmoons
+    - Path // path
+    ; TXT. 00-pmoons
+    - Index // index
+    ; INT. 0
+        Cascade Kingdom: Purple Coins
+        : GTI. 50 50
+        Cascade Kingdom: Moons
+        : GTI. 16 25
+        : REF. 00-pmoons 00-cascade-kingdom
+        Sand Kingdom: Purple Coins
+        : GTI. 93 100
+        Sand Kingdom: Moons
+        : GTI. 47 89
+        : REF. 00-pmoons 01-sand-kingdom
+        Wooded Kingdom: Purple Coins
+        : GTI. 100 100
+        Wooded Kingdom: Moons
+        : GTI. 36 54
+        : REF. 00-pmoons 02-wooded-kingdom
+        Lake Kingdom: Purple Coins
+        : GTI. 50 50
+        Lake Kingdom: Moons
+        : GTI. 14 33
+        : REF. 00-pmoons 03-lake-kingdom
+        Cloud Kingdom: Moons
+        : GTI. 0 2
+        : REF. 00-pmoons 04-cloud-kingdom
+        Lost Kingdom: Purple Coins
+        : GTI. 48 50
+        Lost Kingdom: Moons
+        : GTI. 15 25
+        : REF. 00-pmoons 05-lost-kingdom
+        Metro Kingdom: Purple Coins
+        : GTI. 81 100
+        Metro Kingdom: Moons
+        : GTI. 26 66
+        : REF. 00-pmoons 06-metro-kingdom
+        Seaside Kingdom: Purple Coins
+        : GTI. 100 100
+        Seaside Kingdom: Moons
+        : GTI. 23 52
+        : REF. 00-pmoons 07-seaside-kingdom
+        Snow Kingdom: Purple Snowflakes
+        : GTI. 41 50
+        Snow Kingdom: Moons
+        : GTI. 19 37
+        : REF. 00-pmoons 08-snow-kingdom
+        Luncheon Kingdom: Purple Tomatoes
+        : GTI. 87 100
+        Luncheon Kingdom: Moons
+        : GTI. 20 56
+        : REF. 00-pmoons 09-luncheon-kingdom
+        Ruined Kingdom: Moons
+        : GTI. 2 5
+        : REF. 00-pmoons 10-ruined-kingdom
+        Bowser's Kingdom: Purple Tomatoes
+        : GTI. 94 100
+        Bowser's Kingdom: Red Moons
+        : GTI. 22 45
+        : REF. 00-pmoons 10-bowsers-kingdom
+        Moon Kingdom: Purple Crystals
+        : GTI. 44 50
+        Moon Kingdom: Moons
+        : GTI. 5 27
+        : REF. 00-pmoons 11-moon-kingdom
+        Dark Side: Moons
+        : GTI. 0 24
+        : REF. 00-pmoons 12-dark-side
+        Mushroom Kingdom: Purple Coins
+        : GTI. 100 100
+        Mushroom Kingdom: Moons
+        : GTI. 31 104
+        : REF. 00-pmoons 13-mushroom-kingdom
+        Cap Kingdom: Purple Caps
+        : GTI. 47 50
+        Cap Kingdom: Moons
+        : GTI. 20 31
+        : REF. 00-pmoons 14-cap-kingdom
+        GRP. Cascade Kingdom // 00-cascade-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 00-cascade-kingdom
+        - Index // index
+        ; INT. 1
+            01
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Our First Power Moon
+            02
+            : GTI. 3 3
+            : ERN. <2017-11-06>
+            : DSC. Multi Moon Atop the Falls
+            03
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Chomp Through the Rocks
+            04
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Behind the Waterfall
+            05
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. On Top of the Rubble
+            06
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Treasure of the Waterfall Basin
+            07
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Above a High Cliff
+            08
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Across the Floating Isles
+            09
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Cascade Kingdom Timer Challenge 1
+            10
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Cascade Kingdom Timer Challenge 2
+            11
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Good Morning, Captain Toad!
+            12
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Dinosaur Nest: Big Cleanup!
+            13
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Dinosaur Nest: Running Wild
+            14
+            : CMP. TODO
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Past the Chasm Lifts
+            17
+            : CMP. DONE
+            : ERN. <2017-11-06>
+            : DSC. Hidden Chasm Passage
+            18
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Secret Path to Fossil Falls!
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+        GRP. Sand Kingdom // 01-sand-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 01-sand-kingdom
+        - Index // index
+        ; INT. 2
+            01
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Atop the Highest Tower
+            02
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Moon Shards in the Sand
+            03
+            : GTI. 3 3
+            : ERN. <2017-11-11>
+            : DSC. Showdown on the Inverted Pyramid
+            04
+            : GTI. 3 3
+            : ERN. <2017-11-12>
+            : DSC. The Hole in the Desert
+            05
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Overlooking the Desert Town
+            06
+            : CMP. TODO
+            07
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. On the Leaning Pillar
+            08
+            : CMP. TODO
+            09
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Secret of the Mural
+            10
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Secret of the Inverted Mural
+            11
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. On Top of the Stone Archway
+            12
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. From a Crate in the Ruins
+            13
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. On the Lone Pillar
+            14
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. On the Statue’s Tail
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Where the Birds Gather
+            17
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Top of a Dune
+            18
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Lost in the Luggage
+            19
+            : CMP. TODO
+            20
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Inside a Block Is a Hard Place
+            21
+            : CMP. TODO
+            22
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Bird Traveling the Wastes
+            23
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. The Lurker Under the Stone
+            24
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. The Treasure of Jaxi Ruins
+            25
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Desert Gardening: Plaza Seed
+            26
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Desert Gardening: Ruins Seed
+            27
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Desert Gardening: Seed on the Cliff
+            28
+            : CMP. TODO
+            29
+            : CMP. DONE
+            : ERN. <2017-11-13>
+            : DSC. Sand Kingdom Timer Challenge 2
+            30
+            : CMP. TODO
+            31
+            : CMP. DONE
+            : ERN. <2017-11-13>
+            : DSC. Found in the Sand! Good Dog!
+            32
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Taking Notes: Jump on the Palm
+            33
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Herding Sheep in the Dunes
+            34
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Fishing in the Oasis
+            35
+            : CMP. TODO
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+            38
+            : CMP. TODO
+            38
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Jaxi Reunion!
+            39
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Welcome Back, Jaxi!
+            40
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Wandering Cactus
+            41
+            : CMP. TODO
+            42
+            : CMP. TODO
+            43
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Employees Only
+            44
+            : CMP. TODO
+            : DSC. Sand Kingdom Slots
+            # parrot
+            45
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Walking the Desert
+            46
+            : CMP. TODO
+            47
+            : CMP. TODO
+            48
+            : CMP. DONE
+            : ERN. <2017-11-12>
+            : DSC. Goomba Tower Assembly
+            49
+            : CMP. TODO
+            50
+            : CMP. TODO
+            51
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Sphynx’s Treasure Vault
+            52
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. A Rumble from the Sandy Floor
+            53
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. Dancing with New Friends
+            54
+            : CMP. DONE
+            : ERN. <2017-11-08>
+            : DSC. The Invisible Maze
+            55
+            : CMP. TODO
+            56
+            : CMP. TODO
+            57
+            : CMP. TODO
+            58
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Jaxi Driver
+            59
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Jaxi Stunt Driving
+            60
+            : CMP. DONE
+            : ERN. <2017-11-13>
+            : DSC. Strange Neighborhood
+            61
+            : CMP. DONE
+            : ERN. <2017-11-13>
+            : DSC. Above a Strange Neighborhood
+            62
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Secret Path to Tostarena!
+            63
+            : CMP. TODO
+            64
+            : CMP. DONE
+            : ERN. <2017-12-25>
+            : DSC. Jammin’ in the Sand Kingdom
+            65
+            : CMP. TODO
+            66
+            : CMP. TODO
+            67
+            : CMP. TODO
+            68
+            : CMP. TODO
+            69
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Peach in the Sand Kingdom
+            70
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Mighty Leap from the Palm Tree!
+            # box
+            71
+            : CMP. TODO
+            # box
+            72
+            : CMP. DONE
+            : ERN. <2017-12-25>
+            : DSC. Into the Flowing Sands
+            # box
+            73
+            : CMP. TODO
+            # box
+            74
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Island in the Poison Swamp
+            # box
+            75
+            : CMP. TODO
+            # box
+            76
+            : CMP. TODO
+            # box
+            77
+            : CMP. TODO
+            # box
+            78
+            : CMP. TODO
+            # box
+            79
+            : CMP. TODO
+            # box
+            80
+            : CMP. TODO
+            # box
+            81
+            : CMP. TODO
+            # box
+            82
+            : CMP. TODO
+            # box
+            83
+            : CMP. TODO
+            # box
+            84
+            : CMP. TODO
+            # box
+            85
+            : CMP. TODO
+            # box
+            86
+            : CMP. TODO
+            # box
+            87
+            : CMP. TODO
+            # box
+            88
+            : CMP. TODO
+            # box
+            89
+            : CMP. TODO
+            # box
+        GRP. Wooded Kingdom // 02-wooded-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 02-wooded-kingdom
+        - Index // index
+        ; INT. 3
+            01
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Road to Sky Garden
+            02
+            : GTI. 3 3
+            : ERN. <2017-11-16>
+            : DSC. Flower Thieves of Sky Garden
+            03
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. Path to the Secret Flower Field
+            04
+            : GTI. 3 3
+            : ERN. <2017-11-18>
+            : DSC. Defend the Secret Flower Field
+            05
+            : CMP. TODO
+            06
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. Back Way Up the Mountain
+            07
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. Rolling Rock in the Woods
+            08
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. Caught Hopping in the Forest!
+            09
+            : CMP. DONE
+            : ERN. <2017-11-17>
+            : DSC. Thanks for the Charge!
+            10
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. Atop the Tall Tree
+            11
+            : CMP. DONE
+            : ERN. <2017-11-17>
+            : DSC. Tucked Away Inside the Tunnel
+            12
+            : CMP. TODO
+            13
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. The Nut ‘Round the Corner
+            14
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Climb the Cliff to Get the Nut
+            15
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. The Nut in the Red Maze
+            16
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. The Nut at the Dead End
+            17
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Cracked Nut on a Crumbling Tower
+            18
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. The Nut that Grew on the Tall Fence
+            19
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Fire in the Cave
+            20
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Hey Out There, Captain Toad!
+            21
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. Love in the Forest Ruins
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Nut Planted in the Tower
+            25
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Stretching Your Legs
+            26
+            : CMP. TODO
+            27
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Make the Secret Flower Field Bloom
+            28
+            : CMP. TODO
+            29
+            : CMP. TODO
+            30
+            : CMP. DONE
+            : ERN. <2017-11-16>
+            : DSC. Past the Peculiar Pipes
+            31
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. By the Babbling Brook in Deep Woods
+            32
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. The Hard Rock in Deep Woods
+            33
+            : CMP. TODO
+            : DSC. A Treasure Made from Coins
+            # parrot
+            34
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. Beneath the Roots of the Moving Tree
+            35
+            : CMP. DONE
+            : ERN. <2017-11-15>
+            : DSC. Deep Woods Treasure Trap
+            36
+            : CMP. TODO
+            37
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. Wooded Kingdom Timer Challenge 1
+            38
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Wooded Kingdom Timer Challenge 2
+            39
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Flooding Pipeway
+            40
+            : CMP. TODO
+            41
+            : CMP. DONE
+            : ERN. <2017-11-17>
+            : DSC. Wandering in the Fog
+            42
+            : CMP. TODO
+            43
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. Flower Road Reach
+            44
+            : CMP. DONE
+            : ERN. <2017-11-17>
+            : DSC. Flower Road Run
+            45
+            : CMP. DONE
+            : ERN. <2017-11-18>
+            : DSC. Elevator Escalation
+            46
+            : CMP. TODO
+            47
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Walking on Clouds
+            48
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Above the Clouds
+            49
+            : CMP. TODO
+            50
+            : CMP. TODO
+            51
+            : CMP. TODO
+            52
+            : CMP. TODO
+            53
+            : CMP. TODO
+            54
+            : CMP. TODO
+        GRP. Lake Kingdom // 03-lake-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 03-lake-kingdom
+        - Index // index
+        ; INT. 4
+            01
+            : GTI. 3 3
+            : ERN. <2017-11-19>
+            : DSC. Broodals Over the Lake
+            02
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Dorrie-Back Rider
+            03
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Cheep Cheep Crossing
+            04
+            : CMP. TODO
+            05
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. What’s in the Box?
+            06
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. On the Lakeshore
+            07
+            : CMP. TODO
+            08
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Treasure in the Spiky Waterway
+            09
+            : CMP. TODO
+            10
+            : CMP. TODO
+            11
+            : CMP. TODO
+            12
+            : CMP. TODO
+            13
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Taking Notes: Dive and Swim
+            14
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Taking Notes: In the Cliffside
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. I Met a Lake Cheep Cheep!
+            17
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Our Secret Little Room
+            18
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Let’s Go Swimming, Captain Toad!
+            19
+            : CMP. TODO
+            20
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. A Successful Repair Job
+            21
+            : CMP. TODO
+            22
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Unzip the Chasm
+            23
+            : CMP. TODO
+            24
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Jump, Grab, Cling, and Climb
+            25
+            : CMP. TODO
+            26
+            : CMP. TODO
+            27
+            : CMP. TODO
+            28
+            : CMP. TODO
+            29
+            : CMP. TODO
+            30
+            : CMP. TODO
+            31
+            : CMP. TODO
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+        GRP. Cloud Kingdom // 04-cloud-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 04-cloud-kingdom
+        - Index // index
+        ; INT. 5
+            01
+            : CMP. TODO
+            02
+            : CMP. TODO
+        GRP. Lost Kingdom // 05-lost-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 05-lost-kingdom
+        - Index // index
+        ; INT. 6
+            01
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Atop a Propeller Pillar
+            02
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Below the Cliff’s Edge
+            03
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Inside the Stone Cage
+            04
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. On a Tree in the Swamp
+            05
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Over the Fuzzies, Above the Swamp
+            06
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Avoiding Fuzzies Inside the Wall
+            07
+            : CMP. TODO
+            08
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Enjoying the View of Forgotten Isle
+            09
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. On the Mountain Road
+            10
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. A Propeller Pillar’s Secret
+            11
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Wrecked Rock Block
+            12
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. A Butterfly’s Treasure
+            13
+            : CMP. TODO
+            14
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Cave Gardening
+            15
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Moon Shards in the Jungle
+            16
+            : CMP. TODO
+            17
+            : CMP. TODO
+            18
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Soaring Over Forgotten Isle!
+            19
+            : CMP. TODO
+            20
+            : CMP. DONE
+            : ERN. <2017-11-22>
+            : DSC. Get Some Rest, Captain Toad!
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+        GRP. Metro Kingdom // 06-metro-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 06-metro-kingdom
+        - Index // index
+        ; INT. 7
+            01
+            : GTI. 3 3
+            : ERN. <2017-11-24>
+            : DSC. New Donk City’s Pest Problem
+            02
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Drummer on Board!
+            03
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Guitarist on Board!
+            04
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Bassist on Board!
+            05
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Trumpeter on Board!
+            06
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Powering Up the Station
+            07
+            : GTI. 3 3
+            : ERN. <2017-12-01>
+            : DSC. A Traditional Festival!
+            08
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Inside an Iron Girder
+            09
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Swaying in the Breeze
+            10
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Girder Sandwich
+            11
+            : CMP. TODO
+            12
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Dizzying Heights
+            13
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Secret Girder Tunnel!
+            14
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Who Piled Garbage on This?
+            15
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Hidden in the Scrap
+            16
+            : CMP. TODO
+            17
+            : CMP. TODO
+            18
+            : CMP. TODO
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. How You Doin’, Captain Toad?
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+            26
+            : CMP. TODO
+            27
+            : CMP. TODO
+            28
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Metro Kingdom Slots
+            29
+            : CMP. TODO
+            30
+            : CMP. TODO
+            31
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Remotely Captured Car
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+            34
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. City Hall Lost & Found
+            35
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Sewer Treasure
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+            38
+            : CMP. TODO
+            39
+            : CMP. TODO
+            40
+            : CMP. TODO
+            : DSC. Off the Beaten Wire
+            # parrot
+            41
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Moon Shards Under Siege
+            42
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Sharpshooting Under Siege
+            43
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Inside the Rotating Maze
+            44
+            : CMP. DONE
+            : ERN. <2017-11-24>
+            : DSC. Outside the Rotating Maze
+            45
+            : CMP. TODO
+            46
+            : CMP. TODO
+            47
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. Bullet Building
+            48
+            : CMP. DONE
+            : ERN. <2017-11-25>
+            : DSC. One Man’s Trash…
+            49
+            : CMP. TODO
+            50
+            : CMP. TODO
+            51
+            : CMP. DONE
+            : ERN. <2017-11-14>
+            : DSC. Secret Path to New Donk City!
+            52
+            : CMP. TODO
+            53
+            : CMP. TODO
+            54
+            : CMP. TODO
+            55
+            : CMP. TODO
+            56
+            : CMP. TODO
+            57
+            : CMP. TODO
+            59
+            : CMP. TODO
+            60
+            : CMP. TODO
+            61
+            : CMP. TODO
+            62
+            : CMP. TODO
+            63
+            : CMP. TODO
+            64
+            : CMP. TODO
+            65
+            : CMP. TODO
+            66
+            : CMP. TODO
+        GRP. Seaside Kingdom // 07-seaside-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 07-seaside-kingdom
+        - Index // index
+        ; INT. 8
+            01
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Stone Pillar Seal
+            02
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Lighthouse Seal
+            03
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Hot Spring Seal
+            04
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Seal Above the Canyon
+            05
+            : GTI. 3 3
+            : ERN. <2017-12-02>
+            : DSC. The Glass Is Half Full
+            06
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. On the Cliff Overlooking the Beach
+            07
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Ride the Jetstream
+            08
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Ocean-Bottom Maze: Treasure
+            09
+            : CMP. TODO
+            10
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Underwater Highway Tunnel
+            11
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Shh! It’s a Shortcut!
+            12
+            : CMP. TODO
+            13
+            : CMP. TODO
+            14
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Merci, Dorrie!
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Under a Dangerous Ceiling
+            17
+            : CMP. TODO
+            18
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Back Canyon: Excavation!
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Treasure Trap Hidden in the Inlet
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+            26
+            : CMP. TODO
+            27
+            : CMP. TODO
+            28
+            : CMP. TODO
+            29
+            : CMP. TODO
+            30
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Moon Shards in the Sea
+            31
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Taking Notes: Ocean Surface Dash
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+            34
+            : CMP. TODO
+            35
+            : CMP. TODO
+            : DSC. Ocean Quiz: Good!
+            # parrot
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+            38
+            : CMP. TODO
+            39
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Looking Back in the Dark Waterway
+            40
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Sphynx’s Underwater Vault
+            41
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. A Rumble on the Seaside Floor
+            42
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. A Relaxing Dance
+            43
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Wading in the Cloud Sea
+            44
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Sunken Treasure in the Cloud Sea
+            45
+            : CMP. TODO
+            46
+            : CMP. TODO
+            47
+            : CMP. TODO
+            48
+            : CMP. TODO
+            49
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Secret Path to Bubblaine!
+            50
+            : CMP. TODO
+            51
+            : CMP. TODO
+            52
+            : CMP. TODO
+        GRP. Snow Kingdom // 08-snow-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 08-snow-kingdom
+        - Index // index
+        ; INT. 9
+            01
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Icicle Barrier
+            02
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Ice Wall Barrier
+            03
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Gusty Barrier
+            04
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Snowy Mountain Barrier
+            05
+            : GTI. 3 3
+            : ERN. <2017-12-02>
+            : DSC. The Bound Bowl Grand Prix
+            06
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Entrance to Shiveria
+            07
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Behind Snowy Mountain
+            08
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Shining in the Snow in Town
+            09
+            : CMP. TODO
+            10
+            : CMP. TODO
+            11
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Shiverian Treasure Chest
+            12
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Treasure in the Ice Wall
+            13
+            : CMP. TODO
+            14
+            : CMP. TODO
+            15
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Moon Shards in the Snow
+            16
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Taking Notes: Snow Path Dash
+            17
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Fishing in the Glacier!
+            18
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Ice-Dodging Goomba Stack
+            19
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Captain Toad is Chilly!
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+            26
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Jump ‘n’ Swim in the Freezing Water
+            27
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Freezing Water Near the Ceiling
+            28
+            : CMP. TODO
+            29
+            : CMP. TODO
+            30
+            : CMP. TODO
+            31
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Spinning Above the Clouds
+            32
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. High-Altitude Spinning
+            33
+            : CMP. TODO
+            34
+            : CMP. TODO
+            35
+            : CMP. TODO
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+        GRP. Luncheon Kingdom // 09-luncheon-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 09-luncheon-kingdom
+        - Index // index
+        ; INT. 10
+            01
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. The Broodals Are After Some Cookin’
+            02
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Under the Cheese Rocks
+            03
+            : GTI. 3 3
+            : ERN. <2017-12-02>
+            : DSC. Big Pot on the Volcano: Dive In!
+            04
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Climb Up the Cascading Magma
+            05
+            : GTI. 3 3
+            : ERN. <2017-12-02>
+            : DSC. Cookatiel Showdown!
+            06
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Piled on the Salt
+            07
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Lurking in the Pillar’s Shadow
+            08
+            : CMP. TODO
+            09
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Is This an Ingredient Too?!
+            10
+            : CMP. TODO
+            11
+            : CMP. TODO
+            12
+            : CMP. TODO
+            13
+            : CMP. TODO
+            14
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Light the Lantern on the Small Island
+            15
+            : CMP. TODO
+            16
+            : CMP. TODO
+            17
+            : CMP. TODO
+            18
+            : CMP. TODO
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Beneath the Rolling Vegetables
+            22
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. All the Cracks Are Fixed
+            23
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Taking Notes: Swimming in Magma
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+            26
+            : CMP. TODO
+            27
+            : CMP. TODO
+            28
+            : CMP. TODO
+            29
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Alcove Behind the Pillars of Magma
+            30
+            : CMP. TODO
+            31
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Light the Two Flames
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+            34
+            : CMP. TODO
+            35
+            : CMP. TODO
+            36
+            : CMP. TODO
+            37
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Magma Swamp: Floating and Sinking
+            38
+            : CMP. TODO
+            39
+            : CMP. TODO
+            40
+            : CMP. TODO
+            41
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Fork Flickin’ to the Summit
+            42
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Fork Flickin’ Detour
+            43
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Excavate ‘n’ Search the Cheese Rocks
+            44
+            : CMP. DONE
+            : ERN. <2017-12-02>
+            : DSC. Climb the Cheese Rocks
+            45
+            : CMP. TODO
+            46
+            : CMP. TODO
+            47
+            : CMP. DONE
+            : ERN. <2017-11-19>
+            : DSC. Secret Path to Mount Volbono!
+            48
+            : CMP. TODO
+            49
+            : CMP. TODO
+            50
+            : CMP. TODO
+            51
+            : CMP. TODO
+            52
+            : CMP. TODO
+            53
+            : CMP. TODO
+            54
+            : CMP. TODO
+            55
+            : CMP. TODO
+            56
+            : CMP. TODO
+        GRP. Bowser's Kingdom // 10-bowsers-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 10-bowsers-kingdom
+        - Index // index
+        ; INT. 11
+            01
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Infiltrate Bowser’s Castle!
+            02
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Smart Bombing
+            03
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Big Broodal Battle
+            04
+            : GTI. 3 3
+            : ERN. <2017-12-04>
+            : DSC. Showdown at Bowser’s Castle
+            05
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Behind the Big Wall
+            06
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Treasure Inside the Turret
+            07
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. From the Side Above the Castle Gate
+            08
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Sunken Treasure in the Moat
+            09
+            : CMP. TODO
+            10
+            : CMP. TODO
+            11
+            : CMP. TODO
+            12
+            : CMP. TODO
+            13
+            : CMP. TODO
+            14
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Inside a Block in the Castle
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Exterminate the Ogres!
+            17
+            : CMP. TODO
+            18
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Taking Notes: Between Spines
+            19
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Stack Up Above the Wall
+            20
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Hidden Corridor Under the Floor
+            21
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Poking Your Nose in the Plaster Wall
+            22
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Poking the Turret Wall
+            23
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Poking Your Nose by the Great Gate
+            24
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Jizo All in a Row
+            25
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. Underground Jizo
+            26
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Found Behind Bars!
+            27
+            : CMP. TODO
+            28
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Good to See You, Captain Toad!
+            29
+            : CMP. TODO
+            30
+            : CMP. DONE
+            : ERN. <2017-12-04>
+            : DSC. Bowser’s Castle Treasure Vault
+            31
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Scene of Crossing the Poison Swamp
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+            34
+            : CMP. TODO
+            35
+            : CMP. TODO
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+            38
+            : CMP. TODO
+            39
+            : CMP. TODO
+            40
+            : CMP. TODO
+            41
+            : CMP. TODO
+            42
+            : CMP. TODO
+            43
+            : CMP. TODO
+            44
+            : CMP. TODO
+            45
+            : CMP. TODO
+        GRP. Ruined Kingdom // 10-ruined-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 10-ruined-kingdom
+        - Index // index
+        ; INT. 12
+            01
+            : GTI. 3 3
+            : ERN. <2017-12-03>
+            : DSC. Battle with the Lord of Lightning!
+            02
+            : CMP. DONE
+            : ERN. <2017-12-03>
+            : DSC. In the ancient Treasure Chest
+            03
+            : CMP. TODO
+            04
+            : CMP. TODO
+            05
+            : CMP. TODO
+        GRP. Moon Kingdom // 11-moon-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 11-moon-kingdom
+        - Index // index
+        ; INT. 13
+            01
+            : CMP. TODO
+            02
+            : CMP. TODO
+            03
+            : CMP. TODO
+            04
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Rolling Rock on the Moon
+            05
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Caught Hopping on the Moon!
+            06
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Cliffside Treasure Chest
+            07
+            : CMP. TODO
+            08
+            : CMP. TODO
+            09
+            : CMP. DONE
+            : ERN. <2017-12-05>
+            : DSC. Under the Bowser Statue
+            10
+            : CMP. TODO
+            11
+            : CMP. DONE
+            : ERN. <2017-12-11>
+            : DSC. Around the Barrier Wall
+            12
+            : CMP. TODO
+            13
+            : CMP. TODO
+            14
+            : CMP. TODO
+            15
+            : CMP. TODO
+            16
+            : CMP. TODO
+            17
+            : CMP. TODO
+            18
+            : CMP. TODO
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+        GRP. Dark Side // 12-dark-side
+        - Path // path
+        ; TXT. 00-pmoons 12-dark-side
+        - Index // index
+        ; INT. 14
+            01
+            : CMP. TODO
+            02
+            : CMP. TODO
+            03
+            : CMP. TODO
+            04
+            : CMP. TODO
+            05
+            : CMP. TODO
+            06
+            : CMP. TODO
+            07
+            : CMP. TODO
+            08
+            : CMP. TODO
+            09
+            : CMP. TODO
+            10
+            : CMP. TODO
+            11
+            : CMP. TODO
+            12
+            : CMP. TODO
+            13
+            : CMP. TODO
+            14
+            : CMP. TODO
+            15
+            : CMP. TODO
+            16
+            : CMP. TODO
+            17
+            : CMP. TODO
+            18
+            : CMP. TODO
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+        GRP. Mushroom Kingdom // 13-mushroom-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 13-mushroom-kingdom
+        - Index // index
+        ; INT. 15
+            01
+            : CMP. TODO
+            02
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Pops Out of the Tail
+            03
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Caught Hopping at Peach’s Castle
+            04
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Gardening for Toad: Garden Seed
+            05
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Gardening for Toad: Field Seed
+            06
+            : CMP. TODO
+            07
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Gardening for Toad: Lake Seed
+            08
+            : CMP. TODO
+            09
+            : CMP. TODO
+            10
+            : CMP. TODO
+            11
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Taking Notes: Around the Well
+            12
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Herding Sheep at Peach’s Castle
+            13
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Gobbling Fruit with Yoshi
+            14
+            : CMP. TODO
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Love at Peach’s Castle
+            17
+            : CMP. TODO
+            18
+            : CMP. TODO
+            19
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Jammin’ in the Mushroom Kingdom
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+            26
+            : CMP. TODO
+            27
+            : CMP. TODO
+            28
+            : CMP. TODO
+            29
+            : CMP. TODO
+            30
+            : CMP. TODO
+            31
+            : CMP. TODO
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+            34
+            : CMP. TODO
+            35
+            : CMP. TODO
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+            38
+            : CMP. TODO
+            39
+            : CMP. TODO
+            40
+            : CMP. TODO
+            41
+            : CMP. TODO
+            42
+            : CMP. TODO
+            43
+            : CMP. TODO
+            44
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Rescue Princess Peach :: Rescue Princess Peach from Bowser
+            # mushroom
+            45
+            : GTI. 14 14
+            : ERN. <2017-12-12>
+            : DSC. Achieve World Peace :: Bring Peace to all kingdoms in the world.
+            # mushroom
+            46
+            : GTI. 324 100
+            : ERN. <2017-12-12>
+            : DSC. Power Moon Knight :: Collect Power Moons
+            # mushroom
+            47
+            : GTI. 324 300
+            : ERN. <2017-12-12>
+            : DSC. Power Moon Wizard :: Collect Power Moons
+            # mushroom
+            48
+            : GTI. 324 600
+            : DSC. Power Moon Ruler :: Collect Power Moons
+            # mushroom
+            49
+            : GTI. 5 13
+            : DSC. Regional Coin Shopper :: Buy using regional coins.
+            # mushroom
+            50
+            : GTI. 10 10
+            : ERN. <2017-12-12>
+            : DSC. Flat Moon Finder :: Collect 8-Bit Power Moons
+            # mushroom
+            51
+            : GTI. 10 20
+            : DSC. Flat Moon Fanatic :: Collect 8-Bit Power Moons
+            # mushroom
+            52
+            : GTI. 15 15
+            : ERN. <2017-12-12>
+            : DSC. Treasure Chest Hunter :: Collect Power Moons from treasure chests.
+            # mushroom
+            53
+            : GTI. 15 25
+            : DSC. Super Treasure Chest Hunter :: Collect Power Moons from treasure chests.
+            # mushroom
+            54
+            : GTI. 9 5
+            : ERN. <2017-12-12>
+            : DSC. Note-Collecting World Tour :: Collect Power Moons from taking notes.
+            # mushroom
+            55
+            : GTI. 0 20
+            : DSC. Note-Collecting Space Tour :: Collect Power Moons from taking notes.
+            # mushroom
+            56
+            : GTI. 6 10
+            : DSC. Timer Challenge: Amateur :: Collect Power Moons from Timer Challenges.
+            # mushroom
+            57
+            : GTI. 6 25
+            : DSC. Timer Challenge: Professional :: Collect Power Moons from Timer Challenges.
+            # mushroom
+            58
+            : GTI. 8 5
+            : ERN. <2017-12-12>
+            : DSC. Captain Toad Meeter :: Meet up with Captain Toad
+            # mushroom
+            59
+            : GTI. 8 10
+            : DSC. Captain Toad Greeter :: Meet up with Captain Toad
+            # mushroom
+            60
+            : GTI. 2 5
+            : DSC. Touring with Princess Peach :: Meet up with Princess Peach as she travels the world.
+            # mushroom
+            61
+            : GTI. 2 10
+            : DSC. Globe-Trotting with Princess Peach :: Meet up with Princess Peach as she travels the world.
+            # mushroom
+            62
+            : GTI. 2 4
+            : DSC. Master Sheep Herder :: Herd sheep to collect a Power Moon
+            # mushroom
+            63
+            : GTI. 2 5
+            : DSC. Gaga for Goombette :: Collect Power Moons from Gombette.
+            # mushroom
+            64
+            : GTI. 2 3
+            : DSC. Lakitu Fishing Trip :: Fish Power Moons as Lakitu
+            # mushroom
+            65
+            : GTI. 6 5
+            : DSC. Flower-Growing Guru :: Grow seeds to collect Power Moons
+            # mushroom
+            66
+            : GTI. 6 10
+            : DSC. Flower-Growing Sage :: Grow seeds to collect Power Moons
+            # mushroom
+            67
+            : GTI. 4 5
+            : DSC. Running with Rabbits :: Catch rabbits to collect Power Moons.
+            # mushroom
+            68
+            : GTI. 4 10
+            : DSC. Racing with Rabbits :: Catch rabbits to collect Power Moons.
+            # mushroom
+            69
+            : GTI. 23 15
+            : ERN. <2017-12-12>
+            : DSC. Ground Pound Instructor :: Dig up Power Moons by Ground Pounding.
+            # mushroom
+            70
+            : GTI. 23 45
+            : DSC. Ground Pound Professor :: Dig up Power Moons by Ground Pounding.
+            # mushroom
+            71
+            : GTI. 3 3
+            : DSC. Rad Hatter :: Collect Power Moons by throwing your hat on things.
+            # mushroom
+            72
+            : GTI. 3 10
+            : DSC. Super Rad Hatter :: Collect Power Moons by throwing your hat on things.
+            # mushroom
+            73
+            : GTI. 3 5
+            : DSC. Traveling Bird Herder :: Collect Power Moons from migrating birds.
+            # mushroom
+            74
+            : GTI. 3 3
+            : ERN. <2017-12-12>
+            : DSC. Wearing It Well! :: Collect Power Moons by wearing certain outfits.
+            # mushroom
+            75
+            : GTI. 3 8
+            : DSC. Wearing It Great! :: Collect Power Moons by wearing certain outfits.
+            # mushroom
+            76
+            : GTI. 3 15
+            : DSC. Wearing It Perfect! :: Collect Power Moons by wearing certain outfits.
+            # mushroom
+            77
+            : GTI. 0 5
+            : DSC. Hat-Seeking Missile :: Find Bonetters hidden on people's heads.
+            # mushroom
+            78
+            : GTI. 2 5
+            : DSC. Music Maestro :: Play the music that Toad wants to hear.
+            # mushroom
+            79
+            : GTI. 0 5
+            : DSC. Art Enthusiast :: Collect Power Moons using Hint Art.
+            # mushroom
+            80
+            : GTI. 0 15
+            : DSC. Art Investigator :: Collect Power Moons using Hint Art.
+            # mushroom
+            81
+            : GTI. 1 3
+            : DSC. Slots Machine :: Collect Power Moons playing Slots.
+            # mushroom
+            82
+            : GTI. 0 10
+            : DSC. Koopa Freerunning MVP :: Win Koopa Freerunning races.
+            # mushroom
+            83
+            : GTI. 0 22
+            : DSC. Koopa Freerunning Hall of Famer :: Win Koopa Freerunning races.
+            # mushroom
+            84
+            : GTI. 1 5
+            : DSC. Supernaturally Sure-Footed :: Receive passing scores in Koopa Trace-Walking.
+            # mushroom
+            85
+            : GTI. 0 3
+            : DSC. Quizmaster :: Answer all of the Sphynx's questions correctly.
+            # mushroom
+            86
+            : GTI. 3 10
+            : DSC. Souvenir Sampler :: Collect souvenirs and stickers.
+            # mushroom
+            87
+            : GTI. 0 20
+            : DSC. Souvenir Sleuth :: Collect souvenirs and stickers.
+            # mushroom
+            88
+            : GTI. 0 40
+            : DSC. Souvenir Savant :: Collect souvenirs and stickers.
+            # mushroom
+            89
+            : GTI. 48 20
+            : ERN. <2017-12-12>
+            : DSC. Capturing Novice :: Capture targets.
+            # mushroom
+            90
+            : GTI. 48 35
+            : ERN. <2017-12-12>
+            : DSC. Capturing Apprentice :: Capture targets.
+            # mushroom
+            91
+            : GTI. 48 45
+            : ERN. <2017-12-12>
+            : DSC. Capturing Master :: Capture targets.
+            # mushroom
+            92
+            : GTI. 16 15
+            : ERN. <2017-12-12>
+            : DSC. Hat Maven :: Collect hats.
+            # mushroom
+            93
+            : GTI. 16 35
+            : DSC. Hat Icon :: Collect hats.
+            # mushroom
+            94
+            : GTI. 17 15
+            : ERN. <2017-12-12>
+            : DSC. Fashion Maven :: Collect outfits.
+            # mushroom
+            95
+            : GTI. 17 35
+            : DSC. Fashion Icon :: Collect outfits.
+            # mushroom
+            96
+            : GTI. 2 14
+            : DSC. Moon Rock Liberator :: Open Moon Rocks.
+            # mushroom
+            97
+            : GTI. 6 10
+            : DSC. World Warper :: Travel through warp holes.
+            # mushroom
+            98
+            : GTI. 77 40
+            : ERN. <2017-12-12>
+            : DSC. Checkpoint Flagger :: Activate Checkpoint Flags.
+            # mushroom
+            99
+            : GTI. 77 80
+            : DSC. Checkpoint Flag Enthusiast :: Activate Checkpoint Flags.
+            # mushroom
+            100
+            : GTI. 19721 1000
+            : ERN. <2017-12-12>
+            : DSC. Loaded with Coins :: Collect coins.
+            # mushroom
+            101
+            : GTI. 19721 5000
+            : ERN. <2017-12-12>
+            : DSC. Rolling in Coins :: Collect coins.
+            # mushroom
+            102
+            : GTI. 19721 10000
+            : ERN. <2017-12-12>
+            : DSC. Swimming in Coins :: Collect coins.
+            # mushroom
+            103
+            : GTI. 16530 10000
+            : ERN. <2017-12-12>
+            : DSC. Jump! Jump! Jump! :: Jump.
+            # mushroom
+            104
+            : GTI. 11434 5000
+            : ERN. <2017-12-12>
+            : DSC. Fly, Cappy, Fly! :: Throw Cappy
+            # mushroom
+        GRP. Cap Kingdom // 14-cap-kingdom
+        - Path // path
+        ; TXT. 00-pmoons 14-cap-kingdom
+        - Index // index
+        ; INT. 16
+            01
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Frog-Jumping Above the Fog
+            02
+            : CMP. TODO
+            03
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Cap Kingdom Timer Challenge 1
+            04
+            : CMP. DONE
+            : ERN. <2017-11-11>
+            : DSC. Good Evening, Captain Toad!
+            05
+            : CMP. TODO
+            : DSC. Shopping in Bonneton
+            # parrot
+            06
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Skimming the Poison Tide
+            07
+            : CMP. TODO
+            08
+            : CMP. DONE
+            : ERN. <2017-12-25>
+            : DSC. Push-Block Peril
+            09
+            : CMP. TODO
+            10
+            : CMP. DONE
+            : ERN. <2017-12-11>
+            : DSC. Searching the Frog Pond
+            11
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Secrets of the Frog Pond
+            12
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. The Forgotten Treasure
+            13
+            : CMP. TODO
+            14
+            : CMP. TODO
+            15
+            : CMP. TODO
+            16
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Peach in the Cap Kingdom
+            17
+            : CMP. TODO
+            18
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Next to Glasses Bridge
+            # box
+            19
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Danger Sign
+            # box
+            20
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Under the Big One’s Brim
+            # box
+            21
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Fly to the Edge of the Fog
+            # box
+            22
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Spin the Hat, Get a Prize
+            # box
+            23
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Hidden in a Sunken Hat
+            # box
+            24
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Fog-Shrouded Platform
+            # box
+            25
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Bird Traveling in the Fog
+            # box
+            26
+            : CMP. DONE
+            : ERN. <2017-12-25>
+            : DSC. Caught Hopping Near the Ship!
+            # box
+            27
+            : CMP. TODO
+            # box
+            28
+            : CMP. TODO
+            # box
+            29
+            : CMP. TODO
+            # box
+            30
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Roll On and On
+            # box
+            31
+            : CMP. DONE
+            : ERN. <2017-12-12>
+            : DSC. Precision Rolling
+            # box
+    GRP. Others // 01-others
+    - Path // path
+    ; TXT. 01-others
+    - Index // index
+    ; INT. 17
+        Capture List
+        : GTI. 48 52
+        : REF. 01-others 00-captures
+        Souvenir List
+        : GTI. 3 43
+        : REF. 01-others 01-souvenirs
+        Music List
+        : GTI. 74 82
+        : REF. 01-others 02-music
+        GRP. Capture List // 00-captures
+        - Path // path
+        ; TXT. 01-others 00-captures
+        - Index // index
+        ; INT. 18
+            1: Frog
+            : CMP. DONE
+            : DSC. Jump extremely high to reach elevated areas.
+            2: Spark Pylon
+            : CMP. DONE
+            : DSC. Zip along power lines to traverse across levels.
+            3: Paragoomba
+            : CMP. DONE
+            : DSC. Fly over gaps and hazards.
+            4: Chain Chomp
+            : CMP. DONE
+            : DSC. Swing and break obstacles with momentum.
+            5: Big Chain Chomp
+            : CMP. DONE
+            : DSC. Same as Chain Chomp, with longer reach.
+            6: Chain Chompikins
+            : CMP. DONE
+            : DSC. Used in the fight with Madame Broode.
+            7: T-Rex
+            : CMP. DONE
+            : DSC. Smash through rocks and enemies (temporary).
+            8: Binoculars
+            : CMP. DONE
+            : DSC. Look around and survey the surrounding area.
+            9: Bullet Bill
+            : CMP. DONE
+            : DSC. Fly quickly to destroy blocks (temporary).
+            10: Moe-Eye
+            : CMP. DONE
+            : DSC. See invisible platforms and objects with its shades.
+            11: Cactus
+            : CMP. DONE
+            : DSC. Move blocked areas to reveal hidden Power Moons.
+            12: Goomba
+            : CMP. DONE
+            : DSC. Stack into towers; unlock affection-based Moon.
+            13: Knucklotec’s Fist
+            : CMP. DONE
+            : DSC. Punch enemies during boss fight with Knucklotec.
+            14: Mini Rocket
+            : CMP. DONE
+            : DSC. Fly to sky-platform areas to find moons.
+            15: Glydon
+            : CMP. DONE
+            : DSC. Glide across long distances.
+            16: Lakitu
+            : CMP. DONE
+            : DSC. Fish for Cheep Cheeps and capture Big Cheep Cheeps.
+            17: Zipper
+            : CMP. DONE
+            : DSC. Open hidden paths by unzipping sections of levels.
+            18: Cheep Cheep
+            : CMP. DONE
+            : DSC. Swim faster; breathe underwater.
+            19: Puzzle Part (Lake Kingdom)
+            : CMP. DONE
+            : DSC. Solve a Lochlady puzzle to earn a Power Moon.
+            20: Poison Piranha Plant
+            : CMP. DONE
+            : DSC. Spit poison to clear enemies (post rock-throw).
+            21: Uproot
+            : CMP. DONE
+            : DSC. Stretch and break high Rock Blocks.
+            22: Fire Bro
+            : CMP. DONE
+            : DSC. Throw fire balls to defeat obstacles and enemies.
+            23: Sherm
+            : CMP. DONE
+            : DSC. Drive and destroy barriers as a tank.
+            24: Coin Coffer
+            : CMP. DONE
+            : DSC. Shoot coins to attack and solve puzzles.
+            25: Tree
+            : CMP. DONE
+            : DSC. Move it to reveal secret ground spots.
+            26: Boulder
+            : CMP. DONE
+            : DSC. Shift rocks to clear paths or access areas.
+            27: Picture Match Part (Goomba)
+            : CMP. TODO
+            : DSC. Collect Goomba puzzle piece in Cloud Kingdom.
+            28: Tropical Wiggler
+            : CMP. DONE
+            : DSC. Stretch onto small platforms and alcoves.
+            29: Pole
+            : CMP. DONE
+            : DSC. Propel Mario long distances in Metro Kingdom.
+            30: Manhole Extension
+            : CMP. DONE
+            : DSC. Lift a manhole to reveal hidden Power Moons.
+            31: Taxi
+            : CMP. DONE
+            : DSC. Fly to secret night zone to gather Moon Shards.
+            32: R.C. Car
+            : CMP. DONE
+            : DSC. Drive to break into a cage and collect moons.
+            33: Ty-Foo
+            : CMP. DONE
+            : DSC. Blow away obstacles with wind.
+            34: Shiverian Racer
+            : CMP. DONE
+            : DSC. Race in the Bound Bowl Grand Prix.
+            35: Snow Cheep Cheep
+            : CMP. DONE
+            : DSC. Swim through freezing waters without damage.
+            36: Gushen
+            : CMP. DONE
+            : DSC. Spray water to reach higher platforms.
+            37: Podoboo
+            : CMP. DONE
+            : DSC. Swim through lava unharmed.
+            38: Volbonan
+            : CMP. DONE
+            : DSC. Propel Mario to reach distant heights.
+            39: Hammer Bro / Chef Bro
+            : CMP. DONE
+            : DSC. Throw hammers/pans to clear obstacles.
+            40: Meat
+            : CMP. DONE
+            : DSC. Lure Cookatiel to release a Multi Moon.
+            41: Venus Fire Trap
+            : CMP. TODO
+            : DSC. Spit fire to activate mechanisms.
+            42: Pokio
+            : CMP. DONE
+            : DSC. Launch upwards by poking into walls.
+            43: Jizo
+            : CMP. DONE
+            : DSC. Move or align for coins, blocks, or P-Switches.
+            44: Bowser Statue
+            : CMP. DONE
+            : DSC. Shift it to uncover hidden Power Moons.
+            45: Parabones
+            : CMP. DONE
+            : DSC. Fly across lava with bone wings.
+            46: Banzai Bill
+            : CMP. DONE
+            : DSC. Crash through lava areas invincibly.
+            47: Chargin' Chuck
+            : CMP. DONE
+            : DSC. Charge and break heavy obstacles.
+            48: Bowser
+            : CMP. DONE
+            : DSC. Smash huge blocks during Moon Kingdom story event.
+            49: Letter (M-A-R-I-O)
+            : CMP. TODO
+            : DSC. Spell "Mario" to earn a Power Moon.
+            50: Puzzle Part (Metro Kingdom)
+            : CMP. TODO
+            : DSC. Activate a socket to unlock a Moon.
+            51: Picture Match Part (Mario)
+            : CMP. DONE
+            : DSC. Collect puzzle piece in Mushroom Kingdom.
+            52: Yoshi
+            : CMP. DONE
+            : DSC. Eat berries; 10 eaten grant a Power Moon.
+        GRP. Souvenir List // 01-souvenirs
+        - Path // path
+        ; TXT. 01-others 01-souvenirs
+        - Index // index
+        ; INT. 19
+            01: Plush Frog
+            : CMP. DONE
+            : DSC. These tiny froggies wear tiny top hats for self-defense, which looks so darn cute, they made a toy version!
+            02
+            : CMP. TODO
+            03
+            : CMP. TODO
+            04
+            : CMP. TODO
+            05
+            : CMP. TODO
+            06
+            : CMP. TODO
+            07
+            : CMP. TODO
+            08
+            : CMP. TODO
+            09
+            : CMP. TODO
+            10
+            : CMP. TODO
+            11
+            : CMP. TODO
+            12
+            : CMP. TODO
+            13
+            : CMP. TODO
+            14
+            : CMP. TODO
+            15
+            : CMP. TODO
+            16
+            : CMP. TODO
+            17
+            : CMP. TODO
+            18
+            : CMP. TODO
+            19
+            : CMP. TODO
+            20
+            : CMP. TODO
+            21
+            : CMP. TODO
+            22
+            : CMP. TODO
+            23
+            : CMP. TODO
+            24
+            : CMP. TODO
+            25
+            : CMP. TODO
+            26
+            : CMP. TODO
+            27
+            : CMP. DONE
+            : DSC. A sticker inspired by Top-Hat Tower.
+            28
+            : CMP. TODO
+            29
+            : CMP. DONE
+            : DSC. A sticker inspired by the Inverted Pyramid.
+            30
+            : CMP. TODO
+            31
+            : CMP. TODO
+            32
+            : CMP. TODO
+            33
+            : CMP. TODO
+            34
+            : CMP. TODO
+            35
+            : CMP. TODO
+            36
+            : CMP. TODO
+            37
+            : CMP. TODO
+            38
+            : CMP. TODO
+            39
+            : CMP. TODO
+            40
+            : CMP. TODO
+            41
+            : CMP. TODO
+            42
+            : CMP. TODO
+            43
+            : CMP. TODO
+        GRP. Music List // 02-music
+        - Path // path
+        ; TXT. 01-others 02-music
+        - Index // index
+        ; INT. 20
+            1: Bonneton
+            : CMP. DONE
+            2: Fossil Falls
+            : CMP. DONE
+            3: Fossil Falls (8-Bit)
+            : CMP. DONE
+            4: Fossil Falls: Dinosaur
+            : CMP. DONE
+            5: Tostarena: Ruins
+            : CMP. DONE
+            6: Tostarena: Ruins (8-Bit)
+            : CMP. DONE
+            7: Tostarena: Night
+            : CMP. DONE
+            8: Tostarena: Night (8-Bit)
+            : CMP. DONE
+            9: Tostarena: Town
+            : CMP. DONE
+            10: Tostarena: Jaxi
+            : CMP. DONE
+            11: Steam Gardens
+            : CMP. DONE
+            12: Steam Gardens (8-Bit)
+            : CMP. DONE
+            13: Steam Gardens: Sherm
+            : CMP. DONE
+            14: Lake Lamode 1
+            : CMP. DONE
+            15: Lake Lamode 1 (8-Bit)
+            : CMP. DONE
+            16: Lake Lamode 2
+            : CMP. DONE
+            17: Lake Lamode: Underwater Passage
+            : CMP. DONE
+            18: Forgotten Isle 1
+            : CMP. DONE
+            19: Forgotten Isle 2
+            : CMP. DONE
+            20: Forgotten Isle 2 (8-Bit)
+            : CMP. DONE
+            21: New Donk City: Night 1
+            : CMP. DONE
+            22: New Donk City: Night 2
+            : CMP. DONE
+            23: New Donk City: Daytime
+            : CMP. DONE
+            24: New Donk City: Cafe
+            : CMP. TODO
+            25: New Donk City (Band Performance)
+            : CMP. DONE
+            26: NDC Festival
+            : CMP. DONE
+            27: NDC Festival (Japanese)
+            : CMP. DONE
+            28: NDC Festival (8-Bit)
+            : CMP. TODO
+            29: Bubblaine
+            : CMP. DONE
+            30: Bubblaine: Underwater
+            : CMP. DONE
+            31: Bubblaine (8-Bit)
+            : CMP. DONE
+            32: Shiveria: Town
+            : CMP. DONE
+            33: Shiveria: Race-Course Entrance
+            : CMP. DONE
+            34: Mount Volbono
+            : CMP. DONE
+            35: Mount Volbono (8-Bit)
+            : CMP. DONE
+            36: Mount Volbono: Town
+            : CMP. DONE
+            37: Bowser’s Castle 1
+            : CMP. DONE
+            38: Bowser’s Castle 1 (8-Bit)
+            : CMP. DONE
+            39: Bowser’s Castle 2
+            : CMP. DONE
+            40: Honeylune Ridge
+            : CMP. DONE
+            41: Honeylune Ridge (8-Bit)
+            : CMP. TODO
+            42: Honeylune Ridge: Caves
+            : CMP. DONE
+            43: Honeylune Ridge: Wedding Hall
+            : CMP. DONE
+            44: Honeylune Ridge: Collapse
+            : CMP. DONE
+            45: Honeylune Ridge: Collapse (8-Bit)
+            : CMP. DONE
+            46: Honeylune Ridge: Escape ("Break Free (Lead the Way)")
+            : CMP. DONE
+            47: Honeylune Ridge: Escape (Japanese)
+            : CMP. DONE
+            48: Honeylune Ridge: Escape (8-Bit)
+            : CMP. TODO
+            49: Peach’s Castle
+            : CMP. DONE
+            50: Broodals Battle
+            : CMP. DONE
+            51: Madame Broode Battle
+            : CMP. DONE
+            52: Knucklotec Battle
+            : CMP. DONE
+            53: Torkdrift Battle
+            : CMP. DONE
+            54: Mechawiggler Battle
+            : CMP. DONE
+            55: Mollusque-Lanceur Battle
+            : CMP. DONE
+            56: Mollusque-Lanceur Battle (8-Bit)
+            : CMP. DONE
+            57: Cookatiel Battle
+            : CMP. DONE
+            58: Ruined Dragon Battle
+            : CMP. DONE
+            59: RoboBrood Battle
+            : CMP. DONE
+            60: Bowser Battle 1
+            : CMP. DONE
+            61: Bowser Battle 2
+            : CMP. DONE
+            62: Run, Jump, Throw! 1
+            : CMP. DONE
+            63: Run, Jump, Throw! 2
+            : CMP. DONE
+            64: Run, Jump, Throw! 2 (8-Bit)
+            : CMP. DONE
+            65: Subterranean 1
+            : CMP. DONE
+            66: Subterranean 1 (8-Bit)
+            : CMP. TODO
+            67: Subterranean 2
+            : CMP. DONE
+            68: Caves
+            : CMP. DONE
+            69: Ice
+            : CMP. DONE
+            70: Another World
+            : CMP. DONE
+            71: Ruins
+            : CMP. DONE
+            72: Ruins (8-Bit)
+            : CMP. DONE
+            73: Projection Room: Above Ground
+            : CMP. TODO
+            74: Projection Room: Underground
+            : CMP. TODO
+            75: Above the Clouds
+            : CMP. DONE
+            76: Toad Brigade Member
+            : CMP. DONE
+            77: To the Next Kingdom
+            : CMP. DONE
+            78: Shop
+            : CMP. DONE
+            79: Race
+            : CMP. DONE
+            80: RC Car
+            : CMP. TODO
+            81: Spinning Slots
+            : CMP. DONE
+            82: Climactic Duel!
+            : CMP. DONE

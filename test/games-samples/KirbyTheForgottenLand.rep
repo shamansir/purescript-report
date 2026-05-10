@@ -1,0 +1,383 @@
+SBJ. Kirby: The Forgotten Land // kirby-the-forgotten-land
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-09-18>
+- Playtime // playtime
+; REL. > 10:00:00
+- Platform // platform
+; TXT. Switch
+    GRP. Basic // 00-basic
+    - Path // path
+    ; TXT. 00-basic
+    - Index // index
+    ; INT. 0
+        Stars
+        : INT. 7221
+        Super Stars
+        : INT. 2
+        Total Waddles
+        : INT. 128
+        Wondaria Remains
+        : GTI. 41 48
+        Natural Plains
+        : GTI. 42 46
+        Everbay Coast
+        : GTI. 45 47
+        Wondaria Remains: Treasure Road
+        : GTI. 1 9
+        Natural Plain: Treasure Road
+        : GTI. 7 7
+        Everbay Coast: Treasure Road
+        : GTI. 8 8
+        Figure Collection: Vol.1
+        : GTI. 74 79
+            GRP. World 1: Wondaria Remains // 00-wondaria-remains
+            - Path // path
+            ; TXT. 01-world 00-world-1 00-wondaria-remains
+            - Index // index
+            ; INT. 1
+                Welcome to Wondaria
+                : GTI. 10 10
+                Circuit Speedway
+                : GTI. 10 10
+                Invasion at the House of Horrors
+                : GTI. 10 10
+                The Wondaria Dream Parade
+                : GTI. 11 11
+                Danger under the Big Top
+                : GTI. 0 7
+                GRP. World 1: Wondaria Remains: Treasure Road // 00-treasure-road
+                - Path // path
+                ; TXT. 01-world 00-world-1 00-wondaria-remains 00-treasure-road
+                - Index // index
+                ; INT. 2
+                    Ring Mouth
+                    : CMP. TODO
+                    Pipe Mouth
+                    : CMP. TODO
+                    Needle
+                    : CMP. TODO
+                    Cutter
+                    : CMP. DONE
+                    Bomb
+                    : CMP. TODO
+                    Fleur Tornado
+                    : CMP. TODO
+                    Hammer
+                    : CMP. TODO
+                    Fire
+                    : CMP. TODO
+                    Sword
+                    : CMP. TODO
+            GRP. World 1: Natural Plains // 01-natural-plains
+            - Path // path
+            ; TXT. 01-world 00-world-1 01-natural-plains
+            - Index // index
+            ; INT. 3
+                Downtown Grassland
+                : GTI. 9 9
+                Through the Tunnel
+                : GTI. 10 10
+                Rocky Rollin' Road
+                : GTI. 10 10
+                A Trip to Alivel Mall
+                : GTI. 10 10
+                The Brawl at the Mall
+                : GTI. 3 7
+                GRP. World 1: Natural Plains: Treasure Road // 00-treasure-road
+                - Path // path
+                ; TXT. 01-world 00-world-1 01-natural-plains 00-treasure-road
+                - Index // index
+                ; INT. 4
+                    Vending Mouth
+                    : CMP. DONE
+                    Cone Mouth
+                    : CMP. DONE
+                    Cutter
+                    : CMP. DONE
+                    Bomb
+                    : CMP. DONE
+                    Fire
+                    : CMP. DONE
+                    Ice
+                    : CMP. DONE
+                    Ranger
+                    : CMP. TODO
+            GRP. World 1: Everbay Coast // 03-everbay-coast
+            - Path // path
+            ; TXT. 01-world 00-world-1 03-everbay-coast
+            - Index // index
+            ; INT. 5
+                Abandoned Beach
+                : GTI. 9 9
+                Concrete Isles
+                : GTI. 10 10
+                Scale the Cement Summit
+                : GTI. 10 10
+                Fast-Flowing Waterworks
+                : GTI. 11 11
+                The Tropical Terror
+                : GTI. 5 7
+                GRP. World 1: Everbay Coast : Treasure Road // 00-treasure-road
+                - Path // path
+                ; TXT. 01-world 00-world-1 03-everbay-coast 00-treasure-road
+                - Index // index
+                ; INT. 6
+                    Normal
+                    : CMP. DONE
+                    Stairs Mouth
+                    : CMP. DONE
+                    Hammer
+                    : CMP. DONE
+                    Drill
+                    : CMP. DONE
+                    Tornado
+                    : CMP. DONE
+                    Volcano Fire
+                    : CMP. DONE
+                    Sword
+                    : CMP. DONE
+                    Chakram Cutter
+                    : CMP. DONE
+    GRP. Figures // 02-figures
+    - Path // path
+    ; TXT. 02-figures
+    - Index // index
+    ; INT. 7
+        Kirby
+        : CMP. DONE
+        : DSC. Kirby was pulled into a mysterious vortex that appeared in the sky over his home on Planet Popstar. When he woke up, he was in a new world! Traveling through that vortex also gave Kirby a new and mysterious power... Let's see what it can do! Onward to adventure! This is fittingly always the first figure Kirby collects.
+        Elfilin
+        : CMP. DONE
+        : DSC. A mystical new friend you met in a mysterious new world. You found Elfilin as he was trying to save the Waddle Dees from the Beast Pack. He seems happy to be Kirby's guide, sharing helpful advice to save the Waddle Dees and rebuild their town. Thanks, Elfilin!
+        Bandana Waddle Dee
+        : CMP. DONE
+        : DSC. Bandana Waddle Dee was pulled through the vortex along with Kirby. When he heard that his fellow Waddle Dees were being captured by the Beast Pack, he grabbed his trusty spear and ran to help! He can join you as P2 while you explore the new world.
+        Waddle Dee
+        : CMP. DONE
+        : DSC. These Dee-lightful residents of Planet Popstar landed in the new world before Kirby arrived. Things looked grim when wild beasts began to capture them and steal their precious food...but with Kirby's help, they're rebuilding their town and starting over!
+        Sword
+        : CMP. DONE
+        : DSC. Slice through this new world as a sword-wielding, green-hatted hero! Try charging up before you swing for extra power. Train hard, and become this world's new sword master!
+        Bomb
+        : CMP. DONE
+        : DSC. Hold down the button to aim and throw. Got it? Hold, aim, throw! Throw, hit, BOOM! You can run and throw them too, or roll them ahead of you to get an explosive strike! Contrary to the English description, it is not possible to run while throwing bombs in this game. This error does not exist in Japanese.
+        Cutter
+        : CMP. DONE
+        : DSC. Swish! Sling that sharp-edged boomerang! Use it to grab far-off items. Hold the button down to freeze it in midair and charge it up. That will make it extra powerful! Swish!
+        Fire
+        : CMP. DONE
+        : DSC. This ability is hot, hot, hot! Light fuses, burn through obstacles, and toast your enemies with the power of a raging fire. Run, jump, then attack to blast forward as a fireball!
+        Ranger
+        : CMP. DONE
+        : DSC. Time for some shooting-star sharpshooting! Pew, pew! Hold the button down to charge and aim, then let go to send a sparkling shot flying. Charge it up for bigger blasts!
+        Needle
+        : CMP. DONE
+        : DSC. Ouch! Ooch! Careful with those spikes! Jab enemies in place, or pick 'em up by rolling around. Nab a whole bunch of 'em together, then launch them off all at once! POW!
+        Ice
+        : CMP. DONE
+        : DSC. Brrr! So cold! Can you see your own breath? Make a chunk of ice, then kick it forward! Skate and slide wherever you go. You'll even glide right over mud and magma!
+        Car
+        : CMP. DONE
+        : DSC. N/A
+        Car-Mouth Kirby
+        : CMP. DONE
+        : DSC. Kirby gained the mysterious Mouthful Mode ability after he flew through that vortex... Now he can stuff an entire car into his mouth! When he does, he turns into a peppy, pink car that can jump and use Turbo Dash. It's a nice day for a scenic drive. Turn up the radio! Across all Mouthful Mode English figure descriptions (except for Spring-Mouth Kirby, Gear-Mouth Kirby, and Sign-Mouth Kirby), the first sentence labels the Mouthful Mode ability as mysterious when the Japanese version labels the vortex as such instead.
+        Traffic Cone
+        : CMP. DONE
+        : DSC. N/A
+        Cone-Mouth Kirby
+        : CMP. DONE
+        : DSC. Kirby gained the mysterious Mouthful Mode ability after he flew through that vortex... Now he can stuff an entire cone into his mouth! Use your pointy head to jab below you and bust open cracks in the ground or on pipes. You're out of cone-trol, Kirby!
+        Water Tank
+        : CMP. DONE
+        : DSC. N/A
+        Dome-Mouth Kirby
+        : CMP. DONE
+        : DSC. Kirby gained the mysterious Mouthful Mode ability after he flew through that vortex... Now he can stuff an entire dome into his mouth! Wrap around one of these, then twist until it pops open. Think there's anything good inside? Only one way to find out!
+        Storage Cabinet
+        : CMP. DONE
+        : DSC. N/A
+        Storage-Mouth Kirby
+        : CMP. DONE
+        : DSC. Kirby gained the mysterious Mouthful Mode ability after he flew through that vortex... Now he can stuff an entire set of lockers into his mouth! Wiggle and thrash until you tip over... Hey! Who put this behind the lockers?
+        Rental Lockers
+        : CMP. DONE
+        : DSC. N/A
+        Bolted-Storage-Mouth Kirby
+        : CMP. DONE
+        : DSC. Kirby gained the mysterious Mouthful Mode ability after he flew through that vortex... Now he can stuff an entire set of lockers into his mouth! This one won't budge. Wiggle, wiggle, wiggle, and— Whoa! He just took a whole chunk of that wall down! Use this to find hidden routes you didn't know about. Despite what the end of the English description implies, the only time Bolted-Storage-Mouth is used is required to complete the stage it appears in. Again, this error is not present in Japanese.
+        Captured Waddle Dee
+        : CMP. DONE
+        : DSC. One of the Waddle Dees being held captive by the fearsome Beast Pack. There are so many out there waiting to be saved. You can almost hear them calling for help... "Wa-wa! Wa-wa!" Let me out, let me out! Wait, you hear that too? One of them must be nearby!
+        Captured Waddle Dees
+        : CMP. DONE
+        : DSC. The Beast Pack managed to catch these three Waddle Dees with one golden cage! If they work together, they might be able to... Oh. Never mind. They're too sad to move. All they can do is cry out for help. "Wa-wa! Wa-wa!" Somebody save them!
+        Awoofy
+        : CMP. DONE
+        : DSC. A common beast that can be found all over the new world. They're pretty cute, but they have a dangerous wild side. They'll growl and jump at anyone who crosses them! A whole bunch of these critters attacked the Waddle Dees. Funny, you'd think they'd get along! The end of the description alludes to Awoofies taking the role of "most basic enemy type" that Waddle Dees held in previous games.
+        Cappy
+        : CMP. DONE
+        : DSC. N/A
+        Bronto Burt
+        : CMP. DONE
+        : DSC. N/A
+        Kabu
+        : CMP. DONE
+        : DSC. N/A
+        Bouncy
+        : CMP. DONE
+        : DSC. N/A
+        Gabon
+        : CMP. DONE
+        : DSC. N/A
+        Shotzo
+        : CMP. DONE
+        : DSC. N/A
+        Gordo
+        : CMP. DONE
+        : DSC. N/A
+        Gordo Bar
+        : CMP. DONE
+        : DSC. N/A
+        Big Kabu
+        : CMP. DONE
+        : DSC. N/A
+        Buffahorn
+        : CMP. DONE
+        : DSC. Behold! It's the brutal, brutish Buffahorn! Weak attacks won't stand a chance against this critter's forward tackle. Good thing they have a hard time stopping! If you're careful, you can trick them into running off cliffs. They'll be OK down there. They're real tough.
+        Tortorner
+        : CMP. DONE
+        : DSC. Tortorner has a whole shell made of concrete, as if it walked off with somebody's sidewalk! It has a thick skull and a mean bite, but its body is pretty delicate. A Mouthful Mode ability might help you crack through its shell and land a brutal blow from above!
+        Tortuilding
+        : CMP. DONE
+        : DSC. Whoa! Tortuilding's shell is a whole building! This big baddie must be some kind of boss for the smaller beasts. It enjoys basking in the sun, so it climbs to high spots and claims the whole area as its territory. (It must take a long time for this critter to get up there...)
+        Blade Knight
+        : CMP. DONE
+        : DSC. N/A
+        Poppy Bros. Jr.
+        : CMP. DONE
+        : DSC. N/A
+        Sir Kibble
+        : CMP. DONE
+        : DSC. N/A
+        Hot Head
+        : CMP. DONE
+        : DSC. N/A
+        Bernard
+        : CMP. DONE
+        : DSC. This uppity pup is an expert marksman—pew, pew—who's quick on his feet as he patrols the new world. His eyes are hidden under his hat, but that doesn't seem to affect his aim! He also has an impressive sniffer that can track prey, near or far.
+        Needlous
+        : CMP. DONE
+        : DSC. N/A
+        Chilly
+        : CMP. DONE
+        : DSC. N/A
+        Jabhog
+        : CMP. DONE
+        : DSC. Charge those points up, then...zing! Let 'em fly! Jabhog is famous in the new world for its spiky spines. They were short and cute when it was young, but they eventually grew into dangerous needles. It'll jab anything that gets too close, so approach with caution!
+        Wanted Posters
+        : CMP. DONE
+        : DSC. N/A A wanted poster of Elfilin can be found hidden on the back of this figure if spun around while observing it.
+        Arrow Sign
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Pop Flower
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Tulip
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Star Block
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Bomb Block
+        : CMP. DONE
+        : DSC. N/A
+        Switch
+        : CMP. DONE
+        : DSC. N/A
+        Target Switch
+        : CMP. DONE
+        : DSC. N/A
+        Lantern Switch
+        : CMP. DONE
+        : DSC. N/A
+        Cannon
+        : CMP. DONE
+        : DSC. N/A
+        Warp Star
+        : CMP. DONE
+        : DSC. N/A
+        Treasure Chest
+        : CMP. DONE
+        : DSC. N/A
+        Radio
+        : CMP. DONE
+        : DSC. N/A
+        Car-Shop Sign
+        : CMP. DONE
+        : DSC. This logo belonged to an auto shop named Holine Custom Autos—part of Holine Corp. Holine also sold industrial parts, managed construction, and made all kinds of stuff. From buildings to streets to amusement-park rides, remember: if it's quality, it's Holine! Err, perhaps "it was" would be more accurate. If decoded from the alien language, the sign actually reads "Holine Auto Custom".
+        Alivel Mall Sign
+        : CMP. DONE
+        : DSC. This was the logo for Alivel Mall, owned by Alivel Holding Company. "Making life even livelier" was their corporate slogan. They ran a wide range of businesses: entertainment arenas, food shops, service industries... Now the remains of those businesses can be found in all kinds of places, empty and alone.
+        Lightron Works Sign
+        : CMP. DONE
+        : DSC. The Lightron Works Company was a massive corporation that invested in research and development within all kinds of fields: electro, bio, astro, and more! Lightron eventually split up, giving rise to many rival companies and countless heated corporate battles.
+        Cherry
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Watermelon
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Tangerine
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Melon
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Star Coin
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Green Star Coin
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Red Star Coin
+        : CMP. DONE
+        : DSC. N/A Can only be obtained from the Gotcha Machine Alley.
+        Blue Star Coin
+        : CMP. DONE
+        : DSC. N/A
+        Invincible Candy
+        : CMP. DONE
+        : DSC. N/A
+        Maxim Tomato
+        : CMP. DONE
+        : DSC. If your health is low, just eat a Maxim Tomato to fully heal yourself. (They're packed with nutrients!) Did these fall through the same vortex as Kirby and his friends, or were they in the new world already? It's hard to tell, but everyone seems to enjoy them—even the Beast Pack!
+        Café-Staff Kirby
+        : CMP. TODO
+        : DSC. Kirby's taken on a side gig at the counter of the Waddle Dee Café! He's dressed like a focused employee, but he's secretly fighting the urge to gobble up each dish himself. This might be his greatest struggle yet... Stay strong, Kirby! The "Frenzy Gig" in the Waddle Dee Café: Help Wanted! Sub-Game must be completed in order to earn this figure.
+        Fishing-Pond Kirby
+        : CMP. TODO
+        : DSC. Ahhh. Kirby's doing a bit of fishin' at the ol' fishin' pond. He looks super, super relaxed... Maybe too relaxed. Hey! Pay attention, Kirby! There's exciting stuff swimming in that pond, including the legendary "Bling Blipper" of Waddle Dee Town! The Bling Blipper must be caught in the Flash Fishing Sub-Game in order to earn this figure.
+        Wise Waddle Dee
+        : CMP. DONE
+        : DSC. When you need wisdom, visit Wise Waddle Dee! He always has a tip handy and seems to know a lot about this new world. His magical encyclopedia can collect and share rankings from all over the world! (Where did he even find that book?!) Earn this figure by talking to Wise Waddle Dee, or asking him to continue talking, 5 total times.
+        Delivery Waddle Dee
+        : CMP. TODO
+        : DSC. This dutiful delivery Dee works for Waddle Dee-liveries in town. He gets helpful items to your doorstep with blinding speed! Kirby's handwriting makes it hard to read the Present Codes sometimes, but this kind soul approves the orders anyway. Three offline/town Present Codes must be entered at Waddle Dee-liveries in order to earn this figure.
+        Café-Staff Waddle Dee
+        : CMP. DONE
+        : DSC. This short-order cook loves to feed his fellow Waddle Dees at the café in town. He even kept them fed after they crashed in the new world! His cooking smelled so good...which is how the Beast Pack found them. Now that the café has been rebuilt, it's time to get to work! 300 Star Coins must be spent at Waddle Dee Café in order to earn this figure.
+        Game-Shop Waddle Dee
+        : CMP. TODO
+        : DSC. Step right up, step right up! This Waddle Dee runs the town's favorite game, Tilt-and-Roll Kirby. The other Waddle Dees love to play his game. In fact, they wouldn't stop asking him for more! That might explain why he added the daunting Extra Hard difficulty. All three levels in the Tilt-and-Roll Kirby Sub-Game must be completed on standard difficulty in order to earn this figure.
+        Item-Shop Waddle Dee
+        : CMP. TODO
+        : DSC. This enterprising Waddle Dee opened his own item shop in town. He sells special items that will help you out. He also supplies the café with an Energy Drink that he makes by hand. They have a special business arrangement: two Energy Drinks for three Kirby Burgers! 1050 Star Coins must be spent at Waddle Dee's Item Shop in order to earn this figure.
+        Wild Frosty
+        : CMP. DONE
+        : DSC. The mysterious vortex brought Mr. Frosty to the new world too! He arrived shortly before Kirby and immediately joined the Beast Pack. (The change in wardrobe must have made it an easy choice.) It's tough to be the new guy, but his fellow beasts love working with him.
+        Strong-Armed BeastGorimondo
+        : CMP. DONE
+        : DSC. Gorimondo considers the local shopping mall to be his personal territory. As part of the Beast Pack's executive council, he's in charge of capturing Waddle Dees and gathering food. He tends to eat all the fruit himself... He just can't help it! This behavior has earned him an earful from his boss more than once.

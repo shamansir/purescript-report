@@ -1,0 +1,246 @@
+SBJ. No Rest For The Wicked // no-rest-for-the-wicked
+# Steam
+- Tracked At // trackedAt
+; DAT. <2025-12-27>
+- Playtime // playtime
+; REL. > 22:42:00
+- Platform // platform
+; TXT. Steam
+    GRP. File // 00-file
+    - Path // path
+    ; TXT. 00-file
+    - Index // index
+    ; INT. 0
+        Level
+        : INT. 13
+        XP
+        : GTI. 843 1100
+        HP
+        : GTI. 154 154
+        Attribute Points
+        : INT. 0
+    GRP. Money // 01-money
+    - Path // path
+    ; TXT. 01-money
+    - Index // index
+    ; INT. 1
+        Silver
+        : INT. 11
+        Bronze
+        : INT. 77
+    GRP. Stats // 02-stats
+    - Path // path
+    ; TXT. 02-stats
+    - Index // index
+    ; INT. 2
+        Health
+        : INT. 16
+        Stamina
+        : INT. 12
+        Strength
+        : INT. 17
+        Dexterity
+        : INT. 22
+        Intelligence
+        : INT. 14
+        Faith
+        : INT. 10
+        Focus
+        : INT. 15
+        Equip Load
+        : INT. 10
+        GRP. General // 00-general
+        - Path // path
+        ; TXT. 02-stats 00-general
+        - Index // index
+        ; INT. 3
+            Hit Points
+            : INT. 154
+            Stamina Points
+            : INT. 58
+            Stamina Regen
+            : INT. 30
+            Focus Points
+            : INT. 185
+            Focus Gain
+            : PCI. 110
+        GRP. Defence // 01-defence
+        - Path // path
+        ; TXT. 02-stats 01-defence
+        - Index // index
+        ; INT. 4
+            Armor
+            : INT. 246
+            Heat Resistance
+            : INT. 250
+            Cold Resistance
+            : INT. 258
+            Electric Resistance
+            : INT. 299
+            Plague Resistance
+            : INT. 311
+            Poise
+            : INT. 17
+        GRP. Defence, % // 02-defence-pct
+        - Path // path
+        ; TXT. 02-stats 02-defence-pct
+        - Index // index
+        ; INT. 5
+            Armor
+            : PCI. 33
+            Heat Resistance
+            : PCI. 33
+            Cold Resistance
+            : PCI. 34
+            Electric Resistance
+            : PCI. 38
+            Plague Resistance
+            : PCI. 39
+        GRP. Weight // 03-weight
+        - Path // path
+        ; TXT. 02-stats 03-weight
+        - Index // index
+        ; INT. 6
+            Equip Load
+            : INT. 170
+            Current Weight
+            : INT. 155
+            Weight Class
+            : TXT. Heavy
+            Weight Class (%)
+            : PCI. 91
+    GRP. Weapons // 03-weapons
+    - Path // path
+    ; TXT. 03-weapons
+    - Index // index
+    ; INT. 7
+
+        GRP. Blood Rusted Sword // 00-blood-rusted-sword
+        - Path // path
+        ; TXT. 03-weapons 00-blood-rusted-sword
+        - Index // index
+        ; INT. 8
+            Base
+            : INT. 20
+            Attribute Bonus (Kind)
+            : TXT. Strength
+            Attribute Bonus
+            : INT. 9
+            Other
+            : INT. 0
+            Total
+            : INT. 29
+        GRP. Short Bow // 01-short-bow
+        - Path // path
+        ; TXT. 03-weapons 01-short-bow
+        - Index // index
+        ; INT. 9
+            Base
+            : INT. 18
+            Attribute Bonus (Kind)
+            : TXT. Dexterity
+            Attribute Bonus
+            : INT. 13
+            Other
+            : INT. 0
+            Total
+            : INT. 31
+    GRP. Quests // 04-quests
+    - Path // path
+    ; TXT. 04-quests
+    - Index // index
+    ; INT. 10
+
+        GRP. Active // 00-active
+        - Path // path
+        ; TXT. 04-quests 00-active
+        - Index // index
+        ; INT. 11
+            Servant of God, part 3
+            : PRG. TODO
+            Of Rats and Raiders, part 1
+            : PRG. TODO
+            Spilled Blood, part 1
+            : PRG. TODO
+            Spoken and Unspoken, part 5
+            : PRG. TODO
+        GRP. Completed // 01-completed
+        - Path // path
+        ; TXT. 04-quests 01-completed
+        - Index // index
+        ; INT. 12
+            A Small Mercy, 4/4
+            : GTI. 4 4
+            Sacrament 5/5
+            : GTI. 5 5
+    GRP. Been to // 05-been-to
+    - Path // path
+    ; TXT. 05-been-to
+    - Index // index
+    ; INT. 13
+        The Shallows
+        : PRG. DONE
+        Mariner's Keep
+        : PRG. DONE
+        Orbran Glades
+        : PRG. DONE
+        Sacrament (Home)
+        : PRG. DONE
+        Nameless Pass
+        : PRG. DONE
+    GRP. Blueprints & Recipes // 06-blueprints-recipes
+    - Path // path
+    ; TXT. 06-blueprints-recipes
+    - Index // index
+    ; INT. 14
+
+        GRP. Weapons // 00-weapons
+        - Path // path
+        ; TXT. 06-blueprints-recipes 00-weapons
+        - Index // index
+        ; INT. 15
+            Claymore
+            : PRG. DONE
+            Petaled Spear
+            : PRG. DONE
+        GRP. Armor // 01-armor
+        - Path // path
+        ; TXT. 06-blueprints-recipes 01-armor
+        - Index // index
+        ; INT. 16
+            Reckless Talbear Scarb
+            : PRG. DONE
+            Reckless Talbear Gloves
+            : PRG. DONE
+            Reckless Talbear Helmet
+            : PRG. DONE
+            Reckless Talbear Pants
+            : PRG. DONE
+        GRP. Food // 02-food
+        - Path // path
+        ; TXT. 06-blueprints-recipes 02-food
+        - Index // index
+        ; INT. 17
+            Fish Skewer
+            : PRG. DONE
+            Mushroom & Meat Curry
+            : PRG. DONE
+            Crab Chowder
+            : PRG. DONE
+            Crab Stuffed Mushroom
+            : PRG. DONE
+            Dracaena Dumplings
+            : PRG. DONE
+            Mushroom Soup
+            : PRG. DONE
+        GRP. Decorations // 03-decorations
+        - Path // path
+        ; TXT. 06-blueprints-recipes 03-decorations
+        - Index // index
+        ; INT. 18
+            Wayfarer's Rest Bed
+            : PRG. DONE
+            Small Chest
+            : PRG. DONE
+            Medium Chest
+            : PRG. DONE

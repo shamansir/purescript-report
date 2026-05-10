@@ -1,0 +1,982 @@
+SBJ. Balatro+ // balatro-ios
+# IOS
+- Tracked At // trackedAt
+; DAT. <2026-01-04>
+- Playtime // playtime
+; UNK. .
+- Platform // platform
+; TXT. IOS
+    GRP. Statistics // 00-stats
+    - Path // path
+    ; TXT. 00-stats
+    - Index // index
+    ; INT. 0
+        Best Hand
+        : MSI. 11925 Chips
+        Highest Round
+        : INT. 18
+        Highest Ante
+        : INT. 6
+        Most Played Hand
+        : TXT. Two Pair
+        Most Played Hand (Count)
+        : INT. 30
+        Most Money
+        : MSI. 55 $
+        Best Win Streak
+        : INT. 0
+        Best Win Streak (Count)
+        : INT. 0
+        Progress
+        : PCI. 3
+        Collection
+        : PCI. 15
+        Collection (Items)
+        : GTI. 52 340
+        Challenges
+        : PCI. 0
+        Challenges (Count)
+        : GTI. 0 20
+        Jocker Stickers
+        : PCI. 0
+        Jocker Stickers (Count)
+        : GTI. 0 1200
+        Deck Stake Wins
+        : PCI. 0
+        Deck Stake Wins (Count)
+        : GTI. 0 120
+    GRP. Cards Stats // 01-cards-stats
+    - Path // path
+    ; TXT. 01-cards-stats
+    - Index // index
+    ; INT. 1
+
+        GRP. Cards Stats: Jockers // 00-jockers
+        - Path // path
+        ; TXT. 01-cards-stats 00-jockers
+        - Index // index
+        ; INT. 2
+            Runner
+            : MSI. 16 Rounds
+            : DSC. Common: +5 Chips for Straight
+            Raised First
+            : MSI. 15 Rounds
+            : DSC. Common: Double the Lowest in hand
+            Baseball Card
+            : MSI. 14 Rounds
+            : DSC. Rare: Uncommon Jockers give x1.5 Mult
+            Crafty Jocker
+            : MSI. 12 Rounds
+            : DSC. Common: +80 Chips for Flush
+            Abstract Jocker
+            : MSI. 11 Rounds
+            : DSC. Common: +3 Mult for each Jocker card
+            Jocker
+            : MSI. 8 Rounds
+            : DSC. Common: +4 Mult
+            Turtle Bean
+            : MSI. 5 Rounds
+            : DSC. Uncommon: +5 Hand size, reduced by 1 every round
+            Ride the Bus
+            : MSI. 5 Rounds
+            : DSC. Common: Gains +1 Mult consecutive hand w/o scoring face card
+            Blue Jocker
+            : MSI. 4 Rounds
+            : DSC. Common: +2 Chips for each remaining card in deck
+            Midas Mask
+            : MSI. 3 Rounds
+            : DSC. Uncommon: All played face card become Gold cards when scored
+        GRP. Cards Stats: Consumables // 01-consumables
+        - Path // path
+        ; TXT. 01-cards-stats 01-consumables
+        - Index // index
+        ; INT. 3
+            The Empress
+            : MSI. 2 Times
+            Venus
+            : MSI. 2 Times
+            Uranus
+            : MSI. 2 Times
+            Pluto
+            : MSI. 1 Time
+            Saturn
+            : MSI. 1 Time
+            The Wheel of Fortune
+            : MSI. 1 Time
+            Mercury
+            : MSI. 1 Time
+            The Sun
+            : MSI. 1 Time
+            Earth
+            : MSI. 1 Time
+            The Magician
+            : MSI. 1 Time
+        GRP. Cards Stats: Tarots // 02-tarots
+        - Path // path
+        ; TXT. 01-cards-stats 02-tarots
+        - Index // index
+        ; INT. 4
+            The Empress
+            : MSI. 2 Times
+            The Wheel of Fortune
+            : MSI. 1 Time
+            The Magician
+            : MSI. 1 Time
+            The Sun
+            : MSI. 1 Time
+            The Star
+            : MSI. 1 Time
+        GRP. Cards Stats: Planets // 03-planets
+        - Path // path
+        ; TXT. 01-cards-stats 03-planets
+        - Index // index
+        ; INT. 5
+            Uranus
+            : MSI. 2 Times
+            Venus
+            : MSI. 2 Times
+            Saturn
+            : MSI. 1 Time
+            Earth
+            : MSI. 1 Time
+            Pluto
+            : MSI. 1 Time
+            Mercury
+            : MSI. 1 Time
+        GRP. Cards Stats: Spectrals // 04-spectrals
+        - Path // path
+        ; TXT. 01-cards-stats 04-spectrals
+        - Index // index
+        ; INT. 6
+
+        GRP. Cards Stats: Vouchers // 05-vouchers
+        - Path // path
+        ; TXT. 01-cards-stats 05-vouchers
+        - Index // index
+        ; INT. 7
+            Paint Brush
+            : MSI. 2 Times
+            : DSC. +1 Hand Size
+            Clearance Scale
+            : MSI. 1 Time
+            : DSC. All Cards in Shop 25% off
+    GRP. Collection // 02-collection
+    - Path // path
+    ; TXT. 02-collection
+    - Index // index
+    ; INT. 8
+        Jockers
+        : GTI. 13 150
+        : REF. 02-collection 00-jockers
+        Decks
+        : GTI. 3 15
+        : REF. 02-collection 01-decks
+        Vouchers
+        : GTI. 2 32
+        : REF. 02-collection 02-vouchers
+        Consumables: Tarot Cards
+        : GTI. 7 22
+        : REF. 02-collection 03-consumables 00-tarots
+        Consumables: Planet Cards
+        : GTI. 7 12
+        : REF. 02-collection 03-consumables 01-planets
+        Consumables: Spectral Cards
+        : GTI. 0 18
+        : REF. 02-collection 03-consumables 02-spectrals
+        Enhanced Cards
+        : REF. 02-collection 04-enhanced
+        : NON. .
+        Seals
+        : REF. 02-collection 05-seals
+        : NON. .
+        Editions
+        : GTI. 1 5
+        : REF. 02-collection 06-editions
+        Booster Packs
+        : GTI. 11 32
+        : REF. 02-collection 07-booster-packs
+        Tags
+        : GTI. 0 24
+        : REF. 02-collection 08-tags
+        Blinds
+        : GTI. 8 30
+        : REF. 02-collection 09-blinds
+        GRP. Jockers // 00-jockers
+        - Path // path
+        ; TXT. 02-collection 00-jockers
+        - Index // index
+        ; INT. 9
+            Jocker
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Crafty Jocker
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Banner
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Raised Fist
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Abstract Jocker
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Even Steven
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Ride the Bus
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Runner
+            : CMP. DONE
+            ???
+            : UNK. .
+            DNA
+            : CMP. DONE
+            ???
+            : UNK. .
+            Blue Jocker
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Midas Mask
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Turtle Bean
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            Baseball Card
+            : CMP. DONE
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+            ???
+            : UNK. .
+        GRP. Decks // 01-decks
+        - Path // path
+        ; TXT. 02-collection 01-decks
+        - Index // index
+        ; INT. 10
+            Red Deck
+            : CMP. DONE
+            : DSC. +1 Discard every round
+            Blue Deck
+            : CMP. DONE
+            : DSC. +1 Hand every round
+            Yellow Deck
+            : CMP. DONE
+            : DSC. Start with extra $10
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+        GRP. Vouchers // 02-vouchers
+        - Path // path
+        ; TXT. 02-collection 02-vouchers
+        - Index // index
+        ; INT. 11
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Clearance Sale
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Paint Brush
+            : CMP. DONE
+            ???
+            : CMP. TODO
+        GRP. Consumables // 03-consumables
+        - Path // path
+        ; TXT. 02-collection 03-consumables
+        - Index // index
+        ; INT. 12
+
+            GRP. Tarot Cards // 00-tarots
+            - Path // path
+            ; TXT. 02-collection 03-consumables 00-tarots
+            - Index // index
+            ; INT. 13
+                ???
+                : CMP. TODO
+                The Magician
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                The Empress
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                The Hermit
+                : CMP. DONE
+                Wheel of Fortune
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                The Devil
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                The Star
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                The Sun
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+            GRP. Planet Cards // 01-planets
+            - Path // path
+            ; TXT. 02-collection 03-consumables 01-planets
+            - Index // index
+            ; INT. 14
+                Mercury
+                : CMP. DONE
+                Venus
+                : CMP. DONE
+                Earth
+                : CMP. DONE
+                Mars
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                Saturn
+                : CMP. DONE
+                Uranus
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                Pluto
+                : CMP. DONE
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+            GRP. Spectral Cards // 03-spectral
+            - Path // path
+            ; TXT. 02-collection 03-consumables 03-spectral
+            - Index // index
+            ; INT. 15
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+                ???
+                : CMP. TODO
+        GRP. Enhanced Cards // 04-enhanced
+        - Path // path
+        ; TXT. 02-collection 04-enhanced
+        - Index // index
+        ; INT. 16
+            Bonus Card
+            : NON. .
+            Mult Card
+            : NON. .
+            Wild Card
+            : NON. .
+            Glass Card
+            : NON. .
+            Steel Card
+            : NON. .
+            Stone Card
+            : NON. .
+            Gold Card
+            : NON. .
+            Lucky Card
+            : NON. .
+        GRP. Seals // 05-seals
+        - Path // path
+        ; TXT. 02-collection 05-seals
+        - Index // index
+        ; INT. 17
+            Gold Seal
+            : NON. .
+            Red Seal
+            : NON. .
+            Blue Seal
+            : NON. .
+            Purple Seal
+            : NON. .
+        GRP. Editions // 06-editions
+        - Path // path
+        ; TXT. 02-collection 06-editions
+        - Index // index
+        ; INT. 18
+            Base
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+        GRP. Booster Packs // 07-booster-packs
+        - Path // path
+        ; TXT. 02-collection 07-booster-packs
+        - Index // index
+        ; INT. 19
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Arcana Pack
+            : CMP. DONE
+            Arcana Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            Jumbo Arcana Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Celestial Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Celestial Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Mega Celestial Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            Standard Pack
+            : CMP. DONE
+            Standard Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Jumbo Standard Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            Mega Standard Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            Mega Buffoon Pack
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+        GRP. Tags // 08-tags
+        - Path // path
+        ; TXT. 02-collection 08-tags
+        - Index // index
+        ; INT. 20
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+        GRP. Blinds // 09-blinds
+        - Path // path
+        ; TXT. 02-collection 09-blinds
+        - Index // index
+        ; INT. 21
+            Small Blind
+            : CMP. DONE
+            Big Blind
+            : CMP. DONE
+            The Hook
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            The House
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            The Psychic
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            The Window
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            The Plant
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            The Head
+            : CMP. DONE
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+            ???
+            : CMP. TODO
+        GRP. Antes // 10-antes
+        - Path // path
+        ; TXT. 02-collection 10-antes
+        - Index // index
+        ; INT. 22
+            Ante / Base

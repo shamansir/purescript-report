@@ -1,0 +1,581 @@
+SBJ. Starlink: Battle of Atlas // starlink-battle-of-atlas
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-08-12>
+- Playtime // playtime
+; REL. > 45:00:00
+- Platform // platform
+; TXT. Switch
+    GRP. Hero // 00-hero
+    - Path // path
+    ; TXT. 00-hero
+    - Index // index
+    ; INT. 0
+        Level
+        : INT. 32
+        Name
+        : TXT. Levi McGray
+        Skill points unspent
+        : INT. 11
+        GRP. Skills // 00-skills
+        - Path // path
+        ; TXT. 00-hero 00-skills
+        - Index // index
+        ; INT. 1
+            Nice Try (Ability Skill)
+            : LVS. 1
+            >>> Projectile Deflection
+            Totally Psyched (Ability Skill)
+            : LVS. 2
+            >>> +50% Damage
+            >>> +100% Damage
+            Bad Influence (Mentor Skill)
+            : LVS. 2
+            >>> All Pilots: +10% durability at critical health
+            >>> All Pilots: +20% durability at critical health
+            Reckless (Ability Skill)
+            : LVS. 0
+            >>> -25% energy consumption
+            >>> -50% energy consumpiton
+            Can't Touch This (Stat Skill)
+            : LVS. 3
+            >>> +10% durability while at critical health
+            >>> +20% durability while at critical health
+            >>> +30% durability while at critical health
+            Walk it Off (Stat Skill)
+            : LVS. 3
+            >>> +10% shield recharge speed
+            >>> +20% shield recharge speed
+            >>> +30% shield recharge speed
+            Thrill-Seeker (Ability Skill)
+            : LVS. 3
+            >>> +0.5s per kill
+            >>> +1s per kill
+            >>> +1.5s per kill
+            Star Power (Style Skill)
+            : LVS. 0
+            >>> +50 charge per Trick
+            >>> +100 charge per Trick
+            >>> +150 charge per Trick
+            Gotta Go Fast (Style Skill)
+            : LVS. 0
+            >>> -10% Boost Gauge Cost
+            >>> -20% Boost Gauge Cost
+            >>> -30% Boost Gauge Cost
+    GRP. Resources // 01-resources
+    - Path // path
+    ; TXT. 01-resources
+    - Index // index
+    ; INT. 2
+        Electrum
+        : INT. 2863717
+        Nova
+        : INT. 53
+        Cogs
+        : INT. 842
+        Organics
+        : GTI. 0 99
+        Metallics
+        : GTI. 5 99
+        Cores
+        : GTI. 1 99
+        Aliens
+        : INT. 2
+    GRP. Collection // 02-collection
+    - Path // path
+    ; TXT. 02-collection
+    - Index // index
+    ; INT. 3
+        Hangar
+        : GTI. 26 56
+        Tactical Data
+        : GTI. 42 43
+        Enemy Codex
+        : GTI. 25 27
+        Alien Factions
+        : GTI. 28 36
+        Atlas Discoveries
+        : GTI. 80 114
+        Database
+        : GTI. 20 32
+        Activities
+        : GTI. 6 31
+    GRP. Equinox Upgrades // 03-equinox
+    - Path // path
+    ; TXT. 03-equinox
+    - Index // index
+    ; INT. 4
+        Core Systems
+        : GTI. 3 3
+        Modding Bay
+        : GTI. 4 4
+        Mod Foundry
+        : GTI. 4 4
+        Freight & Cargo
+        : GTI. 5 5
+        Warden Research
+        : GTI. 5 5
+        Expedition Wing
+        : GTI. 1 5
+        Definiton Ops
+        : GTI. 1 5
+        Outlaw Barracks
+        : GTI. 1 5
+        GRP. Hangar // 00-hangar
+        - Path // path
+        ; TXT. 04-collection 00-hangar
+        - Index // index
+        ; INT. 5
+            Star Fox
+            : GTI. 4 8
+            Pilots
+            : GTI. 6 14
+            Ships
+            : GTI. 4 8
+            Weapons
+            : GTI. 12 26
+        GRP. Tactical Data // 01-tactical
+        - Path // path
+        ; TXT. 04-collection 01-tactical
+        - Index // index
+        ; INT. 6
+            Technology
+            : GTI. 19 20
+            Weapon Effects
+            : GTI. 16 16
+            Warden Relics
+            : GTI. 7 7
+        GRP. Enemy Codex // 02-enemy-codex
+        - Path // path
+        ; TXT. 04-collection 02-enemy-codex
+        - Index // index
+        ; INT. 7
+            Forgotten Legion
+            : GTI. 23 24
+            Outlaws
+            : GTI. 2 3
+        GRP. Enemy Factions // 03-enemy-factions
+        - Path // path
+        ; TXT. 04-collection 03-enemy-factions
+        - Index // index
+        ; INT. 8
+            Forgotten Legion
+            : GTI. 9 10
+            Expedition
+            : GTI. 5 5
+            Prospectors
+            : GTI. 5 5
+            Outlaws
+            : GTI. 8 15
+        GRP. Atlas Discoveries // 04-altas
+        - Path // path
+        ; TXT. 04-collection 04-altas
+        - Index // index
+        ; INT. 9
+            Space
+            : GTI. 5 10
+            Kirite
+            : GTI. 9 15
+            Haven
+            : GTI. 11 14
+            Necrom
+            : GTI. 10 14
+            Tundria
+            : GTI. 11 14
+            Sonatus
+            : GTI. 8 13
+            Vylus
+            : GTI. 12 14
+            Ashar
+            : GTI. 9 15
+            Crimson Moon
+            : GTI. 5 5
+        GRP. Database // 05-database
+        - Path // path
+        ; TXT. 04-collection 05-database
+        - Index // index
+        ; INT. 10
+            Chronicles
+            : GTI. 16 16
+            Dossiers
+            : GTI. 2 7
+            Faction Stories
+            : GTI. 2 9
+        GRP. Activities // 06-activities
+        - Path // path
+        ; TXT. 04-collection 06-activities
+        - Index // index
+        ; INT. 11
+            Races
+            : GTI. 3 5
+            Crimson Coliseum
+            : GTI. 1 5
+            Trophies
+            : GTI. 2 21
+    GRP. Planets // 05-planets
+    - Path // path
+    ; TXT. 05-planets
+    - Index // index
+    ; INT. 12
+
+        GRP. Ashar // 00-ashar
+        - Path // path
+        ; TXT. 05-planets 00-ashar
+        - Index // index
+        ; INT. 13
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 0.25
+            Discovered
+            : GTI. 7 11
+            GRP. Ashar: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 00-ashar 00-completed
+            - Index // index
+            ; INT. 14
+                Spires
+                : GTI. 1 5
+                Ruins
+                : GTI. 7 11
+                Wrecks
+                : GTI. 0 13
+                Wonders
+                : GTI. 1 1
+            GRP. Ashar: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 00-ashar 01-discovered
+            - Index // index
+            ; INT. 15
+                Species
+                : GTI. 2 3
+                Sites
+                : GTI. 3 3
+                Samples
+                : GTI. 2 5
+        GRP. Necrom // 01-necrom
+        - Path // path
+        ; TXT. 05-planets 01-necrom
+        - Index // index
+        ; INT. 16
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 0.29
+            Discovered
+            : GTI. 8 11
+            GRP. Necrom: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 01-necrom 00-completed
+            - Index // index
+            ; INT. 17
+                Spires
+                : GTI. 4 5
+                Ruins
+                : GTI. 4 16
+                Wrecks
+                : GTI. 1 13
+                Wonders
+                : GTI. 1 1
+            GRP. Necrom: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 01-necrom 01-discovered
+            - Index // index
+            ; INT. 18
+                Species
+                : GTI. 2 3
+                Sites
+                : GTI. 3 3
+                Samples
+                : GTI. 3 5
+        GRP. Sonatus // 02-sonatus
+        - Path // path
+        ; TXT. 05-planets 02-sonatus
+        - Index // index
+        ; INT. 19
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 0.64
+            Discovered
+            : GTI. 6 10
+            GRP. Sonatus: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 02-sonatus 00-completed
+            - Index // index
+            ; INT. 20
+                Spires
+                : GTI. 4 5
+                Ruins
+                : GTI. 10 14
+                Wrecks
+                : GTI. 10 19
+                Wonders
+                : GTI. 1 1
+            GRP. Sonatus: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 02-sonatus 01-discovered
+            - Index // index
+            ; INT. 21
+                Species
+                : GTI. 3 3
+                Sites
+                : GTI. 1 3
+                Samples
+                : GTI. 2 4
+        GRP. Kirite // 03-kirite
+        - Path // path
+        ; TXT. 05-planets 03-kirite
+        - Index // index
+        ; INT. 22
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 0.5
+            Discovered
+            : GTI. 7 12
+            GRP. Kirite: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 03-kirite 00-completed
+            - Index // index
+            ; INT. 23
+                Spires
+                : GTI. 4 5
+                Ruins
+                : GTI. 12 17
+                Wrecks
+                : GTI. 3 17
+                Wonders
+                : GTI. 1 1
+            GRP. Kirite: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 03-kirite 01-discovered
+            - Index // index
+            ; INT. 24
+                Species
+                : GTI. 3 4
+                Sites
+                : GTI. 2 3
+                Samples
+                : GTI. 2 5
+        GRP. Haven // 04-haven
+        - Path // path
+        ; TXT. 05-planets 04-haven
+        - Index // index
+        ; INT. 25
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 1.0
+            Discovered
+            : GTI. 9 11
+            GRP. Haven: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 04-haven 00-completed
+            - Index // index
+            ; INT. 26
+                Spires
+                : GTI. 5 5
+                Ruins
+                : GTI. 15 15
+                Wrecks
+                : GTI. 18 18
+                Wonders
+                : GTI. 1 1
+            GRP. Haven: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 04-haven 01-discovered
+            - Index // index
+            ; INT. 27
+                Species
+                : GTI. 3 3
+                Sites
+                : GTI. 3 3
+                Samples
+                : GTI. 3 5
+        GRP. Vylus // 05-vylus
+        - Path // path
+        ; TXT. 05-planets 05-vylus
+        - Index // index
+        ; INT. 28
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 0.86
+            Discovered
+            : GTI. 10 11
+            GRP. Vylus: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 05-vylus 00-completed
+            - Index // index
+            ; INT. 29
+                Spires
+                : GTI. 4 5
+                Ruins
+                : GTI. 13 15
+                Wrecks
+                : GTI. 14 16
+                Wonders
+                : GTI. 1 1
+            GRP. Vylus: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 05-vylus 01-discovered
+            - Index // index
+            ; INT. 30
+                Species
+                : GTI. 3 3
+                Sites
+                : GTI. 3 3
+                Samples
+                : GTI. 4 5
+        GRP. Tundria // 06-tundria
+        - Path // path
+        ; TXT. 05-planets 06-tundria
+        - Index // index
+        ; INT. 31
+            Alliance Benefit
+            : PCN. 1.0
+            Completed
+            : PCN. 0.84
+            Discovered
+            : GTI. 9 11
+            GRP. Tundria: Completed // 00-completed
+            - Path // path
+            ; TXT. 05-planets 06-tundria 00-completed
+            - Index // index
+            ; INT. 32
+                Spires
+                : GTI. 5 5
+                Ruins
+                : GTI. 14 16
+                Wrecks
+                : GTI. 11 15
+                Wonders
+                : GTI. 1 1
+            GRP. Tundria: Discovered // 01-discovered
+            - Path // path
+            ; TXT. 05-planets 06-tundria 01-discovered
+            - Index // index
+            ; INT. 33
+                Species
+                : GTI. 3 3
+                Sites
+                : GTI. 3 3
+                Samples
+                : GTI. 3 5
+    GRP. Ship // 06-ship
+    - Path // path
+    ; TXT. 06-ship
+    - Index // index
+    ; INT. 34
+
+        GRP. Zenith // 00-zenith
+        - Path // path
+        ; TXT. 06-ship 00-zenith
+        - Index // index
+        ; INT. 35
+            Name
+            : TXT. Zenith
+            Level
+            : GTI. 2 5
+            Energy
+            : GTI. 49302 82000
+            GRP. Body // 00-body
+            - Path // path
+            ; TXT. 06-ship 00-zenith 00-body
+            - Index // index
+            ; INT. 36
+                Speed
+                : GTI. 100 300
+                Handling
+                : GTI. 150 300
+                Defence
+                : GTI. 255 300
+                Energy
+                : GTI. 235 300
+                Weight
+                : TXT. Medium
+            GRP. Right: Levitator // 01-right
+            - Path // path
+            ; TXT. 06-ship 00-zenith 01-right
+            - Index // index
+            ; INT. 37
+                Damage
+                : GTI. 28 300
+                Range
+                : GTI. 100 300
+                Fire Rate
+                : GTI. 26 300
+                Energy Cost
+                : GTI. 100 300
+                Status Effect
+                : TXT. Stasis Overload
+            GRP. Left: Frost Barrage // 02-left
+            - Path // path
+            ; TXT. 06-ship 00-zenith 02-left
+            - Index // index
+            ; INT. 38
+                Damage
+                : GTI. 26 300
+                Range
+                : GTI. 100 300
+                Fire Rate
+                : GTI. 36 300
+                Energy Cost
+                : GTI. 46 300
+                Status Effect
+                : TXT. Frost
+        GRP. Neptune // 01-neptune
+        - Path // path
+        ; TXT. 06-ship 01-neptune
+        - Index // index
+        ; INT. 39
+            Name
+            : TXT. Neptune
+            Level
+            : GTI. 1 5
+            Energy
+            : GTI. 20537 26000
+            Down
+            : CMP. DONE
+            GRP. Body // 00-body
+            - Path // path
+            ; TXT. 06-ship 01-neptune 00-body
+            - Index // index
+            ; INT. 40
+                Speed
+                : GTI. 100 300
+                Handling
+                : GTI. 100 300
+                Defence
+                : GTI. 230 300
+                Energy
+                : GTI. 125 300
+                Weight
+                : TXT. Ultra-Heavy
+        GRP. Pulse // 02-pulse
+        - Path // path
+        ; TXT. 06-ship 02-pulse
+        - Index // index
+        ; INT. 41
+            Name
+            : TXT. Pulse
+            Level
+            : GTI. 5 5
+            Mastered
+            : CMP. DONE
+            GRP. Body // 00-body
+            - Path // path
+            ; TXT. 06-ship 02-pulse 00-body
+            - Index // index
+            ; INT. 42
+                Speed
+                : GTI. 175 300
+                Handling
+                : GTI. 190 300
+                Defence
+                : GTI. 180 300
+                Energy
+                : GTI. 100 300
+                Weight
+                : TXT. Light

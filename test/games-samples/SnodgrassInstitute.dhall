@@ -202,10 +202,10 @@ in
               // T.inj/date { mon = +9, day = +12, year = +2024 }
               -- Multiple tabular columns via inj/tabs
               // T.inj/tabs
-                    [ { key = "lead_researcher",  value = T.tag (T.v_t "Dr. Kettleworth") }
-                    , { key = "budget_remaining", value = T.tag (T.v_mes +47 "GBP") }
-                    , { key = "water_temp",       value = T.tag (T.v_mesd 97.3 "°C") }
-                    , { key = "steeping_time",    value = T.tag (T.v_time { hrs = +0, min = +3, sec = +45 }) }
+                    [ { key = "lead_researcher",  label = Some "Lead Researcher",   value = T.tag (T.v_t "Dr. Kettleworth") }
+                    , { key = "budget_remaining", label = Some "Budget Remaining",  value = T.tag (T.v_mes +47 "GBP") }
+                    , { key = "water_temp",       label = Some "Water Temperature", value = T.tag (T.v_mesd 97.3 "°C") }
+                    , { key = "steeping_time",    label = Some "Sleeping Time",     value = T.tag (T.v_time { hrs = +0, min = +3, sec = +45 }) }
                     ]
 
             , T.kv_ "Form #88-B: Inter-departmental Nudge Request" (T.p_todo)

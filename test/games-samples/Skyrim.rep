@@ -1,0 +1,339 @@
+SBJ. Elder Scrolls V: Skyrim // elder-scrolls-5-skyrim
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-09-12>
+- Playtime // playtime
+; REL. > 65:00:00
+- Platform // platform
+; TXT. Switch
+    GRP. Hero // 00-hero
+    - Path // path
+    ; TXT. 00-hero
+    - Index // index
+    ; INT. 0
+        Name
+        : TXT. Ulrich Wilfred
+        Race
+        : TXT. Dark Elf
+        Level
+        : INT. 21
+        Magicka
+        : GTI. 120 120
+        Health
+        : GTI. 290 290
+        Stamina
+        : GTI. 115 115
+        Current Epoch
+        : TXT. Loredas, 11:29PM, 20th of Heartfire, 4E 201
+        GRP. Hero: Skills // 00-skills
+        - Path // path
+        ; TXT. 00-hero 00-skills
+        - Index // index
+        ; INT. 1
+            Speech
+            : GTI. 29 100
+            Alchemy
+            : GTI. 34 100
+            Illusion
+            : GTI. 21 100
+            Conjuration
+            : GTI. 16 100
+            Destruction
+            : GTI. 27 100
+            Restoration
+            : GTI. 18 100
+            Alteration
+            : GTI. 22 100
+            Enchanting
+            : GTI. 16 100
+            Smithing
+            : GTI. 18 100
+            Heavy Armor
+            : GTI. 51 100
+            Block
+            : GTI. 21 100
+            Two-Handed
+            : GTI. 62 100
+            One-Handed
+            : GTI. 26 100
+            Archery
+            : GTI. 49 100
+            Light Armor
+            : GTI. 35 100
+            Sneak
+            : GTI. 26 100
+            Lockpicking
+            : GTI. 49 100
+            Pickpocket
+            : GTI. 17 100
+    GRP. Stats // 01-stats
+    - Path // path
+    ; TXT. 01-stats
+    - Index // index
+    ; INT. 2
+
+        GRP. Stats: General // 00-general
+        - Path // path
+        ; TXT. 01-stats 00-general
+        - Index // index
+        ; INT. 3
+            Locations Discovered
+            : INT. 118
+            Dungeons Cleared
+            : INT. 31
+            Days Passed
+            : INT. 34
+            Hours Slept
+            : INT. 65
+            Hours Waiting
+            : INT. 30
+            Standing Stones Found
+            : INT. 5
+            Gold Found
+            : INT. 18325
+            Most Gold Carried
+            : INT. 6196
+            Chests Looted
+            : INT. 728
+            Skill Increases
+            : INT. 232
+            Skill Books Read
+            : INT. 25
+            Food Eaten
+            : INT. 1267
+            Training Sessions
+            : INT. 15
+            Books Read
+            : INT. 141
+            Horses Owned
+            : INT. 2
+            Houses Owned
+            : INT. 1
+            Stores Invested In
+            : INT. 0
+            Barters
+            : INT. 117
+            Persuations
+            : INT. 8
+            Bribes
+            : INT. 2
+            Intimidations
+            : INT. 2
+            Diseases Contracted
+            : INT. 5
+        GRP. Stats: Quests // 01-quests
+        - Path // path
+        ; TXT. 01-stats 01-quests
+        - Index // index
+        ; INT. 4
+            Quests Completed
+            : INT. 11
+            Misc Objectives Completed
+            : INT. 51
+            Main Quests Completed
+            : INT. 5
+            Side Quests Completed
+            : INT. 6
+            The Companions Quests Completed
+            : INT. 0
+            College of Winterhold Quests Completed
+            : INT. 0
+            Thieves' Guild Quests Completed
+            : INT. 1
+            The Dark Brotherhood Quests Completed
+            : INT. 1
+            Civil War Quests Completed
+            : INT. 0
+            Deadric Quests Completed
+            : INT. 0
+            Questlines Completed
+            : INT. 0
+        GRP. Stats: Combat // 02-combat
+        - Path // path
+        ; TXT. 01-stats 02-combat
+        - Index // index
+        ; INT. 5
+            People Killed
+            : INT. 265
+            Animals Killed
+            : INT. 211
+            Creatures Killed
+            : INT. 14
+            Undead Killed
+            : INT. 122
+            Daedra Killed
+            : INT. 10
+            Automatons Killed
+            : INT. 0
+            Favorite Weapon
+            : TXT. Steel Battleaxe of Sparks
+            Critical Strikes
+            : INT. 48
+            Sneak Attacks
+            : INT. 7
+            Backstabs
+            : INT. 0
+            Weapons Disarmed
+            : INT. 0
+            Brawls Won
+            : INT. 1
+            Bunnies Slaughtered
+            : INT. 0
+        GRP. Stats: Magic // 03-magic
+        - Path // path
+        ; TXT. 01-stats 03-magic
+        - Index // index
+        ; INT. 6
+            Spells Learned
+            : INT. 12
+            Favorite Spell
+            : TXT. Healing
+            Favorite School
+            : TXT. Restoration
+            Dragon Souls Collected
+            : INT. 5
+            Words of Power Collected
+            : INT. 4
+            Words of Power Unlocked
+            : INT. 4
+            Shouts Learned
+            : INT. 3
+            Shouts Unlocked
+            : INT. 3
+            Shouts Mastered
+            : INT. 0
+            Times Shouted
+            : INT. 33
+            Favorite Shout
+            : TXT. Unrelenting Force
+        GRP. Stats: Crafting // 04-crafting
+        - Path // path
+        ; TXT. 01-stats 04-crafting
+        - Index // index
+        ; INT. 7
+            Soul Gems Used
+            : INT. 2
+            Souls Trapped
+            : INT. 0
+            Magic Items Made
+            : INT. 0
+            Weapons Improved
+            : INT. 4
+            Weapons Made
+            : INT. 0
+            Armor Improved
+            : INT. 7
+            Armor Made
+            : INT. 2
+            Potions Mixed
+            : INT. 409
+            Potions Used
+            : INT. 142
+            Poisons Mixed
+            : INT. 32
+            Poisons Used
+            : INT. 16
+            Ingridients Harvested
+            : INT. 553
+            Ingridients Eaten
+            : INT. 4
+            Nirnroots Found
+            : INT. 0
+            Wings Plucked
+            : INT. 6
+        GRP. Stats: Crime // 05-crime
+        - Path // path
+        ; TXT. 01-stats 05-crime
+        - Index // index
+        ; INT. 8
+            Total Lifetime Bounty
+            : INT. 15
+            Largest Bounty
+            : INT. 10
+            Locks Picked
+            : INT. 74
+            Pockets Picked
+            : INT. 1
+            Items Pickpocketed
+            : INT. 0
+            Times Jailed
+            : INT. 0
+            Days Jailed
+            : INT. 0
+            Fines Paid
+            : INT. 15
+            Jail Escapes
+            : INT. 0
+            Items Stolen
+            : INT. 5
+            Assaults
+            : INT. 14
+            Murders
+            : INT. 1
+            Horses Stolen
+            : INT. 0
+            Trespasses
+            : INT. 6
+    GRP. Selected Quests // 02-quests
+    - Path // path
+    ; TXT. 02-quests
+    - Index // index
+    ; INT. 9
+        Bring 10 fire salts to Balimund
+        : GTI. 4 10
+        Find 2 flawless saphires for Madesi
+        : GTI. 0 2
+        Find 3 Ice Wraith Teeth for Marise
+        : GTI. 3 5
+        Find 20 Jazbay
+        : GTI. 6 20
+        Gather 10 bear pelts for Temba Wide-Arms
+        : GTI. 8 10
+        Gather 10 bear pelts for Temba Wide-Arms
+        : GTI. 8 10
+        Join The Imperial Legion
+        : CMP. DONE
+        A Chance Arragement
+        : CMP. DONE
+        The Blessings of Nature
+        : CMP. DONE
+        Ancestral Worship
+        : CMP. DONE
+        The Way of the Voice
+        : CMP. DONE
+        Infiltration
+        : CMP. DONE
+        Delayed Burial
+        : CMP. DONE
+        Dragon Rising
+        : CMP. DONE
+        Bleak Falls Barrow
+        : CMP. DONE
+        The Golden Claw
+        : CMP. DONE
+        Before the Storm
+        : CMP. DONE
+        Unbound
+        : CMP. DONE
+        Rise in the East
+        : CMP. TODO
+        Innocence Lost
+        : CMP. TODO
+        Unfathomable Death
+        : CMP. TODO
+        Promised to Keep
+        : CMP. TODO
+        Taking Care of Business
+        : CMP. TODO
+        Dragonborn
+        : CMP. TODO
+        The Horn of Jurgen Windcaller
+        : CMP. TODO
+        The Break of Dawn
+        : CMP. TODO
+        Dawnguard
+        : CMP. TODO
+        In My Time of Need
+        : CMP. TODO
+        Forbidden Legend
+        : CMP. TODO

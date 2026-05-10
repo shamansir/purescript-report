@@ -1,0 +1,306 @@
+SBJ. Nonograms Katana // nonograms-katana
+# GPlay
+- Tracked At // trackedAt
+; DAT. <2025-08-12>
+- Playtime // playtime
+; UNK. .
+- Platform // platform
+; TXT. GPlay
+    GRP. Statistics // 00-stats
+    - Path // path
+    ; TXT. 00-stats
+    - Index // index
+    ; INT. 0
+        Black-and-white
+        : INT. 130
+        Colored
+        : INT. 144
+        Standard
+        : INT. 183
+        Sent by Users
+        : INT. 91
+        Small
+        : INT. 138
+        Medium
+        : INT. 120
+        Big
+        : INT. 9
+        Huge
+        : INT. 7
+        Coloring
+        : INT. 11
+        Mosaic
+        : INT. 10
+        Trial-and-error method
+        : INT. 14
+        True Nonogram
+        : INT. 11
+        Total
+        : INT. 274
+        Started
+        : INT. 0
+        Categories
+        : GTI. 7 31
+        Achievements
+        : GTI. 10 84
+        Time
+        : TIM. 00:00:00
+        Total Score
+        : INT. 83361
+    GRP. Achievements // 01-achievements
+    - Path // path
+    ; TXT. 01-achievements
+    - Index // index
+    ; INT. 1
+        I Know the Rules
+        : CMP. DONE
+        : DSC. Complete the Tutorial
+        5x5 Expert
+        : PCI. 100
+        : DSC. Complete Category: 5x5
+        Smile in Color
+        : PCI. 100
+        : DSC. Complete Category: Color Beginner
+        Amateur
+        : PCI. 100
+        : DSC. Score 10000 Points
+        Professional
+        : PCI. 100
+        : DSC. Score 50000 Points
+        Master
+        : PCI. 83
+        : DSC. Score 100000 Points
+        50 Nonograms
+        : PCI. 100
+        : DSC. Solve 50 Nonograms
+        100 Nonograms
+        : PCI. 100
+        : DSC. Solve 100 Nonograms
+        500 Nonograms
+        : PCI. 36
+        : DSC. Solve 500 Nonograms
+        100 Colors
+        : PCI. 54
+        : DSC. Solve 100 Color Nonograms
+        Step by Step
+        : PCI. 100
+        : DSC. Complete 5 Categories
+        Terminator
+        : PCI. 70
+        : DSC. Complete 10 Categories
+        The Gamer
+        : PCI. 100
+        : DSC. Solve 30 Puzzles in Cartegory: Fantasy RPG
+        Secret
+        : DSC. Secret
+        : NON. .
+        Secret
+        : DSC. Secret
+        : NON. .
+        Secret
+        : DSC. Secret
+        : NON. .
+        Veteran of 1000 Nonograms
+        : PCI. 27
+        : DSC. Solve 1000 Nonograms
+        700 User Nonograms
+        : PCI. 13
+        : DSC. Solve 700 Nonograms sent by users
+        2000 User Nonograms
+        : PCI. 4
+        : DSC. Solve 2000 Nonograms sent by users
+        Anime Fan
+        : PCI. 0
+        : DSC. Solve 500 Nonograms tagged "Anime, Manga"
+        Cat Lover
+        : PCI. 0
+        : DSC. Solve 500 Nonograms tagged "Cats"
+        Dragon Hunter
+        : PCI. 0
+        : DSC. Solve 150 Nonograms tagged "Dragons"
+        Sunset Watcher
+        : PCI. 0
+        : DSC. Solve 150 Nonograms tagged "Twilight, Sunsets"
+        Major Tom
+        : PCI. 0
+        : DSC. Solve 150 Nonograms tagged "Space"
+        Admirer of Japanese Culture
+        : PCI. 8
+        : DSC. Solve 150 Nonograms tagged "Japan"
+        Pirate!
+        : PCI. 0
+        : DSC. Solve 100 Nonograms tagged "Pirates!"
+        Minimalist
+        : PCI. 5
+        : DSC. Solve 500 Nonograms of size 5x5
+        Maximalist
+        : PCI. 5
+        : DSC. Solve 500 Nonograms of size 80x80
+        Truth Seeker
+        : PCI. 36
+        : DSC. Solve 1500 True Nonograms
+        Adept
+        : PCI. 5
+        : DSC. Solve 5000 Nonograms
+        Bachelor
+        : PCI. 2
+        : DSC. Solve 10000 Nonograms
+        Magister
+        : PCI. 1
+        : DSC. Solve 15000 Nonograms
+        Professor
+        : PCI. 1
+        : DSC. Solve 20000 Nonograms
+        Academician
+        : PCI. 1
+        : DSC. Solve 25000 Nonograms
+        Laureate
+        : PCI. 0
+        : DSC. Solve 30000 Nonograms
+        Level 10: Scout
+        : PCI. 10
+        : DSC. Reach level 10 in the guild
+        Level 30: Explorer
+        : PCI. 3
+        : DSC. Reach level 30 in the guild
+        Level 50: Guild Master
+        : PCI. 2
+        : DSC. Reach level 50 in the guild
+        Level 80: Enlightened
+        : PCI. 1
+        : DSC. Reach level 80 in the guild
+        Knowledge is Power
+        : PCI. 0
+        : DSC. Learn any 7 skills
+        New Home
+        : CMP. TODO
+        : DSC. Build any building
+        Construction is in Full Swing
+        : PCI. 0
+        : DSC. Build 10 buildings to level 1
+        The Last Brick
+        : PCI. 0
+        : DSC. Build all buildings to the maximum level
+        The First Mosaic
+        : CMP. TODO
+        : DSC. Collect all fragments of mosaic #1
+        The Last Mosaic
+        : PCI. 0
+        : DSC. Collect all fragments of mosaic #10
+        The Templar Gold
+        : PCI. 0
+        : DSC. Loot: Coint: 1000
+        Montezuma's Treasure
+        : PCI. 0
+        : DSC. Loot: Ruby: 30
+        Pharaoh's Tomb
+        : PCI. 0
+        : DSC. Loot: Gold Ignot: 50
+        Blackbeards's Treasure
+        : PCI. 0
+        : DSC. Loot: Treasure: 50
+        A Month Later...
+        : PCI. 0
+        : DSC. Complete the quest: "Puzzle of the day" 30 times
+        Bounty Hunter
+        : PCI. 0
+        : DSC. Complete the quest: "WANTED" 40 times
+        Fan
+        : CMP. TODO
+        : DSC. Craft: Fan
+        Arrows
+        : CMP. TODO
+        : DSC. Craft: Arrows
+        Charcoal
+        : CMP. TODO
+        : DSC. Craft: Charcoal
+        Wooden Beam
+        : CMP. TODO
+        : DSC. Craft: Wooden Beam
+        Steel
+        : CMP. TODO
+        : DSC. Craft: Steel
+        Gunpowder
+        : CMP. TODO
+        : DSC. Craft: Gunpowder
+        Katana
+        : CMP. TODO
+        : DSC. Craft: Katana
+        Bomb (Horoku)
+        : CMP. TODO
+        : DSC. Craft: Bomb (Horoku)
+        Battering Ram (Kikkosha)
+        : CMP. TODO
+        : DSC. Craft: Battering Ram (Kikkosha)
+        Great Traveler
+        : PCI. 0
+        : DSC. Complete 20 expeditions
+        Coffee Tycoon
+        : PCI. 0
+        : DSC. Loot: Coffee Beans: 500
+        Sea Wolf
+        : PCI. 0
+        : DSC. React level 10 in any type of sailing
+        Personal Museum
+        : PCI. 0
+        : DSC. Collect all artifacts
+        Best Farmer
+        : PCI. 20
+        : DSC. Maximum Level: Farming
+        The Hen That Laid the Golden Eggs
+        : PCI. 0
+        : DSC. Craft: Egg: 500
+        Chef
+        : PCI. 7
+        : DSC. Maximum Level: Cooking
+        Spicy Odyssey
+        : CMP. TODO
+        : DSC. ???
+        Silk Road
+        : CMP. TODO
+        : DSC. ???
+        Secret
+        : DSC. Secret
+        : NON. .
+        Steamobile
+        : CMP. TODO
+        : DSC. Craft: Steamobile
+        Technological Progress
+        : PCI. 0
+        : DSC. Learn 20 technologies
+        Dungeons & Nonograms
+        : CMP. TODO
+        : DSC. Complete level 5C of the dungeon
+        We Got a Champion
+        : CMP. TODO
+        : DSC. Level up a hero to level 21
+        Valiant Knight
+        : PCI. 0
+        : DSC. Valor: 10000
+        Champions of the World
+        : CMP. TODO
+        : DSC. Level up three heroes to level 21
+        Perfect Company
+        : CMP. TODO
+        : DSC. Have a hero with 3 violet familiars.
+        Secret
+        : DSC. Secret
+        : NON. .
+        Secret
+        : DSC. Secret
+        : NON. .
+        Secret
+        : DSC. Secret
+        : NON. .
+        Golden Hands
+        : CMP. TODO
+        : DSC. Collect all craftifacts
+        Secret
+        : DSC. Secret
+        : NON. .
+        Secret
+        : DSC. Secret
+        : NON. .
+        Secret
+        : DSC. Secret
+        : NON. .

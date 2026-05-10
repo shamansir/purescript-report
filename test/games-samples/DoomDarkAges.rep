@@ -1,0 +1,811 @@
+SBJ. Doom: Dark Ages // doom-dark-ages-manual
+# Playstation5
+- Tracked At // trackedAt
+; DAT. <2025-12-18>
+- Playtime // playtime
+; REL. > 60:00:00
+- Platform // platform
+; TXT. Playstation5
+    GRP. Statistics // 00-stats
+    - Path // path
+    ; TXT. 00-stats
+    - Index // index
+    ; INT. 0
+        Completion
+        : PCI. 100
+        Chapters
+        : GTI. 22 22
+        Trophies
+        : GTI. 26 29
+        : REF. 00-stats 00-trophies
+        Nickname
+        : TXT. elektrokilka
+        Difficulty
+        : TXT. Hurt me plenty
+        GRP. Trophies // 00-trophies
+        - Path // path
+        ; TXT. 00-stats 00-trophies
+        - Index // index
+        ; INT. 1
+            Bronze
+            : INT. 11
+            Silver
+            : INT. 12
+            Gold
+            : INT. 3
+    GRP. Chapters // 01-chapters
+    - Path // path
+    ; TXT. 01-chapters
+    - Index // index
+    ; INT. 2
+        Chapter 01: Village of Khalim
+        : PCI. 100
+        : REF. 01-chapters 00-village-of-khalim
+        Chapter 02: Hebeth
+        : PCI. 97
+        : REF. 01-chapters 01-hebeth
+        Chapter 03: Barrier Core
+        : PCI. 100
+        : REF. 01-chapters 02-barrier-core
+        Chapter 04: Sentinel Barracks
+        : PCI. 100
+        : REF. 01-chapters 03-sentinel-barracks
+        Chapter 05: The Holy City of Aratum
+        : PCI. 99
+        : REF. 01-chapters 04-holy-city-of-aratum
+        Chapter 06: The Siege - Part 1
+        : PCI. 100
+        : REF. 01-chapters 05-siege-part-1
+        Chapter 07: The Siege - Part 2
+        : PCI. 100
+        : REF. 01-chapters 06-siege-part-2
+        Chapter 08: Abyssal Forest
+        : PCI. 100
+        : REF. 01-chapters 07-abyssal-forest
+        Chapter 09: Ancestral Forge
+        : PCI. 100
+        : REF. 01-chapters 08-ancestral-forge
+        Chapter 10: The Forsaken Plains
+        : PCI. 100
+        : REF. 01-chapters 09-forsaken-plains
+        Chapter 11: Hellbreaker
+        : PCI. 100
+        : REF. 01-chapters 10-hellbreaker
+        Chapter 12: Sentinel Command Station
+        : PCI. 100
+        : REF. 01-chapters 11-sentinel-command-station
+        Chapter 13: From Beyond
+        : PCI. 72
+        : REF. 01-chapters 12-from-beyond
+        Chapter 14: Spire of Nerathul
+        : PCI. 99
+        : REF. 01-chapters 13-spire-of-nerathul
+        Chapter 15: City of Ry'uul
+        : PCI. 99
+        : REF. 01-chapters 14-city-of-ryuul
+        Chapter 16: The Kar'Thul Marshes
+        : PCI. 99
+        : REF. 01-chapters 15-the-kar-thul-marshes
+        Chapter 17: Temple of Lomarith
+        : PCI. 100
+        : REF. 01-chapters 16-temple-of-lomarith
+        Chapter 18: Belly of the Beast
+        : PCI. 100
+        : REF. 01-chapters 17-belly-of-the-beast
+        Chapter 19: Harbor of Souls
+        : PCI. 100
+        : REF. 01-chapters 18-harbour-of-souls
+        Chapter 20: Resurresction
+        : PCI. 99
+        : REF. 01-chapters 19-resurresction
+        Chapter 21: Final Battle
+        : PCI. 100
+        : REF. 01-chapters 20-final-battle
+        Chapter 22: Reconing
+        : PCI. 99
+        : REF. 01-chapters 21-reconing
+        GRP. Chapter 01: Village of Khalim // 00-village-of-khalim
+        - Path // path
+        ; TXT. 01-chapters 00-village-of-khalim
+        - Index // index
+        ; INT. 3
+            Secrets
+            : GTI. 6 6
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 2 2
+            Skins
+            : GTI. 1 1
+        GRP. Chapter 02: Hebeth // 01-hebeth
+        - Path // path
+        ; TXT. 01-chapters 01-hebeth
+        - Index // index
+        ; INT. 4
+            Gold
+            : GTI. 202 210
+            Demonic Essence - Health
+            : GTI. 1 1
+            Secrets
+            : GTI. 8 9
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Skins
+            : GTI. 1 1
+        GRP. Chapter 03: Barrier Core // 02-barrier-core
+        - Path // path
+        ; TXT. 01-chapters 02-barrier-core
+        - Index // index
+        ; INT. 5
+
+        GRP. Chapter 04: Sentinel Barracks // 03-sentinel-barracks
+        - Path // path
+        ; TXT. 01-chapters 03-sentinel-barracks
+        - Index // index
+        ; INT. 6
+            Gold
+            : GTI. 212 212
+            Ruby
+            : GTI. 2 2
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Secrets
+            : GTI. 6 6
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Skins
+            : GTI. 1 1
+            Challenge 1 : RIP AND TEAR
+            : GTI. 40 40
+            Challenge 2 : PLUNDERER
+            : GTI. 150 150
+            Challenge 3 : PRIZE FIGHTER
+            : GTI. 3 3
+        GRP. Chapter 05: The Holy City of Aratum // 04-holy-city-of-aratum
+        - Path // path
+        ; TXT. 01-chapters 04-holy-city-of-aratum
+        - Index // index
+        ; INT. 7
+            Gold
+            : GTI. 240 240
+            Ruby
+            : GTI. 2 2
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 9 9
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 1 1
+            Skins
+            : GTI. 1 1
+            Challenge 1 : COUNTERCULT
+            : GTI. 3 3
+            Challenge 2 : LAYOVER
+            : GTI. 2 2
+            Challenge 3 : CAT AND MOUSE
+            : GTI. 0 3
+        GRP. Chapter 06: Siege - Part 1 // 05-siege-part-1
+        - Path // path
+        ; TXT. 01-chapters 05-siege-part-1
+        - Index // index
+        ; INT. 8
+            Gold
+            : GTI. 513 513
+            Ruby
+            : GTI. 4 4
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 11 11
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 2 2
+            Skins
+            : GTI. 1 1
+            Challenge 1 : IMMOVABLE OBJECT
+            : GTI. 10 10
+            Challenge 2 : UNSTOPPABLE FORCE
+            : GTI. 25 25
+            Challenge 3 : SIEGE BREAKER
+            : GTI. 4 4
+        GRP. Chapter 07: Siege - Part 2 // 06-siege-part-2
+        - Path // path
+        ; TXT. 01-chapters 06-siege-part-2
+        - Index // index
+        ; INT. 9
+            Gold
+            : GTI. 183 183
+            Ruby
+            : GTI. 2 2
+            Demonic Essence - Health
+            : GTI. 1 1
+            Secrets
+            : GTI. 9 9
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : ROUNDHOUSE
+            : GTI. 10 10
+            Challenge 2 : EXTERMINATOR
+            : GTI. 5 5
+        GRP. Chapter 08: Abyssal Forest // 07-abyssal-forest
+        - Path // path
+        ; TXT. 01-chapters 07-abyssal-forest
+        - Index // index
+        ; INT. 10
+            Gold
+            : GTI. 250 250
+            Ruby
+            : GTI. 1 2
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Secrets
+            : GTI. 11 11
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : GHOST BUSTER
+            : GTI. 3 3
+            Challenge 2 : KNOCKOUT
+            : GTI. 5 5
+            Challenge 3 : BONE COLLECTOR
+            : GTI. 100 100
+        GRP. Chapter 09: Ancestral Forge // 08-ancestral-forge
+        - Path // path
+        ; TXT. 01-chapters 08-ancestral-forge
+        - Index // index
+        ; INT. 11
+            Gold
+            : GTI. 230 230
+            Ruby
+            : GTI. 2 2
+            Wraithstone
+            : GTI. 2 2
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 9 9
+            Codex Entries
+            : GTI. 1 2
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : NOTHING BUT NADE
+            : GTI. 10 10
+            Challenge 2 : SAWED OFF
+            : GTI. 20 20
+            Challenge 3 : SEVEN SECRETS
+            : GTI. 7 7
+        GRP. Chapter 10: The Forsaken Plains // 09-forsaken-plains
+        - Path // path
+        ; TXT. 01-chapters 09-forsaken-plains
+        - Index // index
+        ; INT. 12
+            Gold
+            : GTI. 230 230
+            Ruby
+            : GTI. 3 3
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 10 10
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 1 1
+            Skins
+            : GTI. 1 1
+            Challenge 1 : ROCKET MAN
+            : GTI. 2 5
+            Challenge 2 : EXTERMINATOR
+            : GTI. 2 2
+            Challenge 3 : FAULT LINE
+            : GTI. 25 25
+        GRP. Chapter 11: Hellbreaker // 10-hellbreaker
+        - Path // path
+        ; TXT. 01-chapters 10-hellbreaker
+        - Index // index
+        ; INT. 13
+            Gold
+            : GTI. 85 85
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Secrets
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : ELUSIVE
+            : GTI. 5 5
+            Challenge 2 : DISPERSION
+            : GTI. 5 5
+            Challenge 3 : CRUSHINATOR
+            : GTI. 1 1
+        GRP. Chapter 12: Sentinel Command Station // 11-sentinel-command-station
+        - Path // path
+        ; TXT. 01-chapters 11-sentinel-command-station
+        - Index // index
+        ; INT. 14
+            Gold
+            : GTI. 177 177
+            Ruby
+            : GTI. 1 1
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Health
+            : GTI. 1 1
+            Secrets
+            : GTI. 9 9
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Skins
+            : GTI. 1 1
+            Challenge 1 : PUNCHING BAG
+            : GTI. 10 10
+            Challenge 2 : WAIT FOR IT
+            : GTI. 10 10
+            Challenge 3 : SKELETON KEY
+            : GTI. 2 2
+        GRP. Chapter 13: From Beyond // 12-from-beyond
+        - Path // path
+        ; TXT. 01-chapters 12-from-beyond
+        - Index // index
+        ; INT. 15
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Challenge 1 : DEFT DRAGON
+            : GTI. 5 5
+            Challenge 2 : VETERAN PURSUER
+            : GTI. 1 2
+        GRP. Chapter 14: Spire of Nerathul // 13-spire-of-nerathul
+        - Path // path
+        ; TXT. 01-chapters 13-spire-of-nerathul
+        - Index // index
+        ; INT. 16
+            Gold
+            : GTI. 359 359
+            Ruby
+            : GTI. 3 3
+            Wraithstone
+            : GTI. 2 2
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 11 11
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 2 2
+            Skins
+            : GTI. 1 1
+            Challenge 1 : HEART HARVESTER
+            : GTI. 2 2
+            Challenge 2 : MASTER BLASTER
+            : GTI. 0 250
+            Challenge 3 : EXPERT STALKER
+            : GTI. 0 2
+        GRP. Chapter 15: City of Ry'uul // 14-city-of-ryuul
+        - Path // path
+        ; TXT. 01-chapters 14-city-of-ryuul
+        - Index // index
+        ; INT. 17
+            Gold
+            : GTI. 182 182
+            Ruby
+            : GTI. 2 2
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Secrets
+            : GTI. 10 10
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : HEADS UP
+            : GTI. 3 3
+            Challenge 2 : FACE CRACKER
+            : GTI. 25 25
+            Challenge 3 : TORRENT
+            : GTI. 0 3
+        GRP. Chapter 16: The Kar'Thul Marshes // 15-the-kar-thul-marshes
+        - Path // path
+        ; TXT. 01-chapters 15-the-kar-thul-marshes
+        - Index // index
+        ; INT. 18
+            Gold
+            : GTI. 188 188
+            Ruby
+            : GTI. 1 1
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 5 5
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : HUNTER
+            : GTI. 5 5
+            Challenge 2 : ROUNDUP
+            : GTI. 0 20
+        GRP. Chapter 17: Temple of Lomarith // 16-temple-of-lomarith
+        - Path // path
+        ; TXT. 01-chapters 16-temple-of-lomarith
+        - Index // index
+        ; INT. 19
+            Gold
+            : GTI. 194 194
+            Ruby
+            : GTI. 2 2
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 2 2
+            Secrets
+            : GTI. 9 9
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Skins
+            : GTI. 1 1
+            Challenge 1 : SWASHBUCKLER
+            : GTI. 3 3
+            Challenge 2 : WATER LOGGED
+            : GTI. 3 3
+        GRP. Chapter 18: Belly of the Beast // 17-belly-of-the-beast
+        - Path // path
+        ; TXT. 01-chapters 17-belly-of-the-beast
+        - Index // index
+        ; INT. 20
+            Gold
+            : GTI. 153 153
+            Ruby
+            : GTI. 1 1
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Secrets
+            : GTI. 6 6
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : SWALLOWED WHOLE
+            : GTI. 1 1
+            Challenge 2 : TOE-TO-TOE
+            : GTI. 10 10
+        GRP. Chapter 19: Harbor of Souls // 18-harbour-of-souls
+        - Path // path
+        ; TXT. 01-chapters 18-harbour-of-souls
+        - Index // index
+        ; INT. 21
+            Gold
+            : GTI. 294 294
+            Ruby
+            : GTI. 1 1
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 10 10
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 1 1
+            Challenge 1 : BERSERKER
+            : GTI. 25 25
+            Challenge 2 : DRAGON HOARD
+            : GTI. 3 3
+            Challenge 3 : EXECUTIONER
+            : GTI. 21 25
+        GRP. Chapter 20: Resurrection // 19-resurrection
+        - Path // path
+        ; TXT. 01-chapters 19-resurrection
+        - Index // index
+        ; INT. 22
+            Gold
+            : GTI. 392 392
+            Ruby
+            : GTI. 3 3
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Health
+            : GTI. 1 1
+            Demonic Essence - Armor
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 12 12
+            Codex Entries
+            : GTI. 2 2
+            Collectible Toys
+            : GTI. 2 2
+            Skins
+            : GTI. 1 1
+            Challenge 1 : CANNON CRUSHER
+            : GTI. 3 3
+            Challenge 2 : EXTREME PREJUDICE
+            : GTI. 3 3
+            Challenge 2 : MASTER HUNTER
+            : GTI. 0 1
+        GRP. Chapter 21: Final Battle // 20-final-battle
+        - Path // path
+        ; TXT. 01-chapters 20-final-battle
+        - Index // index
+        ; INT. 23
+
+        GRP. Chapter 22: Reconing // 21-reconing
+        - Path // path
+        ; TXT. 01-chapters 21-reconing
+        - Index // index
+        ; INT. 24
+            Gold
+            : GTI. 335 335
+            Ruby
+            : GTI. 3 3
+            Wraithstone
+            : GTI. 1 1
+            Demonic Essence - Ammo
+            : GTI. 1 1
+            Secrets
+            : GTI. 11 11
+            Codex Entries
+            : GTI. 1 1
+            Collectible Toys
+            : GTI. 2 2
+            Challenge 1 : DEATH CLOCK
+            : GTI. 0 1
+            Challenge 2 : THY FLESH CONSUMED
+            : GTI. 25 25
+    GRP. Campaign Milestones // 02-campaign-milestones
+    - Path // path
+    ; TXT. 02-campaign-milestones
+    - Index // index
+    ; INT. 25
+        A Dark Beginning [Trophy]
+        : GTI. 1 1
+        : DSC. Complete Chapter: Village of Khali
+        Red Planet Achievement
+        : GTI. 1 1
+        : DSC. Complete Chapter: Hebeth
+        Supersized Brawl [Trophy]
+        : GTI. 1 1
+        : DSC. Complete Chapter: Barrier Core
+        Onward and Upward
+        : GTI. 1 1
+        : DSC. Complete Chapter: Sentinel Barracks
+        Bringing the House Down [Trophy]
+        : GTI. 1 1
+        : DSC. Complete Chapter: The Holy City of Aratum
+        Open War
+        : GTI. 1 1
+        : DSC. Complete Chapter: Siege - Part 1
+        Long Live the King
+        : GTI. 1 1
+        : DSC. Complete Chapter: Siege - Part 2
+        Overgrown
+        : GTI. 1 1
+        : DSC. Complete Chapter: Abyssal Forest
+        Heart Surgery
+        : GTI. 1 1
+        : DSC. Complete Chapter: Ancestral Forge
+        I Have the Power
+        : GTI. 1 1
+        : DSC. Complete Chapter: The Forsaken Plains
+        Knock Knock
+        : GTI. 1 1
+        : DSC. Complete Chapter: Hellbreaker
+        Boarding Party
+        : GTI. 1 1
+        : DSC. Complete Chapter: Sentinel Command Station
+        Through The Rift
+        : GTI. 1 1
+        : DSC. Complete Chapter: From Beyond
+        Jailbreak [Trophy]
+        : GTI. 1 1
+        : DSC. Complete Chapter: Spire of Nerathul
+        Into the Unknown
+        : GTI. 1 1
+        : DSC. Complete Chapter: City of Ry'uul
+        Keymaker
+        : GTI. 1 1
+        : DSC. Complete Chapter: The Kar'Thul Marshes
+        Dark Waters
+        : GTI. 1 1
+        : DSC. Complete Chapter: Temple of Lomarith
+        Ritual Sacrifice
+        : GTI. 1 1
+        : DSC. Complete Chapter: Belly of the Beast
+        Too Angry to Die [Trophy]
+        : GTI. 1 1
+        : DSC. Complete Chapter: Harbor of Souls
+        Argent Return [Trophy]
+        : GTI. 1 1
+        : DSC. Complete Chapter: Resurrection
+        The Only Thing They Fear [Trophy]
+        : GTI. 1 1
+        : DSC. Defeat the Old One and Enhanced Ahzrak.
+        Game Complete [Trophy]
+        : GTI. 1 1
+        : DSC. Complete the Campaign on any difficulty.
+        Vagary Down! [Trophy]
+        : GTI. 1 1
+        : DSC. Kill the Vagary Champion.
+        Agaddon Champion Down! [Trophy]
+        : GTI. 1 1
+        : DSC. Kill an Agaddon Hunter.
+        Komodo Champion Down! [Trophy]
+        : GTI. 1 1
+        : DSC. Kill a Komodo Demon.
+        Challenge Accepted
+        : GTI. 1 1
+        : DSC. Complete all Mission Challenges in Holy City
+        Challenge Completed
+        : GTI. 0 1
+        : DSC. Complete all Mission Challenges in the campaign.
+        Custom Trial
+        : GTI. 0 1
+        : DSC. Start a campaign with at least one Custom Difficulty setting modified and complete chapter: Village of Khalim.
+        Pandemonium Complete
+        : GTI. 0 1
+        : DSC. Beat the campaign on Pandemonium difficulty.
+        Ultra-Nightmare Complete
+        : GTI. 0 1
+        : DSC. Beat the campaign on Ultra-Nightmare difficulty.
+        Cultist Purge
+        : GTI. 9 9
+        : DSC. Kill all of the Cultists in the Village of Khalim
+        Bloody Sandbox
+        : GTI. 3 3
+        : DSC. Complete a Ripatorium encounter on each of the three arenas.
+    GRP. Progression Milestones // 03-progression-milestones
+    - Path // path
+    ; TXT. 03-progression-milestones
+    - Index // index
+    ; INT. 26
+        Upgraded [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire your first weapon upgrade.
+        Spared No Expense
+        : GTI. 1 1
+        : DSC. Fully upgrade a weapon.
+        Combat Shotgun Mastery
+        : GTI. 0 1
+        : DSC. Master the Combat Shotgun.
+        Super Shotgun Mastery
+        : GTI. 1 1
+        : DSC. Master the Super Shotgun.
+        Shredder Mastery
+        : GTI. 0 1
+        : DSC. Master the Shredder.
+        Impaler Mastery
+        : GTI. 1 1
+        : DSC. Master the Impaler.
+        Accelerator Mastery
+        : GTI. 0 1
+        : DSC. Master the Accelerator.
+        Cycler Mastery
+        : GTI. 1 1
+        : DSC. Master the Cycler.
+        Pulverizer Mastery
+        : GTI. 1 1
+        : DSC. Master the Pulverizer.
+        Ravager Mastery
+        : GTI. 1 1
+        : DSC. Master the Ravager.
+        Chainshot Mastery
+        : GTI. 1 1
+        : DSC. Master the Chainshot.
+        Grenade Launcher Mastery
+        : GTI. 1 1
+        : DSC. Master the Grenadeade Launcher.
+        Rocket Launcher Mastery
+        : GTI. 1 1
+        : DSC. Master the Rocket Launcher.
+        Fully Loaded [Trophy]
+        : GTI. 1 1
+        : DSC. Complete the Mastery Challenge for a single weapon.
+        Gunpletionist [Trophy]
+        : GTI. 0 1
+        : DSC. Complete the Mastery Challenge of all weapons.
+        Gimme That [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire the Ballistic Force Crossbow.
+        Shield Adept [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire all shield upgrades under the base category.
+        Ancestral Blessing [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire your first Shield Rune.
+        Powerful Investment [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire all upgrades for a single Shield Rune.
+        Melee Expert [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire all melee weapon upgrades.
+        Berserker [Trophy]
+        : GTI. 3 3
+        : DSC. Acquire all Shield Base, Shield Rune, and Melee Weapon upgrades.
+        Essential Upgrade [Trophy]
+        : GTI. 1 1
+        : DSC. Acquire your first Demonic Essence upgrade.
+        Essential Ammo [Trophy]
+        : GTI. 12 12
+        : DSC. Acquire all Demonic Essence ammo upgrades.
+        Essential Armor [Trophy]
+        : GTI. 10 10
+        : DSC. Acquire all Demonic Essence armor upgrades.
+        Essential Health [Trophy]
+        : GTI. 10 10
+        : DSC. Acquire all Demonic Essence Health upgrades.
+        Essentially Unstoppable [Trophy]
+        : GTI. 32 32
+        : DSC. Acquire all Demonic Essence upgrades.
+        Toy Collector [Trophy]
+        : GTI. 24 24
+        : DSC. Acquire all Collectible demon toys.
+        Lore Nerd [Trophy]
+        : GTI. 26 26
+        : DSC. Acquire all Codex Lore pages.
+    GRP. Weapon Mastery Challenges // 03-weapon-mastery
+    - Path // path
+    ; TXT. 03-weapon-mastery
+    - Index // index
+    ; INT. 27
+        Grenade Launcher Mastery Challenge: CLUSTERFUN
+        : GTI. 100 100
+        Rocket Launcher Mastery Challenge: ENGORGE
+        : GTI. 50 50
+        Cycler Mastery Challenge: THERMAL RUNAWAY
+        : GTI. 500 500
+        Shredder Mastery Challenge: BURSTER
+        : GTI. 0 100
+        Impaler Mastery Challenge: ACUPUNCTURE
+        : GTI. 100 100
+        Reaver Mastery Challenge: REVERBERATION
+        : GTI. 100 100
+        Shotgun Mastery Challenge: BARREL STUFFER
+        : GTI. 0 150
+        Super Shotgun Mastery Challenge: SUPER BARREL STUFFER
+        : GTI. 50 50
+        Ravager Mastery Challenge: GATHERER
+        : GTI. 100 100
+        Pulverizer Mastery Challenge: HUNTER
+        : GTI. 250 250

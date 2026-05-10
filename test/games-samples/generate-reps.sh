@@ -1,0 +1,15 @@
+sh ./run-cli.sh -i ./test/games-samples/AstralChain.dhall --from dhall --to rep -o ./test/games-samples/AstralChain.rep
+sh ./run-cli.sh -i ./test/games-samples/AnimalCrossing.dhall --from dhall --to rep -o ./test/games-samples/AnimalCrossing.rep
+sh ./run-cli.sh -i ./test/games-samples/Balatro.dhall --from dhall --to rep -o ./test/games-samples/Balatro.rep
+sh ./run-cli.sh -i ./test/games-samples/BreathOfTheWild.dhall --from dhall --to rep -o ./test/games-samples/BreathOfTheWild.rep
+sh ./run-cli.sh -i ./test/games-samples/DoomDarkAges.dhall --from dhall --to rep -o ./test/games-samples/DoomDarkAges.rep
+sh ./run-cli.sh -i ./test/games-samples/ForzaHorizon5.dhall --from dhall --to rep -o ./test/games-samples/ForzaHorizon5.rep
+sh ./run-cli.sh -i ./test/games-samples/KirbyTheForgottenLand.dhall --from dhall --to rep -o ./test/games-samples/KirbyTheForgottenLand.rep
+sh ./run-cli.sh -i ./test/games-samples/LegoCityUndercover.dhall --from dhall --to rep -o ./test/games-samples/LegoCityUndercover.rep
+sh ./run-cli.sh -i ./test/games-samples/MarioOdissey.dhall --from dhall --to rep -o ./test/games-samples/MarioOdissey.rep
+sh ./run-cli.sh -i ./test/games-samples/NoRestForTheWicked.dhall --from dhall --to rep -o ./test/games-samples/NoRestForTheWicked.rep
+sh ./run-cli.sh -i ./test/games-samples/NonogramsKatana.dhall --from dhall --to rep -o ./test/games-samples/NonogramsKatana.rep
+sh ./run-cli.sh -i ./test/games-samples/Skyrim.dhall --from dhall --to rep -o ./test/games-samples/Skyrim.rep
+sh ./run-cli.sh -i ./test/games-samples/StarlinkBattleOfAtlas.dhall --from dhall --to rep -o ./test/games-samples/StarlinkBattleOfAtlas.rep
+sh ./run-cli.sh -i ./test/games-samples/Torchlight2.dhall --from dhall --to rep -o ./test/games-samples/Torchlight2.rep
+sh ./run-cli.sh -i ./test/games-samples/SnodgrassInstitute.dhall --from dhall --to rep -o ./test/games-samples/SnodgrassInstitute.rep

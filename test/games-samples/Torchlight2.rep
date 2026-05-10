@@ -1,0 +1,456 @@
+SBJ. Torchlight II // torchlight-2
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-08-05>
+- Playtime // playtime
+; REL. > 10:00:00
+- Platform // platform
+; TXT. Switch
+    GRP. Hero // 00-hero
+    - Path // path
+    ; TXT. 00-hero
+    - Index // index
+    ; INT. 0
+        nickname
+        : TXT. shamansir
+        level
+        : INT. 26
+        gold
+        : INT. 25114
+        fame
+        : GTI. 16620 18000
+        title
+        : TXT. Well-known Berserker
+    GRP. Overview // 01-overview
+    - Path // path
+    ; TXT. 01-overview
+    - Index // index
+    ; INT. 1
+        Difficulcy
+        : TXT. Normal
+        Time Played
+        : TIM. 14:08:24
+        Average Time Per Level
+        : TIM. 00:32:12
+        Potions Used
+        : INT. 276
+        Deaths
+        : INT. 6
+        Gold Gathered
+        : INT. 68920
+        Steps Taken
+        : INT. 42786
+        Quests Completed
+        : INT. 38
+        Monsters Killed
+        : INT. 4752
+        Monsters Exploded
+        : INT. 783
+        Champions Killed
+        : INT. 79
+        Skills Used
+        : INT. 3223
+        Lootables Looted
+        : INT. 242
+        Traps Sprung
+        : INT. 58
+        Breakables Broken
+        : INT. 723
+        Portals Used
+        : INT. 40
+        Fish Caught
+        : INT. 27
+        Times Gambled
+        : INT. 0
+        Items Enchanted
+        : INT. 12
+        Items Transmuted
+        : INT. 0
+        Highest Damage Taken
+        : INT. 577
+        Highest Damage Dealt
+        : INT. 1460
+    GRP. Total Stats // 02-total
+    - Path // path
+    ; TXT. 02-total
+    - Index // index
+    ; INT. 2
+
+        GRP. Strength // 00-strength
+        - Path // path
+        ; TXT. 02-total 00-strength
+        - Index // index
+        ; INT. 3
+            Base Strength
+            : INT. 55
+            Percent Strength Bonus
+            : MSI. 0 %
+            Strength Bonus
+            : INT. 19
+            Total Strength
+            : INT. 74
+        GRP. Dexterity // 01-dexterity
+        - Path // path
+        ; TXT. 02-total 01-dexterity
+        - Index // index
+        ; INT. 4
+            Base Dexterity
+            : INT. 54
+            Percent Dexterity Bonus
+            : MSI. 0 %
+            Dexterity Bonus
+            : INT. 16
+            Total Dexterity
+            : INT. 70
+        GRP. Focus // 02-focus
+        - Path // path
+        ; TXT. 02-total 02-focus
+        - Index // index
+        ; INT. 5
+            Base Focus
+            : INT. 18
+            Percent Focus Bonus
+            : MSI. 0 %
+            Focus Bonus
+            : INT. 27
+            Total Focus
+            : INT. 45
+        GRP. Vitality // 03-vitality
+        - Path // path
+        ; TXT. 02-total 03-vitality
+        - Index // index
+        ; INT. 6
+            Base Vitality
+            : INT. 39
+            Percent Vitality Bonus
+            : MSI. 0 %
+            Vitality Bonus
+            : INT. 0
+            Total Vitality
+            : INT. 38
+    GRP. Attack // 03-attack
+    - Path // path
+    ; TXT. 03-attack
+    - Index // index
+    ; INT. 7
+        Attack Speed Bonus
+        : MSX. + 32.0 %
+        Cast Speed Bonus
+        : MSX. + 60.0 %
+        Critical Chance
+        : MSI. 16 %
+        Critical Damage Bonus
+        : MSX. + 16.0 %
+        Fumble Chance
+        : MSI. 21 %
+        Fumble Damage Penalty
+        : PCX. - 0.55
+        Dual Wielding Bonus
+        : MSX. + 0.0 %
+        Execute Chance
+        : MSI. 33 %
+        Physical Damage Bonus
+        : MSI. 0 %
+        GRP. Elemental Damage Bonuses // 00-elemental
+        - Path // path
+        ; TXT. 03-attack 00-elemental
+        - Index // index
+        ; INT. 8
+            Fire
+            : MSI. 0 %
+            Ice
+            : MSI. 0 %
+            Electric
+            : MSI. 6 %
+            Poison
+            : MSI. 12 %
+    GRP. Defence // 04-defence
+    - Path // path
+    ; TXT. 04-defence
+    - Index // index
+    ; INT. 9
+        Physical Armor
+        : INT. 101
+        Physical Damage Reduction
+        : MSI. 25 %
+        Block Chance
+        : MSI. 0 %
+        Dodge Chance
+        : MSI. 14 %
+        Missile Reflect Chance
+        : MSI. 3 %
+        Missile Reflect DPS
+        : MSI. 50 %
+        Resistance to Slowing Effects
+        : MSI. 0 %
+        Resistance to Immbolozation
+        : MSI. 0 %
+        GRP. Elemental Armors // 00-armors
+        - Path // path
+        ; TXT. 04-defence 00-armors
+        - Index // index
+        ; INT. 10
+            Fire
+            : INT. 97
+            Ice
+            : INT. 28
+            Electric
+            : INT. 40
+            Poison
+            : INT. 28
+        GRP. Elemental Damage Reductions // 01-damagered
+        - Path // path
+        ; TXT. 04-defence 01-damagered
+        - Index // index
+        ; INT. 11
+            Fire
+            : MSI. 25 %
+            Ice
+            : MSI. 25 %
+            Electric
+            : MSI. 25 %
+            Poison
+            : MSI. 31 %
+    GRP. Right Hand: // 05-right
+    - Path // path
+    ; TXT. 05-right
+    - Index // index
+    ; INT. 12
+        Damage Per Second
+        : INT. 295
+        Attack Speed
+        : MSN. 0.36 seconds
+        Physical Damage
+        : RGI. 41 59
+        Range
+        : MSN. 1.8 meters
+        Damage Arc
+        : MSI. 0 degrees
+        Splash Damage
+        : MSI. 0 %
+        GRP. Elemental Damages // 00-elemental
+        - Path // path
+        ; TXT. 05-right 00-elemental
+        - Index // index
+        ; INT. 13
+            Fire
+            : INT. 0
+            Ice
+            : INT. 67
+            Electric
+            : INT. 0
+            Poison
+            : INT. 0
+            Critical Damage
+            : INT. 276
+    GRP. Left Hand: // 06-left
+    - Path // path
+    ; TXT. 06-left
+    - Index // index
+    ; INT. 14
+        Damage Per Second
+        : INT. 295
+        Attack Speed
+        : MSN. 0.36 seconds
+        Physical Damage
+        : RGI. 41 59
+        Range
+        : MSN. 1.8 meters
+        Damage Arc
+        : MSI. 0 degrees
+        Splash Damage
+        : MSI. 0 %
+        GRP. Elemental Damages // 00-elemental
+        - Path // path
+        ; TXT. 06-left 00-elemental
+        - Index // index
+        ; INT. 15
+            Fire
+            : INT. 0
+            Ice
+            : INT. 67
+            Electric
+            : INT. 0
+            Poison
+            : INT. 0
+            Critical Damage
+            : INT. 276
+    GRP. Misc // 07-misc
+    - Path // path
+    ; TXT. 07-misc
+    - Index // index
+    ; INT. 16
+        Health Regeneration
+        : PPI. 0 sec
+        Mana Regeneration
+        : PPN. 1.0 sec
+        Base Mana Regeneration
+        : MSN. 4.0 %/sec
+        Run Speed
+        : NUM. 10.5
+        Luck Bonus
+        : MSX. + 4.0 %
+        Fishing Luck Bonus
+        : MSX. + 0.0 %
+        Gold Drop Bonus
+        : MSX. + 0.0 %
+        Avg. Equipment Level
+        : NUM. 17.08
+    GRP. Skills // 08-skills
+    - Path // path
+    ; TXT. 08-skills
+    - Index // index
+    ; INT. 17
+
+        GRP. Hunter // 00-hunter
+        - Path // path
+        ; TXT. 08-skills 00-hunter
+        - Index // index
+        ; INT. 18
+            Eviscreate
+            : GTN. 1.4 3.0
+            Howl
+            : GTN. 0.0 3.0
+            Raze
+            : GTN. 1.2 3.0
+            Wolfstrike
+            : GTN. 0.2 3.0
+            Battle Rage
+            : GTN. 0.0 3.0
+            Rupture
+            : GTN. 0.0 0.0
+            Ravage
+            : GTN. 0.0 0.0
+            Blood Hunter
+            : NON. .
+            Executioner
+            : NON. .
+        GRP. Tundra // 01-tundra
+        - Path // path
+        ; TXT. 08-skills 01-tundra
+        - Index // index
+        ; INT. 19
+            Frost Breath
+            : GTN. 0.0 0.0
+            Stormclaw
+            : GTN. 0.5 3.0
+            Storm Hatchet
+            : GTN. 0.0 3.0
+            Nothern Rage
+            : GTN. 0.0 3.0
+            Iceshield
+            : GTN. 0.0 3.0
+            Permafrost
+            : GTN. 0.0 0.0
+            Glacial Shatter
+            : GTN. 0.0 0.0
+            Shatter Storm
+            : NON. .
+            Rage Retaliation
+            : NON. .
+        GRP. Shadow // 02-shadow
+        - Path // path
+        ; TXT. 08-skills 02-shadow
+        - Index // index
+        ; INT. 20
+            Shadow Burst
+            : GTN. 1.45 3.0
+            Wolf Shader
+            : GTN. 1.45 3.0
+            ShadowBind
+            : GTN. 0.45 3.0
+            Savage Rush
+            : GTN. 0.0 3.0
+            Chain Snare
+            : GTN. 0.0 3.0
+            Battle Standard
+            : GTN. 0.0 3.0
+            Wolfpack
+            : GTN. 0.0 3.0
+            Frenzy Mastery
+            : NON. .
+            Shred Armor
+            : NON. .
+            Red Wolf
+            : NON. .
+    GRP. Stats // 09-stats
+    - Path // path
+    ; TXT. 09-stats
+    - Index // index
+    ; INT. 21
+        Strength
+        : TXT. 55+19->74
+        Dexterity
+        : TXT. 54+16->70
+        Focus
+        : TXT. 18+27->45
+        Vitality
+        : TXT. 38+0->38
+        GRP. Effect // 00-effect
+        - Path // path
+        ; TXT. 09-stats 00-effect
+        - Index // index
+        ; INT. 22
+
+            GRP. Strength // 00-strength
+            - Path // path
+            ; TXT. 09-stats 00-effect 00-strength
+            - Index // index
+            ; INT. 23
+
+                GRP. Weapon Damage // 00-weapon
+                - Path // path
+                ; TXT. 09-stats 00-effect 00-strength 00-weapon
+                - Index // index
+                ; INT. 24
+                    Right Hand
+                    : RGI. 88 126
+                    Left Hand
+                    : RGI. 88 126
+                    Effect
+                    : MSX. + 37.0 %
+                    Critical Damage
+                    : MSX. + 37.0 %
+            GRP. Dexterity // 01-dexterity
+            - Path // path
+            ; TXT. 09-stats 00-effect 01-dexterity
+            - Index // index
+            ; INT. 25
+                Critical
+                : MSI. 16 %
+                Dodge
+                : MSI. 14 %
+                Critical Chance
+                : MSX. + 13.0 %
+                Dodge Chance
+                : MSX. + 13.0 %
+                Weapon Damage
+                : MSX. + 446.0 %
+            GRP. Focus // 02-focus
+            - Path // path
+            ; TXT. 09-stats 00-effect 02-focus
+            - Index // index
+            ; INT. 26
+                Magic Damage
+                : RGI. 47 67
+                Maximum Mana (MP)
+                : INT. 109
+                Magic Damage Effect
+                : MSX. + 225.0 %
+                Execute Chance
+                : MSX. + 33.0 %
+                Weapon Damage
+                : MSX. + 446.0 %
+            GRP. Vitality // 03-vitality
+            - Path // path
+            ; TXT. 09-stats 00-effect 03-vitality
+            - Index // index
+            ; INT. 27
+                Armor
+                : RGI. 51 101
+                Maximum Health (MP)
+                : INT. 1890
+                Armor Bonus
+                : MSX. + 9.5 %
+                Block Chance
+                : MSX. + 7.3 %

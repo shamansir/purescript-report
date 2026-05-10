@@ -1,0 +1,418 @@
+SBJ. Animal Crossing // animal-crossing
+# Other
+- Tracked At // trackedAt
+; DAT. <2025-08-29>
+- Playtime // playtime
+; REL. > 110:00:00
+- Platform // platform
+; TXT. Other
+    GRP. Statistics // 00-stats
+    - Path // path
+    ; TXT. 00-stats
+    - Index // index
+    ; INT. 0
+        Miles Collected
+        : INT. 3270
+        Registered at
+        : DAT. <2020-03-25>
+        Items Collected
+        : GTI. 335 400
+        Recipes Learned
+        : GTI. 195 1828
+        Music Albums Discovered
+        : GTI. 13 110
+        Reactions Learned
+        : GTI. 39 88
+        Reactions
+        : LVP. 88
+        >>> DONE Greetings
+        >>> TODO Agreement
+        >>> DONE Disagreement
+        >>> TODO Pleased
+        >>> DONE Happiness
+        >>> DONE Joy
+        >>> TODO Glee
+        >>> DONE Laughter
+        >>> TODO Love
+        >>> TODO Confident
+        >>> TODO Showmanship
+        >>> TODO Flourish
+        >>> TODO Pride
+        >>> DONE Encouraging
+        >>> DONE Delight
+        >>> DONE Apologetic
+        >>> DONE Bewilderment
+        >>> DONE Curiousity
+        >>> DONE Surprise
+        >>> DONE Amazed
+        >>> TODO Inspiration
+        >>> DONE Shocked
+        >>> DONE Mistaken
+        >>> DONE Bashfulness
+        >>> DONE Shyness
+        >>> DONE Sheepishness
+        >>> DONE Smirking
+        >>> TODO Mischief
+        >>> DONE Resignation
+        >>> TODO Daydreaming
+        >>> TODO Thought
+        >>> TODO Sleepy
+        >>> DONE Dozing
+        >>> TODO Worry
+        >>> TODO Sighing
+        >>> TODO Sadness
+        >>> DONE Heartbreak
+        >>> DONE Sorrow
+        >>> DONE Intense
+        >>> TODO Aggravation
+        >>> DONE Cold Chill
+        >>> DONE Distress
+        >>> TODO Fearful
+        >>> DONE Sneezing
+        >>> TODO Haunt
+        >>> TODO Scare
+        >>> DONE Sit Down
+        >>> DONE Wave Goodbye
+        >>> DONE Take a Picture
+        >>> DONE Sniff Sniff
+        >>> DONE Work out
+        >>> DONE Yoga
+        >>> DONE Here You Go
+        >>> DONE Excited
+        >>> DONE Ta-da
+        >>> DONE Confetti
+        >>> DONE Viva
+        >>> DONE Let's Go
+        >>> DONE Feelin' It
+        >>> TODO Posture Warming
+        >>> TODO Arm Circles
+        >>> TODO Side bends
+        >>> TODO Body Twists
+        >>> TODO Wide Arm Stretch
+        >>> TODO Upper Body Ci..
+        >>> TODO Jump
+        >>> TODO Double Wave
+        >>> TODO Stretch
+        >>> TODO Jammin'
+        >>> TODO Listening Ears
+        >>> TODO Say Cheese
+        >>> TODO Behold
+        >>> TODO Eager
+        >>> TODO Flex
+        >>> TODO Work it
+        >>> TODO Act Natural
+        >>> TODO Hula
+        >>> TODO Grooving Hop
+        >>> TODO Groove Right
+        >>> TODO Groove Left
+        >>> TODO Soak It In
+        >>> TODO Side-to-Side
+        >>> TODO Island Stomp
+        >>> TODO Airplane
+        >>> TODO Twisty Dance
+        >>> TODO Shimmy
+        >>> TODO Turnip Patch
+        >>> TODO Arm-Swinging Da...
+        GRP. Museum // 00-museum
+        - Path // path
+        ; TXT. 00-stats 00-museum
+        - Index // index
+        ; INT. 1
+            Bugs Collected
+            : GTI. 34 80
+            Fish
+            : GTI. 23 80
+            Sea Critters
+            : GTI. 6 40
+            Fossils
+            : GTI. 51 73
+            Art
+            : GTI. 1 43
+    GRP. Nook Miles // 01-nook-miles
+    - Path // path
+    ; TXT. 01-nook-miles
+    - Index // index
+    ; INT. 2
+        Techless Miles!
+        : CMP. DONE
+        : ERN. <2020-03-25>
+        Angling For Perfection!
+        : DSC. Fishing Mastering
+        : NON. .
+        Island Ichtyologist
+        : DSC. Fill Fish in Critterpedia
+        : NON. .
+        Island Togetherness
+        : DSC. Chat with residents
+        : NON. .
+        You've Got the Bug
+        : DSC. Catch bugs
+        : NON. .
+        Bugs Don't Bug Me
+        : DSC. Fill Bugs in Critterpedia
+        : NON. .
+        Have a Nice DIY
+        : DSC. Collect DIY Recipes
+        : NON. .
+        Deep Dive
+        : DSC. Dive in the Sea
+        : NON. .
+        Underwater Understudy
+        : DSC. Fill Deep Sea Creatures in Critterpedia
+        : NON. .
+        DIY Tools
+        : DSC. Make DIY Tools
+        : NON. .
+        DIY Furniture
+        : DSC. Craft DIY Furniture
+        : NON. .
+        Furniture Freshener
+        : DSC. Refurbish DIY Furniture
+        : NON. .
+        Rough-hewn
+        : DSC. Chop Wood from the Trees
+        : NON. .
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        Trashed Tools
+        : DSC. Tools Broken
+        : NON. .
+        Rock-Splitting Champ
+        : CMP. DONE
+        : ERN. <2020-05-05>
+        Bona Fide Bone Finder
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        Fossil Assesment
+        : DSC. Assess Fossils
+        : NON. .
+        Nice to Meet You, Gyroid!
+        : CMP. DONE
+        : ERN. <2021-11-13>
+        Gyroid Getter
+        : DSC. Different Kinds of Gyroids
+        : NON. .
+        Greedy Weeder
+        : DSC. Sell weeds
+        : NON. .
+        Flower Power
+        : DSC. Sell weeds
+        : NON. .
+        Flower Tender
+        : DSC. Shower Flowers
+        : NON. .
+        Tomorrow's Trees Today
+        : DSC. Plant Trees
+        : NON. .
+        Pick of the Bunch
+        : DSC. Sell Fruits
+        : NON. .
+        Fruit Roots
+        : DSC. Grow different kinds of Fruits
+        : LVP. 6
+        >>> <2020-04-12> DONE A: Cherries
+        >>> <2020-04-12> DONE B: Oranges
+        >>> <2020-04-28> DONE C: Pears
+        >>> TODO D: ???
+        >>> TODO E: ???
+        >>> <2020-04-04> DONE F: Coconuts
+        Shrubbery Hubbubbery
+        : DSC. Plant shrubs
+        : NON. .
+        ???
+        : CMP. TODO
+        Executive Producer
+        : DSC. Eat what you grow
+        : NON. .
+        Go Ahead. Be Shellfish!
+        : DSC. Sell Shellfish
+        : NON. .
+        Clam and Collected
+        : DSC. Dig Up Clams
+        : NON. .
+        Trash Fishin'
+        : DSC. Fish the trash, clean the Island
+        : NON. .
+        Cast Master
+        : DSC. Catch Fish in a row
+        : NON. .
+        Dream House
+        : DSC. Expand your home
+        : NON. .
+        Decorated Decorator!
+        : CMP. DONE
+        : ERN. <2020-06-16>
+        Hoard Reward
+        : DSC. Have furniture
+        : NON. .
+        Good Things in Store
+        : DSC. Items in the Storage
+        : NON. .
+        ???
+        : CMP. TODO
+        Smile Isle
+        : DSC. Fullfill residents' requests
+        : NON. .
+        Reaction Ruler
+        : DSC. Learn Reactions
+        : NON. .
+        Island Shutterbug!
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        Edit Credit
+        : CMP. DONE
+        : ERN. <2020-03-25>
+        Nook Phone Life!
+        : CMP. DONE
+        : ERN. <2020-03-25>
+        ???
+        : CMP. TODO
+        Shop to it
+        : DSC. Shop with NookShopping
+        : NON. .
+        Growing Collection
+        : DSC. Expand NookShopping Catalogue
+        : NON. .
+        Nook Miles for Miles!
+        : DSC. Earn Miles by Getting Miles
+        : NON. .
+        First Time Buyer!
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        Seller of Unwanted Stuff!
+        : CMP. DONE
+        : ERN. <2020-03-27>
+        Moving Fees Paid!
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        Bell Ringer
+        : DSC. Spend Bells
+        : NON. .
+        Miles for Stalkholders
+        : CMP. DONE
+        : ERN. <2020-04-05>
+        : DSC. Purchase Turnips
+        Cornering the Stalk Market
+        : DSC. Turnip Transactions
+        : NON. .
+        No More Loan Playments
+        : CMP. DONE
+        : ERN. <2020-04-03>
+        : DSC. (No more) Paying for Loan
+        Bulletin-Board Benefit
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        : DSC. Write Something on the Bulletin Board
+        Popular Pen Pal
+        : DSC. Write letters
+        : NON. .
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        Faint of Heart
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        : DSC. Meet Ghosts
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        It's Raining Treasure
+        : DSC. Shoot Balloons with Gifts
+        : NON. .
+        Fun with Fences
+        : GTI. 0 20
+        : DSC. Install Fences
+        ???
+        : CMP. TODO
+        Wishes Come True
+        : DSC. Wish by Shooting Stars
+        : NON. .
+        Exterior Decorator
+        : GTI. 10 10
+        : ERN. <2020-03-29>
+        : DSC. Put furniture outside
+        Techless Icons
+        : DSC. Select island flag and tune
+        : LVP. 2
+        >>> DONE A: Select flag
+        >>> <2021-11-11> TODO B: Select tune
+        Island Designer
+        : DSC. Build path, river, and cliff
+        : LVP. 3
+        >>> <2020-05-15> DONE A: Path
+        >>> <2020-05-29> DONE B: River
+        >>> <2020-05-18> DONE C: Cliff
+        Wispy Island Secrets
+        : DSC. Discover Island Secrets
+        : NON. .
+        Guiliver's Travails
+        : DSC. Help in troubles at the Beach
+        : NON. .
+        K.K. Mania
+        : DSC. Attend K.K. Shows
+        : NON. .
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        Set Sail for Adventure
+        : DSC. Tour with the Sailor
+        : NON. .
+        Come Home to the Roost
+        : DSC. Sip a coffee at the Roost
+        : NON. .
+        ???
+        : CMP. TODO
+        True Friends
+        : DSC. Establish true Friends
+        : NON. .
+        Birthday Celebration
+        : DSC. Celebrate Birthdays of the Residents
+        : NON. .
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        ???
+        : CMP. TODO
+        Making a Change
+        : CMP. DONE
+        : ERN. <2020-05-02>
+        : DSC. Change your outfit
+        First Custom Design!
+        : CMP. TODO
+        : DSC. Use Custom Design App
+        ???
+        : CMP. TODO
+        Paydirt!
+        : CMP. DONE
+        : ERN. <2020-03-29>
+        : DSC. Treasure from buriying Bells
+        Shady Shakedown
+        : DSC. Shake Furniture from Trees
+        : NON. .
+        ???
+        : CMP. TODO
+        Island and Yourland
+        : DSC. Visit neighbour islands
+        : NON. .
+        Host the Most
+        : DSC.  Have guests from neighbour islands
+        : NON. .
+        Active Island Resident
+        : DSC. Number of active days on the island
+        : NON. .

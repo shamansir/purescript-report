@@ -1,0 +1,252 @@
+SBJ. Snodgrass Institute for Mundane Phenomena // snodgrass-institute
+# Science
+# Peculiar
+# British
+- established // established
+; DAT. <1987-03-17>
+- location // location
+; TXT. Upper Tufnell Park, London
+- staff_count // staff_count
+; INT. 47
+- papers_published // papers_published
+; INT. 3
+- papers_retracted // papers_retracted
+; INT. 3
+- net_useful_output // net_useful_output
+; NON. .
+    GRP. General Overview // 00-overview
+    - Path // path
+    ; TXT. 00-overview
+    - Index // index
+    ; INT. 0
+        Founded
+        : INT. 1987
+        Active Staff Members
+        : NUM. 47.0
+        Annual Budget (£ million)
+        : NUM. 3.14
+        Current Director
+        : TXT. Prof. Archibald Snodgrass VII
+        Location of Last Known Stapler
+        : NON. .
+        Source of Ongoing Funding
+        : UNK. .
+        Achievement Certificates (ref)
+        : GTI. 2 5
+        : REF. 05-levels 01-certs
+    GRP. Experiments: Status Board // 01-experiments
+    - Path // path
+    ; TXT. 01-experiments
+    - Index // index
+    ; INT. 1
+        Toast Trajectory Study (butter-side-down)
+        : PRG. DOING
+        : DSC. 1000 drops planned; 847 confirmed butter-down so far
+        Queue Migration Theorem: Phase III
+        : PRG. TODO
+        : DSC. Why does the other queue always move faster?
+        Remote Control Uncertainty Principle
+        : PRG. NOW
+        : DSC. CRITICAL: whereabouts unknown; last seen near sofa (2019)
+        Tea Temperature Optimality Survey
+        : PRG. WAIT
+        : DSC. Awaiting 400 additional teapot deliveries for Phase II
+        Optimal Biscuit Dunking Protocol
+        : PRG. DONE
+        : ERN. <2024-11-03>
+        : DSC. Result: 4.2 sec in 73°C tea (chocolate digestive only)
+        Left Sock Weather Correlation Study
+        : PRG. LATER
+        : DSC. Deferred: awaiting meteorological cooperation agreement
+        Elevator Button Pressing Efficacy
+        : PRG. CANCELED
+        : DSC. Terminated: buttons disconnected since 1994 (see memo #4471)
+        Fridge Light Observation Project
+        : PRG. TODO
+        : DSC. Blocked by ethics committee (Schrödinger compliance issue)
+    GRP. Measurement Lab: Units // 02-measurements
+    - Path // path
+    ; TXT. 02-measurements
+    - Index // index
+    ; INT. 2
+        Teaspoons Lost Per Year
+        : MSI. 147 spoons
+        Average Sock-Search Duration
+        : MSN. 3.7 min
+        Annoyance Factor Change (positive delta)
+        : MSX. + 2.5 units
+        Staff Patience Erosion (negative delta)
+        : MSX. - 8.3 units
+        Useless Meetings Per Day
+        : PPI. 5 day
+        Paperclip Consumption
+        : PPN. 12.5 hour
+        Forms Approved (pct int measure)
+        : MSI. 73 %
+        Forms Rejected (pct double measure)
+        : MSN. 41.5 %
+        Efficiency Improvement Delta (pct positive)
+        : MSX. + 2.3 %
+        Budget Burn Rate (pct negative)
+        : MSX. - 5.7 %
+        GRP. Measurement Lab: Percentages // 00-percentages
+        - Path // path
+        ; TXT. 02-measurements 00-percentages
+        - Index // index
+        ; INT. 3
+            Experiment Success Rate (pct 0.0..1.0)
+            : PCN. 0.42
+            Bureaucracy Overhead (pcti 0..100)
+            : PCI. 87
+            Tea Satisfaction Index (pctx positive)
+            : PCX. + 12.5
+            Staff Enthusiasm Change (pctx negative)
+            : PCX. - 3.14
+            Hypothesis Confirmed
+            : PCN. 1.0
+            Hypothesis Not-Yet-Falsified
+            : PCN. 0.0
+            Funding Consumed
+            : PCI. 100
+            Useful Output Delivered
+            : PCI. 0
+        GRP. Measurement Lab: Bool & Fractions // 01-booleans
+        - Path // path
+        ; TXT. 02-measurements 01-booleans
+        - Index // index
+        ; INT. 4
+            Coffee Machine: Operational
+            : CMP. DONE
+            WiFi Connection: Reliable
+            : CMP. TODO
+            Last Grant Application: Approved (pi 1/1)
+            : GTI. 1 1
+            Parking Space: Obtained (pi 0/1)
+            : GTI. 0 1
+            Last Committee Vote: Conclusive (pi 0/0)
+            : GTI. 0 0
+            Quarterly Reports Submitted (pi int)
+            : GTI. 7 12
+            Skill Points Allocated (pd double)
+            : GTN. 2.5 5.0
+    GRP. Temporal Records // 03-time
+    - Path // path
+    ; TXT. 03-time
+    - Index // index
+    ; INT. 5
+        Duration of Last Board Meeting
+        : TIM. 03:47:22
+        Date of Last Sensible Decision
+        : DAT. <2019-04-01>
+        Next Fire Drill (relt: more than)
+        : REL. > 02:00:00
+        Acceptable Tea Break Window (relt: less than)
+        : REL. < 00:15:00
+        Statutory Board Meeting Length (relt: exact)
+        : REL. = 01:30:00
+    GRP. Ranges & Numeric Relations // 04-ranges
+    - Path // path
+    ; TXT. 04-ranges
+    - Index // index
+    ; INT. 6
+        Acceptable Pencil Length (rngi, mm)
+        : RGI. 120 190
+        Ideal Coffee Temperature (rngd, °C)
+        : RGN. 63.0 79.5
+        Minimum Forms Per Day (reli: more than)
+        : NON. .
+        Maximum Acceptable Queue (reli: less than)
+        : NON. .
+        Minimum Staff Satisfaction Score (reld: more than)
+        : NON. .
+        Maximum Acceptable Library Noise dB (reld: less than)
+        : NON. .
+        Annual Forms Processing Target (reln: exact)
+        : NON. .
+    GRP. Level Progressions // 05-levels
+    - Path // path
+    ; TXT. 05-levels
+    - Index // index
+    ; INT. 7
+
+        GRP. Skill Tracks // 00-skills
+        - Path // path
+        ; TXT. 05-levels 00-skills
+        - Index // index
+        ; INT. 8
+            Rubber Stamp Proficiency (lvls: text gives)
+            : LVS. 3
+            >>> Basic Approval Authority
+            >>> <2024-03-15> +20 Stamp Speed
+            >>> <2024-09-07> Unconditional Denial Mastery
+            >>> Cross-Departmental Stamp Rights
+            >>> Legendary: The Phantom Stamp
+            Procrastination Mastery (lvli: int maximum)
+            : LVI. 4
+            >>> 10 I'll Do It Tomorrow
+            >>> 25 Strategic Delay
+            >>> 50 Extended Contemplation
+            >>> <2025-01-03> 100 Masterful Deferral
+            >>> 200 Enlightened Inaction
+            Tea Brewing Expertise (lvld: double maximum)
+            : LVN. 2.5
+            >>> 1.0 Bag-in-Cup
+            >>> 2.0 Loose Leaf Aware
+            >>> <2023-06-12> 3.0 Temperature Control
+            >>> 4.0 Steeping Time Precision
+            >>> 5.0 Grandmaster of the Kettle
+            Form Processing Level (lvlc: current/max)
+            : LVC. 7 10 7 10
+            Queue Management Certification (lvlp: per-level PROC)
+            : LVP. 5
+            >>> DONE Single Queue Basics
+            >>> <2023-02-28> DONE Multi-Lane Queuing
+            >>> DOING Predictive Queue Analysis
+            >>> TODO Zen Queue Management
+            >>> TODO Queue Singularity (requires Zen)
+            Budget Expenditure Authorization (lvlio: optional int)
+            : NON. .
+        GRP. Achievement Certificates // 01-certs
+        - Path // path
+        ; TXT. 05-levels 01-certs
+        - Index // index
+        ; INT. 9
+            Certificate of Participation
+            : CMP. DONE
+            Certificate of Mild Effort
+            : CMP. DONE
+            Certificate of Occasional Presence
+            : PRG. DOING
+            Certificate of Marginal Contribution
+            : CMP. TODO
+            Certificate of Legendary Inaction
+            : CMP. TODO
+    GRP. Annotated Field Notes // 06-field-notes
+    - Path // path
+    ; TXT. 06-field-notes
+    - Index // index
+    ; INT. 10
+        Observation #1: The Missing Stapler Phenomenon
+        : PRG. DOING
+        # urgent
+        # recurring
+        # unexplained
+        Experiment Delta-7: Kettle Behaviour Study
+        : GTI. 3 5
+        : ERN. <2024-09-12>
+        : DSC. Comprehensive boiling pattern analysis under controlled observation
+        Form #88-B: Inter-departmental Nudge Request
+        : PRG. TODO
+        # form
+        # nudge
+        # pending-since-1998
+        Cross-Reference: Biscuit Dunking Study
+        : REF. 01-experiments
+        : NON. .
+        # cross-ref
+        Proprietary Finding #44
+        : DSC. Details classified — patent application pending (filed: never)
+        : UNK. .
+        PROC value via v_proc helper
+        : PRG. DOING
+        : DSC. Same result as p_doing; demonstrates v_proc + PROC_ form

@@ -1,0 +1,483 @@
+SBJ. Zelda: Breath of the Wild // zelda-breath-of-the-wild
+# Switch
+- Tracked At // trackedAt
+; DAT. <2025-08-29>
+- Playtime // playtime
+; REL. > 205:00:00
+- Platform // platform
+; TXT. Switch
+    GRP. General Stats // 00-stats
+    - Path // path
+    ; TXT. 00-stats
+    - Index // index
+    ; INT. 0
+        Health Hearts
+        : INT. 18
+        Stamina Circles
+        : INT. 3
+        Divine Orbs
+        : INT. 3
+        Shrines Discovered
+        : INT. 87
+        Korok Seeds
+        : INT. 225
+        Rupees
+        : INT. 8116
+        Divine Beasts
+        : GTI. 4 4
+    GRP. Recovered Memories // 01-memories
+    - Path // path
+    ; TXT. 01-memories
+    - Index // index
+    ; INT. 1
+        #1: Subdued Ceremony
+        : CMP. DONE
+        #2: Revali's Flap
+        : CMP. DONE
+        #3: ???
+        : CMP. TODO
+        #4: Daruk's Meetle
+        : CMP. DONE
+        #5: Zelda's Resentement
+        : CMP. DONE
+        #6: Urbosa's Hand
+        : CMP. DONE
+        #7: ???
+        : CMP. TODO
+        #8: ???
+        : CMP. TODO
+        #9: ???
+        : CMP. TODO
+        #10: Mipha's Touch
+        : CMP. DONE
+        #11: Shelter from the Storm
+        : CMP. DONE
+        #12: ???
+        : CMP. TODO
+        #13: Slumbering Power
+        : CMP. DONE
+        #14: ???
+        : CMP. TODO
+        #15: Return of Galamity Ganon
+        : CMP. DONE
+        #16: Despair
+        : CMP. DONE
+        #17: ???
+        : CMP. TODO
+        #18: The Master Sword
+        : CMP. DONE
+    GRP. Shrines // 02-shrines
+    - Path // path
+    ; TXT. 02-shrines
+    - Index // index
+    ; INT. 2
+        Oman Au :: Great Plateau
+        : PRG. DONE
+        : DSC. BOTW-001
+        Ja Baij :: Great Plateau
+        : PRG. DONE
+        : DSC. BOTW-002
+        Owa Daim :: Great Plateau
+        : PRG. DONE
+        : DSC. BOTW-003
+        Keh Namut :: Great Plateau
+        : PRG. DONE
+        : DSC. BOTW-004
+        Bosh Kala :: Dueling Peaks
+        : PRG. DONE
+        : DSC. BOTW-005
+        Toto Sah :: Dueling Peaks
+        : PRG. TODO
+        : DSC. BOTW-006
+        Shee Vaneer :: Dueling Peaks
+        : PRG. DONE
+        : DSC. BOTW-007
+        Ree Dahee :: Dueling Peaks
+        : PRG. DONE
+        : DSC. BOTW-008
+        Shee Venath :: Dueling Peaks
+        : PRG. TODO
+        : DSC. BOTW-009
+        Ha Dahamar :: Dueling Peaks
+        : PRG. DONE
+        : DSC. BOTW-010
+        Ta'loh Naeg :: Dueling Peaks
+        : PRG. DONE
+        : DSC. BOTW-011
+        Hila Rao :: Dueling Peaks
+        : PRG. DONE
+        : DSC. BOTW-012 :: Watch Out for the Flowers
+        Lakna Rokee :: Dueling Peaks
+        : PRG. TODO
+        : DSC. BOTW-013 :: The Stolen Heirloom
+        Chaas Qeta :: Hateno
+        : PRG. DOING
+        : DSC. BOTW-014
+        Myahm Agana :: Hateno
+        : PRG. DONE
+        : DSC. BOTW-015
+        Tahno O'ah :: Hateno
+        : PRG. DONE
+        : DSC. BOTW-016 :: Secret of the Cedars
+        Jitan Sa'mi :: Hateno
+        : PRG. DONE
+        : DSC. BOTW-017 :: The Spring of Wisdom
+        Dow Na'eh :: Hateno
+        : PRG. TODO
+        : DSC. BOTW-018
+        Kam Urog :: Hateno
+        : PRG. DONE
+        : DSC. BOTW-019 :: The Cursed Statue
+        Mezza Lo :: Hateno
+        : PRG. TODO
+        : DSC. BOTW-020 :: The Crowned Beast
+        Daka Tuss :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-021
+        Kaya Wan :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-022
+        Soh Kofi :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-023
+        Sheh Rata :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-024
+        Rucco Maag :: Lanayru
+        : PRG. DOING
+        : DSC. BOTW-025
+        Shai Yota :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-026 :: Master of the Wind
+        Dagah Keek :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-027 :: The Ceremonial Song
+        Ne'ez Yohma :: Lanayru
+        : PRG. DOING
+        : DSC. BOTW-028
+        Kah Mael :: Lanayru
+        : PRG. DONE
+        : DSC. BOTW-029
+        Rona Kachta :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-030
+        Monya Toma :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-031
+        Kuhn Sidajj :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-032 :: Trial of Second Sight
+        Daag Chokah :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-033 :: The Lost Pilgrimage
+        Keo Ruug :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-034
+        Maag Halan :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-035 :: The Test of Wood
+        Ketoh Wawai :: Woodland
+        : PRG. DONE
+        : DSC. BOTW-036 :: Shrouded Shrine
+        Mirro Shaz :: Woodland
+        : PRG. DOING
+        : DSC. BOTW-037
+        Dah Kaso :: Central
+        : PRG. DONE
+        : DSC. BOTW-038
+        Rota Ooh :: Central
+        : PRG. DONE
+        : DSC. BOTW-039
+        Wahgo Katta :: Central
+        : PRG. DONE
+        : DSC. BOTW-040
+        Kaam Ya'tak :: Central
+        : PRG. DONE
+        : DSC. BOTW-041
+        Katah Chuki :: Central
+        : PRG. DONE
+        : DSC. BOTW-042
+        Noya Neha :: Central
+        : PRG. DONE
+        : DSC. BOTW-043
+        Saas Ko'sah :: Central
+        : PRG. TODO
+        : DSC. BOTW-044
+        Namika Ozz :: Central
+        : PRG. DOING
+        : DSC. BOTW-045
+        Ishto Soh :: Lake
+        : PRG. DONE
+        : DSC. BOTW-046
+        Shoqa Tatone :: Lake
+        : PRG. TODO
+        : DSC. BOTW-047 :: Guardian Slideshow
+        Ka'o Makagh :: Lake
+        : PRG. DONE
+        : DSC. BOTW-048
+        Pumaag Nitae :: Lake
+        : PRG. DONE
+        : DSC. BOTW-049
+        Ya Naga :: Lake
+        : PRG. DONE
+        : DSC. BOTW-050
+        Shae Katha :: Lake
+        : PRG. TODO
+        : DSC. BOTW-051 :: The Serpent's Jaws
+        Shai Utoh :: Faron
+        : PRG. DONE
+        : DSC. BOTW-052
+        Qukah Nata :: Faron
+        : PRG. DONE
+        : DSC. BOTW-053 :: A Song of Storms
+        Shoda Sah :: Faron
+        : PRG. TODO
+        : DSC. BOTW-054
+        Tawa Jinn :: Faron
+        : PRG. DONE
+        : DSC. BOTW-055 :: The Three Giant Brothers
+        Yah Rin :: Faron
+        : PRG. DONE
+        : DSC. BOTW-056
+        Kah Yah :: Faron
+        : PRG. DONE
+        : DSC. BOTW-057 :: A Fragmented Monument
+        Muwo Jeem :: Faron
+        : PRG. DONE
+        : DSC. BOTW-058
+        Korgu Chideh :: Faron
+        : PRG. DONE
+        : DSC. BOTW-059 :: Stranded on Eventide
+        Mijah Rokee :: Ridgeland
+        : PRG. TODO
+        : DSC. BOTW-060 :: Under a Red Moon
+        Shae Loya :: Ridgeland
+        : PRG. DONE
+        : DSC. BOTW-061
+        Sheem Dagoze :: Ridgeland
+        : PRG. DONE
+        : DSC. BOTW-062 :: The Two Rings
+        Mogg Latan :: Ridgeland
+        : PRG. DOING
+        : DSC. BOTW-063
+        Zalta Wa :: Ridgeland
+        : PRG. TODO
+        : DSC. BOTW-064
+        Maag No'rah :: Ridgeland
+        : PRG. DONE
+        : DSC. BOTW-065
+        Toh Yahsa :: Ridgeland
+        : PRG. DONE
+        : DSC. BOTW-066 :: Trial of Thunder
+        Sha Warvo :: Tabantha
+        : PRG. DOING
+        : DSC. BOTW-067
+        Voo Lota :: Tabantha
+        : PRG. TODO
+        : DSC. BOTW-068 :: Recital at Warbler's Nest
+        Akh Va'quot :: Tabantha
+        : PRG. DOING
+        : DSC. BOTW-069
+        Bareeda Naag :: Tabantha
+        : PRG. DONE
+        : DSC. BOTW-070 :: The Ancient Rito Song
+        Tena Ko'sah :: Tabantha
+        : PRG. DONE
+        : DSC. BOTW-071
+        Kah Okeo :: Tabantha
+        : PRG. DOING
+        : DSC. BOTW-072
+        Hia Miu :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-073
+        To Quomo :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-074
+        Mozo Shenno :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-075 :: The Bird in the Mountains
+        Shada Naw :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-076
+        Rok Uwog :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-077
+        Sha Gehma :: Hebra
+        : PRG. DOING
+        : DSC. BOTW-078
+        Qaza Tokki :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-079 :: Trial on the Cliff
+        Goma Asaagh :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-080
+        Maka Rah :: Hebra
+        : PRG. DOING
+        : DSC. BOTW-081
+        Dunba Taag :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-082
+        Lanno Kooh :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-083
+        Gee Ha'rah :: Hebra
+        : PRG. DONE
+        : DSC. BOTW-084
+        Rin Oyaa :: Hebra
+        : PRG. DOING
+        : DSC. BOTW-085
+        Hawa Koth :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-086
+        Kema Zoos :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-087 :: The Silent Swordswomen
+        Tho Kayu :: Wasteland
+        : PRG. TODO
+        : DSC. BOTW-088
+        Raqa Zunzo :: Wasteland
+        : PRG. TODO
+        : DSC. BOTW-089 :: The Undefeated Champ
+        Misae Suma :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-090 :: The Perfect Drink
+        Dila Maag :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-091 :: The Desert Labyrinth
+        Korsh O'hu :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-092 :: The Seven Heroines
+        Kay Noh :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-093
+        Dako Tah :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-094 :: The Eye of the Sandstorm
+        Suma Sahma :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-095 :: Secret of the Snowy Peaks
+        Jee Noh :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-096
+        Daqo Chisay :: Wasteland
+        : PRG. DONE
+        : DSC. BOTW-097
+        Keeha Yoog :: Gerudo
+        : PRG. TODO
+        : DSC. BOTW-098 :: Cliffside Etchings
+        Kuh Takkar :: Gerudo
+        : PRG. DONE
+        : DSC. BOTW-099
+        Kema Kosassa :: Gerudo
+        : PRG. DONE
+        : DSC. BOTW-100
+        Sasa Kai :: Gerudo
+        : PRG. TODO
+        : DSC. BOTW-101 :: Sign of the Shadow
+        Joloo Nah :: Gerudo
+        : PRG. TODO
+        : DSC. BOTW-102 :: Test of Will
+        Sho Dantu :: Gerudo
+        : PRG. DONE
+        : DSC. BOTW-103
+        Shora Hah :: Eldin
+        : PRG. DOING
+        : DSC. BOTW-104
+        Daqa Koh :: Eldin
+        : PRG. DONE
+        : DSC. BOTW-105
+        Qua Raym :: Eldin
+        : PRG. DOING
+        : DSC. BOTW-106
+        Tah Muhl :: Eldin
+        : PRG. DONE
+        : DSC. BOTW-107 :: A Landscape of a Stable
+        Mo'a Keet :: Eldin
+        : PRG. DOING
+        : DSC. BOTW-108
+        Sah Dahaj :: Eldin
+        : PRG. DOING
+        : DSC. BOTW-109
+        Gorae Torr :: Eldin
+        : PRG. DONE
+        : DSC. BOTW-110 :: The Gut Check Challenge
+        Kayra Mah :: Eldin
+        : PRG. TODO
+        : DSC. BOTW-111 :: A Brother's Roast
+        Shae Mo'sah :: Eldin
+        : PRG. DONE
+        : DSC. BOTW-112
+        Zuna Kai :: Akkala
+        : PRG. DONE
+        : DSC. BOTW-113 :: The Skull's Eye
+        Ze Kasho :: Akkala
+        : PRG. DONE
+        : DSC. BOTW-114
+        Ke'nai Shakah :: Akkala
+        : PRG. DONE
+        : DSC. BOTW-115
+        Ritaag Zumo :: Akkala
+        : PRG. DONE
+        : DSC. BOTW-116 :: Into the Vortex
+        Tutsuwa Nima :: Akkala
+        : PRG. TODO
+        : DSC. BOTW-117 :: The Spring of Power
+        Tu Ka'loh :: Akkala
+        : PRG. DONE
+        : DSC. BOTW-118 :: Trial of the Labyrinth
+        Dah Hesho :: Akkala
+        : PRG. DOING
+        : DSC. BOTW-119
+        Katosa Aug :: Akkala
+        : PRG. DONE
+        : DSC. BOTW-120
+    GRP. Towers // 03-towers
+    - Path // path
+    ; TXT. 03-towers
+    - Index // index
+    ; INT. 3
+        Great Plateau Tower
+        : PRG. DONE
+        : DSC. TWR-001
+        Dueling Peaks Tower
+        : PRG. DONE
+        : DSC. TWR-002
+        Hateno Tower
+        : PRG. DONE
+        : DSC. TWR-003
+        Lanayru Tower
+        : PRG. DONE
+        : DSC. TWR-004
+        Faron Tower
+        : PRG. DONE
+        : DSC. TWR-005
+        Lake Tower
+        : PRG. DONE
+        : DSC. TWR-006
+        Central Tower
+        : PRG. DONE
+        : DSC. TWR-007
+        Woodland Tower
+        : PRG. DONE
+        : DSC. TWR-008
+        Eldin Tower
+        : PRG. DONE
+        : DSC. TWR-009
+        Akkala Tower
+        : PRG. DONE
+        : DSC. TWR-010
+        Hebra Tower
+        : PRG. DONE
+        : DSC. TWR-011
+        Tabantha Tower
+        : PRG. DONE
+        : DSC. TWR-012
+        Ridgeland Tower
+        : PRG. DONE
+        : DSC. TWR-013
+        Wasteland Tower
+        : PRG. DONE
+        : DSC. TWR-014
+        Gerudo Tower
+        : PRG. DONE
+        : DSC. TWR-015

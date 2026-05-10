@@ -1,0 +1,2251 @@
+SBJ. Forza Horizon 5 // forza-horizon-5
+# Steam
+- Tracked At // trackedAt
+; DAT. <2025-08-14>
+- Playtime // playtime
+; REL. = 69:30:00
+- Platform // platform
+; TXT. Steam
+    GRP. Statistics // 00-stats
+    - Path // path
+    ; TXT. 00-stats
+    - Index // index
+    ; INT. 0
+        Level
+        : INT. 131
+        Nickname
+        : TXT. Elektrokiłka
+        Current Car
+        : TXT. 2020 Lamborghini Huracán STO (S1 883)
+        GRP. General // 00-general
+        - Path // path
+        ; TXT. 00-stats 00-general
+        - Index // index
+        ; INT. 1
+            Time Driven
+            : TIM. 30:52:39
+            Number of Podiums
+            : INT. 71
+            Number of Victories
+            : INT. 61
+            Time Spent in the First Place
+            : TIM. 02:59:10
+            Total Winnings
+            : MSI. 7378074 CR
+            Clean Laps
+            : INT. 0
+            Number of Collisions in a Race
+            : INT. 125
+            Average Number of Collisions in a Race
+            : INT. 26
+            Number of clean overtakes
+            : INT. 365
+            Number of Cars in Garage
+            : INT. 124
+            Favorite Car
+            : TXT. Hoonigan Cossie
+            Most Successful Car
+            : TXT. Hoonigan Cossie
+            Most Valuable Car
+            : TXT. Bugatti Divo
+            Car Manufactures Owned
+            : INT. 50
+            Garage Value
+            : MSI. 41561000 CR
+            Garage Parts Value
+            : MSI. 0 CR
+            Total #Forzathron Points Earned
+            : INT. 2430
+            #Forzathron Daily Challenges Completed
+            : INT. 6
+            #Forzathron Weekly Challenges Completed
+            : INT. 0
+            Season Events Entered
+            : INT. 1
+            The Trial Championships Entered
+            : INT. 0
+            Favorite Radio Station
+            : TXT. Horizon Wave
+            Times Using Anna
+            : INT. 5
+        GRP. Campaign // 01-campaign
+        - Path // path
+        ; TXT. 00-stats 01-campaign
+        - Index // index
+        ; INT. 2
+            Accolade Points Earned
+            : INT. 90300
+            Expeditions Completed
+            : INT. 4
+            Festival Outposts Unlocked
+            : INT. 2
+            Player House Owned
+            : GTI. 7 7
+            Showcases Hosted
+            : INT. 1
+            Showcases Won
+            : GTI. 1 4
+            Time in Showcases
+            : TIM. 00:05:08
+            Horizon Chapters Completed
+            : GTI. 9 65
+            Horizon Stories Stars Earned
+            : GTI. 18 195
+            Number of Races
+            : INT. 80
+            Horizon Exibitions Completed
+            : GTI. 13 84
+            Head-to-Head Races Entered
+            : INT. 0
+            Head-to-Head Races Won
+            : INT. 0
+            Time in Head-to-Head Races
+            : TIM. 00:00:00
+            Street Scene Events Entered
+            : INT. 0
+            Street Scene Events Won
+            : GTI. 0 21
+            Time in Street Scene Events
+            : TIM. 00:00:00
+            Midnight Battels Won
+            : GTI. 0 4
+            Speed Trap Stars Earned
+            : GTI. 4 93
+            Speed Zone Stars Earned
+            : GTI. 3 78
+            Danger Sign Stars Earned
+            : GTI. 3 60
+            Drift Zone Stars Earned
+            : GTI. 0 60
+            Trailblazer Gate Stars Earned
+            : GTI. 3 30
+            Speed Traps Triggered
+            : GTI. 2 31
+            Speed Traps Completed
+            : GTI. 2 31
+            Speed Zones Triggered
+            : GTI. 1 26
+            Speed Zones Completed
+            : GTI. 1 26
+            Danger Signs Triggered
+            : GTI. 1 20
+            Danger Signs Completed
+            : GTI. 1 20
+            Drift Zones Triggered
+            : GTI. 0 20
+            Drift Zones Completed
+            : GTI. 0 20
+            Trailblazer Gates Triggered
+            : GTI. 1 10
+            Trailblazer Gates Completed
+            : GTI. 1 10
+        GRP. Online // 02-online
+        - Path // path
+        ; TXT. 00-stats 02-online
+        - Index // index
+        ; INT. 3
+            Kudos Received
+            : INT. 8
+            Kudos Given
+            : INT. 3
+            Horizon Arcade Events Entered
+            : INT. 1
+            Horizon Arcade Events Completed
+            : INT. 0
+            Flag Rush Games Entered
+            : INT. 0
+            Flag Rush Games Won
+            : INT. 0
+            Number of Flags Captured
+            : INT. 0
+            Number of Flags Stolen From You
+            : INT. 0
+            Team Flag Rush Games Entered
+            : INT. 0
+            Team Flag Rush Games Won
+            : INT. 0
+            Infected Games Entered
+            : INT. 0
+            Infected Games Won
+            : INT. 0
+            Times Infected
+            : INT. 0
+            Times You Infected Others
+            : INT. 0
+            Survival Games Entered
+            : INT. 0
+            Survival Games Won
+            : INT. 0
+            King Games Entered
+            : INT. 0
+            King Games Won
+            : INT. 0
+            Team King Games Entered
+            : INT. 0
+            Team King Games Won
+            : INT. 0
+            Rivals Beaten
+            : INT. 0
+            Credits Earned from Rivals
+            : MSI. 0 CR
+            Laps Completed in Rivals
+            : INT. 0
+            Best Finish Position in the Eliminator
+            : INT. 0
+            Games of the Eliminator won
+            : INT. 0
+            Final Races Completed in the Eliminator
+            : INT. 0
+            Eliminations
+            : INT. 0
+            Car Drops Found in the Eliminator
+            : INT. 0
+            Legendary Cars Driven in the Eliminator
+            : INT. 0
+            Games of the Eliminator Played
+            : INT. 0
+            Time Spent in the Eliminator
+            : TIM. 00:00:00
+            Distance Driven in the Eliminator
+            : MSI. 0 mi
+        GRP. Skills // 03-skills
+        - Path // path
+        ; TXT. 00-stats 03-skills
+        - Index // index
+        ; INT. 4
+            Car Perks Earned
+            : INT. 141
+            Highest Skill Score
+            : INT. 687600
+            Highest Skill Score Car
+            : TXT. Hoonigan Cossie
+            Total Skill Points Earned
+            : INT. 750
+            Total Ultimate Skills
+            : INT. 1309
+            Ultimate Drift Skills
+            : INT. 252
+            Ultimate Speed Skills
+            : INT. 36
+            Ultimate Draft Skills
+            : INT. 14
+            Ultimate Pass Skills
+            : INT. 40
+            Ultimate Burnout Skills
+            : INT. 5
+            Ultimate Air Skills
+            : INT. 595
+            Ultimate Two-Wheels Skills
+            : INT. 3
+            Ultimate E-Drift Skills
+            : INT. 1
+            Ultimate Near-Miss Skills
+            : INT. 2
+            Ultimate Wreckage Skills
+            : INT. 289
+            Ultimate One-Eighty Skills
+            : INT. 59
+            Ultimate J-Turn Skills
+            : INT. 13
+        GRP. Discovery // 04-discovery
+        - Path // path
+        ; TXT. 00-stats 04-discovery
+        - Index // index
+        ; INT. 5
+            Unique Cars Photographed
+            : INT. 1
+            Barn Finds Discovered
+            : GTI. 13 14
+            1,000 XP Boards Smashed
+            : GTI. 100 100
+            3,000 XP Boards Smashed
+            : GTI. 74 75
+            5,000 XP Boards Smashed
+            : GTI. 12 25
+            Bonus Boards Smashed
+            : GTI. 235 250
+            Fast Travel Boards Smashed
+            : GTI. 49 50
+            Roads Discovered
+            : GTI. 578 578
+            Landmarks Discovered
+            : GTI. 56 57
+            Treasure Chests Found
+            : GTI. 2 2
+        GRP. Records // 05-records
+        - Path // path
+        ; TXT. 00-stats 05-records
+        - Index // index
+        ; INT. 6
+            Highest Drift Zone Score
+            : INT. 0
+            Highest Danger Sign Score
+            : MSN. 2005.7 ft
+            Highest Speed Trap Score
+            : MSI. 209 mph
+            Highest Speed Zone Score
+            : MSI. 142 mph
+            Longest Skill Chain
+            : TIM. 00:03:10
+            Top Speed
+            : MSI. 300 mph
+            Average Speed
+            : MSI. 70 mph
+            Distance Driven
+            : MSI. 2149 mi
+            Biggest Air
+            : MSN. 7.15 s
+            Longest Drift
+            : MSN. 856.3 ft
+            Longest Jump
+            : MSN. 1988.2 ft
+        GRP. Creative Hub // 06-creative-hub
+        - Path // path
+        ; TXT. 00-stats 06-creative-hub
+        - Index // index
+        ; INT. 7
+            Tuning Setups Shared
+            : INT. 0
+            Designs Shared
+            : INT. 0
+            Photos Taken
+            : INT. 0
+            Eventlab Events Played
+            : INT. 0
+            Eventlab Events Made
+            : INT. 0
+            Likes Given
+            : INT. 0
+            Likes Received
+            : INT. 0
+        GRP. Telemetry // 07-telemetry
+        - Path // path
+        ; TXT. 00-stats 07-telemetry
+        - Index // index
+        ; INT. 8
+            Max Lateral Gs
+            : MSN. 12.9 Gs
+            Average Lateral Gs
+            : MSN. 0.3 Gs
+            Max Acceleration Gs
+            : MSN. 18.1 Gs
+            Average Acceleration Gs
+            : MSN. 0.3 Gs
+            Max Braking Gs
+            : MSN. 19.2 Gs
+            Average Braking Gs
+            : MSN. 0.0 Gs
+            Max Left-Front Tire Load
+            : MSN. 64871.8 lbf
+            Average Left-Front Tire Load
+            : MSN. 1152.8 lbf
+            Max Right-Front Tire Load
+            : MSN. 64824.4 lbf
+            Average Right-Front Tire Load
+            : MSN. 64712.6 lbf
+            Max Left-Rear Tire Load
+            : MSN. 70121.7 lbf
+            Average Left-Rear Tire Load
+            : MSN. 1499.5 lbf
+            Max Right-Rear Tire Load
+            : MSN. 70121.6 lbf
+            Average Right-Rear Tire Load
+            : MSN. 1487.7 lbf
+            Max Left-Front Tire Temp
+            : MSN. 521.9 ºF
+            Average Left-Front Tire Temp
+            : MSN. 118.4 ºF
+            Max Right-Front Tire Temp
+            : MSN. 642.3 ºF
+            Average Right-Front Tire Temp
+            : MSN. 119.4 ºF
+            Max Left-Rear Tire Temp
+            : MSN. 1422.1 ºF
+            Average Left-Rear Tire Temp
+            : MSN. 149.3 ºF
+            Max Right-Rear Tire Temp
+            : MSN. 1810.7 ºF
+            Average Right-Rear Tire Temp
+            : MSN. 148.0 ºF
+            Max Left-Front Tire Suspension Stroke
+            : MSN. 24.38 in
+            Average Left-Front Tire Suspension Stroke
+            : MSN. 5.7 in
+            Max Right-Front Tire Suspension Stroke
+            : MSN. 24.38 in
+            Average Right-Front Tire Suspension Stroke
+            : MSN. 5.71 in
+            Max Left-Rear Tire Suspension Stroke
+            : MSN. 24.27 in
+            Average Left-Rear Tire Suspension Stroke
+            : MSN. 5.05 in
+            Max Right-Rear Tire Suspension Stroke
+            : MSN. 24.27 in
+            Average Right-Rear Tire Suspension Stroke
+            : MSN. 5.07 in
+        GRP. Hot Wheels // 08-hot-wheels
+        - Path // path
+        ; TXT. 00-stats 08-hot-wheels
+        - Index // index
+        ; INT. 9
+            Medals Earned
+            : GTI. 1290 5000
+            Exhibitions Completed
+            : GTI. 13 18
+            Races Completed
+            : INT. 13
+            Races Won
+            : INT. 12
+            Podium Finishes
+            : INT. 12
+            Qualifier Stars Earned
+            : GTI. 0 12
+            Story Stars Earned
+            : GTI. 24 15
+            Roads Discovered
+            : GTI. 175 175
+            Landmarks Discovered
+            : GTI. 27 28
+            Bonus Boards Smashed
+            : GTI. 25 25
+            Air Balloons Smashed
+            : GTI. 3 20
+            Speed Trap Stars Earned
+            : GTI. 7 15
+            Speed Zone Stars Earned
+            : GTI. 8 15
+            Danger Sign Stars Earned
+            : GTI. 5 15
+            Drift Zone Stars Earned
+            : GTI. 3 1
+            Seasonal Events Entered
+            : INT. 0
+            Rivals Beaten
+            : INT. 0
+            Credits Earned from Rivals
+            : MSI. 0 CR
+            Eventlab Events Created
+            : INT. 1
+            Eventlab Events Played
+            : INT. 0
+        GRP. Rally Adventure // 09-rally-adventure
+        - Path // path
+        ; TXT. 00-stats 09-rally-adventure
+        - Index // index
+        ; INT. 10
+            Tournaments Completed
+            : INT. 1
+            Races Completed
+            : INT. 45
+            Races Won
+            : INT. 36
+            Podium Finishes
+            : INT. 42
+            Horizon Rally Events Entered
+            : INT. 18
+            Horizon Races Entered
+            : INT. 26
+            Ambassador Races Entered
+            : INT. 26
+            Roads Discovered
+            : GTI. 32 32
+            Landmarks Discovered
+            : GTI. 20 20
+            Palm Trees Smashed
+            : INT. 1113
+            Distance Driven in Water
+            : MSI. 7 mi
+            Distance Driven on Sand
+            : MSI. 41 mi
+            Distance Driven on Dirt
+            : MSI. 125 mi
+            Distance Driven on Gravel
+            : MSI. 28 mi
+            Distance Driven on Asphalt
+            : MSI. 295 mi
+            Speed Trap Stars Earned
+            : GTI. 10 15
+            Speed Zone Stars Earned
+            : GTI. 5 15
+            Danger Sign Stars Earned
+            : GTI. 5 15
+            Drift Zone Stars Earned
+            : GTI. 1 15
+            Rivals Beaten
+            : INT. 0
+            Credits Earned from Rivals
+            : MSI. 0 CR
+            Eventlab Events Created
+            : INT. 1
+            Eventlab Events Played
+            : INT. 0
+    GRP. Accolades // 01-accolades
+    - Path // path
+    ; TXT. 01-accolades
+    - Index // index
+    ; INT. 11
+        Total
+        : GTI. 227 2237
+        Welcome To Mexico
+        : GTI. 35 35
+        : REF. 01-accolades 00-mexico
+        Expeditions
+        : GTI. 25 54
+        : REF. 01-accolades 01-expeditions
+        Festival Playlist
+        : GTI. 3 83
+        : REF. 01-accolades 02-festival
+        Road Racing
+        : GTI. 4 136
+        : REF. 01-accolades 03-road
+        Cross Country Racing
+        : GTI. 9 69
+        : REF. 01-accolades 04-cross
+        Skills
+        : GTI. 30 77
+        : REF. 01-accolades 05-skills
+        Locked
+        : GTI. 0 77
+        Locked
+        : GTI. 0 37
+        Discovery & Collections
+        : GTI. 39 96
+        : REF. 01-accolades 06-discovery-and-cars
+        Creative
+        : GTI. 4 193
+        : REF. 01-accolades 07-creative
+        Hot Wheels
+        : GTI. 17 28
+        : REF. 01-accolades 08-hot-wheels
+        Festivals
+        : GTI. 45 132
+        : REF. 01-accolades 09-festivals
+        Stories
+        : GTI. 10 172
+        : REF. 01-accolades 10-stories
+        Evolving World
+        : GTI. 1 182
+        : REF. 01-accolades 11-evolving-world
+        Locked
+        : GTI. 0 89
+        Locked
+        : GTI. 0 92
+        Locked
+        : GTI. 0 100
+        Locked
+        : GTI. 0 72
+        Online
+        : GTI. 3 361
+        : REF. 01-accolades 12-online
+        Rally Adventure
+        : GTI. 2 11
+        : REF. 01-accolades 13-rally
+        GRP. Welcome to Mexico // 00-mexico
+        - Path // path
+        ; TXT. 01-accolades 00-mexico
+        - Index // index
+        ; INT. 12
+            Welcome to Mexico
+            : CMP. DONE
+            : ERN. <2023-12-11>
+            First Love
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Home Sweet Home
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Ooo, what's this?
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Fast track ticket
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            This is the way
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            First few miles
+            : GTI. 10 10
+            : ERN. <2023-12-11>
+            Icebreaker
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            Surprise Awaits
+            : CMP. DONE
+            : ERN. <2023-12-11>
+            Adaptable
+            : CMP. DONE
+            : ERN. <2023-12-11>
+            Horizon Mexico Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-12>
+            Emerald Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Mulegé Town Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            Desierto Trail Rookie
+            : CMP. DONE
+            : ERN. <2023-12-12>
+            Oasis Cross Country Rookie
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Airfield Cross Country Rookie
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Horizon Mexico Circuit Pro
+            : CMP. DONE
+            : ERN. <2023-12-12>
+            Emerald Circuit Pro
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Mulegé Town Circuit Pro
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            Desierto Trail Pro
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Oasis Cross Country Pro
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Airfield Cross Country Pro
+            : CMP. DONE
+            : ERN. <2023-12-16>
+            Drag Strip Novice
+            : GTI. 1 1
+            : ERN. <2023-12-16>
+            Punta Allen Novice
+            : GTI. 1 1
+            : ERN. <2023-12-18>
+            Runway Novice
+            : GTI. 1 1
+            : ERN. <2023-12-16>
+            Malpaís Novice
+            : GTI. 1 1
+            : ERN. <2023-12-18>
+            Drag Strip Expert
+            : GTI. 2 2
+            : ERN. <2023-12-18>
+            Punta Allen Expert
+            : GTI. 2 2
+            : ERN. <2023-12-18>
+            Runway Expert
+            : GTI. 2 2
+            : ERN. <2023-12-18>
+            Malpaís Expert
+            : GTI. 2 2
+            : ERN. <2023-12-18>
+            Drag Strip Master
+            : GTI. 3 3
+            : ERN. <2023-12-18>
+            Punta Allen Master
+            : GTI. 3 3
+            : ERN. <2023-12-18>
+            Runway Master
+            : GTI. 3 3
+            : ERN. <2023-11-19>
+            Malpaís Master
+            : GTI. 3 3
+            : ERN. <2023-12-18>
+        GRP. Expeditions // 01-expeditions
+        - Path // path
+        ; TXT. 01-accolades 01-expeditions
+        - Index // index
+        ; INT. 13
+            Tulum Expedition
+            : GTI. 13 13
+            : REF. 01-accolades 01-expeditions 00-tulum
+            Jungle Expedition
+            : GTI. 0 16
+            : REF. 01-accolades 01-expeditions 01-jungle
+            Baja Expedition
+            : GTI. 12 12
+            : REF. 01-accolades 01-expeditions 02-baja
+            Guanajuato Expedition
+            : GTI. 0 7
+            : REF. 01-accolades 01-expeditions 03-guanajuto
+            Canyon Expedition
+            : GTI. 0 6
+            : REF. 01-accolades 01-expeditions 04-canyon
+            GRP. Tulum Expedition // 00-tulum
+            - Path // path
+            ; TXT. 01-accolades 01-expeditions 00-tulum
+            - Index // index
+            ; INT. 14
+                Wanderer
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Take Off
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Lost
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                And Found
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                The Cenote Book
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Eye of the Storm
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                A Storm's Brewing
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Break in the Clouds
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                New Tune
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                You Call This Archelogy?
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Wonder Awaits
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Hidden Treasures
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                Strange Things Happen in Storms Like This
+                : CMP. DONE
+                : ERN. <2025-08-11>
+            GRP. Jungle Expedition // 01-jungle
+            - Path // path
+            ; TXT. 01-accolades 01-expeditions 01-jungle
+            - Index // index
+            ; INT. 15
+
+            GRP. Baja Expedition // 02-baja
+            - Path // path
+            ; TXT. 01-accolades 01-expeditions 02-baja
+            - Index // index
+            ; INT. 16
+                Extreme Activity
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Delecious Desert
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                A Change of Plan
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Driving Hazard
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Hive of Activity
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Friends Reunited
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Geronimo!
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Bajasta la vista
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                For Science
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Research
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Close Encounter
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                In the name of science
+                : CMP. DONE
+                : ERN. <2023-12-18>
+            GRP. Guanajuto Expedition // 03-guanajuto
+            - Path // path
+            ; TXT. 01-accolades 01-expeditions 03-guanajuto
+            - Index // index
+            ; INT. 17
+
+            GRP. Canyon Expedition // 04-canyon
+            - Path // path
+            ; TXT. 01-accolades 01-expeditions 04-canyon
+            - Index // index
+            ; INT. 18
+
+        GRP. Festival Playlist // 02-festival
+        - Path // path
+        ; TXT. 01-accolades 02-festival
+        - Index // index
+        ; INT. 19
+            Daily Dozen
+            : GTI. 12 12
+            : ERN. <2024-11-20>
+            : DSC. Complete 12 Daily #Forzathon Challenges
+            Lootbox
+            : CMP. DONE
+            : ERN. <2025-04-08>
+            : DSC. Find a Treasure Chest
+            Seasoned Veteran
+            : GTI. 4 4
+            : ERN. <2024-11-20>
+            : DSC. Complete at least 1 Festival Playlist activity in every season type
+            Quench Your Thirst
+            : GTI. 3 10
+            : DSC. Complete 10 Festival Playlist activities during the dry season
+            Whipping Up Storm
+            : GTI. 1 10
+            : DSC. Complete 10 Festival Playlist activities during the Storm season
+            All in a Day's Work
+            : GTI. 6 30
+            : DSC. Complete 30 Daily #Forzathon Challenges
+            Treasure Collector
+            : GTI. 2 10
+            : DSC. Find 10 Treasure Chests
+            The Pioneer
+            : GTI. 7 50
+            : DSC. Complete 50 Festival Playlist activities
+            Some Like it Hot
+            : GTI. 1 10
+            : DSC. Complete 10 Festival Playlist activities during the Hot season
+            Get Your Feet Wet
+            : GTI. 1 10
+            : DSC. Complete 10 Festival Playlist activities during the Wet season
+        GRP. Road Racing // 03-road
+        - Path // path
+        ; TXT. 01-accolades 03-road
+        - Index // index
+        ; INT. 20
+            Just Can't get Enough
+            : GTI. 5 5
+            : ERN. <2025-08-11>
+            : DSC. Complete 5 Road Racing Events
+            A Prime Chance
+            : GTI. 3 3
+            : ERN. <2025-08-11>
+            : DSC. Win 3 Road Racing Events
+            The Odd Chance
+            : GTI. 5 5
+            : ERN. <2025-08-11>
+            : DSC. Win 5 Road Racing Events
+            `C` Class Road Challenger
+            : CMP. DONE
+            : ERN. <2025-08-11>
+            : DSC. Complete a Road Racing Event in any `C` Class Car
+        GRP. Cross Country // 04-cross
+        - Path // path
+        ; TXT. 01-accolades 04-cross
+        - Index // index
+        ; INT. 21
+            Estadio Cross Country Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-20>
+            Urban Cross Country Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-21>
+            Trópico Cross Country Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-21>
+            Restos Cross Country Circuit Rookie
+            : CMP. DONE
+            : ERN. <2023-12-21>
+            Drive into Action
+            : GTI. 5 5
+            : ERN. <2023-12-20>
+            : DSC. Complete 5 Cross Country Events
+            Estadio Cross Country Circuit Pro
+            : CMP. DONE
+            : ERN. <2023-12-20>
+            Urban Cross Country Circuit Pro
+            : CMP. DONE
+            : ERN. <2023-12-21>
+            Restos Cross Country Circuit Pro
+            : CMP. DONE
+            : ERN. <2023-12-22>
+            Drive Rain or Shine
+            : GTI. 5 5
+            : ERN. <2023-12-20>
+            : DSC. Win 5 Cross Country Events
+        GRP. Skills // 05-skills
+        - Path // path
+        ; TXT. 01-accolades 05-skills
+        - Index // index
+        ; INT. 22
+            Master And Commander
+            : GTI. 141 150
+            : DSC. Unlock 150 Car Masteries
+            Perkception Awaits
+            : GTI. 8 10
+            : DSC. Unlock 10 Car Mastery Trees
+            Predator
+            : GTI. 7 25
+            : DSC. Earn 25 Slingshot Compbos in an Extreme Track Toy
+            Master Key
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            I Wanna Rock, DJ
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            Eurobeat intensifies
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            Flair
+            : GTI. 25000 25000
+            : ERN. <2023-12-18>
+            : DSC. Bank a Skill Chain worth at least 25,000 Skill Score
+            Killer Skills
+            : GTN. 5.0 5.0
+            : ERN. <2023-12-18>
+            : DSC. Bank a Chain with a Skill Multiplier of 5,0 or higher for the first time
+            Bonus Stage
+            : GTI. 5 5
+            : ERN. <2024-10-24>
+            : DSC. Take part in 5 Skill Songs
+            A Wise Investment
+            : CMP. DONE
+            : ERN. <2023-12-18>
+            Tombola
+            : CMP. DONE
+            : ERN. <2023-12-21>
+            Branching Out
+            : CMP. DONE
+            : ERN. <2023-12-21>
+            Showing Off
+            : GTI. 50000 50000
+            : ERN. <2023-12-18>
+            : DSC. Bank a Skill Chain worth at least 25,000 Skill Score
+            Prowess
+            : GTI. 75000 75000
+            : ERN. <2023-12-18>
+            : DSC. Bank a Skill Chain worth at least 75,000 Skill Score
+            Hundred Grand
+            : GTI. 100000 100000
+            : ERN. <2023-12-22>
+            : DSC. Bank a Skill Chain worth at least 100,000 Skill Score
+            Finesse
+            : GTI. 250000 250000
+            : ERN. <2024-10-24>
+            : DSC. Bank a Skill Chain worth at least 250,000 Skill Score
+            Jump Around
+            : GTI. 25 25
+            : ERN. <2023-12-22>
+            : DSC. Earn 25 Ultimate Air Skills in any Unlimited Offroad Car
+            Thrill Seeker
+            : GTI. 15 15
+            : ERN. <2025-04-08>
+            : DSC. Earn 15 Near Miss Skills in any Lamborgini
+            Drifty Smash Smash
+            : GTI. 5 5
+            : ERN. <2023-12-22>
+            : DSC. Earn 2 Ultimate Drift Skills and 3 Sideswipe Combos in 2 minutes
+            Double Daredevil
+            : GTI. 2 2
+            : ERN. <2025-04-08>
+            : DSC. Earn 2 Daredevil Combos from Near Misses within 30 seconds
+            Balancing Act
+            : CMP. DONE
+            : ERN. <2024-10-24>
+            Ultimate Road Warrior
+            : CMP. DONE
+            : ERN. <2024-10-28>
+            Mega Skills
+            : GTN. 6.0 6.0
+            : ERN. <2023-12-18>
+            : DSC. Bank a Skill Chain with a Skill Multiplier of 6,0 or higher for the first time
+            Giga Skills
+            : GTN. 7.0 7.0
+            : ERN. <2023-12-22>
+            : DSC. Bank a Skill Chain with a Skill Multiplier of 7,0 or higher for the first time
+            Choonigan
+            : GTI. 25 25
+            : ERN. <2024-11-24>
+            : DSC. Take part in 25 Skill Songs
+            Skillz
+            : GTI. 10000000 10000000
+            : ERN. <2024-10-24>
+            : DSC. Earn a total of 10,000,000 Skill Score
+            Flex
+            : GTI. 10 10
+            : ERN. <2023-12-18>
+            : DSC. Unlock 10 Car Masteries
+            Mega Master
+            : GTI. 10 10
+            : ERN. <2023-12-22>
+            : DSC. Unlock 25 Car Masteries
+            Chief of Masteries
+            : GTI. 50 50
+            : ERN. <2024-11-17>
+            : DSC. Unlock 50 Car Masteries
+            Car Conqueror
+            : GTI. 100 100
+            : ERN. <2024-11-20>
+            : DSC. Unlock 100 Car Masteries
+            Skills
+            : GTI. 500 500
+            : ERN. <2024-10-24>
+            : DSC. Earn 500 Skills of any type and grade
+            More Skills
+            : GTI. 1000 1000
+            : ERN. <2024-10-24>
+            : DSC. Earn 1000 Skills of any type and grade
+            Moar Skills!
+            : GTI. 5000 5000
+            : ERN. <2024-10-24>
+            : DSC. Earn 5000 Skills of any type and grade
+        GRP. Discovery & Collections // 06-discovery-and-cars
+        - Path // path
+        ; TXT. 01-accolades 06-discovery-and-cars
+        - Index // index
+        ; INT. 23
+            Discovery
+            : GTI. 26 42
+            : REF. 01-accolades 06-discovery-and-cars 00-discovery
+            Car Collection
+            : GTI. 13 54
+            : REF. 01-accolades 06-discovery-and-cars 01-cars
+            GRP. Discovery // 00-discovery
+            - Path // path
+            ; TXT. 01-accolades 06-discovery-and-cars 00-discovery
+            - Index // index
+            ; INT. 24
+                Teleportation Device
+                : GTI. 49 50
+                : DSC. Smash 50 Fast Travel Boards
+                Silent Mode
+                : GTI. 9 15
+                : DSC. Smash 15 Phone Boxes
+                AAAARRRGGGHHH!
+                : GTI. 2 5
+                : DSC. Discover 5 Treasure Chests
+                Cactus Makes Perfect
+                : GTI. 73 500
+                : DSC. Smash 500 Cacti during the Wet Season
+                GOALLL
+                : GTI. 1 25
+                : DSC. Smash 25 Football Goal Posts
+                Total Eclipse
+                : GTI. 2 100
+                : DSC. Smash 100 Solar Panels in the 1995 Mitsubishi Eclipse GSX
+                Hunter-Gatherer
+                : GTI. 10 10
+                : ERN. <2023-12-18>
+                : DSC. Find and Smash 10 Bonus Boards
+                Boards Go Smash
+                : GTI. 25 25
+                : ERN. <2023-12-18>
+                : DSC. Find and Smash 25 XP Boards
+                Cheaper, Better, Faster, Travel
+                : GTI. 25 25
+                : ERN. <2024-12-02>
+                : DSC. Find and Smash 25 Fast Travel Boards
+                AHOY!
+                : GTI. 1 1
+                : ERN. <2025-04-08>
+                : DSC. Discover your first Treasure Chest
+                Dry Spell
+                : GTI. 1 1
+                : ERN. <2023-12-18>
+                : DSC. Experience Dry Season in Freeroam
+                Hot, Hot, Hot!
+                : GTI. 1 1
+                : ERN. <2024-12-02>
+                : DSC. Experience Hot Season in Freeroam
+                Weather the Storm
+                : GTI. 1 1
+                : ERN. <2025-01-08>
+                : DSC. Experience Storm Season in Freeroam
+                On The Road Again
+                : GTI. 50 50
+                : ERN. <2023-12-18>
+                : DSC. Discover 50 Roads in Mexico
+                Not Half Bad
+                : GTI. 50 50
+                : ERN. <2024-11-19>
+                : DSC. Find and Smash 50 XP Boards
+                Going Overboard
+                : GTI. 100 100
+                : ERN. <2024-11-24>
+                : DSC. Find and Smash 50 XP Boards
+                Triple Strike
+                : GTI. 30 30
+                : ERN. <2023-12-22>
+                : DSC. Smash 30 Traffic Cones
+                Must Destroy All Spiky Things
+                : GTI. 100 100
+                : ERN. <2023-12-18>
+                : DSC. Smash 100 Cacti
+                Room to Wander
+                : GTI. 100 100
+                : ERN. <2023-12-18>
+                : DSC. Discover 100 Roads in Mexico
+                Level Up
+                : GTI. 200 200
+                : ERN. <2025-11-14>
+                : DSC. Smash 200 XP Boards
+                The Start of Many
+                : MSN. 50.0 miles
+                : ERN. <2023-12-18>
+                : DSC. Drive 50 Miles (80.5km)
+                I like to Drive It, Drive it
+                : MSN. 100.0 miles
+                : ERN. <2023-12-18>
+                : DSC. Drive 100 Miles (161km)
+                The Complete Collection
+                : GTI. 250 250
+                : ERN. <2025-01-14>
+                : DSC. Smash 250 Bonus Boards
+                Right Up My Street
+                : GTI. 200 200
+                : ERN. <2024-11-20>
+                : DSC. Discover 200 Roads in Mexico
+                Seing The Sights
+                : GTI. 300 300
+                : ERN. <2024-12-02>
+                : DSC. Discover 300 Roads in Mexico
+                Highways and Byways
+                : GTI. 400 400
+                : ERN. <2025-01-08>
+                : DSC. Discover 400 Roads in Mexico
+                El Explorador
+                : GTI. 14 14
+                : ERN. <2024-11-20>
+                : DSC. Discover every region of Mexico
+                Discovery Connoisseur
+                : GTI. 1 1
+                : ERN. <2025-01-15>
+                : DSC. Discover all points of interest
+                On The Move
+                : MSN. 250.0 miles
+                : ERN. <2023-12-18>
+                : DSC. Drive 250 Miles (402.3km)
+                Ride and Seek
+                : GTI. 578 578
+                : ERN. <2025-01-16>
+                : DSC. Discover all Roads in Mexico
+                Just Keep Driving, Driving, Driving
+                : MSN. 500.0 miles
+                : ERN. <2024-10-23>
+                : DSC. Drive 500 Miles (804.7km)
+                Going the Extra Mile
+                : MSN. 1000.0 miles
+                : ERN. <2024-11-19>
+                : DSC. Drive 1000 Miles (1610km)
+            GRP. Car Collection // 01-cars
+            - Path // path
+            ; TXT. 01-accolades 06-discovery-and-cars 01-cars
+            - Index // index
+            ; INT. 25
+                Better than New
+                : GTI. 12 14
+                : DSC. Restore 14 Barns Finds
+                Honorary Owner
+                : GTI. 34 50
+                : DSC. Own 50 Unique Rare Cars
+                The Legendary Collection
+                : GTI. 30 50
+                : DSC. Own 50 Unique Legendary Cars
+                Car Museum
+                : GTI. 28 50
+                : DSC. Own 50 Unique Epic Cars
+                A Dime A Dozen
+                : GTI. 25 50
+                : DSC. Own 50 Unique Common Cars
+                Playing for Keeps
+                : GTI. 120 250
+                : DSC. Own 250 Unique Cars
+                Special Edition
+                : GTI. 2 5
+                : DSC. Own 5 Unique Forza Edition Cars
+                Completitionist
+                : GTI. 15 50
+                : DSC. Earn 50 Manufacturer Bonuses
+                Bulk Buying
+                : GTI. 3 150
+                : DSC. Buy 150 Cars from the Autoshow
+                Bare Necessities
+                : GTI. 10 10
+                : ERN. <2023-12-18>
+                : DSC. Own 10 Unique Rare Cars
+                Rare Find
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Own a Rare Car
+                Get Off to an Epic Start
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Own an Epic Car
+                Drive The Legend
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Own a Legendary Car
+                A Fine Addition
+                : CMP. DONE
+                : ERN. <2024-10-24>
+                : DSC. Own a Forza Edition Car
+                Manufacturer Affinity
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Earn a Manufacturer Bonus
+                A Forza Edition to my Collection
+                : CMP. DONE
+                : ERN. <2024-11-17>
+                : DSC. Earn a Forza Edition Car via a Wheelspin
+                Hidden Gem
+                : CMP. DONE
+                : ERN. <2023-12-21>
+                : DSC. Restore a Barn Find Car
+                Fine Selection
+                : GTI. 50 50
+                : ERN. <2024-10-24>
+                : DSC. Own 50 Unique Cars
+                World Famous
+                : GTI. 25 25
+                : ERN. <2025-01-07>
+                : DSC. Own 25 unique Legendary Cars
+                Rediscovered Treasure
+                : GTI. 5 5
+                : ERN. <2024-11-24>
+                : DSC. Restore 5 Barn Find Cars
+                Factory Fresh
+                : GTI. 15 15
+                : ERN. <2024-12-02>
+                : DSC. Earn 15 Manufacturer Bonuses
+                Spoiled for Choice
+                : GTI. 100 100
+                : ERN. <2024-11-28>
+                : DSC. Own 100 Unique Cars
+        GRP. Creative // 07-creative
+        - Path // path
+        ; TXT. 01-accolades 07-creative
+        - Index // index
+        ; INT. 26
+            Painting
+            : GTI. 0 44
+            : REF. 01-accolades 07-creative 00-painting
+            Tuning
+            : GTI. 0 27
+            : REF. 01-accolades 07-creative 01-tuning
+            Test Track
+            : GTI. 0 15
+            : REF. 01-accolades 07-creative 02-test-track
+            Photo
+            : GTI. 1 72
+            : REF. 01-accolades 07-creative 03-photo
+            Event Lab
+            : GTI. 3 20
+            : REF. 01-accolades 07-creative 04-eventlab
+            Super 7
+            : GTI. 0 15
+            : REF. 01-accolades 07-creative 05-super7
+            GRP. Painting // 00-painting
+            - Path // path
+            ; TXT. 01-accolades 07-creative 00-painting
+            - Index // index
+            ; INT. 27
+
+            GRP. Tuning // 01-tuning
+            - Path // path
+            ; TXT. 01-accolades 07-creative 01-tuning
+            - Index // index
+            ; INT. 28
+                The Upgrader
+                : GTI. 2 5
+                The Tuner
+                : GTI. 1 3
+                The Ultra Upgrader
+                : GTI. 2 20
+                The Ultra Tuner
+                : GTI. 1 10
+            GRP. Test Track // 02-test-track
+            - Path // path
+            ; TXT. 01-accolades 07-creative 02-test-track
+            - Index // index
+            ; INT. 29
+
+            GRP. Photo // 03-photo
+            - Path // path
+            ; TXT. 01-accolades 07-creative 03-photo
+            - Index // index
+            ; INT. 30
+                Snap!
+                : GTI. 1 5
+                Say Cheese
+                : CMP. DONE
+                : ERN. <2025-08-11>
+            GRP. Event Lab // 04-eventlab
+            - Path // path
+            ; TXT. 01-accolades 07-creative 04-eventlab
+            - Index // index
+            ; INT. 31
+                Mix and Match!
+                : GTI. 1 2
+                Architect of Fun
+                : GTI. 1 5
+                Pathfinder
+                : CMP. DONE
+                : ERN. <2024-11-24>
+                Show me Your Moves
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                Creative Spark
+                : CMP. DONE
+                : ERN. <2024-11-24>
+            GRP. Super7 // 05-super7
+            - Path // path
+            ; TXT. 01-accolades 07-creative 05-super7
+            - Index // index
+            ; INT. 32
+
+        GRP. Hot Wheels // 08-hot-wheels
+        - Path // path
+        ; TXT. 01-accolades 08-hot-wheels
+        - Index // index
+        ; INT. 33
+            Over Qualified
+            : GTI. 9 12
+            : DSC. Earn 3 Stars from each of the Hot Wheels Qualifier Events
+            Altitude Quickness
+            : GTI. 12 18
+            : DSC. Win All Hot Wheels Race Events
+            Missions Complete
+            : GTI. 65 155
+            : DSC. Complete All Missions
+            Hot Wheels All Star
+            : GTI. 23 60
+            : DSC. Earn 3 Stars from every PR Stunt in Hot Wheels Park
+            Gotta Pop 'Em All
+            : GTI. 3 10
+            : DSC. Smash all of the Tank Balloons in Hot Wheels Park
+            No one expects the hot wheels expedition
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            : DSC. Arrive at the Horizon Hot Wheels Outpost
+            High Roller
+            : GTI. 25 25
+            : ERN. <2024-11-24>
+            : DSC. Spin 25 Wheelspins while in Hot Wheels Park
+            The Rookie
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            Pros, no Cons
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            I am an expert now
+            : CMP. DONE
+            : ERN. <2024-11-24>
+            Missions
+            : GTI. 5 5
+            : ERN. <2024-11-20>
+            : DSC. Complete 5 Missions
+            More Missions
+            : GTI. 25 25
+            : ERN. <2024-11-20>
+            : DSC. Complete 25 Missions
+            Soared and Board
+            : GTI. 25 25
+            : ERN. <2024-11-24>
+            : DSC. Smash All Bonus Boards in Hot Wheels Park
+            Fresh Pressed Orange Routes
+            : PCN. 1.0
+            : ERN. <2024-11-24>
+            : DSC. Discover every road in Hot Wheels Park
+            Lessons in Hot Wheels History
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            Major in Hot Wheels History
+            : CMP. DONE
+            : ERN. <2024-11-24>
+            Professor of Hot Wheels History
+            : CMP. DONE
+            : ERN. <2024-11-24>
+            Aquanaut
+            : CMP. DONE
+            : ERN. <2024-11-23>
+            Icy Road Ahead
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            Shaken not third
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            Attracted to Victory
+            : CMP. DONE
+            : ERN. <2024-11-20>
+            Points means Prizes
+            : CMP. DONE
+            : ERN. <2024-11-20>
+        GRP. Festivals // 09-festivals
+        - Path // path
+        ; TXT. 01-accolades 09-festivals
+        - Index // index
+        ; INT. 34
+            Horizon Festival Mexico
+            : GTI. 22 28
+            : REF. 01-accolades 09-festivals 00-mexico
+            Horizon Apex Outpost
+            : GTI. 12 23
+            : REF. 01-accolades 09-festivals 01-apex
+            Horizon Wilds Outpost
+            : GTI. 0 23
+            : REF. 01-accolades 09-festivals 02-wilds
+            Horizon Baja Outpost
+            : GTI. 11 24
+            : REF. 01-accolades 09-festivals 03-baja
+            Horizon Street Scene Outpost
+            : GTI. 0 18
+            : REF. 01-accolades 09-festivals 04-streets
+            Horizon Rush Outpost
+            : GTI. 0 18
+            : REF. 01-accolades 09-festivals 05-rush
+            GRP. Horizon Festival Mexico // 00-mexico
+            - Path // path
+            ; TXT. 01-accolades 09-festivals 00-mexico
+            - Index // index
+            ; INT. 35
+                Tulum Expedition
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Unlock Tulum Expedition
+                Jungle Expedition
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Unlock Jungle Expedition
+                Baja Expedition
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Unlock Baja Expedition
+                Guanajuato Expedition
+                : CMP. DONE
+                : ERN. <2023-12-23>
+                : DSC. Unlock Guanajuato Expedition
+                Far from the Mudding Crowd
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Build the Horizon Apex Festival Outpost
+                There's always money in the Baja Stand
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Build the Horizon Baja Festival Outpost
+                Initial Introductions
+                : CMP. DONE
+                : ERN. <2025-01-07>
+                : DSC. Unlock the `Vocho` Horizon Story at Horizon Festival Mexico
+                Goliath Cometh
+                : CMP. DONE
+                : ERN. <2024-11-19>
+                : DSC. Unlock the Goliath
+                Big Deal
+                : CMP. DONE
+                : ERN. <2024-11-20>
+                : DSC. Complete the Goliath
+                Long Gone
+                : CMP. DONE
+                : ERN. <2024-11-20>
+                : DSC. Win the Goliath
+                Volcanic Activity
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover La Gran Caldera
+                Living Up in the Desert
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Discover Baja California
+                Talk of the Town
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Discover the Town of Mulegé
+                Dam it
+                : CMP. DONE
+                : ERN. <2025-01-07>
+                : DSC. Discover Sierra Verde Dam
+                The Buried City
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover San Juan
+                Stargazer
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover the Gran Telescopio at the top of Volcano
+                In Deep Waters
+                : CMP. DONE
+                : ERN. <2025-01-07>
+                : DSC. Discover the Temple of Quechula in the river
+                First Contact
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover the De Otro Mundo crop circles
+                Hole io One
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Discover the Club de Ópalo de Fuego on the West Coast
+                Cultural Heritage
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Discover the Misión Santa Rosalía de Mulegé
+                I'll Take the Ocean View Suite
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Discover Palacio Azul del Océano on the West Coast
+                On the Rocks
+                : CMP. DONE
+                : ERN. <2023-12-16>
+                : DSC. Discover Descansar Dorado
+            GRP. Horizon Apex Outpost // 01-apex
+            - Path // path
+            ; TXT. 01-accolades 09-festivals 01-apex
+            - Index // index
+            ; INT. 36
+                An Architectural Wonder
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Teotihuacán
+                Make An Entrance
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover the Arch of Mulegé
+                Swamp Creature
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Pantano de la Selva
+                Day at the Beach
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Riviera Maya
+                I can see Clearly Plow
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Tierra Próspera Farmlands
+                Down by the Coast
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover the East Coast of Playa Azul
+                Discover Farid Rueda
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Farid Rueda's Bear Mural in Playa Azul
+                Discover Farid Rueda Again
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Farid Rueda's Lion Mural in Playa Azul
+                Home Comforts
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover the Town of Los Jardines
+                Land of Colors
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Granjas de Tapalpa farmland
+                Paradise Found
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Río de la Selva in the Swamp Region
+                City of Dawn
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Discover Tulum on the East Coast
+            GRP. Horizon Wilds Outpost // 02-wilds
+            - Path // path
+            ; TXT. 01-accolades 09-festivals 02-wilds
+            - Index // index
+            ; INT. 37
+
+            GRP. Horizon Baja Outpost // 03-baja
+            - Path // path
+            ; TXT. 01-accolades 09-festivals 03-baja
+            - Index // index
+            ; INT. 38
+                No Place Like Home
+                : CMP. DONE
+                : ERN. <2023-12-23>
+                : DSC. Own La Cabaña Player House
+                Beast Mode
+                : CMP. DONE
+                : ERN. <2025-08-11>
+                : DSC. Unlock the Buggy and the Beast Showcase Event
+                Close Up Time
+                : CMP. DONE
+                : ERN. <2024-11-24>
+                : DSC. Unlock the `V10` Horizon Story at Horizon Baja
+                Big Leagues
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                : DSC. Unlock the Titan
+                Off Track Mind
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                : DSC. Unlock all content associated with the Cross Country Racing Festival
+                With a Pinch of Salt
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover Lago Blanco
+                I don't like Sand it gets everywhere
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover Dunas Blancas
+                Going Coastal
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover the Costa Rocosa
+                All About that Dust
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Discover the Baja Circuit in the Desert Region
+                The Coast is Clear
+                : CMP. DONE
+                : ERN. <2023-12-23>
+                : DSC. Discover Bahía de Plano on the West Coast
+                Land's End
+                : CMP. DONE
+                : ERN. <2025-01-06>
+                : DSC. Discover El Arco de Cobo San Lucas on the West Coast
+            GRP. Horizon Street Scene Outpost // 04-streets
+            - Path // path
+            ; TXT. 01-accolades 09-festivals 04-streets
+            - Index // index
+            ; INT. 39
+
+            GRP. Horizon Rush Outpost // 05-rush
+            - Path // path
+            ; TXT. 01-accolades 09-festivals 05-rush
+            - Index // index
+            ; INT. 40
+
+        GRP. Stories // 10-stories
+        - Path // path
+        ; TXT. 01-accolades 10-stories
+        - Index // index
+        ; INT. 41
+            El Camino
+            : GTI. 0 18
+            : REF. 01-accolades 10-stories 00-el-camino
+            Vocho
+            : GTI. 1 15
+            : REF. 01-accolades 10-stories 01-vocho
+            Test Driver
+            : GTI. 0 32
+            : REF. 01-accolades 10-stories 02-test-driver
+            Lucha de Carreteras
+            : GTI. 0 17
+            : REF. 01-accolades 10-stories 03-lucha
+            Born Fast
+            : GTI. 0 9
+            : REF. 01-accolades 10-stories 04-born-fast
+            V10
+            : GTI. 0 13
+            : REF. 01-accolades 10-stories 05-v10
+            Donut Media Hi Low
+            : GTI. 9 20
+            : REF. 01-accolades 10-stories 06-donut-media-hi-low
+            Donut Media @ Horizon
+            : GTI. 0 7
+            : REF. 01-accolades 10-stories 07-donut-media-horizon
+            Horizon Origins
+            : GTI. 0 12
+            : REF. 01-accolades 10-stories 08-horizon-origins
+            Made in Mexico
+            : GTI. 0 10
+            : REF. 01-accolades 10-stories 09-made-in-mexico
+            Drift Club
+            : GTI. 0 10
+            : REF. 01-accolades 10-stories 10-drift-club
+            Icons of Speed
+            : GTI. 0 9
+            : REF. 01-accolades 10-stories 11-icons-of-speed
+            GRP. El Camino // 00-el-camino
+            - Path // path
+            ; TXT. 01-accolades 10-stories 00-el-camino
+            - Index // index
+            ; INT. 42
+
+            GRP. Vocho // 01-vocho
+            - Path // path
+            ; TXT. 01-accolades 10-stories 01-vocho
+            - Index // index
+            ; INT. 43
+                Flexibility Beats Everything
+                : GTI. 3 39
+                : DSC. Earn 3 Stas in all chapters of Vocho
+                El Vocho
+                : CMP. DONE
+                : ERN. <2025-01-07>
+                : DSC. Complete `The Vocho` chapter of Vocho
+            GRP. Test Driver // 02-test-driver
+            - Path // path
+            ; TXT. 01-accolades 10-stories 02-test-driver
+            - Index // index
+            ; INT. 44
+
+            GRP. Lucha de Carreteras // 03-lucha
+            - Path // path
+            ; TXT. 01-accolades 10-stories 03-lucha
+            - Index // index
+            ; INT. 45
+
+            GRP. Born Fast // 04-born-fast
+            - Path // path
+            ; TXT. 01-accolades 10-stories 04-born-fast
+            - Index // index
+            ; INT. 46
+
+            GRP. V10 // 05-v10
+            - Path // path
+            ; TXT. 01-accolades 10-stories 05-v10
+            - Index // index
+            ; INT. 47
+
+            GRP. Donut Media Hi Low // 06-donut-media-hi-low
+            - Path // path
+            ; TXT. 01-accolades 10-stories 06-donut-media-hi-low
+            - Index // index
+            ; INT. 48
+                Hi Performance
+                : GTI. 11 18
+                : DSC. Earn 3 Stas in all chapters of `Donut Media Hi Team`
+                On the Road Again
+                : CMP. DONE
+                : ERN. <2024-11-28>
+                Well, Hi There!
+                : CMP. DONE
+                : ERN. <2024-12-03>
+                Under 3 Minutes or it's Free
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                Just a Little Further!
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                History of Z
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                No Pain No Gain
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                Putting it to the Test
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                High Five
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                Generational Speed
+                : CMP. DONE
+                : ERN. <2025-01-15>
+                : DSC. Maintain a speed of 120mph for more than 20 seconds in the Up to Speed chapter
+            GRP. Donut Media @ Horizon // 07-donut-media-horizon
+            - Path // path
+            ; TXT. 01-accolades 10-stories 07-donut-media-horizon
+            - Index // index
+            ; INT. 49
+
+            GRP. Horizon Origins // 08-horizon-origins
+            - Path // path
+            ; TXT. 01-accolades 10-stories 08-horizon-origins
+            - Index // index
+            ; INT. 50
+
+            GRP. Made in Mexico // 09-made-in-mexico
+            - Path // path
+            ; TXT. 01-accolades 10-stories 09-made-in-mexico
+            - Index // index
+            ; INT. 51
+
+            GRP. Drift Club // 10-drift-club
+            - Path // path
+            ; TXT. 01-accolades 10-stories 10-drift-club
+            - Index // index
+            ; INT. 52
+
+            GRP. Icons of Speed // 11-icons-of-speed
+            - Path // path
+            ; TXT. 01-accolades 10-stories 11-icons-of-speed
+            - Index // index
+            ; INT. 53
+
+        GRP. Evolving World // 11-evolving-world
+        - Path // path
+        ; TXT. 01-accolades 11-evolving-world
+        - Index // index
+        ; INT. 54
+            Horizon Realms
+            : GTI. 0 63
+            : REF. 01-accolades 11-evolving-world 00-horizon-realms
+            Evolving World
+            : GTI. 0 20
+            : REF. 01-accolades 11-evolving-world 01-evolving-world
+            New Cars
+            : GTI. 0 42
+            : REF. 01-accolades 11-evolving-world 02-new-cars
+            Pathfinder
+            : GTI. 0 17
+            : REF. 01-accolades 11-evolving-world 03-pathfinder
+            Oval Track
+            : GTI. 1 20
+            : REF. 01-accolades 11-evolving-world 04-oval-track
+            Hoonigan
+            : GTI. 0 20
+            : REF. 01-accolades 11-evolving-world 05-hoonigan
+            GRP. Horizon Realms // 00-horizon-realms
+            - Path // path
+            ; TXT. 01-accolades 11-evolving-world 00-horizon-realms
+            - Index // index
+            ; INT. 55
+
+            GRP. Evolving World // 01-evolving-world
+            - Path // path
+            ; TXT. 01-accolades 11-evolving-world 01-evolving-world
+            - Index // index
+            ; INT. 56
+
+            GRP. New Cars // 02-new-cars
+            - Path // path
+            ; TXT. 01-accolades 11-evolving-world 02-new-cars
+            - Index // index
+            ; INT. 57
+
+            GRP. Pathfinder // 03-pathfinder
+            - Path // path
+            ; TXT. 01-accolades 11-evolving-world 03-pathfinder
+            - Index // index
+            ; INT. 58
+
+            GRP. Oval Track // 04-oval-track
+            - Path // path
+            ; TXT. 01-accolades 11-evolving-world 04-oval-track
+            - Index // index
+            ; INT. 59
+                An Ellipse of the Heart
+                : CMP. DONE
+                : ERN. <2024-11-28>
+                : DSC. Visit the Oval Track at the Stadium
+            GRP. Hoonigan // 05-hoonigan
+            - Path // path
+            ; TXT. 01-accolades 11-evolving-world 05-hoonigan
+            - Index // index
+            ; INT. 60
+
+        GRP. Online // 12-online
+        - Path // path
+        ; TXT. 01-accolades 12-online
+        - Index // index
+        ; INT. 61
+            Horizon Arcade
+            : GTI. 2 70
+            : REF. 01-accolades 12-online 00-horizon-arcade
+            Horizon Tour
+            : GTI. 0 66
+            : REF. 01-accolades 12-online 01-horizont-tour
+            The Eliminator
+            : GTI. 0 34
+            : REF. 01-accolades 12-online 02-eliminator
+            Hide & Seek
+            : GTI. 0 10
+            : REF. 01-accolades 12-online 03-hide-and-seek
+            Horizon Open
+            : GTI. 1 41
+            : REF. 01-accolades 12-online 04-horizon-open
+            Rivals
+            : GTI. 0 140
+            : REF. 01-accolades 12-online 05-rivals
+            GRP. Horizon Arcade // 00-horizon-arcade
+            - Path // path
+            ; TXT. 01-accolades 12-online 00-horizon-arcade
+            - Index // index
+            ; INT. 62
+                Finding Choku Dori
+                : GTI. 1 2
+                : DSC. Earn 2 Ultimate Drift Skills during a Drift Run in a Horizon Arcade Event
+                Angle Grinder
+                : GTI. 1 3
+                : DSC. Complete 3 Drift Rounds in Horizon Arcade Events
+                Taking Five
+                : GTI. 1 5
+                : DSC. Take part in 5 Horizon Arcade Events and complete at least round one
+                Keeping Up Appearances
+                : GTI. 1 10
+                : DSC. Take part in 10 Horizon Arcade Events and complete at least round one
+                DK Country
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Complete a Drift theme Horizon Arcade Event
+                Dori Time
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Complete a Drift Run round in a Horizon Arcade Event
+            GRP. Horizon Tour // 01-horizont-tour
+            - Path // path
+            ; TXT. 01-accolades 12-online 01-horizont-tour
+            - Index // index
+            ; INT. 63
+
+            GRP. The Eliminator // 02-eliminator
+            - Path // path
+            ; TXT. 01-accolades 12-online 02-eliminator
+            - Index // index
+            ; INT. 64
+
+            GRP. Hide & Seek // 03-hide-and-seek
+            - Path // path
+            ; TXT. 01-accolades 12-online 03-hide-and-seek
+            - Index // index
+            ; INT. 65
+
+            GRP. Horizon Open // 04-horizon-open
+            - Path // path
+            ; TXT. 01-accolades 12-online 04-horizon-open
+            - Index // index
+            ; INT. 66
+                The Grand Opening
+                : GTI. 1 10
+                : DSC. Earn 10 Levels in Horizon Open
+                Badge of Honour
+                : CMP. DONE
+                : ERN. <2023-12-18>
+                : DSC. Earn a Badge
+            GRP. Rivals // 05-rivals
+            - Path // path
+            ; TXT. 01-accolades 12-online 05-rivals
+            - Index // index
+            ; INT. 67
+
+        GRP. Rally Adventure // 13-rally
+        - Path // path
+        ; TXT. 01-accolades 13-rally
+        - Index // index
+        ; INT. 68
+            Horizon Badlands Race Champion
+            : GTI. 21 24
+            : DSC. Win all Horizon Race Events in Sierra Nueva
+            Apex Predators Legend
+            : GTI. 33 49
+            : DSC. Complete every Apex Predators Challenge
+            Horizon Raptors Legend
+            : GTI. 33 49
+            : DSC. Complete every Horizon Raptors Challenge
+            Gift Reapers Legend
+            : GTI. 30 49
+            : DSC. Complete every Gift Reapers Challenge
+            Horizon Badlands Rally Champion
+            : GTI. 10 24
+            : DSC. Win all Horizon Rally Events in Sierra Nueva
+            Sierra Nueva PR Stunt Champion
+            : GTI. 21 60
+            : DSC. Earn all Stars from PR Stunts in Sierra Nueva
+            Taking in the Sights
+            : PCN. 1.0
+            : ERN. <2024-10-27>
+            : DSC. Discover all Landmarks in Sierra Nueva
+            Recce Complete
+            : PCN. 1.0
+            : ERN. <2024-11-19>
+            : DSC. Discover all Roads in Sierra Nueva
+    GRP. Badges // 02-badges
+    - Path // path
+    ; TXT. 02-badges
+    - Index // index
+    ; INT. 69
+        The Grand Opening
+        : GTI. 1 10
+        : DSC. Reach Level 10 in Horizon Open
+        Horizon Open Newcomer
+        : GTI. 1 100
+        : DSC. Reach Level 100 in Horizon Open
+        Horizon Open Rookie
+        : GTI. 1 200
+        : DSC. Reach Level 200 in Horizon Open
+        Horizon Open Amateur
+        : GTI. 1 300
+        : DSC. Reach Level 300 in Horizon Open
+        Horizon Open Enthusiast
+        : GTI. 1 400
+        : DSC. Reach Level 400 in Horizon Open
+        Horizon Open Expert
+        : GTI. 1 500
+        : DSC. Reach Level 500 in Horizon Open
+        Horizon Open Pro
+        : GTI. 1 600
+        : DSC. Reach Level 600 in Horizon Open
+        Horizon Open Elite
+        : GTI. 1 700
+        : DSC. Reach Level 700 in Horizon Open
+        Horizon Open Specialist
+        : GTI. 1 800
+        : DSC. Reach Level 800 in Horizon Open
+        Horizon Open Master
+        : GTI. 1 900
+        : DSC. Reach Level 900 in Horizon Open
+        Horizon Open Champion
+        : GTI. 1 1000
+        : DSC. Reach Level 1000 in Horizon Open
+        You're the Boss
+        : CMP. DONE
+        : DSC. Play Forza Horizon 5 during the Dry Season of the `Horizon 10 Year Annivarsary`
+        Spring into Action
+        : CMP. DONE
+        : DSC. Play Forza Horizon 5 during the Hot Season of the `Horizon 10 Year Annivarsary`
+    GRP. Car Collection // 03-car-collection
+    - Path // path
+    ; TXT. 03-car-collection
+    - Index // index
+    ; INT. 70
+        Total
+        : GTI. 121 899
+        Abarth
+        : GTI. 0 4
+        Acura
+        : GTI. 1 3
+        Alfa Romeo
+        : GTI. 0 7
+        Alpine
+        : GTI. 0 2
+        Alumicraft
+        : GTI. 2 3
+        AMC
+        : GTI. 1 3
+        AMG Transport Dynamic
+        : GTI. 0 1
+        Apollo
+        : GTI. 0 2
+        Ariel
+        : GTI. 0 2
+        Ascari
+        : GTI. 0 1
+        Aston Martin
+        : GTI. 1 16
+        ATS
+        : GTI. 0 1
+        Audi
+        : GTI. 3 25
+        Austin-Healey
+        : GTI. 0 1
+        Automobile Pinifarina
+        : GTI. 0 1
+        Autozam
+        : GTI. 0 1
+        BAC
+        : GTI. 1 1
+        Bentley
+        : GTI. 0 7
+        BMW
+        : GTI. 8 37
+        Brabham
+        : GTI. 0 1
+        Bugatti
+        : GTI. 0 5
+        Buick
+        : GTI. 0 2
+        Cadillac
+        : GTI. 2 7
+        Can-Am
+        : GTI. 0 1
+        Casie Curie Motorsport
+        : GTI. 1 1
+        Caterham
+        : GTI. 0 1
+        Chevrolet
+        : GTI. 6 36
+        Citroën
+        : GTI. 0 1
+        Cupra
+        : GTI. 1 3
+        Czinger
+        : GTI. 0 1
+        Datsun
+        : GTI. 0 1
+        DeBerti
+        : GTI. 1 8
+        DeLorean DMC
+        : GTI. 0 1
+        Dodge
+        : GTI. 5 18
+        Donkervoort
+        : GTI. 0 1
+        DS Automobiles
+        : GTI. 0 1
+        Eagle
+        : GTI. 0 1
+        Elemental
+        : GTI. 0 1
+        Exomotive
+        : GTI. 0 2
+        Extreme E
+        : GTI. 0 10
+        Fast and Furious
+        : GTI. 0 5
+        Ferrari
+        : GTI. 2 43
+        Fiat
+        : GTI. 0 2
+        Ford
+        : GTI. 12 78
+        Formula Drift
+        : GTI. 2 16
+        Forsberg Racing
+        : GTI. 0 4
+        Funco Motorsports
+        : GTI. 0 1
+        Ginetta
+        : GTI. 0 1
+        GMC
+        : GTI. 1 6
+        Gordon Murray Automotive
+        : GTI. 1 1
+        HDT
+        : GTI. 0 1
+        Hennessey
+        : GTI. 0 5
+        Holden
+        : GTI. 0 3
+        Honda
+        : GTI. 2 16
+        Hoonigan
+        : GTI. 5 14
+        Hot Wheels
+        : GTI. 7 11
+        HSV
+        : GTI. 1 2
+        Hummer
+        : GTI. 0 1
+        Hyundai
+        : GTI. 0 7
+        Infiniti
+        : GTI. 0 1
+        International
+        : GTI. 0 1
+        Italdesign
+        : GTI. 0 2
+        Jaguar
+        : GTI. 3 20
+        Jeep
+        : GTI. 2 6
+        Jimco
+        : GTI. 2 2
+        Kia
+        : GTI. 0 1
+        Koenigsegg
+        : GTI. 0 8
+        KTM
+        : GTI. 0 3
+        Lamborghini
+        : GTI. 4 32
+        Lancia
+        : GTI. 0 5
+        Land Rover
+        : GTI. 1 6
+        Lexus
+        : GTI. 1 6
+        Lincoln
+        : GTI. 0 1
+        Local Motors
+        : GTI. 0 1
+        Lola
+        : GTI. 0 1
+        Lotus
+        : GTI. 1 12
+        Lucid
+        : GTI. 0 1
+        Lync & Co
+        : GTI. 0 4
+        Maserati
+        : GTI. 1 5
+        Mazda
+        : GTI. 2 10
+        McLaren
+        : GTI. 0 17
+        Mersedes-AMG
+        : GTI. 0 9
+        Mersedes-Benz
+        : GTI. 2 24
+        Mercury
+        : GTI. 0 1
+        Meyers
+        : GTI. 2 3
+        MG
+        : GTI. 0 7
+        Mini
+        : GTI. 1 8
+        Mitsubishi Motors
+        : GTI. 2 13
+        Morgan
+        : GTI. 1 2
+        Morris
+        : GTI. 0 4
+        Moster
+        : GTI. 1 2
+        Napier
+        : GTI. 0 1
+        NIO
+        : GTI. 0 1
+        Nissan
+        : GTI. 7 37
+        Noble
+        : GTI. 0 2
+        Oldsmobile
+        : GTI. 0 1
+        Opel
+        : GTI. 0 1
+        Pagani
+        : GTI. 1 6
+        Peel
+        : GTI. 0 2
+        Penhall
+        : GTI. 1 1
+        Peugeot
+        : GTI. 1 3
+        Plymouth
+        : GTI. 0 4
+        Polaris
+        : GTI. 1 3
+        Pontiac
+        : GTI. 1 7
+        Porsche
+        : GTI. 6 52
+        Radical
+        : GTI. 0 1
+        RAESR
+        : GTI. 0 1
+        Ram
+        : GTI. 0 1
+        Reliant
+        : GTI. 0 1
+        Renault
+        : GTI. 2 10
+        Rimac
+        : GTI. 0 2
+        Rivian
+        : GTI. 0 2
+        RJ Anderson
+        : GTI. 1 2
+        Rossion
+        : GTI. 0 1
+        Saleen
+        : GTI. 0 4
+        Schuppan
+        : GTI. 0 1
+        Shelby
+        : GTI. 0 3
+        SIERRA Cars
+        : GTI. 0 3
+        Spania GTA
+        : GTI. 0 1
+        Subaru
+        : GTI. 1 14
+        Toyota
+        : GTI. 3 27
+        TVR
+        : GTI. 0 3
+        Ultima
+        : GTI. 0 1
+        Universal Studios
+        : GTI. 0 5
+        Vauxhall
+        : GTI. 0 3
+        Volkswagen
+        : GTI. 2 23
+        Volvo
+        : GTI. 0 4
+        VUHL
+        : GTI. 0 1
+        W Motors
+        : GTI. 0 1
+        Willys
+        : GTI. 0 1
+        Wuling
+        : GTI. 0 2
+        Xpeng
+        : GTI. 0 1
+        Zenyo
+        : GTI. 0 2
