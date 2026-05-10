@@ -61,13 +61,18 @@ expectedDhall = """let T = ./Types.dhall
 let GT = ./Game.Types.dhall
 
 in
-    GT.collapseAt
+    T.collapseWith
         { id = "DHL:astral-chain"
         , name = "Astral Chain"
-        , platform = GT.Platform.<TODO>
-        , playtime = GT.Playtime.<TODO>
         }
-        (Some { day = +12, mon = +8, year = +2025 }) (
+        ([ "Dhall", "Switch" ])
+        (
+         [ { key = "platform" , label = "Platform" , value = "Switch" }
+         , { key = "playtime" , label = "Playtime" , value = (T.v_relt (T.v_rel_T.rel_more_than T.TIME { hrs = +40, min = +0, sec = +0 })) }
+         , { key = "trackedAt" , label = "Tracked At" , value = { day = +12, mon = +8, year = +2025 } }
+         ]
+        )
+        (
 
     T.group "File" [ "00-file" ]
         [ T.kv_ "Time" (T.v_time { hrs = +7, min = +54, sec = +0 })

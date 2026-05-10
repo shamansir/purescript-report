@@ -74,29 +74,53 @@ toDhall inclRule =
             let subjectRec = unwrap subject in
             D.text "let T = ./Types.dhall\nlet GT = ./Game.Types.dhall"
             <> D.break <> D.break <> D.text "in"
-            <> D.break <> D.indent (D.text "GT.collapseAt")
-            <> brindent2
+            <> D.break <> D.indent (D.text "T.collapseWith")
+            <> brindent2 (
                 [ D.text "{ id = " <> (quote $ unwrap subjectRec.id)
                 , D.text ", name = " <> quote subjectRec.name
-                , D.text ", platform = " <> D.text "GT.Platform.<TODO>"
-                , D.text ", playtime = " <> D.text "GT.Playtime.<TODO>"
                 , D.text "}"
-                , (D.enclose (D.text "(") (D.text ")") $ mbdaterec $ mbTrackedAt subjectRec.tabulars) <> D.space <> D.text "("
+                , case subjectRec.tags of
+                    [] -> D.text "([] : List Text)"
+                    _  -> D.enclose (D.text "(") (D.text ")") $ convertTags subjectRec.tags
                 ]
+                <> case subjectRec.tabulars of
+                    [] -> [ D.text "([] : List T.TabularKVR)" ]
+                    _  -> let tabularsCount = Array.length subjectRec.tabulars in
+                        [ D.text "(" ]
+                        <> (pure $ alignDecorators $ (Array.catMaybes $ mapWithIndex (convertTabular tabularsCount) subjectRec.tabulars)) <>
+                        [ D.text " ]"
+                        , D.text ")"
+                        ]
+
+                -- , D.enclose  (D.text "(") (D.text ")") $ (alignDecorators $ Array.catMaybes $ mapWithIndex convertTabular subjectRec.tabulars) <> D.space <> D.text "]"
+                <> [ D.text "(" ]
+                )
+                -- , (D.enclose (D.text "(") (D.text ")") $ mbdaterec $ mbTrackedAt subjectRec.tabulars) <> D.space <> D.text "("
                 -- (pure $ alignDecorators $ Array.catMaybes $ mapWithIndex convertTabular subjectRec.tabulars)
             <> fold (mapWithIndex convertGroupRec groups)
             <> D.break <> D.break <> D.indent (D.text ")")
 
 
-        convertTabular :: Int -> TabularRec -> Maybe (RenderedAs (Doc Unit))
-        convertTabular index { tkey, tlabel, value } =
+        convertTabular :: Int -> Int -> TabularRec -> Maybe (RenderedAs (Doc Unit))
+        convertTabular count index { tkey, tlabel, value } =
             case value of
                 TV.TVAtomic atomicV ->
                     case convertTabularAV atomicV of
-                        OneLine oneLineV -> Just $ OneLine $ (D.text $ if index == 0 then "[" else ",") <> D.space <> D.text tkey <> D.space <> D.text "=" <> D.space <> oneLineV
-                        MutliLine multiLineV  -> Just $ MutliLine $
-                            [ (D.text $ if index == 0 then "[" else ",") <> D.space <> D.text tkey <> D.space <> D.text "="
-                            ] <> (D.indent <$> multiLineV)
+                        OneLine oneLineV ->
+                            Just $ OneLine
+                                $ (D.text $ if index == 0 then "[" else ",")
+                                <> D.space <> D.text "{ key = " <> quote tkey
+                                <> D.space <> D.text ", label = " <> quote tlabel
+                                <> D.space <> D.text ", value = " <> oneLineV
+                                <> D.space <> D.text "}" <> (if index /= count - 1 then D.break else mempty)
+                        MutliLine multiLineV  ->
+                            Just $ MutliLine $
+                                [ (D.text $ if index == 0 then "[" else ",")
+                                <> D.space <> D.text "{ key = " <> quote tkey
+                                <> D.space <> D.text ", label = " <> quote tlabel
+                                <> D.space <> D.text ", value = " ]
+                                <> (D.indent <$> multiLineV)
+                                <> [ D.text "}" ]
                 _ -> Nothing
 
             -- <> (Array.concat $ Array.intersperse (pure "\n\n") $ convertGroup <$> groups)
@@ -121,13 +145,17 @@ toDhall inclRule =
             D.text "T.kv_" <> D.space <> quote itemRec.title <>
                 (case itemRec.tags of
                     RawTags [] -> mempty
-                    RawTags tags -> convertTags tags <> D.space
+                    RawTags tags -> convertTagsInj tags <> D.space
                 )
                 <> (alignDecorators $ convertDecoratorRec <$> itemRec.decorators)
 
-
         convertTags :: Array RawTag -> Doc Unit
         convertTags =
+            map (CT.loadRawId >>> MbW.toString >>> quote)
+                >>> ilarrayD
+
+        convertTagsInj :: Array RawTag -> Doc Unit
+        convertTagsInj =
             map (CT.loadRawId >>> MbW.toString >>> quote)
                 >>> ilarrayD
                 >>> prefixD "// T.inj/tags"

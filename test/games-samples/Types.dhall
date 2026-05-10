@@ -539,6 +539,17 @@ let collapse
         }
 
 
+let collapseWith
+    : QSubject -> List Text -> List TabularKVR -> List Property -> Subject
+    = \(subject : QSubject) -> \(tags : List Text) -> \(tabular : List TabularKVR) -> \(properties : List Property) ->
+        { id = subject.id
+        , name = subject.name
+        , properties = properties
+        , tabular = tabular
+        , tags = tags
+        }
+
+
 let introduce
     : QSubject -> Subject
     = \(subject : QSubject) ->
@@ -566,7 +577,7 @@ in
     , v_reli, v_reld, v_reln, v_relt
     , v_empty, v_unk
     , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tag, inj/tags, inj/tab, inj/ltab, inj/tabs
-    , collapse, introduce
+    , collapse, introduce, collapseWith
     , p_todo, p_doing, p_done, p_now, p_later, p_canceled, p_wait, p_locked
     , p_todo_, p_doing_, p_done_, p_now_, p_later_, p_canceled_, p_wait_, p_locked_
     , rel_more_than, rel_less_than, rel_exact
