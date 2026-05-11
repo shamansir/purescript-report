@@ -50,6 +50,16 @@ newtype SmosStateEntry = SmosStateEntry SmosStateEntryRec
 derive newtype instance ReadForeign SmosStateEntry
 
 
+type SmosLogbookEntryRec =
+    { start :: String
+    , end   :: Maybe String
+    }
+
+
+newtype SmosLogbookEntry = SmosLogbookEntry SmosLogbookEntryRec
+derive newtype instance ReadForeign SmosLogbookEntry
+
+
 newtype SmosEntry = SmosEntry
     { header       :: String
     , contents     :: Maybe String
@@ -57,6 +67,7 @@ newtype SmosEntry = SmosEntry
     , properties   :: Maybe (Object String)
     , stateHistory :: Maybe (Array SmosStateEntry)
     , tags         :: Maybe (Array String)
+    , logbook      :: Maybe (Array SmosLogbookEntry)
     }
 
 
@@ -68,4 +79,5 @@ instance ReadForeign SmosEntry where
         properties   <- FI.readProp "properties"    f >>= readImpl
         stateHistory <- FI.readProp "state-history" f >>= readImpl
         tags         <- FI.readProp "tags"          f >>= readImpl
-        pure $ SmosEntry { header, contents, timestamps, properties, stateHistory, tags }
+        logbook      <- FI.readProp "logbook"       f >>= readImpl
+        pure $ SmosEntry { header, contents, timestamps, properties, stateHistory, tags, logbook }

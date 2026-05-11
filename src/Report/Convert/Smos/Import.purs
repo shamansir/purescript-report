@@ -4,7 +4,7 @@ import Prelude
 
 import Foreign (Foreign, F)
 
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Array as Array
 import Data.Either (Either)
 import Data.Bifunctor (bimap)
@@ -32,12 +32,13 @@ import Report.Decorator (Decorator(..)) as Dec
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Progress (Progress(..))
 import Report.Tabular (empty, fromArray') as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Convert.Rep.Import.Parser as Parser
 import Report.Convert.Types (SubjectId, ImportError(..))
 import Report.Convert.Generic
-import Report.Core (SDate(..), monthFromInt) as CT
+import Report.Core (SDate(..), monthFromInt, dateToRec) as CT
 
 import Report.Impl.Subject (Subject(..)) as Impl
 import Report.Group (Group(..))
@@ -116,9 +117,11 @@ fromSmos yamlStr =
                     , e.contents <#> Dec.SDescription
                     ]
                 timestamps = fromMaybe Object.empty e.timestamps
-                tabular = Tabular.fromArray' $ Array.mapMaybe
+                tsEntries = Array.mapMaybe
                     (\k -> smosTimestampToTabular k $ fromMaybe "" $ Object.lookup k timestamps)
                     (Object.keys timestamps)
+                lbEntry   = smosLogbookToTabular $ fromMaybe [] e.logbook
+                tabular   = Tabular.fromArray' $ tsEntries <> Array.catMaybes [ lbEntry ]
                 rawTags = Array.catMaybes $ Parser.parseTag <$> fromMaybe [] e.tags
             in convertItem @subj_id @subj_tag @item_tag @subj @group @item @x $
                 Impl.Item
@@ -158,6 +161,22 @@ smosTimestampToTabular key value =
         , label : tabKey
         , value : TV.date d
         }
+
+
+smosLogbookToTabular
+    :: Array SmosLogbookEntry
+    -> Maybe { key :: String, label :: String, value :: TV.TabularValue }
+smosLogbookToTabular [] = Nothing
+smosLogbookToTabular entries =
+    let levels = Array.mapWithIndex toLevelP entries
+    in Just { key: "logbook", label: "Logbook", value: TV.progress (LevelsP { levels }) }
+    where
+        toLevelP idx (SmosLogbookEntry { start, end }) =
+            { name    : "entry-" <> show (idx + 1)
+            , proc    : if isNothing end then TDoing else TDone
+            , date    : parseSmosTime start <#> CT.dateToRec
+            , endDate : end >>= parseSmosTime <#> CT.dateToRec
+            }
 
 
 parseSmosTime :: String -> Maybe CT.SDate

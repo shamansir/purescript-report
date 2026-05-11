@@ -5,7 +5,7 @@ import Prelude
 import Foreign (Foreign, F)
 import Control.Monad.Except (runExcept)
 
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Either (either)
 import Data.Tuple (Tuple(..))
 import Data.String (joinWith) as String
@@ -30,6 +30,7 @@ import Report.Convert.Text.Decorators.Tags as CT
 import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
+import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Tabular.TabularValue as TV
 
 import Data.YAML.Foreign.Encode (YValue, class ToYAML, toYAML, printYAML, object)
@@ -108,6 +109,7 @@ toSmos inclRule =
         itemEntryYV itemRec =
             let stateHistory  = itemStateHistory itemRec
                 timestamps    = itemTimestamps   itemRec
+                logbookArr    = itemLogbook      itemRec
                 rawTags       = unwrap itemRec.tags
                 tagStrs       = (Chain.toString <<< CT.loadRawId) <$> rawTags
                 mbDescription = findDecorator @D.Decorator itemRec.decorators "DESC"
@@ -116,6 +118,8 @@ toSmos inclRule =
                     , case mbDescription of
                         Just (D.SDescription desc) -> Just $ Tuple "contents" (toYAML desc)
                         _                          -> Nothing
+                    , if Array.null logbookArr then Nothing
+                      else Just $ Tuple "logbook" (toYAML $ AsYaml <$> logbookArr)
                     , if Array.null stateHistory then Nothing
                       else Just $ Tuple "state-history" (toYAML $ AsYaml <$> stateHistory)
                     , if Object.isEmpty timestamps then Nothing
@@ -124,6 +128,25 @@ toSmos inclRule =
                       else Just $ Tuple "tags" (toYAML tagStrs)
                     ]
             in object pairs
+
+        itemLogbook :: ItemRec -> Array YValue
+        itemLogbook itemRec =
+            case Array.find (\{ tkey } -> tkey == "logbook") itemRec.tabulars of
+                Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (LevelsP { levels }))) } ->
+                    logbookEntryYV <$> levels
+                _ -> []
+
+        logbookEntryYV :: { date :: Maybe CT.SDateRec, endDate :: Maybe CT.SDateRec | _ } -> YValue
+        logbookEntryYV { date, endDate } =
+            let startStr = maybe "1970-01-01 00:00:00.000" (smosTime <<< CT.dateFromRec) date
+            in case endDate of
+                Just ed ->
+                    object
+                        [ Tuple "end"   (toYAML $ smosTime $ CT.dateFromRec ed)
+                        , Tuple "start" (toYAML startStr)
+                        ]
+                Nothing ->
+                    object [ Tuple "start" (toYAML startStr) ]
 
         itemStateHistory :: ItemRec -> Array YValue
         itemStateHistory itemRec =

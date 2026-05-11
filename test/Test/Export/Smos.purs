@@ -24,7 +24,9 @@ import Report.Group (Group(..))
 import Report.GroupPath (pathToArray) as GP
 import Report.Tabular (items) as Tabular
 import Report.Decorator (get, Key(..), Decorator(..)) as Dec
+import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..)) as TV
 import Report.Decorators.Task (TaskP(..))
+import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Tags (RawTag)
 import Report.Convert.Types (SubjectId(..), ImportError, printImportError, Input(..), Output(..))
 import Report.Convert.Generic (RR, includeAll)
@@ -234,6 +236,37 @@ spec =
                                                         d.day `A.shouldEqual` 15
                                                     _ -> A.fail "Expected SEarnedAt for Fix login bug"
 
+            it "reads logbook into a LevelsP tabular entry" do
+                fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
+                case parseSmos fileText of
+                    Left err -> A.fail $ printImportError err
+                    Right report -> do
+                        let subjects = unfold report
+                        case Array.head subjects of
+                            Nothing -> A.fail "No subjects"
+                            Just (_ /\ groups) ->
+                                case Array.head groups of
+                                    Nothing -> A.fail "No Work group"
+                                    Just (_ /\ items) ->
+                                        case Array.head items of
+                                            Nothing -> A.fail "No first item"
+                                            Just (Impl.Item item) -> do
+                                                let tabRows = Tabular.items item.tabular
+                                                -- logbook entry should be last tabular row (after SCHEDULED on "Write tests"; this item has no timestamps)
+                                                let mbLogRow = Array.find (\r -> (unwrap r).key == "logbook") tabRows
+                                                case mbLogRow of
+                                                    Nothing -> A.fail "No logbook tabular entry"
+                                                    Just logRow ->
+                                                        case (unwrap logRow).value of
+                                                            TV.TVAtomic (TV.TVDecorator (Dec.SProgress (LevelsP { levels }))) -> do
+                                                                Array.length levels `A.shouldEqual` 2
+                                                                case Array.head levels of
+                                                                    Nothing -> A.fail "No first level"
+                                                                    Just lv -> do
+                                                                        lv.proc `A.shouldEqual` TDone
+                                                                        lv.name `A.shouldEqual` "entry-1"
+                                                            _ -> A.fail "Expected LevelsP in logbook tabular"
+
         describe "export" do
 
             it "round-trips smos→smos preserving structure" do
@@ -279,6 +312,11 @@ expectedRoundTripSmos = """value:
       - entry:
           contents: This is a known login issue
           header: Fix login bug
+          logbook:
+            - end: '2025-01-14 00:00:00.000'
+              start: '2025-01-14 00:00:00.000'
+            - end: '2025-01-15 00:00:00.000'
+              start: '2025-01-15 00:00:00.000'
           state-history:
             - state: DONE
               time: '2025-01-15 00:00:00.000'

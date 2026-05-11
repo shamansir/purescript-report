@@ -428,7 +428,7 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
       spIdx <- indexOfSpace rest
       let taskStr = String.take spIdx rest
           name    = String.drop (spIdx + 1) rest
-      pure { date: CT.dateToRec <$> date, proc: taskPFromString taskStr, name }
+      pure { date: CT.dateToRec <$> date, proc: taskPFromString taskStr, name, endDate: Nothing }
     parseLevelsP _ =
       let levels = Array.catMaybes $ parseLevelP <$> NEA.tail raw
       in Just $ LevelsP { levels }

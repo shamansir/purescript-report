@@ -15,7 +15,7 @@ type TimeRec = CT.STimeRec
 type LevelN = { maximum :: Number, name :: String, date :: Maybe DateRec }
 type LevelI = { maximum :: Int, name :: String, date :: Maybe DateRec }
 type LevelS = { gives :: String, date :: Maybe DateRec }
-type LevelP = { name :: String, proc :: TaskP, date :: Maybe DateRec }
+type LevelP = { name :: String, proc :: TaskP, date :: Maybe DateRec, endDate :: Maybe DateRec }
 type LevelO = { mbMaximum :: Maybe Int, name :: String, date :: Maybe DateRec }
 
 
