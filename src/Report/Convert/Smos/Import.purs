@@ -107,14 +107,14 @@ fromSmos yamlStr =
 
         collectItem :: SmosTree -> item
         collectItem (SmosTree { entry: SmosEntry e }) =
-            let mbTask = do
-                    history <- e.stateHistory
-                    first   <- Array.head history
-                    let SmosStateEntry se = first
-                    state   <- se.state
-                    smosStateToTask state
+            let mbFirst    = e.stateHistory >>= Array.head <#> \(SmosStateEntry se) -> se
+                mbTask     = mbFirst >>= _.state >>= smosStateToTask
+                mbEarnedAt = mbFirst >>= \se -> parseSmosTime se.time
                 decorators = Decorators.fromArray' $ Array.catMaybes
-                    [ mbTask <#> Dec.PTask ]
+                    [ mbTask     <#> Dec.PTask
+                    , mbEarnedAt <#> Dec.SEarnedAt
+                    , e.contents <#> Dec.SDescription
+                    ]
                 timestamps = fromMaybe Object.empty e.timestamps
                 tabular = Tabular.fromArray' $ Array.mapMaybe
                     (\k -> smosTimestampToTabular k $ fromMaybe "" $ Object.lookup k timestamps)
@@ -158,6 +158,10 @@ smosTimestampToTabular key value =
         , label : tabKey
         , value : TV.date d
         }
+
+
+parseSmosTime :: String -> Maybe CT.SDate
+parseSmosTime = parseOrgDate <<< String.take 10
 
 
 parseOrgDate :: String -> Maybe CT.SDate

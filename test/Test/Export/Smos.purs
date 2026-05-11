@@ -30,7 +30,7 @@ import Report.Convert.Types (SubjectId(..), ImportError, printImportError, Input
 import Report.Convert.Generic (RR, includeAll)
 import Report.Convert.Smos (fromSmos) as Smos
 import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
-import Report.Core (ReportFormat(..))
+import Report.Core (ReportFormat(..), SDate(..), monthToInt) as CT
 
 import Report.Impl.Subject (Subject(..)) as Impl
 import Report.Impl.Group (Group) as Impl
@@ -192,11 +192,53 @@ spec =
                                                     Just tabItem ->
                                                         (unwrap tabItem).key `A.shouldEqual` "SCHEDULED"
 
+            it "reads contents into description decorator" do
+                fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
+                case parseSmos fileText of
+                    Left err -> A.fail $ printImportError err
+                    Right report -> do
+                        let subjects = unfold report
+                        case Array.head subjects of
+                            Nothing -> A.fail "No subjects"
+                            Just (_ /\ groups) ->
+                                case Array.head groups of
+                                    Nothing -> A.fail "No Work group"
+                                    Just (_ /\ items) ->
+                                        case Array.head items of
+                                            Nothing -> A.fail "No first item"
+                                            Just (Impl.Item item) ->
+                                                case Dec.get Dec.KDescription item.decorators of
+                                                    Just (Dec.SDescription desc) ->
+                                                        desc `A.shouldEqual` "This is a known login issue"
+                                                    _ -> A.fail "Expected SDescription for Fix login bug"
+
+            it "reads state-history time into earned-at decorator" do
+                fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
+                case parseSmos fileText of
+                    Left err -> A.fail $ printImportError err
+                    Right report -> do
+                        let subjects = unfold report
+                        case Array.head subjects of
+                            Nothing -> A.fail "No subjects"
+                            Just (_ /\ groups) ->
+                                case Array.head groups of
+                                    Nothing -> A.fail "No Work group"
+                                    Just (_ /\ items) ->
+                                        case Array.head items of
+                                            Nothing -> A.fail "No first item"
+                                            Just (Impl.Item item) ->
+                                                case Dec.get Dec.KEarnedAt item.decorators of
+                                                    Just (Dec.SEarnedAt (CT.SDate d)) -> do
+                                                        d.year `A.shouldEqual` 2025
+                                                        CT.monthToInt d.month `A.shouldEqual` 1
+                                                        d.day `A.shouldEqual` 15
+                                                    _ -> A.fail "Expected SEarnedAt for Fix login bug"
+
         describe "export" do
 
             it "round-trips smos→smos preserving structure" do
                 let cmdToRun = Convert
-                        { from: Smos, to: Smos }
+                        { from: CT.Smos, to: CT.Smos }
                         { input: FileInput simpleSmosSamplePath, output: NullOutput }
                         defaultOptions []
                 commandResult <- liftEffect $ runCommand cmdToRun
@@ -207,7 +249,7 @@ spec =
 
             it "produces smos from rep input with version header" do
                 let cmdToRun = Convert
-                        { from: Rep, to: Smos }
+                        { from: CT.Rep, to: CT.Smos }
                         { input: FileInput "test/games-samples/AstralChain.rep"
                         , output: NullOutput
                         }
@@ -225,8 +267,8 @@ spec =
 
 -- Expected output after smos → smos round-trip.
 -- Paths use Title-case headers, not the original lowercase path= from the file.
--- State times default to epoch (no EarnedAt after round-trip).
 -- yaml-next sorts object keys alphabetically (Map-backed).
+-- contents appears before header (c < h), real state times preserved via SEarnedAt.
 expectedRoundTripSmos :: String
 expectedRoundTripSmos = """value:
   - entry:
@@ -235,17 +277,18 @@ expectedRoundTripSmos = """value:
         path: Work
     forest:
       - entry:
+          contents: This is a known login issue
           header: Fix login bug
           state-history:
             - state: DONE
-              time: '1970-01-01 00:00:00.000'
+              time: '2025-01-15 00:00:00.000'
           tags:
             - bug
       - entry:
           header: Write tests
           state-history:
             - state: TODO
-              time: '1970-01-01 00:00:00.000'
+              time: '2025-01-15 00:00:00.000'
           timestamps:
             SCHEDULED: <2025-01-20>
       - entry:
@@ -257,7 +300,7 @@ expectedRoundTripSmos = """value:
               header: Refactor auth module
               state-history:
                 - state: TODO
-                  time: '1970-01-01 00:00:00.000'
+                  time: '2025-01-01 00:00:00.000'
   - entry:
       header: Personal
       properties:
@@ -267,7 +310,7 @@ expectedRoundTripSmos = """value:
           header: Learn PureScript
           state-history:
             - state: STARTED
-              time: '1970-01-01 00:00:00.000'
+              time: '2025-01-10 00:00:00.000'
           tags:
             - hobby
 version: 2

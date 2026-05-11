@@ -106,12 +106,16 @@ toSmos inclRule =
 
         itemEntryYV :: ItemRec -> YValue
         itemEntryYV itemRec =
-            let stateHistory = itemStateHistory itemRec
-                timestamps   = itemTimestamps   itemRec
-                rawTags      = unwrap itemRec.tags
-                tagStrs      = (Chain.toString <<< CT.loadRawId) <$> rawTags
+            let stateHistory  = itemStateHistory itemRec
+                timestamps    = itemTimestamps   itemRec
+                rawTags       = unwrap itemRec.tags
+                tagStrs       = (Chain.toString <<< CT.loadRawId) <$> rawTags
+                mbDescription = findDecorator @D.Decorator itemRec.decorators "DESC"
                 pairs = Array.catMaybes
                     [ Just $ Tuple "header" (toYAML itemRec.title)
+                    , case mbDescription of
+                        Just (D.SDescription desc) -> Just $ Tuple "contents" (toYAML desc)
+                        _                          -> Nothing
                     , if Array.null stateHistory then Nothing
                       else Just $ Tuple "state-history" (toYAML $ AsYaml <$> stateHistory)
                     , if Object.isEmpty timestamps then Nothing

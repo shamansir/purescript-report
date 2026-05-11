@@ -7,6 +7,7 @@ value:
     forest:
       - entry:
           header: Fix login bug
+          contents: "This is a known login issue"
           state-history:
             - state: DONE
               time: "2025-01-15 00:00:00.000"
