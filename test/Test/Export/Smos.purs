@@ -188,11 +188,9 @@ spec =
                                             Nothing -> A.fail "No second item"
                                             Just (Impl.Item item) -> do
                                                 let tabRows = Tabular.items item.tabular
-                                                Array.length tabRows `A.shouldEqual` 1
-                                                case Array.head tabRows of
-                                                    Nothing -> A.fail "No tabular entries"
-                                                    Just tabItem ->
-                                                        (unwrap tabItem).key `A.shouldEqual` "SCHEDULED"
+                                                case Array.find (\r -> (unwrap r).key == "SCHEDULED") tabRows of
+                                                    Nothing -> A.fail "No SCHEDULED tabular entry"
+                                                    Just _ -> pure unit
 
             it "reads contents into description decorator" do
                 fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
@@ -267,6 +265,38 @@ spec =
                                                                         lv.name `A.shouldEqual` "entry-1"
                                                             _ -> A.fail "Expected LevelsP in logbook tabular"
 
+            it "stores full state-history as a LevelsP tabular entry" do
+                fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
+                case parseSmos fileText of
+                    Left err -> A.fail $ printImportError err
+                    Right report -> do
+                        let subjects = unfold report
+                        case Array.head subjects of
+                            Nothing -> A.fail "No subjects"
+                            Just (_ /\ groups) ->
+                                case Array.head groups of
+                                    Nothing -> A.fail "No Work group"
+                                    Just (_ /\ items) ->
+                                        -- "Write tests" is second item, has two history entries
+                                        case Array.index items 1 of
+                                            Nothing -> A.fail "No second item"
+                                            Just (Impl.Item item) -> do
+                                                let tabRows = Tabular.items item.tabular
+                                                let mbShRow = Array.find (\r -> (unwrap r).key == "state-history") tabRows
+                                                case mbShRow of
+                                                    Nothing -> A.fail "No state-history tabular entry"
+                                                    Just shRow ->
+                                                        case (unwrap shRow).value of
+                                                            TV.TVAtomic (TV.TVDecorator (Dec.SProgress (LevelsP { levels }))) -> do
+                                                                Array.length levels `A.shouldEqual` 2
+                                                                case Array.head levels of
+                                                                    Nothing -> A.fail "No first level"
+                                                                    Just lv -> lv.proc `A.shouldEqual` TTodo
+                                                                case Array.index levels 1 of
+                                                                    Nothing -> A.fail "No second level"
+                                                                    Just lv -> lv.proc `A.shouldEqual` TDoing
+                                                            _ -> A.fail "Expected LevelsP in state-history tabular"
+
         describe "export" do
 
             it "round-trips smos→smos preserving structure" do
@@ -327,6 +357,8 @@ expectedRoundTripSmos = """value:
           state-history:
             - state: TODO
               time: '2025-01-15 00:00:00.000'
+            - state: STARTED
+              time: '2025-01-10 00:00:00.000'
           timestamps:
             SCHEDULED: <2025-01-20>
       - entry:

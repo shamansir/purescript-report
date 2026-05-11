@@ -150,19 +150,33 @@ toSmos inclRule =
 
         itemStateHistory :: ItemRec -> Array YValue
         itemStateHistory itemRec =
-            let mbTask     = findDecorator @D.Decorator itemRec.decorators "TASK"
-                mbEarnedAt = findDecorator @D.Decorator itemRec.decorators "EARN"
-                timeStr = case mbEarnedAt of
-                    Just (D.SEarnedAt sdate) -> smosTime sdate
-                    _                        -> "1970-01-01 00:00:00.000"
-            in case mbTask of
-                Just (D.PTask taskP) ->
-                    [ object
-                        [ Tuple "state" (toYAML $ taskToSmosState taskP)
-                        , Tuple "time"  (toYAML timeStr)
-                        ]
-                    ]
-                _ -> []
+            let fromTabular = case Array.find (\{ tkey } -> tkey == "state-history") itemRec.tabulars of
+                    Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (LevelsP { levels }))) }
+                        | not (Array.null levels) -> stateEntryYV <$> levels
+                    _ -> []
+            in if not (Array.null fromTabular) then fromTabular
+               else
+                   let mbTask     = findDecorator @D.Decorator itemRec.decorators "TASK"
+                       mbEarnedAt = findDecorator @D.Decorator itemRec.decorators "EARN"
+                       timeStr = case mbEarnedAt of
+                           Just (D.SEarnedAt sdate) -> smosTime sdate
+                           _                        -> "1970-01-01 00:00:00.000"
+                   in case mbTask of
+                       Just (D.PTask taskP) ->
+                           [ object
+                               [ Tuple "state" (toYAML $ taskToSmosState taskP)
+                               , Tuple "time"  (toYAML timeStr)
+                               ]
+                           ]
+                       _ -> []
+
+        stateEntryYV :: { proc :: TaskP, date :: Maybe CT.SDateRec | _ } -> YValue
+        stateEntryYV { proc, date } =
+            let timeStr = maybe "1970-01-01 00:00:00.000" (smosTime <<< CT.dateFromRec) date
+            in object
+                [ Tuple "state" (toYAML $ taskToSmosState proc)
+                , Tuple "time"  (toYAML timeStr)
+                ]
 
         itemTimestamps :: ItemRec -> Object.Object String
         itemTimestamps itemRec =

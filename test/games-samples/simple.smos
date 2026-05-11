@@ -23,6 +23,8 @@ value:
           state-history:
             - state: TODO
               time: "2025-01-15 00:00:00.000"
+            - state: STARTED
+              time: "2025-01-10 00:00:00.000"
           timestamps:
             SCHEDULED: "<2025-01-20>"
       - entry:

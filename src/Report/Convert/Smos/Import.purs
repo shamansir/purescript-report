@@ -120,8 +120,9 @@ fromSmos yamlStr =
                 tsEntries = Array.mapMaybe
                     (\k -> smosTimestampToTabular k $ fromMaybe "" $ Object.lookup k timestamps)
                     (Object.keys timestamps)
-                lbEntry   = smosLogbookToTabular $ fromMaybe [] e.logbook
-                tabular   = Tabular.fromArray' $ tsEntries <> Array.catMaybes [ lbEntry ]
+                lbEntry   = smosLogbookToTabular      $ fromMaybe [] e.logbook
+                shEntry   = smosStateHistoryToTabular $ fromMaybe [] e.stateHistory
+                tabular   = Tabular.fromArray' $ tsEntries <> Array.catMaybes [ lbEntry, shEntry ]
                 rawTags = Array.catMaybes $ Parser.parseTag <$> fromMaybe [] e.tags
             in convertItem @subj_id @subj_tag @item_tag @subj @group @item @x $
                 Impl.Item
@@ -176,6 +177,22 @@ smosLogbookToTabular entries =
             , proc    : if isNothing end then TDoing else TDone
             , date    : parseSmosTime start <#> CT.dateToRec
             , endDate : end >>= parseSmosTime <#> CT.dateToRec
+            }
+
+
+smosStateHistoryToTabular
+    :: Array SmosStateEntry
+    -> Maybe { key :: String, label :: String, value :: TV.TabularValue }
+smosStateHistoryToTabular [] = Nothing
+smosStateHistoryToTabular entries =
+    let levels = Array.mapWithIndex toLevel entries
+    in Just { key: "state-history", label: "State History", value: TV.progress (LevelsP { levels }) }
+    where
+        toLevel idx (SmosStateEntry { state, time }) =
+            { name    : "state-" <> show (idx + 1)
+            , proc    : fromMaybe TTodo (state >>= smosStateToTask)
+            , date    : parseSmosTime time <#> CT.dateToRec
+            , endDate : Nothing
             }
 
 
