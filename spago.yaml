@@ -18,6 +18,7 @@ package:
     - string-parsers
     - strings
     - tuples
+    - yaml-next
     - yoga-json
     - yoga-tree-utils
     # - yoga-tree-svg

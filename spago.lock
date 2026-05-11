@@ -22,12 +22,14 @@
             "string-parsers",
             "strings",
             "tuples",
+            "yaml-next",
             "yoga-json",
             "yoga-tree-utils"
           ],
           "build_plan": [
             "aff",
             "ansi",
+            "argonaut-core",
             "arraybuffer-types",
             "arrays",
             "avar",
@@ -122,6 +124,7 @@
             "web-storage",
             "web-touchevents",
             "web-uievents",
+            "yaml-next",
             "yoga-json",
             "yoga-tree",
             "yoga-tree-utils"
@@ -2490,6 +2493,23 @@
         "web-dom",
         "web-file",
         "web-html"
+      ]
+    },
+    "yaml-next": {
+      "type": "registry",
+      "version": "3.1.1",
+      "integrity": "sha256-kpiHQ7oSrPIcdQMT9BKEruByu7xH9S1okRHifZ/U8Hg=",
+      "dependencies": [
+        "argonaut-core",
+        "arrays",
+        "foreign",
+        "functions",
+        "lists",
+        "maybe",
+        "ordered-collections",
+        "prelude",
+        "tuples",
+        "unsafe-coerce"
       ]
     },
     "yoga-json": {

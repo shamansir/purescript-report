@@ -52,6 +52,7 @@ import Report.Convert.Json (toJson) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
 import Report.Convert.Rep (toRep) as Report
+import Report.Convert.Smos (toSmos) as Report
 import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
 
 import Report.Web.Component.RecalcBehavior as CRB
@@ -446,6 +447,7 @@ component cfg =
                 Org   -> reportToExport # Report.toOrg   @x @subj_id @subj_tag @item_tag includeRule
                 Rep   -> reportToExport # Report.toRep   @x @subj_id @subj_tag @item_tag includeRule
                 Text  -> reportToExport # Report.toText  @x @subj_id @subj_tag @item_tag includeRule
+                Smos  -> reportToExport # Report.toSmos  @x @subj_id @subj_tag @item_tag includeRule
             exportSelected trg = state.mbExportTo == Just trg
 
             findSubjName :: subj_id -> Maybe String

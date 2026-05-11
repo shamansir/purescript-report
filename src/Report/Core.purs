@@ -398,6 +398,7 @@ data ReportFormat
     | Org
     | Rep
     | Text
+    | Smos
     -- | Tree -- TODO
 
 
@@ -408,6 +409,7 @@ instance Show ReportFormat where
         Org -> "ORG"
         Rep -> "REP"
         Text -> "TEXT"
+        Smos -> "SMOS"
 
 
 derive instance Eq ReportFormat

@@ -29,6 +29,7 @@ import Report.Convert.Json (toJson, fromJson) as Report
 import Report.Convert.Rep (toRep, fromRep) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
+import Report.Convert.Smos (toSmos, fromSmos) as Report
 
 
 type Process = TagAction RawTagKind RawTag
@@ -127,6 +128,7 @@ readReport format source =
         Rep   -> Report.fromRep   @RR @SubjectId @RawTag @RawTag source
         Json  -> Report.fromJson  @RR @SubjectId @RawTag @RawTag source
         Dhall -> Report.fromDhall @RR @SubjectId @RawTag @RawTag source
+        Smos  -> Report.fromSmos  @RR @SubjectId @RawTag @RawTag source
         _ -> Left $ UnsupportedFormat format
 
 
@@ -137,22 +139,25 @@ convertReport format rawReport = case format of
     Org   -> rawReport # Report.toOrg   @RR @SubjectId @RawTag @RawTag IncludeAll
     Rep   -> rawReport # Report.toRep   @RR @SubjectId @RawTag @RawTag IncludeAll
     Text  -> rawReport # Report.toText  @RR @SubjectId @RawTag @RawTag IncludeAll
+    Smos  -> rawReport # Report.toSmos  @RR @SubjectId @RawTag @RawTag IncludeAll
 
 
 formatFromStr :: String -> ReportFormat
 formatFromStr = case _ of
-    "json" -> Json
+    "json"  -> Json
     "dhall" -> Dhall
-    "org" -> Org
-    "rep" -> Rep
-    "text" -> Text
-    _ -> Text
+    "org"   -> Org
+    "rep"   -> Rep
+    "text"  -> Text
+    "smos"  -> Smos
+    _       -> Text
 
 
 formatToStr :: ReportFormat -> String
 formatToStr = case _ of
-    Json -> "json"
+    Json  -> "json"
     Dhall -> "dhall"
-    Org -> "org"
-    Rep -> "rep"
-    Text -> "text"
+    Org   -> "org"
+    Rep   -> "rep"
+    Text  -> "text"
+    Smos  -> "smos"
