@@ -27,10 +27,10 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Chain as Chain
 import Report.Convert.Text.Decorators.Tags as CT
 
-import Report.Decorator (Key(..), Decorator(..)) as D
+import Report.Decorator (Key(..), Decorator(..), encodeKey) as D
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), PTValueTag(..), _vtagTo) as P
 import Report.Decorators.Tabular.TabularValue as TV
 
 import Data.YAML.Foreign.Encode (YValue, class ToYAML, toYAML, printYAML, object)
@@ -132,7 +132,7 @@ toSmos inclRule =
         itemLogbook :: ItemRec -> Array YValue
         itemLogbook itemRec =
             case Array.find (\{ tkey } -> tkey == "logbook") itemRec.tabulars of
-                Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (LevelsP { levels }))) } ->
+                Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LevelsP { levels }))) } ->
                     logbookEntryYV <$> levels
                 _ -> []
 
@@ -151,24 +151,30 @@ toSmos inclRule =
         itemStateHistory :: ItemRec -> Array YValue
         itemStateHistory itemRec =
             let fromTabular = case Array.find (\{ tkey } -> tkey == "state-history") itemRec.tabulars of
-                    Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (LevelsP { levels }))) }
+                    Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LevelsP { levels }))) }
                         | not (Array.null levels) -> stateEntryYV <$> levels
                     _ -> []
             in if not (Array.null fromTabular) then fromTabular
                else
-                   let mbTask     = findDecorator @D.Decorator itemRec.decorators "TASK"
-                       mbEarnedAt = findDecorator @D.Decorator itemRec.decorators "EARN"
+                   let mbTask     = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KTask -- "TASK"
+                       mbProg     = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey $ D.KProgress $ P._vtagTo P.PTToComplete
+                       mbEarnedAt = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KEarnedAt -- "EARN"
                        timeStr = case mbEarnedAt of
                            Just (D.SEarnedAt sdate) -> smosTime sdate
                            _                        -> "1970-01-01 00:00:00.000"
-                   in case mbTask of
-                       Just (D.PTask taskP) ->
+                       mbTaskP = case mbTask of
+                           Just (D.PTask t) -> Just t
+                           _ -> case mbProg of
+                               Just (D.SProgress (P.ToComplete { done })) -> Just $ if done then TDone else TTodo
+                               _ -> Nothing
+                   in case mbTaskP of
+                       Just taskP ->
                            [ object
                                [ Tuple "state" (toYAML $ taskToSmosState taskP)
                                , Tuple "time"  (toYAML timeStr)
                                ]
                            ]
-                       _ -> []
+                       Nothing -> []
 
         stateEntryYV :: { proc :: TaskP, date :: Maybe CT.SDateRec | _ } -> YValue
         stateEntryYV { proc, date } =
