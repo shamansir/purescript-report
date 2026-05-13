@@ -387,16 +387,19 @@ component cfg =
     updateProcessedReport :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item
     updateProcessedReport s = updateReports s.sourceReport s
 
+    reportAreaRefLabel = H.RefLabel "report-area" :: H.RefLabel
+
     render :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) () m
     render state =
         HH.div
             [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;"
-            , HP.tabIndex 1
-            , HE.onKeyDown TryNavigateWithKeyboard
             ]
             [ HH.div
-                [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;"
+                [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;outline:none;"
                 -- , HE.onClick $ const ClearNavigation
+                , HE.onKeyDown TryNavigateWithKeyboard
+                , HP.ref reportAreaRefLabel
+                , HP.tabIndex 1
                 ]
                 $
                 ( Tuple.uncurry
@@ -737,11 +740,17 @@ component cfg =
     clearCurrentActions = _ { navigatedTo = Navigation.clear }
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
 
-    focusOnCurrentEditInput :: forall s a sl o. H.HalogenM s a o sl m Unit
-    focusOnCurrentEditInput = do
-        mElement <- H.getHTMLElementRef $ EI.refLabelForEdit
+    focusOn :: forall s a sl o. H.RefLabel -> H.HalogenM s a o sl m Unit
+    focusOn refLabel = do
+        mElement <- H.getHTMLElementRef refLabel
         for_ mElement \element -> do
             H.liftEffect $ HTMLEvent.focus element
+
+    focusOnReportArea :: forall s a sl o. H.HalogenM s a o sl m Unit
+    focusOnReportArea = focusOn reportAreaRefLabel
+
+    focusOnCurrentEditInput :: forall s a sl o. H.HalogenM s a o sl m Unit
+    focusOnCurrentEditInput = focusOn EI.refLabelForEdit
 
     nextNavigation :: Location subj_id -> NavigatedTo subj_id
     nextNavigation = case _ of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
@@ -821,6 +830,8 @@ component cfg =
                     (HTMLDocument.toEventTarget document)
                     (map TryGoingIntoEditWithKeyboard <<< KE.fromEvent)
 
+            focusOnReportArea
+
             pure unit
         SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] } *>  H.modify_ updateProcessedReport *> updateUrl
         AddSubjectToSelection subjId -> H.modify_ (\state -> state { subjects = Array.snoc state.subjects subjId }) *> H.modify_ updateProcessedReport *> updateUrl
@@ -869,18 +880,21 @@ component cfg =
                 navigateDown = navigateDir Modify.Down
                 navigateLeft = navigateDir Modify.Left
                 navigateRight = navigateDir Modify.Right
+                keyStr = {- Debug.spy "key" $ -} KE.key kevt
+                codeStr = {- Debug.spy "code" $ -} KE.code kevt
+                peformNavigation s =
+                    (not $ Navigation.isEditing s.navigatedTo)
+                    && (keyStr == "ArrowUp" || keyStr == "ArrowDown" || keyStr == "ArrowLeft" || keyStr == "ArrowRight")
                 navigateIfNotEditing s =
-                    if Navigation.isEditing s.navigatedTo then s else
-                    let
-                        keyStr = {- Debug.spy "key" $ -} KE.key kevt
-                        codeStr = {- Debug.spy "code" $ -} KE.code kevt
-                    in case keyStr of
-                        "ArrowUp" -> navigateUp s
-                        "ArrowDown" -> navigateDown s
-                        "ArrowLeft" -> navigateLeft s
-                        "ArrowRight" -> navigateRight s
-                        _ -> s
-            in {- stopKEPropagation kevt <> -} H.modify_ navigateIfNotEditing
+                    if peformNavigation s then
+                        case keyStr of
+                            "ArrowUp" -> navigateUp s
+                            "ArrowDown" -> navigateDown s
+                            "ArrowLeft" -> navigateLeft s
+                            "ArrowRight" -> navigateRight s
+                            _ -> s
+                    else s
+            in H.modify_ navigateIfNotEditing {- <> (H.get >>= \s -> when (peformNavigation s) $ stopKEPropagation kevt) -}
 
 
         TryGoingIntoEditWithKeyboard kevt | KE.key kevt == "e" -> do
@@ -971,7 +985,7 @@ component cfg =
                                     }
 
         StartEditing mevt -> stopMEPropagation mevt -- <> H.modify_ _ { editingValue = true }
-        CancelEditing -> H.modify_ clearEditing
+        CancelEditing -> H.modify_ clearEditing <> focusOnReportArea
         ToggleReadOnlyMode -> do
             H.modify_ clearEditing
             s <- H.get
