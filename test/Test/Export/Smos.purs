@@ -38,6 +38,8 @@ import Report.Impl.Subject (Subject(..)) as Impl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Item (Item(..)) as Impl
 
+import Test.Export.Org as OrgTest
+
 
 simpleSmosSamplePath = "test/games-samples/simple.smos" :: String
 
@@ -326,6 +328,48 @@ spec =
                         String.contains (String.Pattern "header: Stats") smosStr `A.shouldEqual` true
                     )
                     commandResult
+
+            it "org→smos includes task state-history entries" do
+                let cmdToRun = Convert
+                        { from: CT.Org, to: CT.Smos }
+                        { input: FileInput OrgTest.simpleOrgSamplePath, output: NullOutput }
+                        defaultOptions []
+                commandResult <- liftEffect $ runCommand cmdToRun
+                either
+                    (\err -> A.fail $ "Failed: " <> printImportError err)
+                    (\(_ /\ smosStr) -> do
+                        String.contains (String.Pattern "state: DONE") smosStr `A.shouldEqual` true
+                        String.contains (String.Pattern "state: TODO") smosStr `A.shouldEqual` true
+                        String.contains (String.Pattern "state: STARTED") smosStr `A.shouldEqual` true
+                    )
+                    commandResult
+
+            it "org→smos includes logbook entries" do
+                let cmdToRun = Convert
+                        { from: CT.Org, to: CT.Smos }
+                        { input: FileInput OrgTest.simpleOrgSamplePath, output: NullOutput }
+                        defaultOptions []
+                commandResult <- liftEffect $ runCommand cmdToRun
+                either
+                    (\err -> A.fail $ "Failed: " <> printImportError err)
+                    (\(_ /\ smosStr) ->
+                        String.contains (String.Pattern "logbook:") smosStr `A.shouldEqual` true
+                    )
+                    commandResult
+
+            it "org→smos includes SCHEDULED timestamps" do
+                let cmdToRun = Convert
+                        { from: CT.Org, to: CT.Smos }
+                        { input: FileInput OrgTest.simpleOrgSamplePath, output: NullOutput }
+                        defaultOptions []
+                commandResult <- liftEffect $ runCommand cmdToRun
+                either
+                    (\err -> A.fail $ "Failed: " <> printImportError err)
+                    (\(_ /\ smosStr) ->
+                        String.contains (String.Pattern "SCHEDULED") smosStr `A.shouldEqual` true
+                    )
+                    commandResult
+
 
 
 -- Expected output after smos → smos round-trip.

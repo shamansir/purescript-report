@@ -228,7 +228,7 @@ taskToSmosState = case _ of
     TWait     -> "WAITING"
     TCanceled -> "CANCELLED"
     TNow      -> "NEXT"
-    TLater    -> "TODO"
+    TLater    -> "LATER"
 
 
 smosTime :: CT.SDate -> String

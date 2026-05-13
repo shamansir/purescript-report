@@ -243,10 +243,8 @@ findTimestamp key lines =
 extractDrawer :: String -> Array String -> Maybe (Array String)
 extractDrawer name lines =
     let openPattern = String.Pattern $ ":" <> String.toUpper name <> ":"
-    in case Array.findIndex (\l ->
-            String.contains openPattern (String.toUpper (String.trim l))) lines of
-        Nothing -> Nothing
-        Just startIdx ->
+    in Array.findIndex (String.contains openPattern <<< String.toUpper <<< String.trim) lines >>=
+        \startIdx ->
             let after = Array.drop (startIdx + 1) lines
             in case Array.findIndex (\l ->
                     String.contains (String.Pattern ":END:") (String.toUpper (String.trim l))) after of
@@ -277,9 +275,8 @@ parseClockLine line =
 
 extractBracket :: String -> String -> String -> Maybe String
 extractBracket open close s =
-    case String.indexOf (String.Pattern open) s of
-        Nothing       -> Nothing
-        Just startIdx ->
+    String.indexOf (String.Pattern open) s >>=
+        \startIdx ->
             let inner = String.drop (startIdx + 1) s
             in case String.indexOf (String.Pattern close) inner of
                 Nothing     -> Nothing
