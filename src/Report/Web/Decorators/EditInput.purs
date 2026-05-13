@@ -9,11 +9,15 @@ import Report.Core.Logic as CT
 import Report.Web.Helpers (H)
 import Report.Web.Decorators.Types (EditableValueEvents)
 
+import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
 import Web.UIEvent.KeyboardEvent as KE
+
+
+refLabelForEdit = H.RefLabel "editing-input" :: H.RefLabel
 
 
 mkValueEditInput :: forall a r w i. EditableValueEvents i r -> (CT.EncodedValue -> i) -> CT.ViewOrEdit a -> H w i
@@ -28,6 +32,7 @@ mkValueEditInput_ events customOnEdit (CT.EncodedValue encVal) =
     HH.input
         [ HP.type_ HP.InputText
         , HP.value encVal
+        , HP.ref refLabelForEdit
         , HE.onClick events.onStartEditing
         , HE.onValueChange (CT.EncodedValue >>> customOnEdit)
         , HE.onKeyUp (KE.code >>> -- Debug.spy "key up" >>>

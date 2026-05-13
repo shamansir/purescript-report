@@ -8,7 +8,7 @@ import Effect.Console as Console
 
 import Data.Array ((:))
 import Data.Array as Array
-import Data.Foldable (foldl)
+import Data.Foldable (foldl, for_)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int as Int
 import Data.Map as Map
@@ -73,13 +73,17 @@ import Report.Web.Tabular (renderSubjectTabularValues, renderItemTabularValues)
 import Web.Event.Event (stopPropagation) as Event
 import Web.Event.Event as E
 import Web.HTML (window) as Web
+import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history, document) as Window
 import Web.HTML.History (URL(..), DocumentTitle(..), state, pushState) as History
 import Web.HTML.Location (hash, setHash, search, setSearch) as Location
-import Web.HTML.Window (toEventTarget, innerWidth, innerHeight, location, history) as Window
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.HTMLElement as HTMLEvent
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent (toEvent, shiftKey, altKey, metaKey, ctrlKey) as ME
 import Web.UIEvent.KeyboardEvent (KeyboardEvent)
-import Web.UIEvent.KeyboardEvent (toEvent, code, key) as KE
+import Web.UIEvent.KeyboardEvent (toEvent, code, key, fromEvent) as KE
+import Web.UIEvent.KeyboardEvent.EventTypes as KET
+
 
 import Yoga.JSON (writePrettyJSON, class WriteForeign, class ReadForeign)
 
@@ -733,6 +737,12 @@ component cfg =
     clearCurrentActions = _ { navigatedTo = Navigation.clear }
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
 
+    focusOnCurrentEditInput :: forall s a sl o. H.HalogenM s a o sl m Unit
+    focusOnCurrentEditInput = do
+        mElement <- H.getHTMLElementRef $ EI.refLabelForEdit
+        for_ mElement \element -> do
+            H.liftEffect $ HTMLEvent.focus element
+
     nextNavigation :: Location subj_id -> NavigatedTo subj_id
     nextNavigation = case _ of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
         AtSubj subjId ->
@@ -782,6 +792,7 @@ component cfg =
     handleAction = case _ of
         Initialize -> do
             window <- H.liftEffect $ Web.window
+            document <- H.liftEffect $ Window.document window
 
             handleAction HandleUrlChange
             -- handleAction HandleResize
@@ -804,6 +815,12 @@ component cfg =
                     (Window.toEventTarget window)
                     (E.target >=> (const $ Just HandleUrlChange))
 
+            H.subscribe' \sid ->
+                eventListener
+                    KET.keyup
+                    (HTMLDocument.toEventTarget document)
+                    (map TryGoingIntoEditWithKeyboard <<< KE.fromEvent)
+
             pure unit
         SelectSubject subjId -> H.modify_ _ { subjects = [ subjId ] } *>  H.modify_ updateProcessedReport *> updateUrl
         AddSubjectToSelection subjId -> H.modify_ (\state -> state { subjects = Array.snoc state.subjects subjId }) *> H.modify_ updateProcessedReport *> updateUrl
@@ -823,16 +840,21 @@ component cfg =
                 nextNavigation_ = nextNavigation location
                 editNavigation_ = editNavigation location
                 processedReport s = processingCount s > 0
+                justNavigating s = (not $ processedReport s) && (s.flags.readOnlyMode || s.navigatedTo /= nextNavigation_)
                 navigateOrEdit s =
                     if Navigation.isEditing s.navigatedTo then s else
                     -- this event is called on every click on any editable item,
                     -- so by checking `s.navigatedTo /= nextNavigation_` we ensure we did change location,
                     -- but if it stayed the same (and we're not in `readOnlyMode`),
                     -- it is a second mouse click on the same editable item, so we can toggle into editing
-                    if (not $ processedReport s) && (s.flags.readOnlyMode || s.navigatedTo /= nextNavigation_)
+                    if justNavigating s
                         then s { navigatedTo = nextNavigation_ }
                         else s { navigatedTo = editNavigation_ s }
-            in stopMEPropagation mevt <> H.modify_ navigateOrEdit
+            in stopMEPropagation mevt <> do
+                s <- H.get
+                let editingValue = not $ justNavigating s
+                H.modify_ navigateOrEdit
+                when editingValue focusOnCurrentEditInput
 
         TryNavigateWithKeyboard kevt ->
             let
@@ -861,13 +883,15 @@ component cfg =
             in {- stopKEPropagation kevt <> -} H.modify_ navigateIfNotEditing
 
 
-        TryGoingIntoEditWithKeyboard kevt -> do
+        TryGoingIntoEditWithKeyboard kevt | KE.key kevt == "e" -> do
             H.modify_ \s ->
-                if Navigation.isEditing s.navigatedTo then s else
-                    if s.flags.readOnlyMode then s
-                    else
-                        let location = Navigation.toLocation s.navigatedTo in
-                        s { navigatedTo = editNavigation location s }
+                if s.flags.readOnlyMode || Navigation.isEditing s.navigatedTo then s
+                else
+                    let location = Navigation.toLocation s.navigatedTo in
+                    s { navigatedTo = editNavigation location s }
+            focusOnCurrentEditInput
+
+        TryGoingIntoEditWithKeyboard _    | otherwise -> pure unit
 
         ApplyEditAt location encval ->
             let
