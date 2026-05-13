@@ -495,8 +495,8 @@ component cfg =
                 HH.div
                     [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
                         -- <> if state.flags.subjectNavigationExpanded then "line-height: 1.6em;" else "line-height : 1.1em;"
-                    , HE.onMouseEnter $ const ExpandSubjectNavigation
-                    , HE.onMouseLeave $ const CollapseSubjectNavigation
+                    , HE.onMouseEnter $ const $ if not state.flags.subjectNavigationPinned then ExpandSubjectNavigation   else NoOp
+                    , HE.onMouseLeave $ const $ if not state.flags.subjectNavigationPinned then CollapseSubjectNavigation else NoOp
                     ]
                     $ subjNavigationItem <$> state.subjects
 
@@ -509,7 +509,7 @@ component cfg =
                     [ HH.a
                         [ HP.href $ "#subject-" <> uniqueId, HP.style "color: darkgoldenrod; text-decoration: none;"
                         ]
-                        [ if state.flags.subjectNavigationExpanded
+                        [ if state.flags.subjectNavigationExpanded || state.flags.subjectNavigationPinned
                             then HH.span
                                 [ HP.style "color: black; margin-right: 5px; font-size: 0.7em; position: relative; top: -1px; margin-left: 4px; " ]
                                 [ HH.text subjName ]
