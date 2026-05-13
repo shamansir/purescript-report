@@ -144,9 +144,10 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | ToggleItemsTagsInOptions
     | NextSort
     | ClearNavigation
-    | NavigateTo MouseEvent (Location subj_id)
+    | NavigateByMouseClickTo MouseEvent (Location subj_id)
     | TryNavigateWithKeyboard KeyboardEvent
-    | EditAt (Location subj_id) CT.EncodedValue
+    | TryGoingIntoEditWithKeyboard KeyboardEvent
+    | ApplyEditAt (Location subj_id) CT.EncodedValue
     | StartEditing MouseEvent
     | CancelEditing
     | ToggleReadOnlyMode
@@ -470,6 +471,7 @@ component cfg =
                         , { label : "DHALL", onClick : const $ if exportSelected Dhall then DisableExport else EnableExport Dhall, enabled : exportSelected Dhall }
                         , { label : "ORG",   onClick : const $ if exportSelected Org   then DisableExport else EnableExport Org,   enabled : exportSelected Org   }
                         , { label : "REP",   onClick : const $ if exportSelected Rep   then DisableExport else EnableExport Rep,   enabled : exportSelected Rep   }
+                        , { label : "SMOS",  onClick : const $ if exportSelected Rep   then DisableExport else EnableExport Smos,  enabled : exportSelected Smos  }
                         , { label : "TEXT",  onClick : const $ if exportSelected Text  then DisableExport else EnableExport Text,  enabled : exportSelected Text  }
                         ]
 
@@ -731,6 +733,49 @@ component cfg =
     clearCurrentActions = _ { navigatedTo = Navigation.clear }
     clearEditing s = s { navigatedTo = Navigation.clearEditing s.navigatedTo }
 
+    nextNavigation :: Location subj_id -> NavigatedTo subj_id
+    nextNavigation = case _ of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
+        AtSubj subjId ->
+                                    Navigation.toSubj subjId
+        AtGroup subjId groupPath ->
+                                    Navigation.toGroup subjId groupPath
+        AtItem subjId groupPath itemIdx ->
+                                    Navigation.toItem subjId groupPath itemIdx
+        AtDecorator subjId groupPath itemIdx decoratorKey ->
+                                    Navigation.toDecorator subjId groupPath itemIdx decoratorKey
+        AtTag subjId groupPath itemIdx tagIdx ->
+                                    Navigation.toTag subjId groupPath itemIdx tagIdx
+        AtTabular subjId groupPath itemIdx tabularIdx ->
+                                    Navigation.toTabular subjId groupPath itemIdx tabularIdx
+        Nowhere ->
+                                    Navigation.clear
+
+    editNavigation :: Location subj_id -> ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> NavigatedTo subj_id
+    editNavigation location s = case location of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
+        AtSubj subjId ->            Navigation.toSubj subjId
+        AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
+                                    $ maybe (CT.EncodedValue "") (R.g_title >>> CT.EncodedValue)
+                                    $ R.findGroup subjId groupPath s.sourceReport
+        AtItem subjId groupPath itemIdx ->
+                                    Navigation.editItemName subjId groupPath itemIdx
+                                    $ maybe (CT.EncodedValue "") (R.i_title >>> CT.EncodedValue)
+                                    $ R.findItem subjId groupPath itemIdx s.sourceReport
+        AtDecorator subjId groupPath itemIdx decoratorKey ->
+                                    Navigation.editDecorator subjId groupPath itemIdx decoratorKey
+                                    $ maybe (CT.EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
+                                    $ Decorator.get decoratorKey
+                                    =<< R.i_decorators
+                                    <$> R.findItem subjId groupPath itemIdx s.sourceReport
+        AtTag subjId groupPath itemIdx tagIdx ->
+                                    Navigation.editTag subjId groupPath itemIdx tagIdx
+                                    $ maybe (CT.EncodedValue "") (R.i_tags @item_tag >>> flip Array.index tagIdx >>> map (R.tagContent >>> Chain.toString >>> CT.EncodedValue) >>> fromMaybe (CT.EncodedValue ""))
+                                    $ R.findItem subjId groupPath itemIdx s.sourceReport
+        AtTabular subjId groupPath itemIdx tabularIdx ->
+                                    Navigation.editTag subjId groupPath itemIdx tabularIdx
+                                    $ maybe (CT.EncodedValue "") (const $ CT.EncodedValue "") -- FIXME
+                                    $ R.findItem subjId groupPath itemIdx s.sourceReport
+        Nowhere -> s.navigatedTo
+
     handleAction
         :: ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item
         -> ReportComponentM subj_id subj_tag item_tag_kind item_tag subj group item output m
@@ -773,53 +818,20 @@ component cfg =
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ clearCurrentActions
 
-        NavigateTo mevt location ->
+        NavigateByMouseClickTo mevt location ->
             let
-                nextNavigation   = case location of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
-                    AtSubj subjId ->
-                                                Navigation.toSubj subjId
-                    AtGroup subjId groupPath ->
-                                                Navigation.toGroup subjId groupPath
-                    AtItem subjId groupPath itemIdx ->
-                                                Navigation.toItem subjId groupPath itemIdx
-                    AtDecorator subjId groupPath itemIdx decoratorKey ->
-                                                Navigation.toDecorator subjId groupPath itemIdx decoratorKey
-                    AtTag subjId groupPath itemIdx tagIdx ->
-                                                Navigation.toTag subjId groupPath itemIdx tagIdx
-                    AtTabular subjId groupPath itemIdx tabularIdx ->
-                                                Navigation.toTabular subjId groupPath itemIdx tabularIdx
-                    Nowhere ->
-                                                Navigation.clear
-                editNavigation s = case location of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
-                    AtSubj subjId ->            Navigation.toSubj subjId
-                    AtGroup subjId groupPath -> Navigation.editGroupName subjId groupPath
-                                                $ maybe (CT.EncodedValue "") (R.g_title >>> CT.EncodedValue)
-                                                $ R.findGroup subjId groupPath s.sourceReport
-                    AtItem subjId groupPath itemIdx ->
-                                                Navigation.editItemName subjId groupPath itemIdx
-                                                $ maybe (CT.EncodedValue "") (R.i_title >>> CT.EncodedValue)
-                                                $ R.findItem subjId groupPath itemIdx s.sourceReport
-                    AtDecorator subjId groupPath itemIdx decoratorKey ->
-                                                Navigation.editDecorator subjId groupPath itemIdx decoratorKey
-                                                $ maybe (CT.EncodedValue "") (Decorator.encodeDecorator >>> Tuple.snd)
-                                                $ Decorator.get decoratorKey
-                                                =<< R.i_decorators
-                                                <$> R.findItem subjId groupPath itemIdx s.sourceReport
-                    AtTag subjId groupPath itemIdx tagIdx ->
-                                                Navigation.editTag subjId groupPath itemIdx tagIdx
-                                                $ maybe (CT.EncodedValue "") (R.i_tags @item_tag >>> flip Array.index tagIdx >>> map (R.tagContent >>> Chain.toString >>> CT.EncodedValue) >>> fromMaybe (CT.EncodedValue ""))
-                                                $ R.findItem subjId groupPath itemIdx s.sourceReport
-                    AtTabular subjId groupPath itemIdx tabularIdx ->
-                                                Navigation.editTag subjId groupPath itemIdx tabularIdx
-                                                $ maybe (CT.EncodedValue "") (const $ CT.EncodedValue "") -- FIXME
-                                                $ R.findItem subjId groupPath itemIdx s.sourceReport
-                    Nowhere -> s.navigatedTo
+                nextNavigation_ = nextNavigation location
+                editNavigation_ = editNavigation location
                 processedReport s = processingCount s > 0
                 navigateOrEdit s =
                     if Navigation.isEditing s.navigatedTo then s else
-                    if (not $ processedReport s) && (s.flags.readOnlyMode || s.navigatedTo /= nextNavigation)
-                        then s { navigatedTo = nextNavigation }
-                        else s { navigatedTo = editNavigation s }
+                    -- this event is called on every click on any editable item,
+                    -- so by checking `s.navigatedTo /= nextNavigation_` we ensure we did change location,
+                    -- but if it stayed the same (and we're not in `readOnlyMode`),
+                    -- it is a second mouse click on the same editable item, so we can toggle into editing
+                    if (not $ processedReport s) && (s.flags.readOnlyMode || s.navigatedTo /= nextNavigation_)
+                        then s { navigatedTo = nextNavigation_ }
+                        else s { navigatedTo = editNavigation_ s }
             in stopMEPropagation mevt <> H.modify_ navigateOrEdit
 
         TryNavigateWithKeyboard kevt ->
@@ -848,7 +860,16 @@ component cfg =
                         _ -> s
             in {- stopKEPropagation kevt <> -} H.modify_ navigateIfNotEditing
 
-        EditAt location encval ->
+
+        TryGoingIntoEditWithKeyboard kevt -> do
+            H.modify_ \s ->
+                if Navigation.isEditing s.navigatedTo then s else
+                    if s.flags.readOnlyMode then s
+                    else
+                        let location = Navigation.toLocation s.navigatedTo in
+                        s { navigatedTo = editNavigation location s }
+
+        ApplyEditAt location encval ->
             let
                 nextReport :: R.Report subj group item -> R.Report subj group item
                 nextReport curReport
@@ -1086,7 +1107,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                         <> (show $ marginFor groupPath) <> "px;"
                         -- <> (if isNavigatedTo then " background-color: #2e9eff;" else "")
                     , HP.id $ groupPathId groupPath
-                    , HE.onClick $ \mevt -> NavigateTo mevt $ AtGroup subjId groupPath
+                    , HE.onClick $ \mevt -> NavigateByMouseClickTo mevt $ AtGroup subjId groupPath
                     ]
                     [ HH.div [ HP.style "display: flex; flex-direction: row;" ]
                         [ HH.div [ {- HP.style "display: flex; flex-direction: column;" -} ]
@@ -1136,9 +1157,9 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     -- itemTitleSelectedStyle = "background-color: #fff8ff; border-radius: 3px;"
                     itemTitleSelectedStyle = "background-color: #fbd6fb; border-radius: 3px;"
                     itemTitleUsualStyle = ""
-                    makeItemNameEditEvt = EditAt $ AtItem subjId groupPath itemIdx
-                    makeDecoratorClickEvt decoratorKey mevt = NavigateTo mevt $ AtDecorator subjId groupPath itemIdx decoratorKey
-                    makeDecoratorEditEvt decoratorKey = EditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
+                    makeItemNameEditEvt = ApplyEditAt $ AtItem subjId groupPath itemIdx
+                    makeDecoratorClickEvt decoratorKey mevt = NavigateByMouseClickTo mevt $ AtDecorator subjId groupPath itemIdx decoratorKey
+                    makeDecoratorEditEvt decoratorKey = ApplyEditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
                     -- itemSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
                     -- itemUsualStyle = "border: 1px dashed transparent;"
                     itemDecorators = R.i_decorators item
@@ -1203,7 +1224,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                 in HH.div
                     [ HP.style
                         $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
-                    , HE.onClick $ \mevt -> NavigateTo mevt $ AtItem subjId groupPath itemIdx
+                    , HE.onClick $ \mevt -> NavigateByMouseClickTo mevt $ AtItem subjId groupPath itemIdx
                     ]
                     $ HH.span_ (Array.intersperse qspacerSpan inlinePrefixes)
                     : case itemTitle of

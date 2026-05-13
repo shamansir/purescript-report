@@ -161,17 +161,22 @@ fromDhall jsonStr =
                 )
         dhallConvertItem :: DhallItemRec -> item
         dhallConvertItem itemRec =
-            convertItem @subj_id @subj_tag @item_tag @subj @group @item @x
+            let mbProgress = itemRec.value <#> Progress.rawToProgressJson >>= Progress.fromJson
+                mbTask     = mbProgress >>= case _ of
+                    Task taskP -> Just taskP
+                    _          -> Nothing
+            in convertItem @subj_id @subj_tag @item_tag @subj @group @item @x
                 (Impl.Item
                     { title : fromMaybe (fromMaybe "???" itemRec.title) itemRec.key
                     , decorators :
                         Decorators.fromArray
                             $ Array.catMaybes
                             $ Array.cons
-                                (itemRec.value <#> Progress.rawToProgressJson >>= Progress.fromJson <#> Dec.SProgress <#> (\p -> Dec.keyOf p /\ p))
-                                [ itemRec.detailed <#>                 \d -> Dec.KDescription /\ Dec.SDescription d
-                                , itemRec.selfRef  <#> pathFromRef <#> \p -> Dec.KReference /\ Dec.SReference p
-                                , itemRec.date     <#>                 \d -> Dec.KEarnedAt  /\ Dec.SEarnedAt (CT.dateFromRec d)
+                                ( mbProgress       <#> Dec.SProgress <#> \p -> Dec.keyOf p /\ p )
+                                [ mbTask           <#>                   \t -> Dec.KTask        /\ Dec.PTask t -- FIXME: could duplicate task since takes from decorator
+                                , itemRec.detailed <#>                   \d -> Dec.KDescription /\ Dec.SDescription d
+                                , itemRec.selfRef  <#> pathFromRef   <#> \p -> Dec.KReference   /\ Dec.SReference p
+                                , itemRec.date     <#>                   \d -> Dec.KEarnedAt    /\ Dec.SEarnedAt (CT.dateFromRec d)
                                 ]
                     , tabular : Tabular.empty -- FIXME: items contains no tabular. TV.progress <$> loadTabular itemRec.tabular
                     , tags : Tags $
