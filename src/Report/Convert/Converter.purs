@@ -27,7 +27,7 @@ import Report.Convert.Generic (RR, IncludeRule(..))
 import Report.Convert.Dhall (toDhall, fromDhall) as Report
 import Report.Convert.Json (toJson, fromJson) as Report
 import Report.Convert.Rep (toRep, fromRep) as Report
-import Report.Convert.Org (toOrg) as Report
+import Report.Convert.Org (toOrg, fromOrg) as Report
 import Report.Convert.Text (toText) as Report
 import Report.Convert.Smos (toSmos, fromSmos) as Report
 
@@ -129,6 +129,7 @@ readReport format source =
         Json  -> Report.fromJson  @RR @SubjectId @RawTag @RawTag source
         Dhall -> Report.fromDhall @RR @SubjectId @RawTag @RawTag source
         Smos  -> Report.fromSmos  @RR @SubjectId @RawTag @RawTag source
+        Org   -> Report.fromOrg   @RR @SubjectId @RawTag @RawTag source
         _ -> Left $ UnsupportedFormat format
 
 

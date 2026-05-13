@@ -21,6 +21,7 @@ import Test.Export.TextDodo as TextDodo
 import Test.Export.RepDodo as RepDodo
 import Test.Export.Converter as Converter
 import Test.Export.Smos as Smos
+import Test.Export.Org as Org
 
 
 main :: Effect Unit
@@ -38,4 +39,5 @@ main = do
         ParseTree.spec
         Converter.spec
         Smos.spec
+        Org.spec
         -- MusicApi.spec

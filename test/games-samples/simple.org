@@ -1,0 +1,13 @@
+* Work
+** DONE Fix login bug                                          :bug:
+   This is a known login issue
+   :LOGBOOK:
+   CLOCK: [2025-01-14 Tue 09:00]--[2025-01-14 Tue 11:00] =>  2:00
+   CLOCK: [2025-01-15 Wed 10:00]--[2025-01-15 Wed 12:30] =>  2:30
+   :END:
+** TODO Write tests
+   SCHEDULED: <2025-01-20>
+** Backlog
+*** TODO Refactor auth module
+* Personal
+** STARTED Learn PureScript                                   :hobby:
