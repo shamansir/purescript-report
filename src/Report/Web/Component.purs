@@ -150,7 +150,7 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | ClearNavigation
     | NavigateByMouseClickTo MouseEvent (Location subj_id)
     | TryNavigateWithKeyboard KeyboardEvent
-    | TryGoingIntoEditWithKeyboard KeyboardEvent
+    | HandleDocumentKey KeyboardEvent
     | ApplyEditAt (Location subj_id) CT.EncodedValue
     | StartEditing MouseEvent
     | CancelEditing
@@ -752,6 +752,12 @@ component cfg =
     focusOnCurrentEditInput :: forall s a sl o. H.HalogenM s a o sl m Unit
     focusOnCurrentEditInput = focusOn EI.refLabelForEdit
 
+    handleActionIfNotEditing :: _
+    handleActionIfNotEditing action = do
+        H.get >>= \s ->
+            when (not $ Navigation.isEditing s.navigatedTo) $
+                handleAction action
+
     nextNavigation :: Location subj_id -> NavigatedTo subj_id
     nextNavigation = case _ of -- FIXME: now we have location stored in the data type, we don't need any proxy methods to case-switch it
         AtSubj subjId ->
@@ -828,7 +834,7 @@ component cfg =
                 eventListener
                     KET.keyup
                     (HTMLDocument.toEventTarget document)
-                    (map TryGoingIntoEditWithKeyboard <<< KE.fromEvent)
+                    (map HandleDocumentKey <<< KE.fromEvent)
 
             focusOnReportArea
 
@@ -896,8 +902,7 @@ component cfg =
                     else s
             in H.modify_ navigateIfNotEditing {- <> (H.get >>= \s -> when (peformNavigation s) $ stopKEPropagation kevt) -}
 
-
-        TryGoingIntoEditWithKeyboard kevt | KE.key kevt == "e" -> do
+        HandleDocumentKey kevt | KE.key kevt == "e" -> do
             H.modify_ \s ->
                 if s.flags.readOnlyMode || Navigation.isEditing s.navigatedTo then s
                 else
@@ -905,7 +910,31 @@ component cfg =
                     s { navigatedTo = editNavigation location s }
             focusOnCurrentEditInput
 
-        TryGoingIntoEditWithKeyboard _    | otherwise -> pure unit
+        HandleDocumentKey kevt | KE.key kevt == "r" ->
+            handleActionIfNotEditing ToggleReadOnlyMode
+
+        HandleDocumentKey kevt | KE.key kevt == "d" ->
+            handleActionIfNotEditing ToggleDebugMode
+
+        HandleDocumentKey kevt | KE.key kevt == "p" ->
+            handleActionIfNotEditing ToggleProgressPlates
+
+        HandleDocumentKey kevt | KE.key kevt == "x" ->
+            handleActionIfNotEditing $ EnableExport Rep
+
+        HandleDocumentKey kevt | KE.key kevt == "f" ->
+            handleActionIfNotEditing $ EnableExport Text
+
+        HandleDocumentKey kevt | KE.key kevt == "q" ->
+            handleActionIfNotEditing DisableExport
+
+        HandleDocumentKey kevt | KE.key kevt == "s" ->
+            handleActionIfNotEditing ToggleSubjectNavigationPinned
+
+        HandleDocumentKey kevt | KE.key kevt == "g" ->
+            handleActionIfNotEditing ToggleGroupNavigationPinned
+
+        HandleDocumentKey _    | otherwise -> pure unit
 
         ApplyEditAt location encval ->
             let
