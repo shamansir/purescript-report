@@ -156,17 +156,24 @@ toSmos inclRule =
                     _ -> []
             in if not (Array.null fromTabular) then fromTabular
                else
-                   let mbTask     = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KTask -- "TASK"
-                       mbProg     = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey $ D.KProgress $ P._vtagTo P.PTToComplete
-                       mbEarnedAt = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KEarnedAt -- "EARN"
+                   let mbTask     = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KTask
+                       mbEarnedAt = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KEarnedAt
                        timeStr = case mbEarnedAt of
                            Just (D.SEarnedAt sdate) -> smosTime sdate
                            _                        -> "1970-01-01 00:00:00.000"
+                       mbProgTaskP = Array.findMap
+                           (\ptag ->
+                               findDecorator @D.Decorator itemRec.decorators (D.encodeKey (D.KProgress (P._vtagTo ptag)))
+                                   >>= case _ of
+                                       D.SProgress prog -> progressToSmosState prog
+                                       _                -> Nothing
+                           )
+                           [ P.PTTask, P.PTToComplete, P.PTToGetI, P.PTToGetN
+                           , P.PTPercentI, P.PTPercentN, P.PTPercentSign
+                           ]
                        mbTaskP = case mbTask of
                            Just (D.PTask t) -> Just t
-                           _ -> case mbProg of
-                               Just (D.SProgress (P.ToComplete { done })) -> Just $ if done then TDone else TTodo
-                               _ -> Nothing
+                           _                -> mbProgTaskP
                    in case mbTaskP of
                        Just taskP ->
                            [ object
@@ -235,6 +242,18 @@ taskToSmosState = case _ of
     TCanceled -> "CANCELLED"
     TNow      -> "NEXT"
     TLater    -> "LATER"
+
+
+progressToSmosState :: P.Progress -> Maybe TaskP
+progressToSmosState = case _ of
+    P.Task taskP               -> Just taskP
+    P.ToComplete { done }      -> Just $ if done then TDone else TTodo
+    P.ToGetI { got, total }    -> Just $ if got >= total && total > 0   then TDone else if got > 0   then TDoing else TTodo
+    P.ToGetN { got, total }    -> Just $ if got >= total && total > 0.0 then TDone else if got > 0.0 then TDoing else TTodo
+    P.PercentI n               -> Just $ if n >= 100                    then TDone else if n > 0     then TDoing else TTodo
+    P.PercentN n               -> Just $ if n >= 1.0                    then TDone else if n > 0.0   then TDoing else TTodo
+    P.PercentSign { sign, pct } -> Just $ if sign >= 0 && pct >= 1.0   then TDone else if pct > 0.0 then TDoing else TTodo
+    _                          -> Nothing
 
 
 smosTime :: CT.SDate -> String
