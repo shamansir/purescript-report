@@ -64,7 +64,9 @@ last :: GroupPath -> Maybe PathSegment
 last = unwrap >>> Array.last
 
 
-startsWith :: GroupPath -> GroupPath -> Boolean
+{-| Starts with the given path or equals to it. First argument is a starting path to try for and second one is the one to test if it starts with the first one
+-}
+startsWith :: GroupPath -> GroupPath -> Boolean -- TODO use newtypes to help distinguishing between arguments
 startsWith possibleStart sample =
     (howDeep possibleStart > 0) &&
     (howDeep sample > 0) &&
@@ -80,8 +82,10 @@ startsWith possibleStart sample =
     )
 
 
+{-| Starts with the given path, but not equals to it. First argument is a starting path to try for and second one is the one to test if it starts with the first one
+-}
 startsWithNotEq :: GroupPath -> GroupPath -> Boolean
-startsWithNotEq possibleStart sample =
+startsWithNotEq possibleStart sample = -- TODO use newtypes to help distinguishing between arguments
     (howDeep possibleStart > 0) &&
     (howDeep sample > 0) &&
     (howDeep possibleStart < howDeep sample) &&

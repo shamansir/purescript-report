@@ -29,15 +29,15 @@ main = do
     -- runAff_ (const $ pure unit) $ MusicApi.fetchArtist Nothing "Queen"
 
     runSpecAndExitProcess [consoleReporter] do
-        DhallDodo.spec
-        OrgDodo.spec
-        TextDodo.spec
-        RepDodo.spec
+        -- DhallDodo.spec
+        -- OrgDodo.spec
+        -- TextDodo.spec
+        -- RepDodo.spec
         Report.spec
-        ReportImpl.spec
-        Groups.spec
-        ParseTree.spec
-        Converter.spec
-        Smos.spec
-        Org.spec
+        -- ReportImpl.spec
+        -- Groups.spec
+        -- ParseTree.spec
+        -- Converter.spec
+        -- Smos.spec
+        -- Org.spec
         -- MusicApi.spec

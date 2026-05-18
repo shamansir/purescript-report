@@ -8,7 +8,7 @@ module Report.Builder
     , build, buildG
     , toBuilder, toBuilderC, toBuilderG
     , unfold, unfoldC, unfoldAll
-    , toTree, toTree_
+    , toTree, toTree_, toPlainTree, toPlainTree_
     , nodeToString
     {- Subjects -}
     , mapSubjects, mapSubjectsIndexed
@@ -43,10 +43,11 @@ import Prelude
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
+import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (head, concat, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe) as Array
+import Data.Array (head, concat, cons, snoc, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, fromArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
@@ -184,9 +185,22 @@ unfoldC = unwrap >>> map \(Subject subj groups) -> subj /\ (unfoldGroup <$> grou
         unfoldGroup (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
-toTree :: forall subj group item. Builder subj group item -> Tree (TreeNode subj group item)
+toTree :: forall subj group item. RC.IsGroup group => Builder subj group item -> Tree (TreeNode subj group item)
 toTree =
     toTree_
+        NRoot
+        (\subj groups -> Tree.node (NSubject subj) groups)
+        foldChain
+    where
+        foldChain :: Chain group -> Array item -> Tree (TreeNode subj group item)
+        foldChain groupC items =
+            Chain.current groupC #
+                \g -> Tree.node (NGroup g) $ Tree.leaf <$> NItem <$> items
+
+
+toPlainTree :: forall subj group item. Builder subj group item -> Tree (TreeNode subj group item)
+toPlainTree =
+    toPlainTree_
         NRoot
         (\subj groups -> Tree.node (NSubject subj) groups)
         foldChain
@@ -200,14 +214,75 @@ toTree =
                     Tree.node (NGroup g) $ pure $ foldChain restC subGoiArr
 
 
+newtype K_ group = K (GroupPath /\ Chain group)
+
+instance Eq (K_ group) where
+    eq (K (pathA /\ _)) (K (pathB /\ _)) = eq pathA pathB
+instance Ord (K_ group) where
+    compare (K (pathA /\ _)) (K (pathB /\ _)) = compare pathA pathB
+
+
 toTree_
+    :: forall subj group item c
+     . RC.IsGroup group
+    => c
+    -> (subj -> Array (Tree c) -> Tree c)
+    -> (Chain group -> Array item -> Tree c)
+    -> Builder subj group item
+    -> Tree c
+toTree_ root toSubjNode toGroupNode (Builder subjects) =
+    Tree.node root $ toSubjectTree <$> subjects
+    where
+        toSubjectTree :: Subject subj group item -> Tree c
+        toSubjectTree (Subject subj groupsArr) =
+            toSubjNode subj $ foldGroupChains groupsArr
+        foldGroupChains :: Array (Group group item) -> Array (Tree c)
+        foldGroupChains = foldl foldToMapF Map.empty >>> groupMapToTrees
+        foldToMapF :: Map (K_ group) (Array item) -> Group group item -> Map (K_ group) (Array item)
+        foldToMapF groupsMap = case _ of
+            Group groupC goiArr -> case groupC of
+                Chain.End g ->
+                    groupsMap
+                        # Map.alter (insertOrAppend $ unwrap <$> goiArr) (K $ RC.g_path g /\ groupC)
+                Chain.More g restC ->
+                    groupsMap
+                        # Map.alter (insertOrAppend []) (K $ RC.g_path g /\ groupC)
+                        # flip foldToMapF (Group restC goiArr)
+        insertOrAppend :: Array item -> Maybe (Array item) -> Maybe (Array item)
+        insertOrAppend items = case _ of
+            Just prevItems -> Just $ prevItems <> items
+            Nothing -> Just items
+        groupMapToTrees :: Map (K_ group) (Array item) -> Array (Tree c)
+        groupMapToTrees theMap = foldlWithIndex (flip $ foldToTreesF theMap Nothing) [] theMap
+        foldToTreesF :: Map (K_ group) (Array item) -> Maybe GroupPath -> Array (Tree c) -> K_ group -> Array item -> Array (Tree c)
+        foldToTreesF theMap mbGroupPath collected (K (curGroupPath /\ curGroupC)) items =
+            let
+                addCurrentAndCollectDeeper nextStartPath =
+                    let childTrees = foldlWithIndex (flip $ foldToTreesF theMap $ Just nextStartPath) [] theMap
+                        curTree    = toGroupNode curGroupC items
+                        fullTree   = curTree # Tree.break \val kids -> Tree.node val $ kids <> childTrees
+                    in Array.snoc collected fullTree
+            in case mbGroupPath of
+                Nothing ->
+                    if GP.howDeep curGroupPath == 1 then
+                        addCurrentAndCollectDeeper curGroupPath
+                    else
+                        collected
+                Just startPath ->
+                    if (GP.howDeep curGroupPath == GP.howDeep startPath + 1) && GP.startsWithNotEq startPath curGroupPath then
+                        addCurrentAndCollectDeeper curGroupPath
+                    else
+                        collected
+
+
+toPlainTree_
     :: forall subj group item c
      . c
     -> (subj -> Array (Tree c) -> Tree c)
     -> (Chain group -> Array item -> Tree c)
     -> Builder subj group item
     -> Tree c
-toTree_ root toSubjNode toGroupNode (Builder subjects) =
+toPlainTree_ root toSubjNode toGroupNode (Builder subjects) =
     Tree.node root $ toSubjectTree <$> subjects
     where
         toSubjectTree :: Subject subj group item -> Tree c

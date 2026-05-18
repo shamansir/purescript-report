@@ -476,7 +476,7 @@ spec = do
 
 
   describe "converting to tree" $ do
-    pending' "properly converts storage to tree (no sorting)" $ do
+    it "properly converts storage to tree (no sorting)" $ do
         (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReportA)
         -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
         `U.shouldEqual`
@@ -520,7 +520,7 @@ spec = do
 ┊┄┄┄┄I: "group-2-1-1-item-1"
 ┊┄┄┄┄I: "group-2-1-1-item-2""""
 
-    pending' "properly converts storage to tree (with sorting)" $ do
+    it "properly converts storage to tree (with sorting)" $ do
         (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReportA)
         -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
         `U.shouldEqual`
