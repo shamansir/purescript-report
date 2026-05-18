@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.String (split, joinWith, Pattern(..)) as String
-import Data.Array (length, index, last, head) as Array
+import Data.Array (length, index, last, head, take) as Array
 import Data.FoldableWithIndex (foldlWithIndex)
 
 import Yoga.JSON (class ReadForeign, class WriteForeign)
@@ -62,6 +62,12 @@ head = unwrap >>> Array.head
 
 last :: GroupPath -> Maybe PathSegment
 last = unwrap >>> Array.last
+
+
+parent :: GroupPath -> GroupPath
+parent gp =
+    let pathArr = pathToArray gp
+    in pathFromArray $ Array.take (Array.length pathArr - 1) pathArr
 
 
 {-| Starts with the given path or equals to it. First argument is a starting path to try for and second one is the one to test if it starts with the first one

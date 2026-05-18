@@ -47,7 +47,7 @@ import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (head, concat, cons, snoc, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe) as Array
+import Data.Array (head, concat, cons, snoc, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe, take, length) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, fromArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
@@ -253,26 +253,32 @@ toTree_ root toSubjNode toGroupNode (Builder subjects) =
             Just prevItems -> Just $ prevItems <> items
             Nothing -> Just items
         groupMapToTrees :: Map (K_ group) (Array item) -> Array (Tree c)
-        groupMapToTrees theMap = foldlWithIndex (flip $ foldToTreesF theMap Nothing) [] theMap
-        foldToTreesF :: Map (K_ group) (Array item) -> Maybe GroupPath -> Array (Tree c) -> K_ group -> Array item -> Array (Tree c)
-        foldToTreesF theMap mbGroupPath collected (K (curGroupPath /\ curGroupC)) items =
-            let
-                addCurrentAndCollectDeeper nextStartPath =
-                    let childTrees = foldlWithIndex (flip $ foldToTreesF theMap $ Just nextStartPath) [] theMap
-                        curTree    = toGroupNode curGroupC items
-                        fullTree   = curTree # Tree.break \val kids -> Tree.node val $ kids <> childTrees
-                    in Array.snoc collected fullTree
-            in case mbGroupPath of
-                Nothing ->
-                    if GP.howDeep curGroupPath == 1 then
-                        addCurrentAndCollectDeeper curGroupPath
-                    else
-                        collected
-                Just startPath ->
-                    if (GP.howDeep curGroupPath == GP.howDeep startPath + 1) && GP.startsWithNotEq startPath curGroupPath then
-                        addCurrentAndCollectDeeper curGroupPath
-                    else
-                        collected
+        groupMapToTrees theMap =
+            let childrenMap :: Map GroupPath (Array (K_ group /\ Array item)) -- Map of parent paths to their children
+                childrenMap = foldlWithIndex
+                    (flip $ \curChildrenMap sampleKey sampleItems ->
+                        let K (samplePath /\ _) = sampleKey
+                            parentPath = GP.parent samplePath
+                        in Map.alter
+                            (\collectedChildren ->
+                                Just $ Array.snoc (fromMaybe [] collectedChildren) $ sampleKey /\ sampleItems
+                            )
+                            parentPath
+                            curChildrenMap
+                    )
+                    Map.empty
+                    theMap
+                buildLevelFor :: GroupPath -> Array (Tree c)
+                buildLevelFor parentPath =
+                    case Map.lookup parentPath childrenMap of
+                        Nothing -> []
+                        Just children ->
+                            children
+                                <#> \(K (curGroupPath /\ curGroupC) /\ items) ->
+                                    let childTrees = buildLevelFor curGroupPath
+                                    in toGroupNode curGroupC items
+                                        # Tree.break \curNode prevChidren -> Tree.node curNode $ prevChidren <> childTrees
+            in buildLevelFor $ GP.pathFromArray []
 
 
 toPlainTree_

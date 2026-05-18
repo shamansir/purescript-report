@@ -480,51 +480,22 @@ spec = do
         (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReportA)
         -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
         `U.shouldEqual`
-        """*
-┊S: "subject1"
-┊┄G: ["group-1"]
-┊┄┄I: "group-1-item-1"
-┊┄┄I: "group-1-item-2"
-┊┄┄G: ["group-1","group-1-1"]
-┊┄┄┄I: "group-1-1-item-1"
-┊┄┄┄I: "group-1-1-item-2"
-┊┄┄┄G: ["group-1","group-1-1","group-1-1-1"]
-┊┄┄┄┄I: "group-1-1-1-item-1"
-┊┄┄┄┄I: "group-1-1-1-item-2"
-┊┄┄G: ["group-1","group-1-2"]
-┊┄┄┄I: "group-1-2-item-1"
-┊┄┄┄I: "group-1-2-item-2"
-┊┄┄G: ["group-1","group-1-3"]
-┊┄┄┄I: "group-1-3-item-1"
-┊┄┄┄I: "group-1-3-item-2"
-┊┄┄G: ["group-1","group-1-4"]
-┊┄┄┄G: ["group-1","group-1-4","group-1-4-1"]
-┊┄┄┄┄I: "group-1-4-1-item-1"
-┊┄┄┄┄I: "group-1-4-1-item-2"
-┊┄┄┄G: ["group-1","group-1-4","group-1-4-2"]
-┊┄┄┄┄I: "group-1-4-2-item-1"
-┊┄┄┄┄I: "group-1-4-2-item-2"
-┊┄┄┄┄G: ["group-1","group-1-4","group-1-4-2","group-1-4-2-1"]
-┊┄┄┄┄┄I: "group-1-4-2-1-item-1"
-┊┄┄┄G: ["group-1","group-1-4","group-1-4-3"]
-┊┄┄┄G: ["group-1","group-1-4","group-1-4-4"]
-┊┄┄┄┄I: "group-1-4-4-item-1"
-┊┄┄G: ["group-1","group-2-2"]
-┊┄G: ["group-2"]
-┊┄┄I: "group-2-item-1"
-┊┄┄I: "group-1-item-2"
-┊┄┄G: ["group-2","group-2-1"]
-┊┄┄┄I: "group-2-1-item-1"
-┊┄┄┄I: "group-2-1-item-2"
-┊┄┄┄G: ["group-2","group-2-1","group-2-1-1"]
-┊┄┄┄┄I: "group-2-1-1-item-1"
-┊┄┄┄┄I: "group-2-1-1-item-2""""
+        noSortingTreeSampleA
 
     it "properly converts storage to tree (with sorting)" $ do
         (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toTree sampleReportA)
         -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
         `U.shouldEqual`
-        """*
+        sortedTreeSampleA
+
+    it "properly converts storage to tree (no sorting)" $ do
+        (Tree.toString Mode.Dashes (RB.nodeToString true) $ Report.toPlainTree sampleReportA)
+        -- (Tree.toString Mode.Dashes identity $ Storage.toTree sampleStorage)
+        `U.shouldEqual`
+        plainTreeSampleA
+
+
+noSortingTreeSampleA = """*
 ┊S: "subject1"
 ┊┄G: ["group-1"]
 ┊┄┄I: "group-1-item-1"
@@ -562,4 +533,86 @@ spec = do
 ┊┄┄┄I: "group-2-1-item-2"
 ┊┄┄┄G: ["group-2","group-2-1","group-2-1-1"]
 ┊┄┄┄┄I: "group-2-1-1-item-1"
-┊┄┄┄┄I: "group-2-1-1-item-2""""
+┊┄┄┄┄I: "group-2-1-1-item-2"""" :: String
+
+
+sortedTreeSampleA = """*
+┊S: "subject1"
+┊┄G: ["group-1"]
+┊┄┄I: "group-1-item-1"
+┊┄┄I: "group-1-item-2"
+┊┄┄G: ["group-1","group-1-1"]
+┊┄┄┄I: "group-1-1-item-1"
+┊┄┄┄I: "group-1-1-item-2"
+┊┄┄┄G: ["group-1","group-1-1","group-1-1-1"]
+┊┄┄┄┄I: "group-1-1-1-item-1"
+┊┄┄┄┄I: "group-1-1-1-item-2"
+┊┄┄G: ["group-1","group-1-2"]
+┊┄┄┄I: "group-1-2-item-1"
+┊┄┄┄I: "group-1-2-item-2"
+┊┄┄G: ["group-1","group-1-3"]
+┊┄┄┄I: "group-1-3-item-1"
+┊┄┄┄I: "group-1-3-item-2"
+┊┄┄G: ["group-1","group-1-4"]
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-1"]
+┊┄┄┄┄I: "group-1-4-1-item-1"
+┊┄┄┄┄I: "group-1-4-1-item-2"
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-2"]
+┊┄┄┄┄I: "group-1-4-2-item-1"
+┊┄┄┄┄I: "group-1-4-2-item-2"
+┊┄┄┄┄G: ["group-1","group-1-4","group-1-4-2","group-1-4-2-1"]
+┊┄┄┄┄┄I: "group-1-4-2-1-item-1"
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-3"]
+┊┄┄┄G: ["group-1","group-1-4","group-1-4-4"]
+┊┄┄┄┄I: "group-1-4-4-item-1"
+┊┄┄G: ["group-1","group-2-2"]
+┊┄G: ["group-2"]
+┊┄┄I: "group-2-item-1"
+┊┄┄I: "group-1-item-2"
+┊┄┄G: ["group-2","group-2-1"]
+┊┄┄┄I: "group-2-1-item-1"
+┊┄┄┄I: "group-2-1-item-2"
+┊┄┄┄G: ["group-2","group-2-1","group-2-1-1"]
+┊┄┄┄┄I: "group-2-1-1-item-1"
+┊┄┄┄┄I: "group-2-1-1-item-2"""" :: String
+
+
+plainTreeSampleA = """*
+┊S: "subject1"
+┊┄G: ["group-1"]
+┊┄┄I: "group-1-item-1"
+┊┄┄I: "group-1-item-2"
+┊┄G: ["group-1","group-1-1"]
+┊┄┄I: "group-1-1-item-1"
+┊┄┄I: "group-1-1-item-2"
+┊┄G: ["group-1","group-1-1","group-1-1-1"]
+┊┄┄I: "group-1-1-1-item-1"
+┊┄┄I: "group-1-1-1-item-2"
+┊┄G: ["group-1","group-1-2"]
+┊┄┄I: "group-1-2-item-1"
+┊┄┄I: "group-1-2-item-2"
+┊┄G: ["group-1","group-1-3"]
+┊┄┄I: "group-1-3-item-1"
+┊┄┄I: "group-1-3-item-2"
+┊┄G: ["group-1","group-1-4"]
+┊┄G: ["group-1","group-1-4","group-1-4-1"]
+┊┄┄I: "group-1-4-1-item-1"
+┊┄┄I: "group-1-4-1-item-2"
+┊┄G: ["group-1","group-1-4","group-1-4-2"]
+┊┄┄I: "group-1-4-2-item-1"
+┊┄┄I: "group-1-4-2-item-2"
+┊┄G: ["group-1","group-1-4","group-1-4-2","group-1-4-2-1"]
+┊┄┄I: "group-1-4-2-1-item-1"
+┊┄G: ["group-1","group-1-4","group-1-4-3"]
+┊┄G: ["group-1","group-1-4","group-1-4-4"]
+┊┄┄I: "group-1-4-4-item-1"
+┊┄G: ["group-2"]
+┊┄┄I: "group-2-item-1"
+┊┄┄I: "group-1-item-2"
+┊┄G: ["group-2","group-2-1"]
+┊┄┄I: "group-2-1-item-1"
+┊┄┄I: "group-2-1-item-2"
+┊┄G: ["group-2","group-2-1","group-2-1-1"]
+┊┄┄I: "group-2-1-1-item-1"
+┊┄┄I: "group-2-1-1-item-2"
+┊┄G: ["group-1","group-2-2"]""" :: String
