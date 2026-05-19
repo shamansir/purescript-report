@@ -28,23 +28,22 @@ import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicVa
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Tags (RawTag)
-import Report.Convert.Types (SubjectId(..), ImportError, printImportError, Input(..), Output(..))
-import Report.Convert.Generic (RR, includeAll)
-import Report.Convert.Smos (fromSmos) as Smos
+import Report.Convert.Types (RawReport, SubjectId, ImportError, printImportError, Input(..), Output(..))
+import Report.Convert.Generic (RR, IncludeRule(..))
+import Report.Convert.Smos (fromSmos, toSmos) as Smos
 import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
 import Report.Core (ReportFormat(..), SDate(..), monthToInt) as CT
 
-import Report.Impl.Subject (Subject(..)) as Impl
-import Report.Impl.Group (Group) as Impl
 import Report.Impl.Item (Item(..)) as Impl
 
 import Test.Export.Org as OrgTest
+import Test.Samples.ArtistsReport as AR
 
 
 simpleSmosSamplePath = "test/games-samples/simple.smos" :: String
 
 
-parseSmos :: String -> Either ImportError (Report (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag))
+parseSmos :: String -> Either ImportError RawReport
 parseSmos = Smos.fromSmos @RR @SubjectId @RawTag @RawTag
 
 
@@ -300,6 +299,12 @@ spec =
                                                             _ -> A.fail "Expected LevelsP in state-history tabular"
 
         describe "export" do
+
+            {-}
+            let
+                convertArtistsReportToSmos :: AR.ArtistReport -> String
+                convertArtistsReportToSmos = unwrap >>> Smos.toSmos @AR.ArtistReport @SubjectId @RawTag @RawTag IncludeAll
+            -}
 
             it "round-trips smos→smos preserving structure" do
                 let cmdToRun = Convert
