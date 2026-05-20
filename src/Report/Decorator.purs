@@ -12,7 +12,7 @@ import Data.Maybe (isJust) as Maybe
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Array (catMaybes, elemIndex, filter, findMap) as Array
+import Data.Array (head, catMaybes, elemIndex, filter, findMap) as Array
 import Data.String (Pattern(..), stripPrefix) as String
 
 import Report.Core as CT
@@ -314,15 +314,23 @@ hasProgress = keys >>> Array.findMap
     )
 
 
-collectProgress :: Decorators -> Array (Maybe P.PValueTag /\ P.Progress)
-collectProgress sfx =
-    toArray sfx
+collectProgress :: Decorators -> Array P.Progress
+collectProgress = collectProgress_ >>> map Tuple.snd
+
+
+collectProgress_ :: Decorators -> Array (Maybe P.PValueTag /\ P.Progress)
+collectProgress_ sfx =
+    toArray sfx -- FIXME: no need to convert Map to Array
         <#> (\(key /\ suffix) -> case key /\ suffix of
                 KProgress pvtag /\ SProgress p -> Just $ Just pvtag /\ p
                 _ /\ SProgress p -> Just $ Nothing /\ p
                 _ -> Nothing
             )
          # Array.catMaybes
+
+
+firstProgress :: Decorators -> Maybe P.Progress
+firstProgress = collectProgress >>> Array.head
 
 
 getEarnedAt :: Decorators -> Maybe CT.SDate

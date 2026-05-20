@@ -87,6 +87,14 @@ findV :: forall v. String -> Tabular v -> Maybe v
 findV s = find s >>> map (unwrap >>> _.value)
 
 
+findMap :: forall v a. String -> (Item v -> Maybe a) -> Tabular v -> Maybe a
+findMap s fn = find s >>> flip bind fn
+
+
+findMapV :: forall v a. String -> (v -> Maybe a) -> Tabular v -> Maybe a
+findMapV s fn = findV s >>> flip bind fn
+
+
 empty :: forall v. Tabular v
 empty = Tabular []
 

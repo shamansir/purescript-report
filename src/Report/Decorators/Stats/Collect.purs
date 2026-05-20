@@ -9,7 +9,7 @@ import Data.Array (filter, length, head) as Array
 import Report.Class (class HasDecorators, i_decorators)
 import Report.Decorators.Stats (Stats(..))
 import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
-import Report.Decorator (collectProgress) as Decorator
+import Report.Decorator (firstProgress) as Decorator
 
 
 data CollectWhat
@@ -24,7 +24,7 @@ collectStats what flattened =
             let
                 allProgressN = loadNProgress <$> getProgress <$> flattened
                 getProgress :: item -> Progress -- FIXME: we only take one progress per item, need to aggregate all tagged progresses
-                getProgress = fromMaybe None <<< map Tuple.snd <<< Array.head <<< Decorator.collectProgress <<< i_decorators
+                getProgress = fromMaybe None <<< Decorator.firstProgress <<< i_decorators
                 nonValue = Array.filter (\i -> i /= Skip && i /= StatsValue) allProgressN
                 total = Array.length nonValue
                 got = Array.length $ Array.filter (_ == Achieved) nonValue

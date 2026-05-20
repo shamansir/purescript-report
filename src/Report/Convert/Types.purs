@@ -2,34 +2,33 @@ module Report.Convert.Types where
 
 import Prelude
 
-import Foreign (Foreign, fail)
-import Foreign (fail, ForeignError(..), renderForeignError) as F
+import Foreign (Foreign)
+import Foreign (ForeignError, renderForeignError) as F
 
-import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.List.NonEmpty (toUnfoldable) as NEL
 import Data.String (joinWith) as String
 
-import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
+import Yoga.JSON (class WriteForeign, class ReadForeign)
 
 import StringParser (ParseError, printParserError) as SP
 
 import Report (Report)
-import Report.Class (class ConvertFrom, class ConvertTo)
-import Report.Core (ReportFormat(..))
+import Report.Class
+import Report.Core (ReportFormat)
 import Report.Group (Group)
 import Report.Chain (Chain)
+import Report.Chain (Chain(..)) as C
 import Report.Decorators.Stats (Stats)
-import Report.Decorators.Progress (DateRec)
+import Report.Decorators.Stats (Stats(..)) as ST
+import Report.Tabular as Tabular
 import Report.Tabular (Tabular)
 import Report.Impl.Subject (Subject(..)) as Impl
-import Report.Impl.Subject (mapTags) as SubjImpl
-import Report.Impl.Item (Item(..)) as Impl
-import Report.Impl.Item (mapTags) as ItemImpl
+import Report.Impl.Item (Item) as Impl
 import Report.Impl.Group (Group) as Impl
-import Report.Impl.Tag (Tag(..)) as Impl
+import Report.Impl.Tag (Tag) as Impl
 import Report.Decorators.Tags (RawTag, RawTags)
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 import Report.Convert.Keyed (class EncodableKey)
@@ -147,3 +146,23 @@ printImportError = case _ of
 
 type RawReport' subj_id = Report (Impl.Subject subj_id Impl.Tag) Impl.Group (Impl.Item Impl.Tag)
 type RawReport = RawReport' SubjectId
+
+
+data UnitSubject = US
+derive instance Eq UnitSubject
+instance Show UnitSubject where show = const "subj"
+instance IsSubjectId String  UnitSubject where s_id      = const "subj"
+instance IsSubject   String  UnitSubject where s_name    = const "Subject"
+instance HasTags     UnitTag UnitSubject where i_tags    = const []
+instance HasTabular          UnitSubject where i_tabular = const Tabular.empty
+instance HasStats            UnitSubject where i_stats   = const ST.SNotRelevant
+
+
+data UnitTag = UT
+instance ConvertTo (Chain String)   UnitTag where convertTo   = const $ C.End "subj"
+instance ConvertFrom (Chain String) UnitTag where convertFrom = const $ Just UT
+instance IsTag UnitTag where
+    tagContent = const $ C.End "Tag"
+    tagColors = const defaultTagColors
+
+

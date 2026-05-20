@@ -18,6 +18,7 @@ import Report.Chain as C
 import Report.Builder as RB
 import Report.Class (class HasStats, class HasTags, class IsGroup, class IsGroupable, class IsSortable, class Same)
 import Report.Convert.Generic (class ToImport, class ToExport)
+import Report.Convert.Types (UnitSubject(..))
 import Report.GroupPath (pathFromArray) as GP
 import Report.Decorators.Stats (Stats(..)) as ST
 
@@ -26,7 +27,7 @@ import Yoga.Tree.Extended.Convert (Mode(..)) as Mode
 
 import Test.Utils (shouldEqual) as U
 
-import Test.Samples.ArtistsReport (Subject(..), Artist(..), ArtistTag, ArtistTagKind(..), MyGroup(..), artistsReport)
+import Test.Samples.ArtistsReport (Artist(..), ArtistTag, ArtistTagKind(..), MyGroup(..), artistsReport)
 
 -- jsonFilePath = "./data/games/src/manual/Switch/AstralChain.json" :: String
 
@@ -225,7 +226,7 @@ spec = do
 
         (artistsReport # unwrap # Report.groupItemsByKind @ArtistTag KGenre # Report.unfold)
         `shouldEqual`
-        [ S /\
+        [ US /\
             [ G [ "Analogue", "Grunge" ] /\ (A <$> [ "Nirvana" ])
             , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
             , G [ "Analogue", "Rock", "Pop Rock" ] /\ (A <$> [ "Queen", "Depeche Mode" ])
@@ -241,7 +242,7 @@ spec = do
 
         (artistsReport # unwrap # Report.groupItemsByKind @ArtistTag KCountry # Report.unfold)
         `shouldEqual`
-        [ S /\
+        [ US /\
             [ G [ "Americas", "USA" ] /\ (A <$> [ "NIN", "Nirvana", "Moby" ])
             , G [ "Europe", "Germany" ] /\ (A <$> [ "Rammstein" ])
             , G [ "Europe", "Sweden" ] /\ (A <$> [ "The Knife", "Fever Ray" ])
@@ -254,7 +255,7 @@ spec = do
 
         (artistsReport # unwrap # Report.groupItemsByKind @ArtistTag KAlbumsCount # Report.unfold)
         `shouldEqual`
-        [ S /\
+        [ US /\
             [ G [ "Less-than-5" ] /\ (A <$> [ "Nirvana", "Fever Ray" ])
             , G [ "More-than-10" ] /\ (A <$> [ "NIN", "Queen", "The Chemical Brothers", "GusGus", "Depeche Mode" ])
             , G [ "More-than-20" ] /\ (A <$> [ "Moby" ])
@@ -266,7 +267,7 @@ spec = do
 
         (artistsReport # unwrap # Report.groupItemsByKind @ArtistTag KGenre # Report.unfoldAll)
         `shouldEqual`
-        [ S /\
+        [ US /\
             [ G [ "Analogue" ] /\ (A <$> [])
             , G [ "Analogue", "Grunge" ] /\ (A <$> [ "Nirvana" ])
             , G [ "Analogue", "Rock" ] /\ (A <$> [ "Queen", "Rammstein" ])
@@ -284,7 +285,7 @@ spec = do
 
         (artistsReport # unwrap # Report.groupItemsByKind @ArtistTag KCountry # Report.unfoldAll)
         `shouldEqual`
-        [ S /\
+        [ US /\
             [ G [ "Americas" ] /\ (A <$> [])
             , G [ "Americas", "USA" ] /\ (A <$> [ "NIN", "Nirvana", "Moby" ])
             , G [ "Europe" ] /\ (A <$> [])

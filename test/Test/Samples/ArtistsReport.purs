@@ -17,7 +17,7 @@ import Report as Report
 import Report.Chain as C
 import Report.Builder as RB
 import Report.Class
-import Report.Convert.Types (SubjectId)
+import Report.Convert.Types (SubjectId, UnitSubject(..), UnitTag(..))
 import Report.Convert.Generic (class ToImport, class ToExport)
 import Report.GroupPath (pathFromArray) as GP
 import Report.Decorator as Decorators
@@ -27,26 +27,6 @@ import Report.Tabular as Tabular
 import Yoga.Tree.Extended.Convert (toString) as Tree
 import Yoga.Tree.Extended.Convert (Mode(..)) as Mode
 
-
-
-data Subject = S
-derive instance Eq Subject
-instance Show Subject where show = const "subj"
-instance IsSubjectId String    Subject where s_id      = const "subj"
-instance IsSubject  String     Subject where s_name    = const "Subject"
-instance HasTags    SubjectTag Subject where i_tags    = const []
-instance HasTabular            Subject where i_tabular = const Tabular.empty
-instance HasStats              Subject where i_stats   = const ST.SNotRelevant
-
-
-data SubjectTag = ST
-
-
-instance ConvertTo (C.Chain String)   SubjectTag where convertTo   = const $ C.End "subj"
-instance ConvertFrom (C.Chain String) SubjectTag where convertFrom = const $ Just ST
-instance IsTag SubjectTag where
-    tagContent = const $ C.End "Tag"
-    tagColors = const defaultTagColors
 
 
 data ArtistTag
@@ -248,19 +228,19 @@ intToDecimals = go [] >Array.reverse
 -}
 
 
-newtype ArtistReport = AR (Report Subject MyGroup Artist)
+newtype ArtistReport = AR (Report UnitSubject MyGroup Artist)
 derive instance Newtype ArtistReport _
 
 
-instance ToReport Subject MyGroup Artist ArtistReport where toReport = unwrap
+instance ToReport UnitSubject MyGroup Artist ArtistReport where toReport = unwrap
 
 
-instance ToExport String SubjectTag ArtistTag Subject MyGroup Artist ArtistReport
+instance ToExport String UnitTag ArtistTag UnitSubject MyGroup Artist ArtistReport
 
 
 artistsReport =
     RB.buildG
-        [ S /\
+        [ US /\
             [ G [ "root" ] /\
                 (A <$>
                     [ "NIN", "Queen", "Rammstein", "The Chemical Brothers"
