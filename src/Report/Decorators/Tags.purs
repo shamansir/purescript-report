@@ -2,7 +2,9 @@ module Report.Decorators.Tags where
 
 import Prelude
 
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, wrap, unwrap)
+import Data.Array (catMaybes) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
@@ -36,6 +38,10 @@ fromArray = wrap
 
 empty :: forall t. Tags t
 empty = fromArray []
+
+
+catMaybes :: forall t. Tags (Maybe t) -> Tags t
+catMaybes = toArray >>> Array.catMaybes >>> fromArray
 
 
 newtype RawTag = RawTag ({ id :: NonEmptyArray String, content :: NonEmptyArray String })

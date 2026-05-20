@@ -32,9 +32,9 @@ import Report.Convert.Text.Decorators.Tags as CT
 import Report.Convert.Types
 
 import Report.Impl.Subject (Subject) as Impl
-import Report.Impl.Subject (mapTags, mapId) as SubjImpl
+import Report.Impl.Subject (mapTags, mapId, catMaybesOfTags, getId) as SubjImpl
 import Report.Impl.Item (Item) as Impl
-import Report.Impl.Item (mapTags) as ItemImpl
+import Report.Impl.Item (mapTags, catMaybesOfTags) as ItemImpl
 import Report.Impl.Group (Group) as Impl
 -- import Report.Impl.Tag (Tag) as Impl
 
@@ -184,12 +184,12 @@ type SubjectName = String
 
 
 class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
-    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> subj_id
-    convertSubjectTag :: RawTag -> subj_tag
-    convertSubject :: Impl.Subject subj_id subj_tag -> subj
-    convertGroup :: Impl.Group -> group
-    convertItem :: Impl.Item item_tag -> item
-    convertItemTag :: RawTag -> item_tag
+    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> Maybe subj_id
+    convertSubjectTag :: RawTag -> Maybe subj_tag
+    convertSubject :: Impl.Subject subj_id subj_tag -> Maybe subj
+    convertGroup :: Impl.Group -> Maybe group
+    convertItem :: Impl.Item item_tag -> Maybe item
+    convertItemTag :: RawTag -> Maybe item_tag
 
 
 newtype RR = RR (Report (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag))
@@ -203,18 +203,18 @@ instance ToExport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.G
 
 
 instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
-    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> SubjectId
-    convertSubjectId _ name mbSubjId = fromMaybe (subjectIdFromName name) mbSubjId
-    convertSubjectTag :: RawTag -> RawTag
-    convertSubjectTag = identity
-    convertSubject :: Impl.Subject SubjectId RawTag -> Impl.Subject SubjectId RawTag
-    convertSubject = identity
-    convertGroup :: Impl.Group -> Impl.Group
-    convertGroup = identity
-    convertItem :: Impl.Item RawTag -> Impl.Item RawTag
-    convertItem = identity
-    convertItemTag :: RawTag -> RawTag
-    convertItemTag = identity
+    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> Maybe SubjectId
+    convertSubjectId _ name mbSubjId = Just $ fromMaybe (subjectIdFromName name) mbSubjId
+    convertSubjectTag :: RawTag -> Maybe RawTag
+    convertSubjectTag = Just
+    convertSubject :: Impl.Subject SubjectId RawTag -> Maybe (Impl.Subject SubjectId RawTag)
+    convertSubject = Just
+    convertGroup :: Impl.Group -> Maybe Impl.Group
+    convertGroup = Just
+    convertItem :: Impl.Item RawTag -> Maybe (Impl.Item RawTag)
+    convertItem = Just
+    convertItemTag :: RawTag -> Maybe RawTag
+    convertItemTag = Just
 
 
 nameToId :: String -> String
@@ -237,12 +237,12 @@ toImport :: forall @x @subj_id @subj_tag @item_tag subj group item
 toImport =
     Report.toBuilder
         >>> ReportB.mapSubjectsIndexed (\idx subj ->
-                SubjImpl.mapId
-                    (Just
-                        >>> convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx (s_name @SubjectId subj)
-                    )
-                    subj
+                SubjImpl.getId subj
+                     # Just
+                     # convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx (s_name @SubjectId subj)
+                    <#> \subjId -> SubjImpl.mapId (const subjId) subj
             )
+        >>> ReportB.catMaybesOfSubjects
         >>> Report.fromBuilder
         >>> toImport' @x @subj_id @subj_tag @item_tag @subj @group @item
 
@@ -268,14 +268,31 @@ toImport' =
         >>> Report.mapItems
             ( ItemImpl.mapTags
                 ( convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x )
+                >>> ItemImpl.catMaybesOfTags
                 >>> convertItem  @subj_id @subj_tag @item_tag @subj @group @item @x
             )
+        >>> ReportB.catMaybesOfItems
         >>> Report.mapGroups
             ( convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x )
+        >>> ReportB.catMaybesOfGroups
         >>> Report.mapSubjects
             ( SubjImpl.mapTags
                 ( convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x )
+                >>> SubjImpl.catMaybesOfTags
                 >>> convertSubject  @subj_id @subj_tag @item_tag @subj @group @item @x
             -- >>> Report.mapId (convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x)
             )
+        >>> ReportB.catMaybesOfSubjects
         >>> Report.fromBuilder
+
+
+uniqueIdFromTitle :: String -> String
+uniqueIdFromTitle = nameToId
+    {-
+    =   String.replaceAll (String.Pattern " ") (String.Replacement "-")
+    >>> String.replaceAll (String.Pattern ",") (String.Replacement "-")
+    >>> String.replaceAll (String.Pattern "(") (String.Replacement "-")
+    >>> String.replaceAll (String.Pattern ")") (String.Replacement "-")
+    >>> String.replaceAll (String.Pattern "'") (String.Replacement "-")
+    >>> String.replaceAll (String.Pattern "#") (String.Replacement "-")
+    >>> String.replaceAll (String.Pattern "!") (String.Replacement "-") -}

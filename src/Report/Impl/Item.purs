@@ -12,7 +12,7 @@ import Report.Tabular (Tabular)
 import Report.Tabular (empty) as Tabular
 import Report.Modify
 import Report.Decorators.Tags (Tags)
-import Report.Decorators.Tags (fromArray, toArray, RawTag, empty) as Tags
+import Report.Decorators.Tags (fromArray, toArray, RawTag, empty, catMaybes) as Tags
 import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
@@ -94,6 +94,11 @@ from item =
 mapTags :: forall item_tag_a item_tag_b. (item_tag_a -> item_tag_b) -> Item item_tag_a -> Item item_tag_b
 mapTags mapF (Item itemRec) =
     Item $ itemRec { tags = mapF <$> itemRec.tags }
+
+
+catMaybesOfTags :: forall item_tag. Item (Maybe item_tag) -> Item item_tag
+catMaybesOfTags (Item itemRec) =
+    Item $ itemRec { tags = Tags.catMaybes itemRec.tags }
 
 
 derive newtype instance ReadForeign  (Item Tags.RawTag)

@@ -13,7 +13,7 @@ module Report.Builder
     {- Subjects -}
     , mapSubjects, mapSubjectsIndexed
     , allSubjects
-    , filterSubjects
+    , filterSubjects, catMaybesOfSubjects
     , sortSubjects, sortSubjectsWith, sortSubjectsBy, sortSubjectsByWith
     , redistribute, redistributeBy
     , alignSubjects, alignSubjectsBy
@@ -21,7 +21,7 @@ module Report.Builder
     , mapGroups
     , allGroups, allGroupsC
     , allGroupsOf, allGroupsOfC
-    , filterGroupsBy
+    , filterGroupsBy, catMaybesOfGroups
     , withGroup, withGroupIdx
     , findGroupBy, findMapGroupBy
     , sortGroups, sortGroupsWith, sortGroupsBy
@@ -30,7 +30,7 @@ module Report.Builder
     {- Items -}
     , mapItems
     , allItems
-    , filterItems, filterItemsBy
+    , filterItems, filterItemsBy, catMaybesOfItems
     , withItem, withItemIdx
     , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
     , findItem, findItemBy, findMapItem, findMapItemBy, findMapItems,findMapItemsBy
@@ -408,6 +408,12 @@ allSubjects = unwrap >>> map extractSubj
         extractSubj (Subject s _) = s
 
 
+catMaybesOfSubjects :: forall subj group item. Builder (Maybe subj) group item -> Builder subj group item
+catMaybesOfSubjects = unwrap >>> map mapSubjectF >>> Array.catMaybes >>> wrap
+    where
+        mapSubjectF (Subject maybeSubj groups) = maybeSubj <#> \subj -> Subject subj groups
+
+
 filterSubjects :: forall subj group item. (subj -> Boolean) -> Builder subj group item -> Builder subj group item
 filterSubjects filterF = unwrap >>> Array.filter subjSatisfy >>> wrap
     where
@@ -591,6 +597,15 @@ allGroupsWithItemsC = unwrap >>> map extractGroups >>> Array.concat
         extractGroupC (Group groupC items) = groupC /\ (unwrap <$> items)
 
 
+-- FIXME: it uses a `Chain (Maybe group)` and applies `catMaybes` to build a new `Chain group`, so some elements of chain could go missing
+catMaybesOfGroups :: forall subj group item. Builder subj (Maybe group) item -> Builder subj group item
+catMaybesOfGroups = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ Array.catMaybes $ mapGroupF <$> groups
+        mapGroupF (Group mbGroupC items) =
+            Chain.toArray mbGroupC # Array.catMaybes # Chain.fromArray <#> \groupC -> Group groupC items
+
+
 filterGroupsBy :: forall subj group item. (subj -> Chain group -> Boolean) -> Builder subj group item -> Builder subj group item
 filterGroupsBy filterF = unwrap >>> map mapSubjectF >>> wrap
     where
@@ -670,6 +685,13 @@ _locateGroup
     -> GroupPath
     -> (subj -> Chain group -> Boolean)
 _locateGroup subjId groupPath subj groupC = RC.s_id subj == subjId && RC.g_path (Chain.last groupC) == groupPath
+
+
+catMaybesOfItems :: forall subj group item. Builder subj group (Maybe item) -> Builder subj group item
+catMaybesOfItems = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
+        mapGroupF s (Group gc items) = Group gc $ Array.mapMaybe (unwrap >>> map Item) items
 
 
 filterItems

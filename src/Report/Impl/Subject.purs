@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Int (fromString) as Int
+import Data.Array (catMaybes) as Array
 import Data.Newtype (class Newtype, wrap, unwrap)
 
 import Report.Class
@@ -110,9 +111,22 @@ mapTags mapF (Subject subjRec) =
     Subject $ subjRec { tags = mapF <$> subjRec.tags }
 
 
+catMaybesOfTags :: forall subj_id subj_tag. Subject subj_id (Maybe subj_tag) -> Subject subj_id subj_tag
+catMaybesOfTags (Subject subjRec) =
+    Subject $ subjRec { tags = Array.catMaybes subjRec.tags }
+
+
 mapId :: forall subj_id_a subj_id_b subj_tag. (subj_id_a -> subj_id_b) -> Subject subj_id_a subj_tag -> Subject subj_id_b subj_tag
 mapId mapF (Subject subjRec) =
     Subject $ subjRec { id = mapF subjRec.id }
+
+
+getId :: forall subj_id subj_tag. Subject subj_id subj_tag -> subj_id
+getId = unwrap >>> _.id
+
+
+getTags :: forall subj_id subj_tag. Subject subj_id subj_tag -> Array subj_tag
+getTags = unwrap >>> _.tags
 
 
 derive newtype instance (ReadForeign subj_id)  => ReadForeign  (Subject subj_id String)
