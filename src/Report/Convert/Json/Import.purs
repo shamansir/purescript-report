@@ -33,35 +33,38 @@ fromJson :: forall @x @subj_id @subj_tag @item_tag subj group item
     => String
     -> Either ImportError (Report subj group item)
 fromJson jsonStr =
-    (readJSON jsonStr :: E ReportToImport) # bimap FromJson (unwrap >>> _.subjects >>> mapWithIndex jsonConvertSubjectWGroups >>> Report.build)
+    (readJSON jsonStr :: E ReportToImport) # bimap FromJson (unwrap >>> _.subjects >>> mapWithIndex jsonConvertSubjectWGroups >>> Array.catMaybes >>> Report.build)
     where
-        jsonConvertSubjectWGroups :: Int -> SubjectWithGroups -> subj /\ Array (group /\ Array item)
+        jsonConvertSubjectWGroups :: Int -> SubjectWithGroups -> Maybe (subj /\ Array (group /\ Array item))
         jsonConvertSubjectWGroups idx (SubjectWithGroups { subject : Subject subjectRec, groups }) =
-            jsonConvertSubject idx subjectRec
-            /\
-            ((\{ group, items } -> jsonConvertGroup group /\ (jsonConvertItem <$> items)) <$> groups)
-        jsonConvertSubject :: Int -> SubjectRec -> subj
-        jsonConvertSubject idx = jsonAdaptSubject idx >>> convertSubject @subj_id @subj_tag @item_tag @subj @group @item @x
-        jsonConvertGroup :: Group -> group
+            jsonConvertSubject idx subjectRec <#> \subj ->
+                subj /\
+                Array.catMaybes
+                    ((\{ group, items } -> jsonConvertGroup group <#> \g -> g /\ Array.catMaybes (jsonConvertItem <$> items)) <$> groups)
+        jsonConvertSubject :: Int -> SubjectRec -> Maybe subj
+        jsonConvertSubject idx = jsonAdaptSubject idx >=> convertSubject @subj_id @subj_tag @item_tag @subj @group @item @x
+        jsonConvertGroup :: Group -> Maybe group
         jsonConvertGroup = convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
-        jsonConvertItem :: ItemRec -> item
+        jsonConvertItem :: ItemRec -> Maybe item
         jsonConvertItem = convertItem @subj_id @subj_tag @item_tag @subj @group @item @x <<< jsonAdaptItem
-        jsonAdaptSubject :: Int -> SubjectRec -> Impl.Subject subj_id subj_tag
+        jsonAdaptSubject :: Int -> SubjectRec -> Maybe (Impl.Subject subj_id subj_tag)
         jsonAdaptSubject idx subjectRec =
-            Impl.Subject
-                { name    : subjectRec.name
-                , id      : convertSubjectId  @subj_id @subj_tag @item_tag @subj @group @item @x idx subjectRec.name $ Just subjectRec.id
-                , tags    : convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x <$> subjectRec.tags
-                , stats   : subjectRec.stats
-                , tabular : Tabular.fromItems $ jsonAdaptTabular <$> subjectRec.tabulars
-                }
+            convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx subjectRec.name (Just subjectRec.id)
+            <#> \subjId ->
+                Impl.Subject
+                    { name    : subjectRec.name
+                    , id      : subjId
+                    , tags    : Array.catMaybes $ convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x <$> subjectRec.tags
+                    , stats   : subjectRec.stats
+                    , tabular : Tabular.fromItems $ jsonAdaptTabular <$> subjectRec.tabulars
+                    }
         jsonAdaptItem :: ItemRec -> Impl.Item item_tag
         jsonAdaptItem itemRec =
             Impl.Item
                 { title      : itemRec.title
-                , decorators : Decorators.fromArray' $ Array.catMaybes $ jsonAdaptDecorator <$> itemRec.decorators
-                , tabular    : Tabular.fromItems     $ jsonAdaptTabular <$> itemRec.tabulars
-                , tags       : wrap $ convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x <$> unwrap itemRec.tags
+                , decorators : Decorators.fromArray'  $ Array.catMaybes $ jsonAdaptDecorator <$> itemRec.decorators
+                , tabular    : Tabular.fromItems      $ jsonAdaptTabular <$> itemRec.tabulars
+                , tags       : wrap $ Array.catMaybes $ convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x <$> unwrap itemRec.tags
                 }
         jsonAdaptDecorator :: DecoratorRec -> Maybe Decorator
         jsonAdaptDecorator dRec = do

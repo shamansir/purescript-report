@@ -65,20 +65,20 @@ fromOrg
     -> Either ImportError (Report subj group item)
 fromOrg orgStr =
     let nodes = buildNodes $ String.split (String.Pattern "\n") orgStr
-    in Right $ Report.build [ collectSubject 0 "Org" nodes ]
+    in Right $ Report.build $ Array.catMaybes [ collectSubject 0 "Org" nodes ]
   where
-    collectSubject :: Int -> String -> Array OrgNode -> subj /\ Array (group /\ Array item)
+    collectSubject :: Int -> String -> Array OrgNode -> Maybe (subj /\ Array (group /\ Array item))
     collectSubject idx name nodes =
-        let subjId  = convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx name Nothing
-            subject = convertSubject   @subj_id @subj_tag @item_tag @subj @group @item @x $
-                Impl.Subject
+        convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx name Nothing >>= \subjId ->
+            convertSubject @subj_id @subj_tag @item_tag @subj @group @item @x
+                (Impl.Subject
                     { id     : subjId
                     , name   : name
                     , stats  : Stats.SYetUnknown
                     , tabular: Tabular.empty
                     , tags   : []
-                    }
-        in subject /\ collectForest [] nodes
+                    })
+                <#> (_ /\ collectForest [] nodes)
 
     collectForest :: Array String -> Array OrgNode -> Array (group /\ Array item)
     collectForest parentPath nodes =
@@ -86,14 +86,11 @@ fromOrg orgStr =
             topLeaves = if Array.null parentPath then Array.filter isLeafNode nodes else []
             rootResult =
                 if Array.null topLeaves then []
-                else
-                    let g = convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x $
-                                Group
-                                    { path  : GP.pathFromArray ["_root"]
-                                    , title : "_root"
-                                    , stats : Stats.SYetUnknown
-                                    }
-                    in [ g /\ (collectItem <$> topLeaves) ]
+                else Array.catMaybes
+                    [ convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
+                          (Group { path: GP.pathFromArray ["_root"], title: "_root", stats: Stats.SYetUnknown })
+                          <#> \g -> g /\ Array.catMaybes (collectItem <$> topLeaves)
+                    ]
         in rootResult <> Array.concatMap (collectBranch parentPath) branches
 
     collectBranch :: Array String -> OrgNode -> Array (group /\ Array item)
@@ -101,16 +98,14 @@ fromOrg orgStr =
         let myPath   = parentPath <> [ n.title ]
             leaves   = Array.filter isLeafNode n.children
             branches = Array.filter (not <<< isLeafNode) n.children
-            g = convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x $
-                    Group
-                        { path  : GP.pathFromArray myPath
-                        , title : n.title
-                        , stats : Stats.SYetUnknown
-                        }
-        in [ g /\ (collectItem <$> leaves) ]
+        in Array.catMaybes
+            [ convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
+                  (Group { path: GP.pathFromArray myPath, title: n.title, stats: Stats.SYetUnknown })
+                  <#> \g -> g /\ Array.catMaybes (collectItem <$> leaves)
+            ]
           <> Array.concatMap (collectBranch myPath) branches
 
-    collectItem :: OrgNode -> item
+    collectItem :: OrgNode -> Maybe item
     collectItem (OrgNode n) =
         let mbTask     = n.taskState >>= smosStateToTask
             decorators = Decorators.fromArray' $ Array.catMaybes
@@ -128,7 +123,7 @@ fromOrg orgStr =
                 , decorators : decorators
                 , tabular    : tabular
                 , tags       : Tags $
-                    convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x
+                    Array.catMaybes $ convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x
                         <$> rawTags
                 }
 

@@ -121,36 +121,36 @@ fromDhall jsonStr =
     let eSubjects =
                 ((readJSON jsonStr :: E DhallImport)     <#> \(DhallImport { collection }) -> collection)
             <|> ((readJSON jsonStr :: E DhallSubjectRec) <#> Array.singleton)
-    in eSubjects # bimap FromJson (mapWithIndex dhallCollectSubject >>> Report.build)
+    in eSubjects # bimap FromJson (mapWithIndex dhallCollectSubject >>> Array.catMaybes >>> Report.build)
     where
-        dhallCollectSubject :: Int ->  DhallSubjectRec -> subj /\ Array (group /\ Array item)
+        dhallCollectSubject :: Int -> DhallSubjectRec -> Maybe (subj /\ Array (group /\ Array item))
         dhallCollectSubject idx subjectRec =
             dhallConvertSubject idx subjectRec
-            /\ collectGroupsWithItems subjectRec.properties
+            <#> (_ /\ collectGroupsWithItems subjectRec.properties)
         collectGroupsWithItems :: Array DhallProperty -> Array (group /\ Array item)
-        collectGroupsWithItems = map dhallCollectProperty >>> foldGroups >>> map (bimap dhallConvertGroup $ map dhallConvertItem)
+        collectGroupsWithItems = map dhallCollectProperty >>> foldGroups >>> Array.mapMaybe
+            (\(grRec /\ items) -> dhallConvertGroup grRec <#> \g -> g /\ Array.catMaybes (dhallConvertItem <$> items))
         foldGroups :: Array (Either DhallGroupRec DhallItemRec) -> Array (DhallGroupRec /\ Array DhallItemRec)
         foldGroups = _groupExtByKey (either _.ref _.ref) identity
         dhallCollectProperty :: DhallProperty -> Either DhallGroupRec DhallItemRec
         dhallCollectProperty = case _ of
             HoldsGroup groupRec -> Left  groupRec
             HoldsItem  itemRec  -> Right itemRec
-        dhallConvertSubject :: Int -> DhallSubjectRec -> subj
+        dhallConvertSubject :: Int -> DhallSubjectRec -> Maybe subj
         dhallConvertSubject idx subjectRec =
-            let
-                subjId = convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx subjectRec.name (Just subjectRec.id)
-            in
-                convertSubject @subj_id @subj_tag @item_tag @subj @group @item @x
-                    (Impl.Subject
-                        { id : subjId
-                        , name : subjectRec.name
-                        , stats : Stats.SYetUnknown
-                        , tabular : TV.progress <$> loadTabular subjectRec.tabular
-                        , tags : convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x
-                                 <$> (Array.catMaybes $ toRawTag <$> subjectRec.tags)
-                        }
-                    )
-        dhallConvertGroup :: DhallGroupRec -> group
+            convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx subjectRec.name (Just subjectRec.id)
+            >>= \subjId ->
+            convertSubject   @subj_id @subj_tag @item_tag @subj @group @item @x
+                (Impl.Subject
+                    { id : subjId
+                    , name : subjectRec.name
+                    , stats : Stats.SYetUnknown
+                    , tabular : TV.progress <$> loadTabular subjectRec.tabular
+                    , tags : Array.catMaybes $ convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x
+                                <$> (Array.catMaybes $ toRawTag <$> subjectRec.tags)
+                    }
+                )
+        dhallConvertGroup :: DhallGroupRec -> Maybe group
         dhallConvertGroup groupRec =
             convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
                 (Impl.Group
@@ -159,7 +159,7 @@ fromDhall jsonStr =
                     , title : groupRec.title
                     }
                 )
-        dhallConvertItem :: DhallItemRec -> item
+        dhallConvertItem :: DhallItemRec -> Maybe item
         dhallConvertItem itemRec =
             let mbProgress = itemRec.value <#> Progress.rawToProgressJson >>= Progress.fromJson
                 mbTask     = mbProgress >>= case _ of
@@ -180,9 +180,10 @@ fromDhall jsonStr =
                                 ]
                     , tabular : Tabular.empty -- FIXME: items contains no tabular. TV.progress <$> loadTabular itemRec.tabular
                     , tags : Tags $
-                            ( convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x
-                              <$> (Array.catMaybes $ toRawTag <$> fromMaybe [] itemRec.tags)
-                            )
+                            Array.catMaybes
+                                ( convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x
+                                  <$> (Array.catMaybes $ toRawTag <$> fromMaybe [] itemRec.tags)
+                                )
                     }
                 )
         toRawTag :: String -> Maybe RawTag

@@ -4,7 +4,7 @@ import Prelude
 
 import Foreign (Foreign, F)
 
-import Data.Maybe (Maybe(..), fromMaybe, isNothing)
+import Data.Maybe (Maybe(..), maybe, fromMaybe, isNothing)
 import Data.Array as Array
 import Data.Either (Either)
 import Data.Bifunctor (bimap)
@@ -59,21 +59,22 @@ fromSmos yamlStr =
     # runExcept
     # bimap FromJson
         ( \(SmosFile { value: forest }) ->
-            Report.build [ collectSubject 0 "Smos" forest ]
+            Report.build $ maybe [] pure $ collectSubject 0 "Smos" forest
         )
     where
-        collectSubject :: Int -> String -> Array SmosTree -> subj /\ Array (group /\ Array item)
+        collectSubject :: Int -> String -> Array SmosTree -> Maybe (subj /\ Array (group /\ Array item))
         collectSubject idx name forest =
-            let subjId  = convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx name Nothing
-                subject = convertSubject   @subj_id @subj_tag @item_tag @subj @group @item @x $
-                    Impl.Subject
+            convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx name Nothing
+            >>= \subjId ->
+            convertSubject   @subj_id @subj_tag @item_tag @subj @group @item @x
+                    (Impl.Subject
                         { id     : subjId
                         , name   : name
                         , stats  : Stats.SYetUnknown
                         , tabular: Tabular.empty
                         , tags   : []
-                        }
-            in subject /\ collectForest [] forest
+                        })
+                    <#> (_ /\ collectForest [] forest)
 
         collectForest :: Array String -> Array SmosTree -> Array (group /\ Array item)
         collectForest parentPath trees =
@@ -82,13 +83,17 @@ fromSmos yamlStr =
                 rootResult =
                     if Array.null topLeaves then []
                     else
-                        let g = convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x $
-                                    Group
-                                        { path  : GP.pathFromArray ["_root"]
-                                        , title : "_root"
-                                        , stats : Stats.SYetUnknown
-                                        }
-                        in [ g /\ (collectItem <$> topLeaves) ]
+                        let
+                            group =
+                                Group
+                                    { path: GP.pathFromArray ["_root"]
+                                    , title: "_root"
+                                    , stats: Stats.SYetUnknown
+                                    }
+                        in
+                        maybe [] pure
+                         $ flip (/\) (Array.catMaybes $ collectItem <$> topLeaves)
+                        <$> convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x group
             in rootResult <> Array.concatMap (collectBranch parentPath) branches
 
         collectBranch :: Array String -> SmosTree -> Array (group /\ Array item)
@@ -97,16 +102,14 @@ fromSmos yamlStr =
                 children = fromMaybe [] mbChildren
                 leaves   = Array.filter isLeafTree children
                 branches = Array.filter (not <<< isLeafTree) children
-                g = convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x $
-                        Group
-                            { path  : GP.pathFromArray myPath
-                            , title : e.header
-                            , stats : Stats.SYetUnknown
-                            }
-            in [ g /\ (collectItem <$> leaves) ]
+            in Array.catMaybes
+                [ convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
+                      (Group { path: GP.pathFromArray myPath, title: e.header, stats: Stats.SYetUnknown })
+                      <#> \g -> g /\ Array.catMaybes (collectItem <$> leaves)
+                ]
               <> Array.concatMap (collectBranch myPath) branches
 
-        collectItem :: SmosTree -> item
+        collectItem :: SmosTree -> Maybe item
         collectItem (SmosTree { entry: SmosEntry e }) =
             let mbFirst    = e.stateHistory >>= Array.head <#> \(SmosStateEntry se) -> se
                 mbTask     = mbFirst >>= _.state >>= smosStateToTask
@@ -123,15 +126,17 @@ fromSmos yamlStr =
                 lbEntry   = smosLogbookToTabular      $ fromMaybe [] e.logbook
                 shEntry   = smosStateHistoryToTabular $ fromMaybe [] e.stateHistory
                 tabular   = Tabular.fromArray' $ tsEntries <> Array.catMaybes [ lbEntry, shEntry ]
-                rawTags = Array.catMaybes $ Parser.parseTag <$> fromMaybe [] e.tags
+                rawTags   = Array.catMaybes $ Parser.parseTag <$> fromMaybe [] e.tags
             in convertItem @subj_id @subj_tag @item_tag @subj @group @item @x $
                 Impl.Item
                     { title      : e.header
                     , decorators : decorators
                     , tabular    : tabular
-                    , tags       : Tags $
-                        convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x
-                            <$> rawTags
+                    , tags       :
+                        Tags
+                         $ Array.catMaybes
+                         $ convertItemTag @subj_id @subj_tag @item_tag @subj @group @item @x
+                        <$> rawTags
                     }
 
 

@@ -48,11 +48,11 @@ fromRepP :: String -> Either ImportError (Array Parser.RepSubject)
 fromRepP = Parser.fromRep >>> lmap FromParser
 
 
-fromRepToImpl :: forall @subj_id. (Int -> SubjectName -> Maybe SubjectId -> subj_id) -> String -> Either ImportError (RawReport' subj_id)
-fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex convertSubj >>> Report.build)
+fromRepToImpl :: forall @subj_id. (Int -> SubjectName -> Maybe SubjectId -> Maybe subj_id) -> String -> Either ImportError (RawReport' subj_id)
+fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> Array.catMaybes >>> Report.build)
   where
-    convertSubj idx subjRec =
-        let subjId = nameToSubjIdF idx subjRec.name subjRec.id in
+    tryConvertSubj idx subjRec =
+        nameToSubjIdF idx subjRec.name subjRec.id <#> \subjId ->
         Impl.Subject
         { id : subjId
         , name : subjRec.name
