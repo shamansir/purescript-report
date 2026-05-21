@@ -305,9 +305,10 @@ instance
     TagsChainConvert item_tag_kind item_tag subj_tag x
 
 
--- instance Is Impl.SubjectId RawTag RawTagKind RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) Report.RR
+instance Is Impl.SubjectId RawTag RawTagKind RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) Report.RR
 instance Has               RawTag            RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) Report.RR
 instance Modify                              RawTag                                      Impl.Group (Impl.Item RawTag) Report.RR
+-- instance TagsChainConvert         RawTagKind RawTag RawTag Report.RR
 
 
 type ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item =

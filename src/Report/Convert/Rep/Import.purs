@@ -24,10 +24,10 @@ import Report.Decorator (keyOf) as Decorator
 import Report.Decorator (fromArray) as Decorators
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats as Stats
-import Report.Convert.Generic (SubjectName)
+import Report.Convert.Generic (SubjectName, RawReportWith')
 import Report.Convert.Generic (class ToImport, toImport') as Report
 import Report.Convert.Generic (convertItem, convertGroup, convertSubject, convertItemTag, convertSubjectTag, convertSubjectId) as Import
-import Report.Convert.Types (ImportError(..), RawReport')
+import Report.Convert.Types (ImportError(..))
 import Report.Impl.Subject (SubjectId)
 import Report.Convert.Rep.Import.Parser as Parser
 import Report.Tabular (Tabular(..))
@@ -49,7 +49,7 @@ fromRepP :: String -> Either ImportError (Array Parser.RepSubject)
 fromRepP = Parser.fromRep >>> lmap FromParser
 
 
-fromRepToImpl :: forall @subj_id. (Int -> SubjectName -> Maybe SubjectId -> Maybe subj_id) -> String -> Either ImportError (RawReport' subj_id)
+fromRepToImpl :: forall @subj_id. (Int -> SubjectName -> Maybe SubjectId -> Maybe subj_id) -> String -> Either ImportError (RawReportWith' subj_id)
 fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> Array.catMaybes >>> Report.build)
   where
     tryConvertSubj idx subjRec =

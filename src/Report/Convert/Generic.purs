@@ -193,11 +193,20 @@ class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
 
 
 {- Raw Report that just stores everything using `Impl.*` records, using basic types and strings wherever possible -}
-newtype RR = RR (Report (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag))
+type RawReportWith subj_id subj_tag item_tag = Report (Impl.Subject subj_id subj_tag) Impl.Group (Impl.Item item_tag)
+type RawReportWith' subj_id = RawReportWith subj_id RawTag RawTag
+type RawReport = RawReportWith Impl.SubjectId RawTag RawTag
+
+newtype RR = RR RawReport
+newtype RRX subj_id subj_tag item_tag (x :: Type) = RRX (RawReportWith subj_id subj_tag item_tag)
 
 
 instance ToReport (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
     toReport (RR report) = report
+
+
+instance ToReport (Impl.Subject subj_id subj_tag) Impl.Group (Impl.Item item_tag) (RRX subj_id subj_tag item_tag x) where
+    toReport (RRX report) = report
 
 
 instance ToExport Impl.SubjectId RawTag RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR
@@ -262,7 +271,7 @@ toImport_ toSubjId =
 
 toImport' :: forall @x @subj_id @subj_tag @item_tag @subj @group @item
      . ToImport subj_id subj_tag item_tag subj group item x
-    => RawReport' subj_id
+    => RawReportWith' subj_id
     -> Report subj group item
 toImport' =
     Report.toBuilder

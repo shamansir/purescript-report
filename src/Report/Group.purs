@@ -6,6 +6,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Foldable (foldl, foldr)
 import Data.String (joinWith) as String
 import Data.Array (snoc, uncons) as Array
@@ -15,6 +16,7 @@ import Data.Array.NonEmpty as NEA
 import Report.Class
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Stats (Stats(..)) as Stats
+import Report.Decorators.Tags (RawTag)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
 import Report.GroupPath as GP
 import Report.Modify (class GroupModify, class StatsModify)
@@ -227,6 +229,20 @@ instance GroupModify Group where
 instance StatsModify Group where
     setStats stats = unwrap >>> _ { stats = stats } >>> wrap
 
+
+instance IsGroupable Group RawTag where
+    t_group tag =
+        let
+            idChain      = tag # unwrap # _.id
+            contentChain = tag # unwrap # _.content
+            mkGroupLink idx (_ /\ title) =
+                Group
+                    { stats : Stats.SYetUnknown
+                    , title
+                    , path : GP.pathFromArray $ NEA.take (idx + 1) idChain
+                    }
+        in
+            Just $ Chain.fromNEArray $ mapWithIndex mkGroupLink $ NEA.zip idChain contentChain
 
 
 from ::

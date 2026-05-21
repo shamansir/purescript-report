@@ -134,10 +134,6 @@ printImportError = case _ of
     -- ImportError ierr -> ierr
 
 
-type RawReport' subj_id = Report (Impl.Subject subj_id Impl.Tag) Impl.Group (Impl.Item Impl.Tag)
-type RawReport = RawReport' Impl.SubjectId
-
-
 data UnitSubject = US
 derive instance Eq UnitSubject
 instance Show UnitSubject where show = const "subj"

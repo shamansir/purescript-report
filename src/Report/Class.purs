@@ -200,6 +200,14 @@ instance IsTag RawTagKind where
     tagContent (RawTagKind rawTagKind) = Chain.fromNEArray rawTagKind
 
 
+instance Same RawTagKind where
+    same (RawTagKind contentsA) (RawTagKind contentsB) = contentsA == contentsB
+
+
+instance IsSortable RawTagKind RawTag where
+    kindOf = const $ RawTagKind $ pure "tag"
+
+
 {-
 instance ConvertTo String RawTag where convertTo (RawTag rawTag) = Chain.fromNEArray rawTag.id # Chain.toString
 instance ConvertFrom String RawTag where convertFrom = Chain.fromString >>> map Chain.toNEArray >>> map RawTag
