@@ -31,7 +31,7 @@ import Report.Decorators.Tags (RawTag, RawTags(..))
 import Report.Convert.Text.Decorators.Tags as CT
 import Report.Convert.Types
 
-import Report.Impl.Subject (Subject) as Impl
+import Report.Impl.Subject (Subject, SubjectId(..)) as Impl
 import Report.Impl.Subject (mapTags, mapId, catMaybesOfTags, getId) as SubjImpl
 import Report.Impl.Item (Item) as Impl
 import Report.Impl.Item (mapTags, catMaybesOfTags) as ItemImpl
@@ -122,7 +122,7 @@ toExport inclRule =
     where
         collectSubject :: subj -> SubjectRec
         collectSubject subj =
-            { id : SubjectId $ encodeKey @subj_id $ s_id subj
+            { id : Impl.SubjectId $ encodeKey @subj_id $ s_id subj
             , name  : s_name  @subj_id subj
             , tags  : i_tags  @subj_tag subj <#> CT.rawifyTag
             , stats : i_stats subj
@@ -184,7 +184,7 @@ type SubjectName = String
 
 
 class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
-    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> Maybe subj_id
+    convertSubjectId :: Int -> SubjectName -> Maybe Impl.SubjectId -> Maybe subj_id -- FIXME: returning Nothing causes `subject` not to be imported
     convertSubjectTag :: RawTag -> Maybe subj_tag
     convertSubject :: Impl.Subject subj_id subj_tag -> Maybe subj
     convertGroup :: Impl.Group -> Maybe group
@@ -192,22 +192,23 @@ class ToImport subj_id subj_tag item_tag subj group item (x :: Type) where
     convertItemTag :: RawTag -> Maybe item_tag
 
 
-newtype RR = RR (Report (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag))
+{- Raw Report that just stores everything using `Impl.*` records, using basic types and strings wherever possible -}
+newtype RR = RR (Report (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag))
 
 
-instance ToReport (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
+instance ToReport (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
     toReport (RR report) = report
 
 
-instance ToExport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR
+instance ToExport Impl.SubjectId RawTag RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR
 
 
-instance ToImport SubjectId RawTag RawTag (Impl.Subject SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
-    convertSubjectId :: Int -> SubjectName -> Maybe SubjectId -> Maybe SubjectId
+instance ToImport Impl.SubjectId RawTag RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) RR where
+    convertSubjectId :: Int -> SubjectName -> Maybe Impl.SubjectId -> Maybe Impl.SubjectId
     convertSubjectId _ name mbSubjId = Just $ fromMaybe (subjectIdFromName name) mbSubjId
     convertSubjectTag :: RawTag -> Maybe RawTag
     convertSubjectTag = Just
-    convertSubject :: Impl.Subject SubjectId RawTag -> Maybe (Impl.Subject SubjectId RawTag)
+    convertSubject :: Impl.Subject Impl.SubjectId RawTag -> Maybe (Impl.Subject Impl.SubjectId RawTag)
     convertSubject = Just
     convertGroup :: Impl.Group -> Maybe Impl.Group
     convertGroup = Just
@@ -225,9 +226,9 @@ nameToId name =
         <$> CP.toCodePointArray name
 
 
-subjectIdFromName :: String -> SubjectId
+subjectIdFromName :: String -> Impl.SubjectId
 subjectIdFromName name =
-    SubjectId $ nameToId name
+    Impl.SubjectId $ nameToId name
 
 
 toImport :: forall @x @subj_id @subj_tag @item_tag subj group item
@@ -239,7 +240,7 @@ toImport =
         >>> ReportB.mapSubjectsIndexed (\idx subj ->
                 SubjImpl.getId subj
                      # Just
-                     # convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx (s_name @SubjectId subj)
+                     # convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x idx (s_name @Impl.SubjectId subj)
                     <#> \subjId -> SubjImpl.mapId (const subjId) subj
             )
         >>> ReportB.catMaybesOfSubjects
@@ -249,7 +250,7 @@ toImport =
 
 toImport_ :: forall @x @subj_id @subj_tag @item_tag subj group item
      . ToImport subj_id subj_tag item_tag subj group item x
-    => (SubjectId -> subj_id)
+    => (Impl.SubjectId -> subj_id)
     -> RawReport
     -> Report subj group item
 toImport_ toSubjId =
@@ -280,7 +281,7 @@ toImport' =
                 ( convertSubjectTag @subj_id @subj_tag @item_tag @subj @group @item @x )
                 >>> SubjImpl.catMaybesOfTags
                 >>> convertSubject  @subj_id @subj_tag @item_tag @subj @group @item @x
-            -- >>> Report.mapId (convertSubjectId @subj_id @subj_tag @item_tag @subj @group @item @x)
+            -- >>> Report.mapId (convertImpl.SubjectId @subj_id @subj_tag @item_tag @subj @group @item @x)
             )
         >>> ReportB.catMaybesOfSubjects
         >>> Report.fromBuilder

@@ -20,9 +20,10 @@ import Node.ChildProcess (execSync)
 import Node.Buffer (toString) as Buffer
 
 import Report.Core (ReportFormat(..))
-import Report.Convert.Types (ImportError(..), Input(..), Output(..), RawReport, SubjectId, printImportError)
+import Report.Convert.Types (ImportError(..), Input(..), Output(..), RawReport, printImportError)
 import Report.Decorators.Tags (RawTag, RawTagKind, TagAction)
 -- import Report.Convert.Rep.Import
+import Report.Impl.Subject (SubjectId)
 import Report.Convert.Generic (RR, IncludeRule(..))
 import Report.Convert.Dhall (toDhall, fromDhall) as Report
 import Report.Convert.Json (toJson, fromJson) as Report

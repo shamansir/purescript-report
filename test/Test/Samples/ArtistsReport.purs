@@ -17,7 +17,7 @@ import Report as Report
 import Report.Chain as C
 import Report.Builder as RB
 import Report.Class
-import Report.Convert.Types (SubjectId, UnitSubject(..), UnitTag(..))
+import Report.Convert.Types (UnitSubject(..), UnitTag(..))
 import Report.Convert.Generic (class ToImport, class ToExport)
 import Report.GroupPath (pathFromArray) as GP
 import Report.Decorator as Decorators

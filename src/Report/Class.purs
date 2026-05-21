@@ -17,7 +17,7 @@ import Report.Tabular (Tabular)
 import Report.Decorator (Decorators)
 import Report.Decorators.Stats (Stats) as S
 import Report.Decorators.Tabular.TabularValue (TabularValue)
-import Report.Decorators.Tags (Tags, RawTag(..))
+import Report.Decorators.Tags (Tags, RawTag(..), RawTagKind(..))
 
 import Yoga.JSON (readImpl, writeImpl)
 
@@ -71,6 +71,10 @@ class IsGroup g <= IsGroupable g t where
 
 class LimitedSet t where
     values :: Array t
+
+
+instance LimitedSet RawTag where
+    values = []
 
 
 class ConvertTo trg src where
@@ -189,6 +193,11 @@ instance ConvertFrom String String where convertFrom = Just
 instance IsTag RawTag where
     tagColors _ = defaultTagColors
     tagContent (RawTag rawTag) = Chain.fromNEArray rawTag.content
+
+
+instance IsTag RawTagKind where
+    tagColors _ = defaultTagColors
+    tagContent (RawTagKind rawTagKind) = Chain.fromNEArray rawTagKind
 
 
 {-

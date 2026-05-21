@@ -38,7 +38,7 @@ import Report.GroupPath (GroupPath)
 import Report.GroupPath as GP
 import Report.Convert.Generic (nameToId) as CG
 
-import Report.Convert.Types (SubjectId(..))
+import Report.Impl.Subject (SubjectId(..))
 import Report.Convert.Rep.Keys as RE
 
 

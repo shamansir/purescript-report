@@ -24,11 +24,12 @@ import Report.Decorator (get, Key(..), Decorator(..)) as Dec
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Tags (RawTag)
-import Report.Convert.Types (SubjectId(..), ImportError, printImportError)
+import Report.Convert.Types (ImportError, printImportError)
 import Report.Convert.Generic (RR, includeAll)
 import Report.Convert.Org (fromOrg) as Org
 import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
-import Report.Convert.Types (SubjectId(..), ImportError, printImportError, Input(..), Output(..))
+import Report.Convert.Types (ImportError, printImportError, Input(..), Output(..))
+import Report.Impl.Subject (SubjectId)
 import Report.Core (ReportFormat(..), SDate(..), monthToInt) as CT
 import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..)) as TV
 import Data.Tuple.Nested ((/\))

@@ -22,7 +22,7 @@ import Report.Core as CT
 import Report.Chain (Chain)
 import Report.Chain as Chain
 import Report.Convert.Generic
-import Report.Convert.Types (SubjectId, ImportError(..))
+import Report.Convert.Types (ImportError(..))
 import Report.Tabular (Tabular(..))
 import Report.Tabular (empty, fromArray, fromArray') as Tabular
 import Report.Group (Group(..)) as Impl
@@ -39,7 +39,7 @@ import Report.Decorators.Tabular.TabularValue (progress) as TV
 import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.Convert.Rep.Import.Parser as Parser
 
-import Report.Impl.Subject (Subject(..)) as Impl
+import Report.Impl.Subject (Subject(..), SubjectId) as Impl
 import Report.Impl.Subject (mapTags, mapId) as SubjImpl
 import Report.Impl.Group (Group(..)) as Impl
 import Report.Impl.Item (Item(..)) as Impl
@@ -89,7 +89,7 @@ instance ReadForeign DhallProperty where
 
 
 type DhallSubjectRec =
-    { id :: SubjectId
+    { id :: Impl.SubjectId
     , name :: String
     , properties :: Array DhallProperty
     , tags :: Array String

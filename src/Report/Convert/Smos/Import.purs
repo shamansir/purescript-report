@@ -36,7 +36,7 @@ import Report.Decorators.Progress (Progress(..))
 import Report.Tabular (empty, fromArray') as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Convert.Rep.Import.Parser as Parser
-import Report.Convert.Types (SubjectId, ImportError(..))
+import Report.Convert.Types (ImportError(..))
 import Report.Convert.Generic
 import Report.Core (SDate(..), monthFromInt, dateToRec) as CT
 

@@ -27,7 +27,8 @@ import Report.Decorators.Stats as Stats
 import Report.Convert.Generic (SubjectName)
 import Report.Convert.Generic (class ToImport, toImport') as Report
 import Report.Convert.Generic (convertItem, convertGroup, convertSubject, convertItemTag, convertSubjectTag, convertSubjectId) as Import
-import Report.Convert.Types (ImportError(..), RawReport', SubjectId)
+import Report.Convert.Types (ImportError(..), RawReport')
+import Report.Impl.Subject (SubjectId)
 import Report.Convert.Rep.Import.Parser as Parser
 import Report.Tabular (Tabular(..))
 import Report.Tabular (empty) as Tabular

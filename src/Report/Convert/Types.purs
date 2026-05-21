@@ -25,7 +25,7 @@ import Report.Decorators.Stats (Stats)
 import Report.Decorators.Stats (Stats(..)) as ST
 import Report.Tabular as Tabular
 import Report.Tabular (Tabular)
-import Report.Impl.Subject (Subject(..)) as Impl
+import Report.Impl.Subject (Subject(..), SubjectId) as Impl
 import Report.Impl.Item (Item) as Impl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Tag (Tag) as Impl
@@ -36,7 +36,7 @@ import Report.Convert.Keyed (class EncodableKey)
 
 type SubjectRec =
     { name :: String
-    , id :: SubjectId
+    , id :: Impl.SubjectId
     , stats :: Stats
     -- , trackedAt :: Maybe DateRec -- TODO
     -- , properties :: Array DecoratorRec
@@ -65,16 +65,6 @@ type TabularRec =
     , tlabel :: String
     , value :: TabularValue
     }
-
-
-newtype SubjectId = SubjectId String
-derive instance Newtype SubjectId _
-derive newtype instance Eq SubjectId
-derive newtype instance ConvertFrom String SubjectId
-derive newtype instance ConvertTo String SubjectId
-derive newtype instance ReadForeign SubjectId
-derive newtype instance WriteForeign SubjectId
-derive newtype instance EncodableKey SubjectId
 
 
 newtype Subject = Subject SubjectRec
@@ -145,7 +135,7 @@ printImportError = case _ of
 
 
 type RawReport' subj_id = Report (Impl.Subject subj_id Impl.Tag) Impl.Group (Impl.Item Impl.Tag)
-type RawReport = RawReport' SubjectId
+type RawReport = RawReport' Impl.SubjectId
 
 
 data UnitSubject = US

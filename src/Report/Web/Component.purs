@@ -40,13 +40,16 @@ import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
 import Report.Decorators.Class.ValueModify as VModify
 import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf, Stats(..)) as R
 import Report.Decorators.Stats.Collect as Collect
-import Report.Decorators.Tags (TagAction(..))
+import Report.Decorators.Tags (TagAction(..), RawTag, RawTagKind)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath (howDeep, startsWithNotEq) as GP
+import Report.Impl.Subject (Subject, SubjectId) as Impl
+import Report.Impl.Group (Group) as Impl
+import Report.Impl.Item (Item) as Impl
 import Report.Modify (Location(..), whatKeyOf)
 import Report.Modify as Modify
 
-import Report.Convert.Generic (class ToExport, includeOnly) as Report
+import Report.Convert.Generic (class ToExport, includeOnly, RR) as Report
 import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Org (toOrg) as Report
@@ -300,6 +303,11 @@ instance
     , R.ConvertTo   (Chain String) item_tag_kind
     ) =>
     TagsChainConvert item_tag_kind item_tag subj_tag x
+
+
+-- instance Is Impl.SubjectId RawTag RawTagKind RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) Report.RR
+instance Has               RawTag            RawTag (Impl.Subject Impl.SubjectId RawTag) Impl.Group (Impl.Item RawTag) Report.RR
+instance Modify                              RawTag                                      Impl.Group (Impl.Item RawTag) Report.RR
 
 
 type ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item =

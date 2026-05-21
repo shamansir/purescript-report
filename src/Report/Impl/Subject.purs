@@ -14,6 +14,7 @@ import Report.Tabular (empty) as Tabular
 import Report.Decorators.Stats (Stats)
 import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Convert.Keyed (class EncodableKey)
 
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
@@ -131,3 +132,14 @@ getTags = unwrap >>> _.tags
 
 derive newtype instance (ReadForeign subj_id)  => ReadForeign  (Subject subj_id String)
 derive newtype instance (WriteForeign subj_id) => WriteForeign (Subject subj_id String)
+
+
+newtype SubjectId = SubjectId String
+derive instance Newtype SubjectId _
+derive newtype instance Eq SubjectId
+derive newtype instance Ord SubjectId
+derive newtype instance ConvertFrom String SubjectId
+derive newtype instance ConvertTo String SubjectId
+derive newtype instance ReadForeign SubjectId
+derive newtype instance WriteForeign SubjectId
+derive newtype instance EncodableKey SubjectId

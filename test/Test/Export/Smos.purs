@@ -28,7 +28,8 @@ import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicVa
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Tags (RawTag)
-import Report.Convert.Types (RawReport, SubjectId, ImportError, printImportError, Input(..), Output(..))
+import Report.Impl.Subject (SubjectId)
+import Report.Convert.Types (RawReport, ImportError, printImportError, Input(..), Output(..))
 import Report.Convert.Generic (RR, IncludeRule(..))
 import Report.Convert.Smos (fromSmos, toSmos) as Smos
 import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
