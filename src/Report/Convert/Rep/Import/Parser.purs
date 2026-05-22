@@ -101,7 +101,10 @@ type RawRepGroup =
 -- | Groups are returned flat; `depth` reflects nesting rank regardless of indent size.
 
 fromRep :: String -> Either ParseError (Array RepSubject)
-fromRep = runParser repParser
+fromRep =
+  String.replaceAll (String.Pattern "\n\n") (String.Replacement "\n")
+  >>> String.replaceAll (String.Pattern "\n\n") (String.Replacement "\n")
+  >>> runParser repParser
 
 
 repParser :: Parser (Array RepSubject)

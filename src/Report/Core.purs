@@ -413,4 +413,5 @@ instance Show ReportFormat where
 
 
 derive instance Eq ReportFormat
+derive instance Ord ReportFormat
 

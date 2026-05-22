@@ -27,7 +27,7 @@ import Report.Impl.Group (Group)
 import Report.Impl.Item (Item)
 import Report.Impl.Subject (Subject)
 import Report.Impl.Tag (altDefaultColors) as Tag
-import Report.Convert.Generic (class ToExport) as Report
+import Report.Convert.Generic (class ToExport, class ToImport) as Report
 import Report.Web.Component as Report
 import Report.Web.Component (defaultConfig) as RepComponent
 import Report.Convert.Keyed
@@ -122,6 +122,13 @@ derive newtype instance Report.Has SubjectTag ItemTag MySubject MyGroup MyItem M
 derive newtype instance Report.Modify ItemTag MyGroup MyItem MyReport
 derive newtype instance Report.ToReport MySubject MyGroup MyItem MyReport
 instance Report.ToExport SubjectId SubjectTag ItemTag MySubject MyGroup MyItem MyReport
+instance Report.ToImport SubjectId SubjectTag ItemTag MySubject MyGroup MyItem MyReport where
+    convertSubjectId = const $ const $ const Nothing
+    convertSubjectTag = const Nothing
+    convertSubject = const Nothing
+    convertGroup = const Nothing
+    convertItem = const Nothing
+    convertItemTag = const Nothing
 
 
 _report  = Proxy :: _ "report"

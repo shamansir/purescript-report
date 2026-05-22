@@ -5,7 +5,6 @@ import Prelude
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as Console
 
-
 import Data.Array ((:))
 import Data.Array as Array
 import Data.Foldable (foldl, for_)
@@ -15,11 +14,14 @@ import Data.Map as Map
 import Data.Map (Map, SemigroupMap(..))
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Maybe (isJust) as Maybe
+import Data.Either (Either(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Set as Set
 import Data.String (length, contains, toLower, joinWith, split, Pattern(..)) as String
 import Data.Tuple (uncurry, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
+
+import Control.Applicative.Extra (whenJust)
 
 import Halogen as H
 import Halogen.HTML as HH
@@ -49,12 +51,13 @@ import Report.Impl.Item (Item) as Impl
 import Report.Modify (Location(..), whatKeyOf)
 import Report.Modify as Modify
 
-import Report.Convert.Generic (class ToExport, includeOnly, RR) as Report
+import Report.Convert.Generic (class ToExport, class ToImport, includeOnly, RR) as Report
+import Report.Convert.Types (ImportError(..), printImportError)
 import Report.Convert.Dhall (toDhall) as Report
 import Report.Convert.Json (toJson) as Report
 import Report.Convert.Org (toOrg) as Report
 import Report.Convert.Text (toText) as Report
-import Report.Convert.Rep (toRep) as Report
+import Report.Convert.Rep (toRep, fromRep) as Report
 import Report.Convert.Smos (toSmos) as Report
 import Report.Convert.Text.Decorator (encodeDecorator) as Decorator
 
@@ -114,6 +117,7 @@ type Flags =
     , groupNavigationExpanded :: Boolean
     , groupNavigationPinned :: Boolean
     , exportProcessedReport :: Boolean
+    , editingExportContent :: Boolean
     }
 
 
@@ -126,6 +130,7 @@ type State subj_id subj_tag item_tag_kind item_tag report =
     , sortBy :: SubjectSort
     , flags :: Flags
     , mbExportTo :: Maybe ReportFormat
+    , importFrom :: Map ReportFormat String
     , navigatedTo :: NavigatedTo subj_id
     , process :: Array (Process item_tag_kind item_tag)
     , collapsed :: CollapseMap subj_id
@@ -174,6 +179,11 @@ data Action subj_id subj_tag item_tag_kind item_tag report
     | GroupItemsBy MouseEvent item_tag_kind
     | ResetPostProcess
     | ToggleGroupCollapse MouseEvent subj_id GroupPath
+    | TryImportFrom ReportFormat
+    | TryImportFromCurrent
+    | StoreContentToImport ReportFormat String
+    | StartedEditingExportContent
+    | FinishedEditingExportContent
     | NoOp
 
 
@@ -339,6 +349,7 @@ component
     => Modify item_tag group item x
     => TagsChainConvert item_tag_kind item_tag subj_tag x
     => Report.ToExport subj_id subj_tag item_tag subj group item x
+    => Report.ToImport subj_id subj_tag item_tag subj group item x
     => R.ToReport subj group item x
     => Config subj_id
     -> H.Component query x output m
@@ -363,6 +374,7 @@ component cfg =
         , tagFilter : []
         , sortBy : ByWeight
         , mbExportTo : Nothing
+        , importFrom : Map.empty
         , navigatedTo : Navigation.init
         , process : []
         , collapsed : Map.empty
@@ -377,6 +389,7 @@ component cfg =
             , groupNavigationPinned : false
             , progressPlatesShown : false
             , exportProcessedReport : false
+            , editingExportContent : false
             }
         }
 
@@ -397,6 +410,7 @@ component cfg =
     updateProcessedReport s = updateReports s.sourceReport s
 
     reportAreaRefLabel = H.RefLabel "report-area" :: H.RefLabel
+    importExportTextareaRefLabel = H.RefLabel "import-export-textarea" :: H.RefLabel
 
     render :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) () m
     render state =
@@ -433,8 +447,22 @@ component cfg =
                         <> "background-color: aliceblue; border-radius: 5px; padding: 5px;"
                         ]
                         [ HH.textarea
-                            [ HP.style "white-space: pre-wrap; background: transparent; border: none; font-size: 0.7em;"
+                            [ HP.style "white-space: pre-wrap; background: white; border: none; font-size: 0.7em;"
                             , HP.value $ exportTextFor exportTarget, HP.cols 75, HP.rows 30
+                            , HP.ref importExportTextareaRefLabel
+                            , HE.onFocus $ const StartedEditingExportContent
+                            , HE.onBlur  $ const FinishedEditingExportContent
+                            , HE.onValueInput $ StoreContentToImport exportTarget
+                            ]
+                        , HH.div
+                            [ HP.style "position: absolute; right: 0; top: 0; padding: 6px 0px;" ]
+                            [ if importSupportedFor exportTarget
+                                then menuButton
+                                    { enabled : true
+                                    , label   : "↫" -- if state.flags.instantImportEnabled then "⟺" else "⤄"
+                                    , onClick : const $ TryImportFrom exportTarget
+                                    }
+                                else HH.text ""
                             ]
                         ]
                 Nothing -> HH.text ""
@@ -764,7 +792,7 @@ component cfg =
     handleActionIfNotEditing :: _
     handleActionIfNotEditing action = do
         H.get >>= \s ->
-            when (not $ Navigation.isEditing s.navigatedTo) $
+            when (not s.flags.editingExportContent && (not $ Navigation.isEditing s.navigatedTo)) $
                 handleAction action
 
     nextNavigation :: Location subj_id -> NavigatedTo subj_id
@@ -860,6 +888,8 @@ component cfg =
         ToggleItemsTagsInOptions -> H.modify_ $ withFlags \f -> f { showItemsTags = not f.showItemsTags }
         NextSort -> H.modify_ \state -> state { sortBy = nextSort state.sortBy }
         ClearNavigation -> H.modify_ clearCurrentActions
+        StartedEditingExportContent  -> H.modify_ $ withFlags _ { editingExportContent = true  }
+        FinishedEditingExportContent -> H.modify_ $ withFlags _ { editingExportContent = false }
 
         NavigateByMouseClickTo mevt location ->
             let
@@ -998,29 +1028,18 @@ component cfg =
                                     , newValue : encval
                                     }
             in
-                case cfg.recalculate.onEdit of
-                    Just recCfg -> do
-                        s <- H.get
-                        let theNextReport = nextReport s.sourceReport
-                        H.modify_ _
-                            { sourceReport = theNextReport
-                            , processedReport =
-                                R.toBuilder theNextReport
-                                # RB.filterSubjects (R.s_id >>> flip Array.elem s.subjects)
-                                # R.fromBuilder
-                                # Modify.recalculate recCfg
-                            }
-                    Nothing ->
-                        H.modify_
-                            \s ->
-                                let theNextReport = nextReport s.sourceReport
-                                in s
-                                    { sourceReport = theNextReport
-                                    , processedReport =
-                                        R.toBuilder theNextReport
-                                        # RB.filterSubjects (R.s_id >>> flip Array.elem s.subjects)
-                                        # R.fromBuilder
-                                    }
+                H.modify_ \s ->
+                    let theNextReport = nextReport s.sourceReport
+                    in s
+                        { sourceReport = theNextReport
+                        , processedReport = -- TODO: this block repeats, look for `processedReport =`
+                            R.toBuilder theNextReport
+                            # RB.filterSubjects (R.s_id >>> flip Array.elem s.subjects)
+                            # R.fromBuilder
+                            # case cfg.recalculate.onEdit of
+                                Just recCfg -> Modify.recalculate recCfg
+                                Nothing -> identity
+                        }
 
         StartEditing mevt -> stopMEPropagation mevt -- <> H.modify_ _ { editingValue = true }
         CancelEditing -> H.modify_ clearEditing <> focusOnReportArea
@@ -1109,6 +1128,42 @@ component cfg =
             H.modify_ $ loadUrlConfig @item_tag_kind nextHashCfg
 
             H.modify_ updateProcessedReport
+
+        StoreContentToImport format content ->
+            H.modify_ \s -> s { importFrom = s.importFrom # Map.insert format content }
+
+        TryImportFromCurrent -> do
+            mbCurrentFormat <- H.get <#> _.mbExportTo
+            whenJust mbCurrentFormat $ handleAction <<< TryImportFrom
+
+        TryImportFrom format -> do
+            s <- H.get
+            let mbContent = Map.lookup format s.importFrom
+            whenJust mbContent $ \content -> do
+                liftEffect $ Console.log $ show format <> "::" <> content
+                when (importSupportedFor format) $ do
+                    let
+                        eNextReport =
+                            case format of
+                                Rep -> Report.fromRep @x @subj_id @subj_tag @item_tag content
+                                _   -> Left $ UnsupportedFormat format
+                    case eNextReport of
+                        Right theNextReport -> do
+                            liftEffect $ Console.log $ "APPLY CHANGE IN " <> show format
+                    -- let theNextReport = nextReport s.sourceReport
+                            H.modify_ _
+                                { sourceReport = theNextReport
+                                , processedReport =
+                                    R.toBuilder theNextReport
+                                    # RB.filterSubjects (R.s_id >>> flip Array.elem s.subjects)
+                                    # R.fromBuilder
+                                    # case cfg.recalculate.onEdit of
+                                        Just recCfg -> Modify.recalculate recCfg
+                                        Nothing -> identity
+                                }
+                        Left theError ->
+                            liftEffect $ Console.log $ printImportError theError
+                    liftEffect $ Console.log $ "TRY IMPORT"
 
         NoOp -> pure unit
 
@@ -1558,3 +1613,10 @@ withFlags
 withFlags chFlag s =
     let newFlags = chFlag s.flags in
     s { flags = newFlags }
+
+
+importSupportedFor :: ReportFormat -> Boolean
+importSupportedFor = case _ of
+    Rep -> true
+    -- Org -> true
+    _ -> false

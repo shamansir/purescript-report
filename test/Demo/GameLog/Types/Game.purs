@@ -32,6 +32,7 @@ data GameId
     | BLG String GLT.Platform
     | IBL Int (Maybe GLT.Platform)
     | EPC String
+    | REP String
 
 
 derive instance Eq GameId
@@ -147,6 +148,8 @@ instance EncodableKey GameId where
             "IBL:" <> show id <> maybe "" (\p -> ":" <> GLT.encodePlatform p) mbPlatform
         EPC code ->
             "EPC:" <> code
+        REP code ->
+            "REP:" <> code
     decodeKey str =
         let
             src  = str # String.take 3
@@ -238,6 +241,8 @@ instance Show GameId where
             "IBL:" <> show id <> maybe "" (\p -> "(" <> show p <> ")") mbPlatform
         EPC code ->
             "EPC:" <> code
+        REP code ->
+            "REP:" <> code
 
 
 decodeGameTag :: String -> Maybe GameTag
@@ -258,3 +263,16 @@ encodeGameTag =
         SourceTag S_IBL -> "IBL"
         SourceTag S_Backloggery -> "BLG"
         PlatformTag platformTag -> GLT.encodePlatform platformTag
+
+
+loadPlatformFromTag :: GameTag -> Maybe GLT.Platform
+loadPlatformFromTag = case _ of
+    PlatformTag platform -> Just platform
+    SourceTag _ -> Nothing
+
+
+loadSourceFromTag :: GameTag -> Maybe Source
+loadSourceFromTag = case _ of
+    PlatformTag _ -> Nothing
+    SourceTag source -> Just source
+
