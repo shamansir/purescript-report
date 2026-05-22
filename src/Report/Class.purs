@@ -103,9 +103,20 @@ instance ConvertFrom (Chain String) Unit where
     convertFrom s = if s == End "." then Just unit else Nothing
 
 
-
 instance ConvertTo (Chain String) RawTag where
     convertTo = unwrap >>> _.id >>> Chain.fromNEArray
+
+
+instance ConvertFrom (Chain String) RawTag where
+    convertFrom = Chain.toNEArray >>> (\strNEArr -> { id : strNEArr, content : strNEArr }) >>> wrap >>> Just
+
+
+instance ConvertTo (Chain String) RawTagKind where
+    convertTo = unwrap >>> Chain.fromNEArray
+
+
+instance ConvertFrom (Chain String) RawTagKind where
+    convertFrom = Chain.toNEArray >>> wrap >>> Just
 
 
 class Same k where -- alternative to `Eq`, not strict equality, but "same kind of thing", e.g. same tag type, same rating type, same platform type, etc.

@@ -12,6 +12,8 @@ import Effect.Aff.Class (class MonadAff)
 import Data.Maybe (Maybe(..))
 import Data.String (joinWith) as String
 import Data.Tuple (uncurry) as Tuple
+import Data.Tuple.Nested ((/\), type (/\))
+import Data.Newtype (wrap)
 
 import Fetch (Method(..), fetch)  as F
 import Fetch.Yoga.Json (fromJSON) as F
@@ -28,13 +30,17 @@ import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as
 import GameLog.Types.Achievement (Achievement, Tag, TagKind) as GL
 
 import Report (toReport)
+import Report (build) as Report
 import Report.Group (Group) as Report
 import Report.Modify (RecalculateInclude(..))
 import Report.Decorators.Stats.Collect (CollectWhat(..))
 import Report.Decorators.Tags (RawTag, RawTagKind)
-import Report.Impl.Subject (Subject, SubjectId) as Impl
+import Report.Impl.Subject (Subject, SubjectId(..)) as Impl
 import Report.Impl.Group (Group) as Impl
 import Report.Impl.Item (Item) as Impl
+import Report.Impl.Q.Subject as QS
+import Report.Impl.Q.Group as QG
+import Report.Impl.Q.Item as QI
 import Report.Web.Component as StatsReport
 import Report.Web.Component.RecalcBehavior
 import Report.Convert.Generic (RR(..))
@@ -65,6 +71,23 @@ data Action
     | Initialize
 
 
+initialReport :: RR
+initialReport = RR $ Report.build
+    [ QS.mk (Impl.SubjectId "subject-1") "Subject 1"
+        /\  [ QG.mk [ "group-1" ] "S1: Group 1"
+                /\ [ QI.mk "S1G1: Item 1", QI.mk "S1G1: Item 2", QI.mk "S1G1: Item 3" ]
+            , QG.mk [ "group-2" ] "S1: Group 2"
+                /\ [ QI.mk "S1G2: Item 1", QI.mk "S1G2: Item 2", QI.mk "S1G2: Item 3", QI.mk "S1G2: Item 4" ]
+            ]
+    , QS.mk (Impl.SubjectId "subject-2") "Subject 2"
+        /\  [ QG.mk [ "group-1" ] "S2: Group 1"
+                /\ [ QI.mk "S2G1: Item 1", QI.mk "S2G1: Item 2", QI.mk "S2G1: Item 3" ]
+            , QG.mk [ "group-2" ] "S2: Group 2"
+                /\ [ QI.mk "S2G2: Item 1", QI.mk "S1G2: Item 2", QI.mk "S2G2: Item 3", QI.mk "S2G2: Item 4" ]
+            ]
+    ]
+
+
 component :: forall query input output m. MonadAff m => MonadEffect m => H.Component query input output m
 component = H.mkComponent
     { initialState: \_ -> { report: Nothing }
@@ -88,22 +111,7 @@ component = H.mkComponent
         handleAction = case _ of
             Skip -> H.modify_ \s -> s
             Initialize -> do
-                gameCollection <- H.liftAff $ do
-                    { json } <- F.fetch "./games-collection.json"
-                        { method: F.GET
-                        , headers: { "Content-Type": "application/json" }
-                        }
-
-                    dhallGameCollection :: GL.FromDhall <- F.fromJSON json
-
-                    let gameCollection  = GL.dhallToAchievements dhallGameCollection
-
-                    liftEffect $ Console.log $ String.joinWith " :: "
-                        $  Tuple.uncurry (\game achs -> GL.gameName game <> " " <> (show $ GL.totalAchievements achs))
-                        <$> gameCollection
-
-                    pure gameCollection
-                H.modify_ \s -> s { report = Just $ GL.fromArray gameCollection}
+                H.modify_ \s -> s { report = Just initialReport }
 
 
 reportComponent :: forall query output m. MonadEffect m => H.Component query RR output m
