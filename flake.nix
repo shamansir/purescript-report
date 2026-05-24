@@ -23,7 +23,7 @@
                        ps-overlay.overlays.default
                      ];
         };
-        
+
         # Build dependencies (required for nix run/build)
         buildDependencies = [
           pkgs.esbuild
@@ -33,12 +33,12 @@
           # pkgs.nodejs
           pkgs.dhall
         ];
-        
+
         # Development-only dependencies (IDE support, etc.)
         devOnlyDependencies = [
           pkgs.dhall-lsp-server
         ];
-        
+
         myPackage =
             pkgs.mkSpagoDerivation {
               spagoYaml = ./spago.yaml;
@@ -60,7 +60,7 @@
 
         myApp = {
             type = "app";
-            program = "sh ./serve.sh";
+            program = "sh ./serve-demo-games-nix.sh";
         };
 
       in
