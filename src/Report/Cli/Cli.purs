@@ -5,6 +5,7 @@ import Prelude
 import Effect (Effect)
 import Effect.Exception (throw)
 
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Either (Either(..), either)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
@@ -26,23 +27,28 @@ import Report.Convert.Converter as Conv
 main :: Effect Unit
 main =
     execParser commandInfo
-    >>= loadCommands
-    >>= traverse Conv.runCommand
+    >>= loadSetup
+    >>= performSetup
+
+
+type CliConfig = Either ConfigFileSource Conv.Setup
+
+
+performSetup :: Conv.Setup -> Effect Unit
+performSetup setup =
+    let options = fromMaybe Conv.defaultOptions setup.options
+    in traverse (Conv.runCommand options) setup.commands
     >>= mempty
 
 
-type CliConfig = Either ConfigFileSource Conv.Command
-
-
-loadCommands :: CliConfig -> Effect (NonEmptyArray Conv.Command)
-loadCommands (Right cmd) = pure $ pure cmd
-loadCommands (Left (ConfigFileSource configFilePath)) = do
+loadSetup :: CliConfig -> Effect Conv.Setup
+loadSetup (Right setup) = pure setup
+loadSetup (Left (ConfigFileSource configFilePath)) = do
     configFileText <- readTextFile UTF8 configFilePath
     either
         (Conv.printYamlDecodeError >>> throw)
         pure
-        $ map _.commands
-        $ Conv.commandsFromYaml configFileText
+        $ Conv.loadSetupFromYaml configFileText
 
 
 appArgsParser :: Parser CliConfig
@@ -50,7 +56,7 @@ appArgsParser =
     (Left <$> configFileSource) <|> (Right <$> pureArgsCommandParser)
 
 
-pureArgsCommandParser :: Parser Conv.Command
+pureArgsCommandParser :: Parser Conv.Setup
 pureArgsCommandParser = ado
     theInput <- input
     theOutput <- output
@@ -58,7 +64,12 @@ pureArgsCommandParser = ado
     from <- from
     to <- to
 
-    in Convert { from, to } { input : theInput, output : theOutput } Conv.defaultOptions [] -- TODO
+    verbose <- verbose
+
+    in
+        { options : Just { verbose }
+        , commands : pure $ Convert { from, to } { input : theInput, output : theOutput } [] -- TODO
+        }
 
 
 input :: Parser Input
@@ -95,6 +106,13 @@ stdOutput :: Parser Output
 stdOutput = flag' StdOutput
     (  long "stdout"
     <> help "Write to stdout" )
+
+
+verbose :: Parser Boolean
+verbose = switch
+    (  long "verbose"
+    <> short 'v'
+    <> help "Verbose or not" )
 
 
 from :: Parser ReportFormat

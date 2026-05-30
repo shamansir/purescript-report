@@ -51,8 +51,8 @@ spec :: Spec Unit
 spec =
     describe "convert" do
       it "from `dhall` to `rep` (plain)" do
-        let cmdToRun = Convert { from : Dhall, to : Rep } { input : FileInput onlyFewGamesFilePath, output : NullOutput } defaultOptions []
-        commandResult <- liftEffect $ runCommand cmdToRun
+        let cmdToRun = Convert { from : Dhall, to : Rep } { input : FileInput onlyFewGamesFilePath, output : NullOutput } []
+        commandResult <- liftEffect $ runCommand defaultOptions cmdToRun
         either
             (\error -> A.fail $ "Errors: " <> printImportError error)
             (\(rawReport /\ reportRepStr) -> do

@@ -307,12 +307,14 @@ spec =
                 convertArtistsReportToSmos = unwrap >>> Smos.toSmos @AR.ArtistReport @SubjectId @RawTag @RawTag IncludeAll
             -}
 
+            let options = defaultOptions
+
             it "round-trips smos→smos preserving structure" do
                 let cmdToRun = Convert
                         { from: CT.Smos, to: CT.Smos }
                         { input: FileInput simpleSmosSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) -> smosStr `U.shouldEqual` expectedRoundTripSmos)
@@ -324,8 +326,8 @@ spec =
                         { input: FileInput "test/games-samples/AstralChain.rep"
                         , output: NullOutput
                         }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) -> do
@@ -339,8 +341,8 @@ spec =
                 let cmdToRun = Convert
                         { from: CT.Org, to: CT.Smos }
                         { input: FileInput OrgTest.simpleOrgSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) -> do
@@ -354,8 +356,8 @@ spec =
                 let cmdToRun = Convert
                         { from: CT.Org, to: CT.Smos }
                         { input: FileInput OrgTest.simpleOrgSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) ->
@@ -367,8 +369,8 @@ spec =
                 let cmdToRun = Convert
                         { from: CT.Org, to: CT.Smos }
                         { input: FileInput OrgTest.simpleOrgSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) ->

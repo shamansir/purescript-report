@@ -57,7 +57,7 @@ type Options =
 
 
 data Command
-    = Convert { from :: ReportFormat, to :: ReportFormat } { input :: Input, output :: Output } Options (Array Process)
+    = Convert { from :: ReportFormat, to :: ReportFormat } { input :: Input, output :: Output } (Array Process)
 
 
 type CommandRunResult = Either ImportError (RawReport /\ String)
@@ -67,20 +67,14 @@ defaultOptions :: Options
 defaultOptions = { verbose : false }
 
 
-getOptions :: Command -> Options
-getOptions = case _ of
-    Convert _ _ opts _ -> opts
-
-
-runCommand :: Command -> Effect CommandRunResult
-runCommand command = do
-    let options = getOptions command
+runCommand :: Options -> Command -> Effect CommandRunResult
+runCommand options command = do
     when options.verbose do
         Console.log $ commandDescription command
         Console.log "------------------------------"
         Console.log "------------------------------"
     returnValue <- case command of
-        Convert fmt pipe _ _ -> do
+        Convert fmt pipe _ -> do
             mbReportStr <- case pipe.input of
                 FileInput filePath ->
                     case fmt.from of
@@ -113,7 +107,7 @@ runCommand command = do
 
 commandDescription :: Command -> String
 commandDescription = case _ of
-    Convert fmt pipe _ process ->
+    Convert fmt pipe process ->
         if (fmt.from == fmt.to)
             then "View " <> descInput pipe.input <> " in " <> descFormat fmt.from <> " format and show it in " <> descOutput pipe.output <> ". " <> descProcess process
             else "Convert " <> descInput pipe.input <> " from " <> descFormat fmt.from <> " to " <> descFormat fmt.to <> " and write it to " <> descOutput pipe.output <> ". " <> descProcess process
@@ -190,7 +184,7 @@ instance DecodeJson Command where
         to     <- formatFromStr <$> AG.getField cmdObj "to"
         input  <- (FileInput    <$> AG.getField cmdObj "in-file")  <|> (SampleIn <$> SampleId <$> AG.getField   cmdObj "in-sample")  <|> pure StdInput
         output <- (FileOutput   <$> AG.getField cmdObj "out-file") <|> (const Screen          <$>  getUnitField cmdObj "out-screen") <|> pure StdOutput
-        pure $ Convert { from, to } { input, output } defaultOptions []
+        pure $ Convert { from, to } { input, output } []
         where
             getUnitField :: FO.Object AG.Json -> String -> Either AG.JsonDecodeError Unit
             getUnitField obj f = AG.getField obj f
@@ -207,8 +201,11 @@ decodeFromYaml :: forall a. DecodeJson a => String -> YamlDecodeResult a
 decodeFromYaml = parseYAMLToJson >>> runExcept  >>> lmap Left >>> flip bind (decodeJson >>> lmap Right)
 
 
-commandsFromYaml :: String -> YamlDecodeResult { commands :: NonEmptyArray Command }
-commandsFromYaml = decodeFromYaml
+type Setup = { options :: Maybe Options, commands :: NonEmptyArray Command }
+
+
+loadSetupFromYaml :: String -> YamlDecodeResult Setup
+loadSetupFromYaml = decodeFromYaml
 
 
 printYamlDecodeError :: YamlDecodeError -> String

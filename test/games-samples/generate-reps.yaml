@@ -1,3 +1,5 @@
+# options:
+#   verbose: true
 commands:
     - from: dhall
       to: rep

@@ -239,12 +239,14 @@ spec =
 
         describe "export" do
 
+            let options = defaultOptions
+
             it "org→smos includes task state-history entries" do
                 let cmdToRun = Convert
                         { from: CT.Org, to: CT.Smos }
                         { input: FileInput simpleOrgSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) -> do
@@ -258,8 +260,8 @@ spec =
                 let cmdToRun = Convert
                         { from: CT.Org, to: CT.Smos }
                         { input: FileInput simpleOrgSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) ->
@@ -271,8 +273,8 @@ spec =
                 let cmdToRun = Convert
                         { from: CT.Org, to: CT.Smos }
                         { input: FileInput simpleOrgSamplePath, output: NullOutput }
-                        defaultOptions []
-                commandResult <- liftEffect $ runCommand cmdToRun
+                        []
+                commandResult <- liftEffect $ runCommand options cmdToRun
                 either
                     (\err -> A.fail $ "Failed: " <> printImportError err)
                     (\(_ /\ smosStr) ->
