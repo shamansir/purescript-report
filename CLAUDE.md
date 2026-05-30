@@ -11,8 +11,8 @@ spago build
 # Run tests
 spago test
 
-# Bundle web demo (output to ./web/app.js)
-spago bundle --module Demo.WebApp --outfile ./web/app.js --platform browser --bundle-type app
+# Bundle web demo (output to ./web/demo-games-app.js)
+spago bundle --module Demo.GamesWebApp --outfile ./web/demo-games-app.js --platform browser --bundle-type app
 
 # Serve demo locally on port 1238 (bundles + serves via Parcel)
 ./serve-demo-nix.sh

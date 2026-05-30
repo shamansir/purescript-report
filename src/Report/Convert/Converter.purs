@@ -6,25 +6,20 @@ import Effect (Effect)
 import Effect.Console as Console
 
 import Control.Alt ((<|>))
-import Control.Monad.Except (runExcept)
 
-import Foreign (ForeignError, renderForeignError)
 import Foreign.Object as FO
 
 import Data.Either (Either(..), note, either)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.List.NonEmpty (NonEmptyList)
-import Data.List.NonEmpty as NEL
-import Data.String (toUpper, joinWith) as String
+import Data.String (toUpper) as String
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Bifunctor (lmap, rmap)
 
 import Data.Argonaut.Core (toObject, Json) as AG
-import Data.Argonaut.Decode (class DecodeJson, decodeJson)
-import Data.Argonaut.Decode.Error as AG
-import Data.Argonaut.Decode.Combinators as AG
-import Data.YAML.Foreign.Decode (parseYAMLToJson)
+import Data.Argonaut.Decode (class DecodeJson)
+import Data.Argonaut.Decode.Error (JsonDecodeError(..)) as AG
+import Data.Argonaut.Decode.Combinators (getField) as AG
+import Data.Yaml.Extra (YamlDecodeResult, decodeFromYaml)
 
 import Node.Encoding (Encoding(..))
 -- import Node.FS.Sync (readTextFile)
@@ -195,20 +190,8 @@ instance DecodeJson Command where
 
 
 
-type YamlDecodeError = Either (NonEmptyList ForeignError) AG.JsonDecodeError
-type YamlDecodeResult a = Either YamlDecodeError a
-
-
-decodeFromYaml :: forall a. DecodeJson a => String -> YamlDecodeResult a
-decodeFromYaml = parseYAMLToJson >>> runExcept  >>> lmap Left >>> flip bind (decodeJson >>> lmap Right)
-
-
 type Setup = { options :: Maybe Options, commands :: NonEmptyArray Command }
 
 
 loadSetupFromYaml :: String -> YamlDecodeResult Setup
 loadSetupFromYaml = decodeFromYaml
-
-
-printYamlDecodeError :: YamlDecodeError -> String
-printYamlDecodeError = either (NEL.toUnfoldable >>> map renderForeignError >>> String.joinWith " ; ") AG.printJsonDecodeError

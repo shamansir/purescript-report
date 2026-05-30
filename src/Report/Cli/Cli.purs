@@ -7,9 +7,8 @@ import Effect.Exception (throw)
 
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Either (Either(..), either)
-import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Array.NonEmpty as NEA
 import Data.Traversable (traverse)
+import Data.Yaml.Extra (printYamlDecodeError) as Yaml
 
 import Control.Alt ((<|>))
 
@@ -46,7 +45,7 @@ loadSetup (Right setup) = pure setup
 loadSetup (Left (ConfigFileSource configFilePath)) = do
     configFileText <- readTextFile UTF8 configFilePath
     either
-        (Conv.printYamlDecodeError >>> throw)
+        (Yaml.printYamlDecodeError >>> throw)
         pure
         $ Conv.loadSetupFromYaml configFileText
 

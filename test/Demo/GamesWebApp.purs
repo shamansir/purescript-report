@@ -1,4 +1,4 @@
-module Demo.WebApp where
+module Demo.GamesWebApp where
 
 import Prelude
 
