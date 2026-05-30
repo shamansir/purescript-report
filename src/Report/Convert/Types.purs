@@ -103,7 +103,7 @@ derive newtype instance ReadForeign ReportToImport
 
 data Input
     = FileInput String
-    | SampleIn {- which -}
+    | SampleIn SampleId
     | StdInput
 
 
@@ -122,13 +122,17 @@ data ImportError
     -- | ImportError String
 
 
+newtype SampleId = SampleId String
+derive instance Newtype SampleId _
+
+
 printImportError :: ImportError -> String
 printImportError = case _ of
     FromParser sperr -> SP.printParserError sperr
     FromJson ferr -> String.joinWith "; " $ F.renderForeignError <$> NEL.toUnfoldable ferr
     FailedToReadInput input -> "Failed to read input: " <> case input of
         FileInput filePath -> "File: " <> filePath
-        SampleIn -> "Sample Input"
+        SampleIn sampleId -> "Sample Input: " <> unwrap sampleId
         StdInput -> "Standard Input"
     UnsupportedFormat fmt -> "Unsupported format: " <> show fmt
     -- ImportError ierr -> ierr

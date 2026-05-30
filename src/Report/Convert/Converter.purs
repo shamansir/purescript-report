@@ -5,10 +5,25 @@ import Prelude
 import Effect (Effect)
 import Effect.Console as Console
 
-import Data.Either (Either(..), note)
-import Data.Maybe (Maybe(..))
-import Data.String (toUpper) as String
+import Control.Alt ((<|>))
+import Control.Monad.Except (runExcept)
+
+import Foreign (ForeignError, renderForeignError)
+import Foreign.Object as FO
+
+import Data.Either (Either(..), note, either)
+import Data.Maybe (Maybe(..), maybe)
+import Data.List.NonEmpty (NonEmptyList)
+import Data.List.NonEmpty as NEL
+import Data.String (toUpper, joinWith) as String
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Bifunctor (lmap, rmap)
+
+import Data.Argonaut.Core (toObject, Json) as AG
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Decode.Error as AG
+import Data.Argonaut.Decode.Combinators as AG
+import Data.YAML.Foreign.Decode (parseYAMLToJson)
 
 import Node.Encoding (Encoding(..))
 -- import Node.FS.Sync (readTextFile)
@@ -20,7 +35,7 @@ import Node.ChildProcess (execSync)
 import Node.Buffer (toString) as Buffer
 
 import Report.Core (ReportFormat(..))
-import Report.Convert.Types (ImportError(..), Input(..), Output(..), printImportError)
+import Report.Convert.Types (ImportError(..), Input(..), Output(..), SampleId(..), printImportError)
 import Report.Decorators.Tags (RawTag, RawTagKind, TagAction)
 -- import Report.Convert.Rep.Import
 import Report.Impl.Subject (SubjectId)
@@ -42,7 +57,9 @@ type Options =
 
 data Command
     = Convert { from :: ReportFormat, to :: ReportFormat } { input :: Input, output :: Output } Options (Array Process)
-    -- | Edit
+
+
+type CommandRunResult = Either ImportError (RawReport /\ String)
 
 
 defaultOptions :: Options
@@ -54,7 +71,7 @@ getOptions = case _ of
     Convert _ _ opts _ -> opts
 
 
-runCommand :: Command -> Effect (Either ImportError (RawReport /\ String))
+runCommand :: Command -> Effect CommandRunResult
 runCommand command = do
     let options = getOptions command
     when options.verbose do
@@ -72,7 +89,7 @@ runCommand command = do
                             when options.verbose $ Console.log jsonFromDhallText
                             pure $ Just jsonFromDhallText
                         _ -> Just <$> readTextFile UTF8 filePath
-                SampleIn -> pure Nothing
+                SampleIn _ -> pure Nothing
                 StdInput -> readStdin
             let eConvertedReport = readReport fmt.from =<< note (FailedToReadInput pipe.input) mbReportStr
             case eConvertedReport of
@@ -102,7 +119,7 @@ commandDescription = case _ of
     where
         descInput = case _ of
             FileInput path -> "file at " <> path
-            SampleIn -> "sample"
+            SampleIn sampleId -> "sample"
             StdInput -> "`stdin`"
         descOutput = case _ of
             Screen -> "screen"
@@ -163,3 +180,35 @@ formatToStr = case _ of
     Rep   -> "rep"
     Text  -> "text"
     Smos  -> "smos"
+
+
+instance DecodeJson Command where
+    decodeJson s = do
+        cmdObj <- maybe (Left $ AG.TypeMismatch "Command is not an object.") Right $ AG.toObject s
+        from   <- formatFromStr <$> AG.getField cmdObj "from"
+        to     <- formatFromStr <$> AG.getField cmdObj "to"
+        input  <- (FileInput    <$> AG.getField cmdObj "from-file") <|> (SampleIn <$> SampleId <$> AG.getField   cmdObj "from-sample") <|> pure StdInput
+        output <- (FileOutput   <$> AG.getField cmdObj "to-file")   <|> (const Screen          <$>  getUnitField cmdObj "to-screen")   <|> pure StdOutput
+        pure $ Convert { from, to } { input, output } defaultOptions []
+        where
+            getUnitField :: FO.Object AG.Json -> String -> Either AG.JsonDecodeError Unit
+            getUnitField obj f = AG.getField obj f
+            -- unitVal :: Either AG.JsonDecodeError Unit
+            -- unitVal = pure unit
+
+
+
+type YamlDecodeError = Either (NonEmptyList ForeignError) AG.JsonDecodeError
+type YamlDecodeResult a = Either YamlDecodeError a
+
+
+decodeFromYaml :: forall a. DecodeJson a => String -> YamlDecodeResult a
+decodeFromYaml = parseYAMLToJson >>> runExcept  >>> lmap Left >>> flip bind (decodeJson >>> lmap Right)
+
+
+commandFromYaml :: String -> YamlDecodeResult Command
+commandFromYaml = decodeFromYaml
+
+
+printYamlDecodeError :: YamlDecodeError -> String
+printYamlDecodeError = either (NEL.toUnfoldable >>> map renderForeignError >>> String.joinWith " ; ") AG.printJsonDecodeError

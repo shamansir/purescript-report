@@ -3,10 +3,16 @@ module Report.Cli where
 import Prelude
 
 import Effect (Effect)
+import Effect.Exception (throw)
+
+import Data.Either (Either(..), either)
 
 import Control.Alt ((<|>))
 
 import Options.Applicative
+
+import Node.Encoding (Encoding(..))
+import Node.FS.Sync (readTextFile)
 
 import Report.Core (ReportFormat(..))
 import Report.Convert.Types (Input(..), Output(..))
@@ -15,11 +21,29 @@ import Report.Convert.Converter as Conv
 
 
 main :: Effect Unit
-main = mempty =<< Conv.runCommand =<< execParser commandInfo
+main = mempty =<< Conv.runCommand =<< loadCommand =<< execParser commandInfo
 
 
-commandParser :: Parser Conv.Command
-commandParser = ado
+type CliConfig = Either ConfigFileSource Conv.Command
+
+
+loadCommand :: CliConfig -> Effect Conv.Command
+loadCommand (Right cmd) = pure cmd
+loadCommand (Left (ConfigFileSource configFilePath)) = do
+    configFileText <- readTextFile UTF8 configFilePath
+    either
+        (Conv.printYamlDecodeError >>> throw)
+        pure
+        $ Conv.commandFromYaml configFileText
+
+
+appArgsParser :: Parser CliConfig
+appArgsParser =
+    (Left <$> configFileSource) <|> (Right <$> pureArgsCommandParser)
+
+
+pureArgsCommandParser :: Parser Conv.Command
+pureArgsCommandParser = ado
     theInput <- input
     theOutput <- output
 
@@ -83,8 +107,20 @@ to = Conv.formatFromStr <$> strOption
     <> help "Output format" )
 
 
-commandInfo :: ParserInfo Command
-commandInfo = info (commandParser <**> helper)
+
+newtype ConfigFileSource = ConfigFileSource String
+
+
+configFileSource :: Parser ConfigFileSource
+configFileSource = ConfigFileSource <$> strOption
+    (  long "conf"
+    <> short 'c'
+    <> metavar "CONFIG"
+    <> help "Configuration file" )
+
+
+commandInfo :: ParserInfo CliConfig
+commandInfo = info (appArgsParser <**> helper)
     ( fullDesc
     <> progDesc "Convert reports from one format to another, or just view them"
     <> header "purescript-report - unified format for displaying and manipulating different kinds of structured reports" )
