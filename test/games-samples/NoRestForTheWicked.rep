@@ -155,16 +155,12 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
         - Index // index
         ; INT. 11
             Servant of God, part 3
-            : TSK. TODO
             : PRG. TODO
             Of Rats and Raiders, part 1
-            : TSK. TODO
             : PRG. TODO
             Spilled Blood, part 1
-            : TSK. TODO
             : PRG. TODO
             Spoken and Unspoken, part 5
-            : TSK. TODO
             : PRG. TODO
         GRP. Completed // 01-completed
         - Path // path
@@ -181,19 +177,14 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
     - Index // index
     ; INT. 13
         The Shallows
-        : TSK. DONE
         : PRG. DONE
         Mariner's Keep
-        : TSK. DONE
         : PRG. DONE
         Orbran Glades
-        : TSK. DONE
         : PRG. DONE
         Sacrament (Home)
-        : TSK. DONE
         : PRG. DONE
         Nameless Pass
-        : TSK. DONE
         : PRG. DONE
     GRP. Blueprints & Recipes // 06-blueprints-recipes
     - Path // path
@@ -206,10 +197,8 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
         - Index // index
         ; INT. 15
             Claymore
-            : TSK. DONE
             : PRG. DONE
             Petaled Spear
-            : TSK. DONE
             : PRG. DONE
         GRP. Armor // 01-armor
         - Path // path
@@ -217,16 +206,12 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
         - Index // index
         ; INT. 16
             Reckless Talbear Scarb
-            : TSK. DONE
             : PRG. DONE
             Reckless Talbear Gloves
-            : TSK. DONE
             : PRG. DONE
             Reckless Talbear Helmet
-            : TSK. DONE
             : PRG. DONE
             Reckless Talbear Pants
-            : TSK. DONE
             : PRG. DONE
         GRP. Food // 02-food
         - Path // path
@@ -234,22 +219,16 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
         - Index // index
         ; INT. 17
             Fish Skewer
-            : TSK. DONE
             : PRG. DONE
             Mushroom & Meat Curry
-            : TSK. DONE
             : PRG. DONE
             Crab Chowder
-            : TSK. DONE
             : PRG. DONE
             Crab Stuffed Mushroom
-            : TSK. DONE
             : PRG. DONE
             Dracaena Dumplings
-            : TSK. DONE
             : PRG. DONE
             Mushroom Soup
-            : TSK. DONE
             : PRG. DONE
         GRP. Decorations // 03-decorations
         - Path // path
@@ -257,11 +236,8 @@ SBJ. No Rest For The Wicked // no-rest-for-the-wicked
         - Index // index
         ; INT. 18
             Wayfarer's Rest Bed
-            : TSK. DONE
             : PRG. DONE
             Small Chest
-            : TSK. DONE
             : PRG. DONE
             Medium Chest
-            : TSK. DONE
             : PRG. DONE

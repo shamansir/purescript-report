@@ -162,9 +162,9 @@ fromDhall jsonStr =
         dhallConvertItem :: DhallItemRec -> Maybe item
         dhallConvertItem itemRec =
             let mbProgress = itemRec.value <#> Progress.rawToProgressJson >>= Progress.fromJson
-                mbTask     = mbProgress >>= case _ of
-                    Task taskP -> Just taskP
-                    _          -> Nothing
+                -- mbTask     = mbProgress >>= case _ of
+                --     Task taskP -> Just taskP
+                --     _          -> Nothing
             in convertItem @subj_id @subj_tag @item_tag @subj @group @item @x
                 (Impl.Item
                     { title : fromMaybe (fromMaybe "???" itemRec.title) itemRec.key
@@ -173,8 +173,8 @@ fromDhall jsonStr =
                             $ Array.catMaybes
                             $ Array.cons
                                 ( mbProgress       <#> Dec.SProgress <#> \p -> Dec.keyOf p /\ p )
-                                [ mbTask           <#>                   \t -> Dec.KTask        /\ Dec.PTask t -- FIXME: could duplicate task since takes from decorator
-                                , itemRec.detailed <#>                   \d -> Dec.KDescription /\ Dec.SDescription d
+                                -- [ mbTask        <#>                   \t -> Dec.KTask        /\ Dec.PTask t -- FIXME: could duplicate task since takes from decorator
+                                [ itemRec.detailed <#>                   \d -> Dec.KDescription /\ Dec.SDescription d
                                 , itemRec.selfRef  <#> pathFromRef   <#> \p -> Dec.KReference   /\ Dec.SReference p
                                 , itemRec.date     <#>                   \d -> Dec.KEarnedAt    /\ Dec.SEarnedAt (CT.dateFromRec d)
                                 ]

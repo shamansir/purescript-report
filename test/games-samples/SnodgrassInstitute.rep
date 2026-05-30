@@ -40,36 +40,28 @@ SBJ. Snodgrass Institute for Mundane Phenomena // snodgrass-institute
     - Index // index
     ; INT. 1
         Toast Trajectory Study (butter-side-down)
-        : TSK. DOING
         : PRG. DOING
         : DSC. 1000 drops planned; 847 confirmed butter-down so far
         Queue Migration Theorem: Phase III
-        : TSK. TODO
         : PRG. TODO
         : DSC. Why does the other queue always move faster?
         Remote Control Uncertainty Principle
-        : TSK. NOW
         : PRG. NOW
         : DSC. CRITICAL: whereabouts unknown; last seen near sofa (2019)
         Tea Temperature Optimality Survey
-        : TSK. WAIT
         : PRG. WAIT
         : DSC. Awaiting 400 additional teapot deliveries for Phase II
         Optimal Biscuit Dunking Protocol
-        : TSK. DONE
         : PRG. DONE
         : ERN. <2024-11-03>
         : DSC. Result: 4.2 sec in 73°C tea (chocolate digestive only)
         Left Sock Weather Correlation Study
-        : TSK. LATER
         : PRG. LATER
         : DSC. Deferred: awaiting meteorological cooperation agreement
         Elevator Button Pressing Efficacy
-        : TSK. CANCELED
         : PRG. CANCELED
         : DSC. Terminated: buttons disconnected since 1994 (see memo #4471)
         Fridge Light Observation Project
-        : TSK. TODO
         : PRG. TODO
         : DSC. Blocked by ethics committee (Schrödinger compliance issue)
     GRP. Measurement Lab: Units // 02-measurements
@@ -223,7 +215,6 @@ SBJ. Snodgrass Institute for Mundane Phenomena // snodgrass-institute
             Certificate of Mild Effort
             : CMP. DONE
             Certificate of Occasional Presence
-            : TSK. DOING
             : PRG. DOING
             Certificate of Marginal Contribution
             : CMP. TODO
@@ -235,7 +226,6 @@ SBJ. Snodgrass Institute for Mundane Phenomena // snodgrass-institute
     - Index // index
     ; INT. 10
         Observation #1: The Missing Stapler Phenomenon
-        : TSK. DOING
         : PRG. DOING
         # urgent
         # recurring
@@ -245,7 +235,6 @@ SBJ. Snodgrass Institute for Mundane Phenomena // snodgrass-institute
         : ERN. <2024-09-12>
         : DSC. Comprehensive boiling pattern analysis under controlled observation
         Form #88-B: Inter-departmental Nudge Request
-        : TSK. TODO
         : PRG. TODO
         # form
         # nudge
@@ -258,6 +247,5 @@ SBJ. Snodgrass Institute for Mundane Phenomena // snodgrass-institute
         : DSC. Details classified — patent application pending (filed: never)
         : UNK. .
         PROC value via v_proc helper
-        : TSK. DOING
         : PRG. DOING
         : DSC. Same result as p_doing; demonstrates v_proc + PROC_ form

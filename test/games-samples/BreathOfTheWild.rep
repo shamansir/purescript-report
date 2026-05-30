@@ -72,483 +72,363 @@ SBJ. Zelda: Breath of the Wild // zelda-breath-of-the-wild
     - Index // index
     ; INT. 2
         Oman Au :: Great Plateau
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-001
         Ja Baij :: Great Plateau
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-002
         Owa Daim :: Great Plateau
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-003
         Keh Namut :: Great Plateau
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-004
         Bosh Kala :: Dueling Peaks
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-005
         Toto Sah :: Dueling Peaks
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-006
         Shee Vaneer :: Dueling Peaks
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-007
         Ree Dahee :: Dueling Peaks
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-008
         Shee Venath :: Dueling Peaks
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-009
         Ha Dahamar :: Dueling Peaks
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-010
         Ta'loh Naeg :: Dueling Peaks
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-011
         Hila Rao :: Dueling Peaks
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-012 :: Watch Out for the Flowers
         Lakna Rokee :: Dueling Peaks
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-013 :: The Stolen Heirloom
         Chaas Qeta :: Hateno
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-014
         Myahm Agana :: Hateno
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-015
         Tahno O'ah :: Hateno
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-016 :: Secret of the Cedars
         Jitan Sa'mi :: Hateno
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-017 :: The Spring of Wisdom
         Dow Na'eh :: Hateno
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-018
         Kam Urog :: Hateno
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-019 :: The Cursed Statue
         Mezza Lo :: Hateno
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-020 :: The Crowned Beast
         Daka Tuss :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-021
         Kaya Wan :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-022
         Soh Kofi :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-023
         Sheh Rata :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-024
         Rucco Maag :: Lanayru
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-025
         Shai Yota :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-026 :: Master of the Wind
         Dagah Keek :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-027 :: The Ceremonial Song
         Ne'ez Yohma :: Lanayru
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-028
         Kah Mael :: Lanayru
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-029
         Rona Kachta :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-030
         Monya Toma :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-031
         Kuhn Sidajj :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-032 :: Trial of Second Sight
         Daag Chokah :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-033 :: The Lost Pilgrimage
         Keo Ruug :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-034
         Maag Halan :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-035 :: The Test of Wood
         Ketoh Wawai :: Woodland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-036 :: Shrouded Shrine
         Mirro Shaz :: Woodland
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-037
         Dah Kaso :: Central
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-038
         Rota Ooh :: Central
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-039
         Wahgo Katta :: Central
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-040
         Kaam Ya'tak :: Central
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-041
         Katah Chuki :: Central
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-042
         Noya Neha :: Central
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-043
         Saas Ko'sah :: Central
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-044
         Namika Ozz :: Central
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-045
         Ishto Soh :: Lake
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-046
         Shoqa Tatone :: Lake
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-047 :: Guardian Slideshow
         Ka'o Makagh :: Lake
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-048
         Pumaag Nitae :: Lake
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-049
         Ya Naga :: Lake
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-050
         Shae Katha :: Lake
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-051 :: The Serpent's Jaws
         Shai Utoh :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-052
         Qukah Nata :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-053 :: A Song of Storms
         Shoda Sah :: Faron
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-054
         Tawa Jinn :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-055 :: The Three Giant Brothers
         Yah Rin :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-056
         Kah Yah :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-057 :: A Fragmented Monument
         Muwo Jeem :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-058
         Korgu Chideh :: Faron
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-059 :: Stranded on Eventide
         Mijah Rokee :: Ridgeland
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-060 :: Under a Red Moon
         Shae Loya :: Ridgeland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-061
         Sheem Dagoze :: Ridgeland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-062 :: The Two Rings
         Mogg Latan :: Ridgeland
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-063
         Zalta Wa :: Ridgeland
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-064
         Maag No'rah :: Ridgeland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-065
         Toh Yahsa :: Ridgeland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-066 :: Trial of Thunder
         Sha Warvo :: Tabantha
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-067
         Voo Lota :: Tabantha
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-068 :: Recital at Warbler's Nest
         Akh Va'quot :: Tabantha
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-069
         Bareeda Naag :: Tabantha
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-070 :: The Ancient Rito Song
         Tena Ko'sah :: Tabantha
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-071
         Kah Okeo :: Tabantha
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-072
         Hia Miu :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-073
         To Quomo :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-074
         Mozo Shenno :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-075 :: The Bird in the Mountains
         Shada Naw :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-076
         Rok Uwog :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-077
         Sha Gehma :: Hebra
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-078
         Qaza Tokki :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-079 :: Trial on the Cliff
         Goma Asaagh :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-080
         Maka Rah :: Hebra
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-081
         Dunba Taag :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-082
         Lanno Kooh :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-083
         Gee Ha'rah :: Hebra
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-084
         Rin Oyaa :: Hebra
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-085
         Hawa Koth :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-086
         Kema Zoos :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-087 :: The Silent Swordswomen
         Tho Kayu :: Wasteland
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-088
         Raqa Zunzo :: Wasteland
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-089 :: The Undefeated Champ
         Misae Suma :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-090 :: The Perfect Drink
         Dila Maag :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-091 :: The Desert Labyrinth
         Korsh O'hu :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-092 :: The Seven Heroines
         Kay Noh :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-093
         Dako Tah :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-094 :: The Eye of the Sandstorm
         Suma Sahma :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-095 :: Secret of the Snowy Peaks
         Jee Noh :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-096
         Daqo Chisay :: Wasteland
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-097
         Keeha Yoog :: Gerudo
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-098 :: Cliffside Etchings
         Kuh Takkar :: Gerudo
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-099
         Kema Kosassa :: Gerudo
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-100
         Sasa Kai :: Gerudo
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-101 :: Sign of the Shadow
         Joloo Nah :: Gerudo
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-102 :: Test of Will
         Sho Dantu :: Gerudo
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-103
         Shora Hah :: Eldin
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-104
         Daqa Koh :: Eldin
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-105
         Qua Raym :: Eldin
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-106
         Tah Muhl :: Eldin
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-107 :: A Landscape of a Stable
         Mo'a Keet :: Eldin
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-108
         Sah Dahaj :: Eldin
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-109
         Gorae Torr :: Eldin
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-110 :: The Gut Check Challenge
         Kayra Mah :: Eldin
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-111 :: A Brother's Roast
         Shae Mo'sah :: Eldin
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-112
         Zuna Kai :: Akkala
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-113 :: The Skull's Eye
         Ze Kasho :: Akkala
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-114
         Ke'nai Shakah :: Akkala
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-115
         Ritaag Zumo :: Akkala
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-116 :: Into the Vortex
         Tutsuwa Nima :: Akkala
-        : TSK. TODO
         : PRG. TODO
         : DSC. BOTW-117 :: The Spring of Power
         Tu Ka'loh :: Akkala
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-118 :: Trial of the Labyrinth
         Dah Hesho :: Akkala
-        : TSK. DOING
         : PRG. DOING
         : DSC. BOTW-119
         Katosa Aug :: Akkala
-        : TSK. DONE
         : PRG. DONE
         : DSC. BOTW-120
     GRP. Towers // 03-towers
@@ -557,62 +437,47 @@ SBJ. Zelda: Breath of the Wild // zelda-breath-of-the-wild
     - Index // index
     ; INT. 3
         Great Plateau Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-001
         Dueling Peaks Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-002
         Hateno Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-003
         Lanayru Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-004
         Faron Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-005
         Lake Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-006
         Central Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-007
         Woodland Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-008
         Eldin Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-009
         Akkala Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-010
         Hebra Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-011
         Tabantha Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-012
         Ridgeland Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-013
         Wasteland Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-014
         Gerudo Tower
-        : TSK. DONE
         : PRG. DONE
         : DSC. TWR-015

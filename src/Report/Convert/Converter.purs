@@ -53,7 +53,9 @@ type Process = TagAction RawTagKind RawTag
 
 
 type Options =
-    { verbose :: Boolean }
+    { verbose :: Boolean
+    -- , logDhallJson :: Boolean
+    }
 
 
 data Command
@@ -72,7 +74,7 @@ runCommand options command = do
     when options.verbose do
         Console.log $ commandDescription command
         Console.log "------------------------------"
-        Console.log "------------------------------"
+        -- Console.log "------------------------------"
     returnValue <- case command of
         Convert fmt pipe _ -> do
             mbReportStr <- case pipe.input of
@@ -81,7 +83,7 @@ runCommand options command = do
                         Dhall -> do
                             jsonFromDhallBuf <- execSync $ "dhall-to-json --file " <> filePath
                             jsonFromDhallText <- Buffer.toString UTF8 jsonFromDhallBuf
-                            when options.verbose $ Console.log jsonFromDhallText
+                            -- when options.logDhallJson $ Console.log jsonFromDhallText
                             pure $ Just jsonFromDhallText
                         _ -> Just <$> readTextFile UTF8 filePath
                 SampleIn _ -> pure Nothing
@@ -101,7 +103,7 @@ runCommand options command = do
                     Console.log "Errors:\n"
                     Console.log $ printImportError importError
                     pure $ Left importError
-    when options.verbose $ Console.log "\n------------------------------\n"
+    -- when options.verbose $ Console.log "\n------------------------------\n"
     pure returnValue
 
 
