@@ -1,0 +1,61 @@
+commands:
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/AstralChain.dhall
+      out-file: ./test/games-samples/AstralChain.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/AnimalCrossing.dhall
+      out-file: ./test/games-samples/AnimalCrossing.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/Balatro.dhall
+      out-file: ./test/games-samples/Balatro.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/BreathOfTheWild.dhall
+      out-file: ./test/games-samples/BreathOfTheWild.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/DoomDarkAges.dhall
+      out-file: ./test/games-samples/DoomDarkAges.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/ForzaHorizon5.dhall
+      out-file: ./test/games-samples/ForzaHorizon5.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/KirbyTheForgottenLand.dhall
+      out-file: ./test/games-samples/KirbyTheForgottenLand.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/LegoCityUndercover.dhall
+      out-file: ./test/games-samples/LegoCityUndercover.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/MarioOdissey.dhall
+      out-file: ./test/games-samples/MarioOdissey.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/NoRestForTheWicked.dhall
+      out-file: ./test/games-samples/NoRestForTheWicked.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/NonogramsKatana.dhall
+      out-file: ./test/games-samples/NonogramsKatana.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/Skyrim.dhall
+      out-file: ./test/games-samples/Skyrim.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/StarlinkBattleOfAtlas.dhall
+      out-file: ./test/games-samples/StarlinkBattleOfAtlas.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/Torchlight2.dhall
+      out-file: ./test/games-samples/Torchlight2.rep
+    - from: dhall
+      to: rep
+      in-file: ./test/games-samples/SnodgrassInstitute.dhall
+      out-file: ./test/games-samples/SnodgrassInstitute.rep

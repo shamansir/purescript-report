@@ -6,6 +6,9 @@ import Effect (Effect)
 import Effect.Exception (throw)
 
 import Data.Either (Either(..), either)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NEA
+import Data.Traversable (traverse)
 
 import Control.Alt ((<|>))
 
@@ -21,20 +24,25 @@ import Report.Convert.Converter as Conv
 
 
 main :: Effect Unit
-main = mempty =<< Conv.runCommand =<< loadCommand =<< execParser commandInfo
+main =
+    execParser commandInfo
+    >>= loadCommands
+    >>= traverse Conv.runCommand
+    >>= mempty
 
 
 type CliConfig = Either ConfigFileSource Conv.Command
 
 
-loadCommand :: CliConfig -> Effect Conv.Command
-loadCommand (Right cmd) = pure cmd
-loadCommand (Left (ConfigFileSource configFilePath)) = do
+loadCommands :: CliConfig -> Effect (NonEmptyArray Conv.Command)
+loadCommands (Right cmd) = pure $ pure cmd
+loadCommands (Left (ConfigFileSource configFilePath)) = do
     configFileText <- readTextFile UTF8 configFilePath
     either
         (Conv.printYamlDecodeError >>> throw)
         pure
-        $ Conv.commandFromYaml configFileText
+        $ map _.commands
+        $ Conv.commandsFromYaml configFileText
 
 
 appArgsParser :: Parser CliConfig
@@ -105,7 +113,6 @@ to = Conv.formatFromStr <$> strOption
     <> value (Conv.formatToStr Rep)
     <> metavar "TO-FORMAT"
     <> help "Output format" )
-
 
 
 newtype ConfigFileSource = ConfigFileSource String

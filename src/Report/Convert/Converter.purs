@@ -13,6 +13,7 @@ import Foreign.Object as FO
 
 import Data.Either (Either(..), note, either)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.List.NonEmpty as NEL
 import Data.String (toUpper, joinWith) as String
@@ -187,8 +188,8 @@ instance DecodeJson Command where
         cmdObj <- maybe (Left $ AG.TypeMismatch "Command is not an object.") Right $ AG.toObject s
         from   <- formatFromStr <$> AG.getField cmdObj "from"
         to     <- formatFromStr <$> AG.getField cmdObj "to"
-        input  <- (FileInput    <$> AG.getField cmdObj "from-file") <|> (SampleIn <$> SampleId <$> AG.getField   cmdObj "from-sample") <|> pure StdInput
-        output <- (FileOutput   <$> AG.getField cmdObj "to-file")   <|> (const Screen          <$>  getUnitField cmdObj "to-screen")   <|> pure StdOutput
+        input  <- (FileInput    <$> AG.getField cmdObj "in-file")  <|> (SampleIn <$> SampleId <$> AG.getField   cmdObj "in-sample")  <|> pure StdInput
+        output <- (FileOutput   <$> AG.getField cmdObj "out-file") <|> (const Screen          <$>  getUnitField cmdObj "out-screen") <|> pure StdOutput
         pure $ Convert { from, to } { input, output } defaultOptions []
         where
             getUnitField :: FO.Object AG.Json -> String -> Either AG.JsonDecodeError Unit
@@ -206,8 +207,8 @@ decodeFromYaml :: forall a. DecodeJson a => String -> YamlDecodeResult a
 decodeFromYaml = parseYAMLToJson >>> runExcept  >>> lmap Left >>> flip bind (decodeJson >>> lmap Right)
 
 
-commandFromYaml :: String -> YamlDecodeResult Command
-commandFromYaml = decodeFromYaml
+commandsFromYaml :: String -> YamlDecodeResult { commands :: NonEmptyArray Command }
+commandsFromYaml = decodeFromYaml
 
 
 printYamlDecodeError :: YamlDecodeError -> String
