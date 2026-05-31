@@ -155,6 +155,7 @@ instance EncodableKey GameId where
             src  = str # String.take 3
             tail = str # String.drop 4
         in case src of
+            "REP" -> if tail /= "" then Just $ REP tail else Nothing
             "DHL" -> if tail /= "" then Just $ DHL tail else Nothing
             "LGS" ->
                 if tail /= "" then

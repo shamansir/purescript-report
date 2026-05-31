@@ -76,6 +76,6 @@ fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> 
         { title : itemRec.title
         , decorators : Decorators.fromArray $ Array.catMaybes $ map convertDecorator <$> _.parsed <$> itemRec.decorators
         , tags : Tags itemRec.tags
-        , tabular : Tabular.empty
+        , tabular : Tabular $ Array.catMaybes $ map (map TV.TVAtomic) <$> _.parsed <$> itemRec.tabulars
         }
     convertDecorator dec = Decorator.keyOf dec /\ dec
