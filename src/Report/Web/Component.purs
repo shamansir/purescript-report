@@ -32,7 +32,7 @@ import Halogen.Query.Event (eventListener)
 import Report as R
 import Report.Builder as RB
 import Report.Chain (Chain)
-import Report.Chain (fromString, toString, length, last, toArray) as Chain
+import Report.Chain (allIn, fromString, toString, length, last, toArray) as Chain
 import Report.Class as R
 import Report.Core (ReportFormat(..))
 
@@ -566,7 +566,7 @@ component cfg =
                         ]
                         $ HH.div [ HP.style "position:absolute;right:0;width:40px;" ]
                             [ groupSelNavigationPinButton ]
-                        : (mapWithIndex groupsSelNavigationItems $ (\subjId -> subjId /\ RB.allGroupsOfC subjId reportBuilder) <$> state.subjects)
+                        : (mapWithIndex groupsSelNavigationItems $ (\subjId -> subjId /\ RB.allGroupsOfCX subjId reportBuilder) <$> state.subjects)
                 else
                     HH.div
                         [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 15%; opacity: 0.5;max-height:2.4em;overflow:scroll;min-height: 2.4em;"

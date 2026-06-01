@@ -20,7 +20,7 @@ module Report.Builder
     {- Groups -}
     , mapGroups
     , allGroups, allGroupsC
-    , allGroupsOf, allGroupsOfC
+    , allGroupsOf, allGroupsOfC, allGroupsOfCX
     , filterGroupsBy, catMaybesOfGroups
     , withGroup, withGroupIdx
     , findGroupBy, findMapGroupBy
@@ -47,7 +47,7 @@ import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Array ((:))
-import Data.Array (head, concat, cons, snoc, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe, take, length) as Array
+import Data.Array (head, concat, cons, snoc, catMaybes, sort, sortWith, sortBy, groupAll, groupAllBy, filter, find, findMap, concatMap, mapMaybe, take, length, nubByEq) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (head, toArray, fromArray) as NEA
 import Data.Array.Extra (groupExt, groupExtBy) as Array
@@ -582,6 +582,14 @@ allGroupsOfC subjId = unwrap >>> map extractGroups >>> Array.concat
         extractGroups (Subject otherSubj groups) | RC.s_id otherSubj == subjId = extractGroupC <$> groups
         extractGroups (Subject otherSubj groups) | otherwise = []
         extractGroupC (Group groupC _) = groupC
+
+
+-- allGroupsOfSubjWithExpandedChains
+allGroupsOfCX :: forall subj_id subj group item. Eq subj_id => RC.IsSubjectId subj_id subj => RC.IsGroup group => subj_id -> Builder subj group item -> Array (Chain group)
+allGroupsOfCX subjId =
+    Array.nubByEq (\a b -> RC.g_path (Chain.last a) == RC.g_path (Chain.last b))
+        <<< Array.concatMap Chain.allIn
+        <<< allGroupsOfC subjId -- TODO: shouldn't it be the default functionality?
 
 
 {- TODO
