@@ -167,3 +167,13 @@ instance WriteForeign Stats where
             writeImpl { type: "NotRelevant", stats : writeImpl "" }
         SYetUnknown ->
             writeImpl { kind: "YetUnknown", stats : writeImpl "" }
+
+
+toProgress :: Stats -> Progress
+toProgress = case _ of
+    SFromProgress progress -> progress
+    SGotTotal { got, total } -> ToGetI { got, total }
+    SWithProgress { got, total } _ -> ToGetI { got, total }
+    SCount { count } -> PInt count
+    SNotRelevant -> None
+    SYetUnknown -> None

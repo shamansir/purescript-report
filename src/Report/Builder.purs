@@ -31,6 +31,7 @@ module Report.Builder
     , mapItems
     , allItems
     , filterItems, filterItemsBy, catMaybesOfItems
+    , replaceItems
     , withItem, withItemIdx
     , sortItems, sortItemsWith, sortItemsBy, sortItemsByWith
     , findItem, findItemBy, findMapItem, findMapItemBy, findMapItems,findMapItemsBy
@@ -638,17 +639,24 @@ mapItems = rmap
 
 
 withItem :: forall subj group itemA itemB. (subj -> Chain group -> itemA -> itemB) -> Builder subj group itemA -> Builder subj group itemB
-withItem imapF = unwrap >>> map mapSubjectF >>> wrap
+withItem imapF = unwrap >>> map mapSubjectF >>> wrap -- TODO: use `replaceItems`
     where
         mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
         mapGroupF s (Group gc items) = Group gc $ (unwrap >>> imapF s gc >>> wrap) <$> items
 
 
 withItemIdx :: forall subj group itemA itemB. (subj -> Chain group -> Int -> itemA -> itemB) -> Builder subj group itemA -> Builder subj group itemB
-withItemIdx imapF = unwrap >>> map mapSubjectF >>> wrap
+withItemIdx imapF = unwrap >>> map mapSubjectF >>> wrap -- TODO: use `replaceItems`
     where
         mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
         mapGroupF s (Group gc items) = Group gc $ mapWithIndex (\idx -> wrap <<< imapF s gc idx <<< unwrap) items
+
+
+replaceItems :: forall subj group itemA itemB. (subj -> Chain group -> Array itemA -> Array itemB) -> Builder subj group itemA -> Builder subj group itemB
+replaceItems updateItemsF = unwrap >>> map mapSubjectF >>> wrap
+    where
+        mapSubjectF (Subject s groups) = Subject s $ mapGroupF s <$> groups
+        mapGroupF s (Group gc items) = Group gc $ wrap <$> (updateItemsF s gc $ unwrap <$> items)
 
 
 sortItems :: forall subj group item. Ord item => Builder subj group item -> Builder subj group item

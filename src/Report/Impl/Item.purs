@@ -101,5 +101,17 @@ catMaybesOfTags (Item itemRec) =
     Item $ itemRec { tags = Tags.catMaybes itemRec.tags }
 
 
+setDecorators :: forall item_tag. Decorators -> Item item_tag -> Item item_tag
+setDecorators = updateDecorators
+
+
+setTags :: forall item_tag. Tags item_tag -> Item item_tag -> Item item_tag
+setTags = updateTags
+
+
+setTabular :: forall item_tag. Tabular TabularValue -> Item item_tag -> Item item_tag
+setTabular nextTabular = unwrap >>> _ { tabular = nextTabular } >>> wrap
+
+
 derive newtype instance ReadForeign  (Item Tags.RawTag)
 derive newtype instance WriteForeign (Item Tags.RawTag)
