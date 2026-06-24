@@ -3,7 +3,7 @@ module Report
     , empty
     , build, buildG
     , toTree, toPlainTree
-    , toBuilder, fromBuilder
+    , toBuilder, fromBuilder, withBuilder
     , unfold, unfoldAll, unfoldC
     -- , fromTreeC
     , class ToReport, toReport
@@ -102,6 +102,7 @@ toBuilder :: forall subj group item. Report subj group item -> B.Builder subj gr
 toBuilder (Report builder) = builder
 
 
+
 unfold :: forall subj group item. Report subj group item -> Array (subj /\ Array (group /\ Array item))
 unfold = toBuilder >>> B.unfold
 
@@ -116,6 +117,10 @@ unfoldAll = toBuilder >>> B.unfoldAll
 
 fromBuilder :: forall subj group item. B.Builder subj group item -> Report subj group item
 fromBuilder = Report
+
+
+withBuilder ::  forall subjA groupA itemA subjB groupB itemB. (B.Builder subjA groupA itemA -> B.Builder subjB groupB itemB) -> Report subjA groupA itemA -> Report subjB groupB itemB
+withBuilder f = toBuilder >>> f >>> fromBuilder
 
 
 toTree :: forall subj group item. Ord group => IsGroup group => Report subj group item -> Tree (B.TreeNode subj group item)

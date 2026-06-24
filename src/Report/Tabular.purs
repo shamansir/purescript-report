@@ -7,7 +7,9 @@ import Data.Array (snoc, sortWith, find) as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.String (joinWith) as String
+import Data.Tuple (curry, uncurry)
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Foldable (foldr)
 
 import Type.Proxy (Proxy(..))
 import Type.Data.Symbol (class IsSymbol, reflectSymbol)
@@ -113,6 +115,14 @@ insert s v (Tabular vs) = Tabular $ Array.snoc vs $ wrap { key : s, label : s, v
 
 insert' :: forall v. String -> String -> v -> Tabular v -> Tabular v
 insert' s l v (Tabular vs) = Tabular $ Array.snoc vs $ wrap { key : s, label : l, value : v }
+
+
+insertMany :: forall v. Array (String /\ v) -> Tabular v -> Tabular v
+insertMany = flip $ foldr $ uncurry insert
+
+
+insertMany' :: forall v. Array (String /\ String /\ v) -> Tabular v -> Tabular v
+insertMany' = flip $ foldr $ \(s /\ l /\ v) -> insert' s l v
 
 
 fromRec :: forall rl row v. RL.RowToList row rl => Record.Keys rl => TabularRow rl row v => Record row -> Tabular v
