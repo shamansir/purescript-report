@@ -102,7 +102,6 @@ toBuilder :: forall subj group item. Report subj group item -> B.Builder subj gr
 toBuilder (Report builder) = builder
 
 
-
 unfold :: forall subj group item. Report subj group item -> Array (subj /\ Array (group /\ Array item))
 unfold = toBuilder >>> B.unfold
 

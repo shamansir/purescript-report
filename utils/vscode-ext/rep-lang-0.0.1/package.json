@@ -1,0 +1,25 @@
+{
+  "name": "rep-lang",
+  "displayName": "REP Report",
+  "description": "Syntax highlighting for .rep report files",
+  "version": "0.0.1",
+  "engines": { "vscode": "^1.0.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "rep",
+        "aliases": ["REP Report", "rep"],
+        "extensions": [".rep"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "rep",
+        "scopeName": "source.rep",
+        "path": "./syntaxes/rep.tmLanguage.json"
+      }
+    ]
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "REP Report",
+  "scopeName": "source.rep",
+  "fileTypes": ["rep"],
+  "patterns": [
+    { "include": "#subject" },
+    { "include": "#group" },
+    { "include": "#tag" },
+    { "include": "#tabular-name" },
+    { "include": "#tabular-value" },
+    { "include": "#decorator" },
+    { "include": "#level-threshold" },
+    { "include": "#item-title" }
+  ],
+  "repository": {
+
+    "subject": {
+      "match": "^(SBJ)(\\. )(.+?)( //.+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.subject.rep" },
+        "2": { "name": "punctuation.separator.rep" },
+        "3": { "name": "entity.name.section.rep" },
+        "4": { "name": "comment.line.rep" }
+      }
+    },
+
+    "group": {
+      "match": "^( *)(GRP)(\\. )(.+?)( //.+)?$",
+      "captures": {
+        "2": { "name": "keyword.control.group.rep" },
+        "3": { "name": "punctuation.separator.rep" },
+        "4": { "name": "entity.name.class.rep" },
+        "5": { "name": "comment.line.rep" }
+      }
+    },
+
+    "tag": {
+      "match": "^( *)(#) (.+)$",
+      "captures": {
+        "2": { "name": "punctuation.definition.tag.rep" },
+        "3": { "name": "entity.name.tag.rep" }
+      }
+    },
+
+    "tabular-name": {
+      "match": "^( *)(-) (.+?)( //.+)?$",
+      "captures": {
+        "2": { "name": "punctuation.definition.variable.rep" },
+        "3": { "name": "variable.other.tabular.rep" },
+        "4": { "name": "comment.line.rep" }
+      }
+    },
+
+    "tabular-value": {
+      "begin": "^( *)(;) ((NON|UNK|INT|NUM|TXT|CMP|PCI|PCN|PCX|GTI|GTN|TIM|DAT|PPI|PPN|MSI|MSN|MSX|RGI|RGN|PRG|LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL|XXX|RAT|PRI|TSK|ERN|DSC|REF|UID|YER|BOL|DTR|DTT|TMR|DMR|TAG)|([A-Z]+))(\\.)(  ?)",
+      "end": "$",
+      "beginCaptures": {
+        "2": { "name": "punctuation.definition.tabular.rep" },
+        "4": { "name": "support.type.rep" },
+        "5": { "name": "invalid.illegal.type.rep" },
+        "6": { "name": "punctuation.separator.rep" }
+      },
+      "patterns": [{ "include": "#value-content" }]
+    },
+
+    "decorator": {
+      "begin": "^( *)(:) ((NON|UNK|INT|NUM|TXT|CMP|PCI|PCN|PCX|GTI|GTN|TIM|DAT|PPI|PPN|MSI|MSN|MSX|RGI|RGN|PRG|LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL|XXX|RAT|PRI|TSK|ERN|DSC|REF|UID|YER|BOL|DTR|DTT|TMR|DMR|TAG)|([A-Z]+))(\\.)(  ?)",
+      "end": "$",
+      "beginCaptures": {
+        "2": { "name": "punctuation.definition.decorator.rep" },
+        "4": { "name": "support.type.rep" },
+        "5": { "name": "invalid.illegal.type.rep" },
+        "6": { "name": "punctuation.separator.rep" }
+      },
+      "patterns": [{ "include": "#value-content" }]
+    },
+
+    "level-threshold": {
+      "begin": "^( *)(>>>)( )",
+      "end": "$",
+      "beginCaptures": {
+        "2": { "name": "keyword.operator.level.rep" }
+      },
+      "patterns": [{ "include": "#value-content" }]
+    },
+
+    "item-title": {
+      "match": "^( +)(?!GRP\\. |- |; |: |# |>>>)(.+)$",
+      "captures": {
+        "2": { "name": "entity.name.rep" }
+      }
+    },
+
+    "value-content": {
+      "patterns": [
+        { "include": "#value-date" },
+        { "include": "#value-time" },
+        { "include": "#value-boolean" },
+        { "include": "#value-relation" },
+        { "include": "#value-path-sep" },
+        { "include": "#value-number" }
+      ]
+    },
+
+    "value-date": {
+      "match": "<[^>]+>",
+      "name": "constant.other.date.rep"
+    },
+
+    "value-time": {
+      "match": "\\b\\d{1,4}:\\d{2}(:\\d{2})?\\b",
+      "name": "constant.numeric.time.rep"
+    },
+
+    "value-boolean": {
+      "match": "\\b(DONE|TODO|DOING)\\b",
+      "name": "constant.language.rep"
+    },
+
+    "value-relation": {
+      "match": "^[><=](?= )",
+      "name": "keyword.operator.relation.rep"
+    },
+
+    "value-number": {
+      "match": "-?\\b\\d+(\\.\\d+)?%?\\b",
+      "name": "constant.numeric.rep"
+    },
+
+    "value-path-sep": {
+      "match": "::",
+      "name": "punctuation.separator.path.rep"
+    }
+
+  }
+}
