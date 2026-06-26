@@ -1,0 +1,109 @@
+# REP (v0.1.0) github.com/shamansir/purescript-report
+
+# REP is a hierarchical text format: Subject → Groups → Items.
+#
+# Line prefixes determine node type (sigil-based, indent-sensitive):
+#
+#   SBJ. <name> [// <id>]          subject header       (column 0)
+#   # <content>                     tag                  (column 0 or indented)
+#   - <label> [// <id>]            tabular field name   (any indent)
+#   ; <MARKER>. <value>             tabular field value  (any indent)
+#   [indent]GRP. <title> [// <id>] group header         (indented)
+#   [indent]: <MARKER>. <value>    item decorator       (indented)
+#   [indent]>>> <content>          continuation line    (indented)
+#   [indent]<text>                 item title           (indented, catch-all)
+#
+# TypeMarker: ValidType is tried first (ordered choice).
+# If none of the 44 defined codes match, UnknownType absorbs the run.
+# The !upper guard on ValidType prevents partial matches (e.g. 'INT' in 'INTO').
+
+SourceFile    <-- (Subject / EndLine)+
+
+# ── Subject ───────────────────────────────────────────────────────────────────
+
+Subject       <-- SubjectHeader
+                  (SubjectTag / SubjectTabular)*
+                  Group*
+
+SubjectHeader <-- 'SBJ. ' SubjectName IdClause? EndLine
+
+SubjectName   <-- (!' // ' !LF unipoint)+
+
+SubjectTag    <-- '# ' TagContent EndLine
+
+SubjectTabular <-- SubjectTabularHeader TabularValueLine
+
+SubjectTabularHeader <-- MINUS SP LabelText IdClause? EndLine
+
+# ── Group ─────────────────────────────────────────────────────────────────────
+
+Group         <-- GroupHeader
+                  TabularEntry*
+                  (Item / Group)*
+
+GroupHeader   <-- SP+ 'GRP. ' GroupTitle IdClause? EndLine
+
+GroupTitle    <-- (!' // ' !LF unipoint)+
+
+# ── Tabular entry (group-level and item-level, unified) ──────────────────────
+
+TabularEntry  <-- TabularHeader TabularValueLine
+
+TabularHeader <-- SP+ MINUS SP LabelText IdClause? EndLine
+
+TabularValueLine <-- SP* SEMI SP TypeMarker DOT SP ValueText EndLine
+                     ContinuationLine*
+
+# ── Item ──────────────────────────────────────────────────────────────────────
+
+Item          <-- ItemTitle
+                  (Decorator / ItemTag / TabularEntry)*
+
+ItemTitle     <-- SP+ ItemTitleText EndLine
+
+ItemTag       <-- SP+ HASH SP TagContent EndLine
+
+Decorator     <-- SP+ COLON SP TypeMarker DOT SP ValueText EndLine
+                  ContinuationLine*
+
+ContinuationLine <-- SP+ '>>> ' ContinuationText EndLine
+
+# ── Shared ────────────────────────────────────────────────────────────────────
+
+IdClause      <-- ' // ' Identifier
+
+# ── Type markers ──────────────────────────────────────────────────────────────
+
+TypeMarker    <-- ValidType / UnknownType
+
+ValidType     <-- ( 'NON' / 'UNK' / 'INT' / 'NUM' / 'TXT' / 'CMP'
+                  / 'PCI' / 'PCN' / 'PCX'
+                  / 'GTI' / 'GTN' / 'TIM' / 'DAT'
+                  / 'PPI' / 'PPN'
+                  / 'MSI' / 'MSN' / 'MSX'
+                  / 'RGI' / 'RGN' / 'PRG'
+                  / 'LVI' / 'LVN' / 'LVO' / 'LVS' / 'LVE' / 'LVP' / 'LVC'
+                  / 'REL' / 'XXX'
+                  / 'RAT' / 'PRI' / 'TSK' / 'ERN' / 'DSC' / 'REF'
+                  / 'UID' / 'YER' / 'BOL' / 'DTR' / 'DTT' / 'TMR' / 'DMR' / 'TAG'
+                  ) !upper
+
+UnknownType   <-- upper+
+
+# ── Terminals ─────────────────────────────────────────────────────────────────
+
+# ItemTitleText must not start with a line-prefix sigil character.
+# The negative lookahead prevents shadowing of -, #, :, >>> prefixed lines.
+ItemTitleText <-- !(MINUS / HASH / COLON / GT) (!LF unipoint)+
+
+LabelText     <-- (!SLASH !LF unipoint)+
+
+TagContent    <-- (!LF unipoint)+
+
+ValueText     <-- (!LF unipoint)*
+
+ContinuationText <-- (!LF unipoint)*
+
+Identifier    <-- (!ws unipoint)+
+
+EndLine        <- LF / CRLF / CR
