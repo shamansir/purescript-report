@@ -1,0 +1,175 @@
+// Lezer grammar for the REP report format.
+// Used with CodeMirror 6.
+//
+// Build:
+//   npm install -D @lezer/generator
+//   npx lezer-generator rep.lezer -o rep.js
+//
+// Then in your CodeMirror setup:
+//   import { parser } from './rep.js'
+//   import { LRLanguage } from '@codemirror/language'
+//   export const repLanguage = LRLanguage.define({ parser })
+
+@top SourceFile { (Subject | blankLine)* }
+
+// ── Subject ──────────────────────────────────────────────────────────────────
+
+Subject {
+  SubjectHeader
+  (SubjectTag | SubjectTabular)*
+  Group*
+}
+
+SubjectHeader { subjectKW subjectName IdClause? newline }
+
+SubjectTag { tagSigil TagContent newline }
+
+SubjectTabular { TabularHeader TabularValueLine }
+
+// ── Group ─────────────────────────────────────────────────────────────────────
+
+Group {
+  GroupHeader
+  TabularEntry*
+  (Item | Group)*
+}
+
+GroupHeader { groupHStart GroupTitle IdClause? newline }
+
+// ── Tabular ───────────────────────────────────────────────────────────────────
+
+TabularEntry { TabularHeader TabularValueLine }
+
+TabularHeader { tabularHStart LabelText IdClause? newline }
+
+TabularValueLine {
+  indent? tabularSigil TypeMarker dot ValueText newline
+  ContinuationLine*
+}
+
+// ── Item ──────────────────────────────────────────────────────────────────────
+
+Item {
+  ItemTitle
+  (Decorator | ItemTag | TabularEntry)*
+}
+
+ItemTitle { itemIndent ItemTitleText newline }
+
+ItemTag { itemTagStart TagContent newline }
+
+Decorator {
+  decoratorStart TypeMarker dot ValueText newline
+  ContinuationLine*
+}
+
+ContinuationLine { continuationStart ContinuationText newline }
+
+// ── Shared ────────────────────────────────────────────────────────────────────
+
+IdClause { idSep Identifier }
+
+// ── Terminals ─────────────────────────────────────────────────────────────────
+
+@tokens {
+
+  // ── Structural keywords ────────────────────────────────────────────────────
+
+  subjectKW  { "SBJ. " }
+  groupHStart  { $[ \t]+ "GRP. " }
+  tabularHStart  { $[ \t]+ "- " | "- " }
+  tabularSigil { "; " }
+  decoratorStart { $[ \t]+ ": " }
+  itemTagStart   { $[ \t]+ "# " }
+  continuationStart { $[ \t]+ ">>> " }
+  tagSigil    { "# " }
+  idSep       { " // " }
+  dot         { ". " }
+
+  // ── Indents ────────────────────────────────────────────────────────────────
+
+  indent      { $[ \t]+ }
+  itemIndent  { $[ \t]+ }
+
+  // ── Type markers ──────────────────────────────────────────────────────────
+  //
+  // Valid types get the TypeMarker node; unknown codes get UnknownMarker.
+  // List every defined code explicitly so the editor can colour them
+  // differently.
+
+  TypeMarker {
+    // Progress types
+    "NON" | "UNK" | "INT" | "NUM" | "TXT" | "CMP" |
+    "PCI" | "PCN" | "PCX" |
+    "GTI" | "GTN" | "TIM" | "DAT" |
+    "PPI" | "PPN" |
+    "MSI" | "MSN" | "MSX" |
+    "RGI" | "RGN" |
+    "PRG" |
+    "LVI" | "LVN" | "LVO" | "LVS" | "LVE" | "LVP" | "LVC" |
+    "REL" | "XXX" |
+    // Decorator types
+    "RAT" | "PRI" | "TSK" | "ERN" | "DSC" | "REF" |
+    // Tabular-specific types
+    "UID" | "YER" | "BOL" | "DTR" | "DTT" | "TMR" | "DMR" | "TAG"
+  }
+
+  UnknownMarker { $[A-Z]+ }
+
+  // ── Text tokens ────────────────────────────────────────────────────────────
+
+  subjectName   { ![/\n] (![ /\n] | ![/\n])* }
+  GroupTitle    { ![/\n] (![ /\n] | ![/\n])* }
+  LabelText     { ![/\n] (![ /\n] | ![/\n])* }
+  Identifier    { ![ \n]+ }
+  TagContent    { ![^\n]+ }
+  ItemTitleText { ![-#:>\n] ![^\n]* }
+  ValueText     { ![^\n]* }
+  ContinuationText { ![^\n]* }
+
+  newline { "\n" }
+  blankLine { "\n" }
+
+  @precedence {
+    groupHStart,
+    decoratorStart,
+    itemTagStart,
+    continuationStart,
+    tabularHStart,
+    itemIndent,
+    indent
+  }
+}
+
+// ── Highlighting ──────────────────────────────────────────────────────────────
+//
+// Map node names to standard CodeMirror highlight tags.
+// Use with:  import { styleTags, tags } from '@lezer/highlight'
+
+@external propSource repHighlighting from "./rep-highlight"
+
+// Alternatively, inline the tags here (no external file needed):
+//
+// import { styleTags, tags as t } from "@lezer/highlight"
+// export const repHighlighting = styleTags({
+//   subjectKW:        t.keyword,
+//   groupHStart:      t.keyword,
+//   SubjectHeader:    t.heading1,
+//   GroupHeader:      t.heading2,
+//   subjectName:      t.heading1,
+//   GroupTitle:       t.heading2,
+//   TypeMarker:       t.typeName,
+//   UnknownMarker:    t.invalid,
+//   Identifier:       t.labelName,
+//   LabelText:        t.propertyName,
+//   TagContent:       t.lineComment,
+//   tagSigil:         t.lineComment,
+//   ValueText:        t.string,
+//   ContinuationText: t.string,
+//   ItemTitleText:    t.variableName,
+//   idSep:            t.operator,
+//   tabularSigil:     t.punctuation,
+//   decoratorStart:   t.punctuation,
+//   continuationStart:t.operator,
+//   dot:              t.punctuation,
+// })
