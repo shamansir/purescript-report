@@ -1,4 +1,5 @@
 {
+  "publisher": "shamansir",
   "name": "rep-lang",
   "displayName": "REP Report",
   "description": "Syntax highlighting for .rep report files",
