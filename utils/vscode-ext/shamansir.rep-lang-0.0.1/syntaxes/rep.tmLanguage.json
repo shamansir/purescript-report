@@ -53,25 +53,41 @@
     },
 
     "tabular-value": {
-      "begin": "^( *)(;) ((NON|UNK|INT|NUM|TXT|CMP|PCI|PCN|PCX|GTI|GTN|TIM|DAT|PPI|PPN|MSI|MSN|MSX|RGI|RGN|PRG|LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL|XXX|RAT|PRI|TSK|ERN|DSC|REF|UID|YER|BOL|DTR|DTT|TMR|DMR|TAG)|([A-Z]+))(\\.)(  ?)",
+      "begin": "^( *)(;) ((DAT|YER|DTR|DTT|DMR)|(TIM|TMR)|(TXT|DSC|REF|UID|TAG)|(INT|NUM|GTI|GTN|PPI|PPN|RGI|RGN)|(MSI|MSN|MSX|PCI|PCN|PCX|ERN)|(PRG|CMP|BOL)|(RAT|PRI|TSK)|(LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL)|(NON|UNK|XXX)|([A-Z]+))(\\.)(  ?)",
       "end": "$",
       "beginCaptures": {
-        "2": { "name": "punctuation.definition.tabular.rep" },
-        "4": { "name": "support.type.rep" },
-        "5": { "name": "invalid.illegal.type.rep" },
-        "6": { "name": "punctuation.separator.rep" }
+        "2":  { "name": "punctuation.definition.tabular.rep" },
+        "4":  { "name": "support.type.date.rep" },
+        "5":  { "name": "support.type.time.rep" },
+        "6":  { "name": "support.type.text.rep" },
+        "7":  { "name": "support.type.number.rep" },
+        "8":  { "name": "support.type.measure.rep" },
+        "9":  { "name": "support.type.progress.rep" },
+        "10": { "name": "support.type.rating.rep" },
+        "11": { "name": "support.type.level.rep" },
+        "12": { "name": "support.type.unknown.rep" },
+        "13": { "name": "invalid.illegal.type.rep" },
+        "14": { "name": "punctuation.separator.rep" }
       },
       "patterns": [{ "include": "#value-content" }]
     },
 
     "decorator": {
-      "begin": "^( *)(:) ((NON|UNK|INT|NUM|TXT|CMP|PCI|PCN|PCX|GTI|GTN|TIM|DAT|PPI|PPN|MSI|MSN|MSX|RGI|RGN|PRG|LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL|XXX|RAT|PRI|TSK|ERN|DSC|REF|UID|YER|BOL|DTR|DTT|TMR|DMR|TAG)|([A-Z]+))(\\.)(  ?)",
+      "begin": "^( *)(:) ((DAT|YER|DTR|DTT|DMR)|(TIM|TMR)|(TXT|DSC|REF|UID|TAG)|(INT|NUM|GTI|GTN|PPI|PPN|RGI|RGN)|(MSI|MSN|MSX|PCI|PCN|PCX|ERN)|(PRG|CMP|BOL)|(RAT|PRI|TSK)|(LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL)|(NON|UNK|XXX)|([A-Z]+))(\\.)(  ?)",
       "end": "$",
       "beginCaptures": {
-        "2": { "name": "punctuation.definition.decorator.rep" },
-        "4": { "name": "support.type.rep" },
-        "5": { "name": "invalid.illegal.type.rep" },
-        "6": { "name": "punctuation.separator.rep" }
+        "2":  { "name": "punctuation.definition.decorator.rep" },
+        "4":  { "name": "support.type.date.rep" },
+        "5":  { "name": "support.type.time.rep" },
+        "6":  { "name": "support.type.text.rep" },
+        "7":  { "name": "support.type.number.rep" },
+        "8":  { "name": "support.type.measure.rep" },
+        "9":  { "name": "support.type.progress.rep" },
+        "10": { "name": "support.type.rating.rep" },
+        "11": { "name": "support.type.level.rep" },
+        "12": { "name": "support.type.unknown.rep" },
+        "13": { "name": "invalid.illegal.type.rep" },
+        "14": { "name": "punctuation.separator.rep" }
       },
       "patterns": [{ "include": "#value-content" }]
     },
@@ -96,10 +112,12 @@
       "patterns": [
         { "include": "#value-date" },
         { "include": "#value-time" },
+        { "include": "#value-progress" },
         { "include": "#value-boolean" },
         { "include": "#value-relation" },
+        { "include": "#value-number" },
         { "include": "#value-path-sep" },
-        { "include": "#value-number" }
+        { "include": "#value-text" }
       ]
     },
 
@@ -113,9 +131,14 @@
       "name": "constant.numeric.time.rep"
     },
 
-    "value-boolean": {
+    "value-progress": {
       "match": "\\b(DONE|TODO|DOING)\\b",
-      "name": "constant.language.rep"
+      "name": "constant.language.progress.rep"
+    },
+
+    "value-boolean": {
+      "match": "\\b(TRUE|FALSE|YES|NO|true|false)\\b",
+      "name": "constant.language.boolean.rep"
     },
 
     "value-relation": {
@@ -131,6 +154,11 @@
     "value-path-sep": {
       "match": "::",
       "name": "punctuation.separator.path.rep"
+    },
+
+    "value-text": {
+      "match": "\\S+",
+      "name": "string.unquoted.text.rep"
     }
 
   }

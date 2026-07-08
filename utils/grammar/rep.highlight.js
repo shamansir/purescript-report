@@ -11,27 +11,47 @@
  *   hljs.registerLanguage('rep', rep);
  */
 
-const VALID_TYPES =
-  'NON|UNK|INT|NUM|TXT|CMP|PCI|PCN|PCX|' +
-  'GTI|GTN|TIM|DAT|PPI|PPN|MSI|MSN|MSX|' +
-  'RGI|RGN|PRG|LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL|XXX|' +
-  'RAT|PRI|TSK|ERN|DSC|REF|' +
-  'UID|YER|BOL|DTR|DTT|TMR|DMR|TAG';
+// Type codes grouped by semantic category — each gets a distinct CSS class
+const TYPE_DATE    = { className: 'built_in',  match: /\b(DAT|YER|DTR|DTT|DMR)\b/ };
+const TYPE_TIME    = { className: 'symbol',    match: /\b(TIM|TMR)\b/ };
+const TYPE_TEXT    = { className: 'string',    match: /\b(TXT|DSC|REF|UID|TAG)\b/ };
+const TYPE_NUMBER  = { className: 'number',    match: /\b(INT|NUM|GTI|GTN|PPI|PPN|RGI|RGN)\b/ };
+const TYPE_MEASURE = { className: 'attribute', match: /\b(MSI|MSN|MSX|PCI|PCN|PCX|ERN)\b/ };
+const TYPE_PROGRESS= { className: 'literal',   match: /\b(PRG|CMP|BOL)\b/ };
+const TYPE_RATING  = { className: 'keyword',   match: /\b(RAT|PRI|TSK)\b/ };
+const TYPE_LEVEL   = { className: 'type',      match: /\b(LVI|LVN|LVO|LVS|LVE|LVP|LVC|REL)\b/ };
+const TYPE_UNKNOWN = { className: 'comment',   match: /\b(NON|UNK|XXX)\b/ };
+
+const TYPE_MODES = [
+  TYPE_DATE, TYPE_TIME, TYPE_TEXT, TYPE_NUMBER, TYPE_MEASURE,
+  TYPE_PROGRESS, TYPE_RATING, TYPE_LEVEL, TYPE_UNKNOWN,
+];
+
+// Unknown type marker — invalid
+const TYPE_INVALID = {
+  className: 'meta', // hljs has no 'error' class by default; 'meta' is distinctive
+  match: /\b[A-Z]+\b/,
+};
 
 // Sub-modes used inside value positions
 const DATE_LITERAL = {
-  className: 'literal',       // <2025-08-12>
+  className: 'built_in',      // <2025-08-12>
   match: /<[^>]+>/,
 };
 
 const TIME_LITERAL = {
-  className: 'number',        // 07:54:00 or 40:00
+  className: 'symbol',        // 07:54:00 or 40:00
   match: /\b\d{1,4}:\d{2}(:\d{2})?\b/,
 };
 
-const BOOLEAN_LITERAL = {
+const PROGRESS_LITERAL = {
   className: 'literal',       // DONE / TODO / DOING
   match: /\b(DONE|TODO|DOING)\b/,
+};
+
+const BOOLEAN_LITERAL = {
+  className: 'number',        // TRUE / FALSE / YES / NO
+  match: /\b(TRUE|FALSE|YES|NO|true|false)\b/,
 };
 
 const REL_OPERATOR = {
@@ -49,19 +69,15 @@ const NUMBER_LITERAL = {
   match: /-?\b\d+(\.\d+)?%?\b/,
 };
 
-const VALUE_MODES = [DATE_LITERAL, TIME_LITERAL, BOOLEAN_LITERAL, REL_OPERATOR, PATH_SEP, NUMBER_LITERAL];
-
-// Valid type marker (keyword-like, coloured as built-in type)
-const TYPE_VALID = {
-  className: 'type',
-  match: new RegExp(`\\b(${VALID_TYPES})\\b`),
+const TEXT_LITERAL = {
+  className: 'string',        // catch-all for unmatched value tokens
+  match: /\S+/,
 };
 
-// Unknown type marker — invalid
-const TYPE_INVALID = {
-  className: 'meta', // hljs has no 'error' class by default; 'meta' is distinctive
-  match: /\b[A-Z]+\b/,
-};
+const VALUE_MODES = [
+  DATE_LITERAL, TIME_LITERAL, PROGRESS_LITERAL, BOOLEAN_LITERAL,
+  REL_OPERATOR, NUMBER_LITERAL, PATH_SEP, TEXT_LITERAL,
+];
 
 // id clause shared by subject, group, tabular header
 const ID_CLAUSE = {
@@ -76,7 +92,7 @@ function markerLine(sigil) {
     begin: new RegExp(`^[ \\t]*${sigil === ':' ? ':' : ';'} `),
     end: /$/,
     contains: [
-      TYPE_VALID,
+      ...TYPE_MODES,
       TYPE_INVALID,
       ...VALUE_MODES,
     ],

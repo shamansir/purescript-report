@@ -11,36 +11,31 @@ endif
 syntax keyword repSubjectKW  SBJ contained
 syntax keyword repGroupKW    GRP contained
 
-" ── Valid type markers ────────────────────────────────────────────────────────
+" ── Valid type markers by semantic category ───────────────────────────────────
 
-" Progress types
-syntax keyword repTypeValid
-  \ NON UNK INT NUM TXT CMP PCI PCN PCX
-  \ GTI GTN TIM DAT PPI PPN MSI MSN MSX
-  \ RGI RGN PRG LVI LVN LVO LVS LVE LVP LVC REL XXX
-  \ contained
-
-" Decorator types
-syntax keyword repTypeValid
-  \ RAT PRI TSK ERN DSC REF
-  \ contained
-
-" Tabular-specific types
-syntax keyword repTypeValid
-  \ UID YER BOL DTR DTT TMR DMR TAG
-  \ contained
+syntax keyword repTypeDateValid   DAT YER DTR DTT DMR               contained
+syntax keyword repTypeTimeValid   TIM TMR                            contained
+syntax keyword repTypeTextValid   TXT DSC REF UID TAG                contained
+syntax keyword repTypeNumValid    INT NUM GTI GTN PPI PPN RGI RGN    contained
+syntax keyword repTypeMsrValid    MSI MSN MSX PCI PCN PCX ERN        contained
+syntax keyword repTypeProgValid   PRG CMP BOL                        contained
+syntax keyword repTypeRatValid    RAT PRI TSK                        contained
+syntax keyword repTypeLvlValid    LVI LVN LVO LVS LVE LVP LVC REL   contained
+syntax keyword repTypeUnkValid    NON UNK XXX                        contained
 
 " Anything else that looks like a type code — flags as error
 syntax match repTypeInvalid /\<[A-Z]\+\>/ contained
 
 " ── Value sub-tokens (used inside value regions) ───────────────────────────────
 
-syntax keyword repBoolean DONE TODO DOING       contained
-syntax match   repDate    /<[^>]\+>/            contained
-syntax match   repTime    /\d\{1,4}:\d\{2}\(:\d\{2}\)\?/ contained
-syntax match   repNumber  /-\?\d\+\(\.\d\+\)\?%\?/ contained
-syntax match   repRelOp   /^[><=]\ze /          contained
-syntax match   repPathSep /::/                  contained
+syntax keyword repProgress DONE TODO DOING              contained
+syntax keyword repBoolLit  TRUE FALSE YES NO true false  contained
+syntax match   repDate     /<[^>]\+>/                   contained
+syntax match   repTime     /\d\{1,4}:\d\{2}\(:\d\{2}\)\?/ contained
+syntax match   repNumber   /-\?\d\+\(\.\d\+\)\?%\?/     contained
+syntax match   repRelOp    /^[><=]\ze /                  contained
+syntax match   repPathSep  /::/                          contained
+syntax match   repValueTxt /\S\+/                        contained
 
 " ── Subject line:  SBJ. <name> [// id] ───────────────────────────────────────
 
@@ -102,7 +97,7 @@ syntax match repItemTitle /^\s\+[^-#:>][^\n]*/
 
 " ── Value content cluster ─────────────────────────────────────────────────────
 
-syntax cluster repValueContent contains=repBoolean,repDate,repTime,repRelOp,repPathSep,repNumber
+syntax cluster repValueContent contains=repDate,repTime,repProgress,repBoolLit,repRelOp,repNumber,repPathSep,repValueTxt
 
 " ── Highlighting links ────────────────────────────────────────────────────────
 
@@ -118,15 +113,25 @@ highlight default link repTabLabel    Identifier
 highlight default link repTabSemi     Delimiter
 highlight default link repDecColon    Delimiter
 highlight default link repContMark    Operator
-highlight default link repTypeDot     Delimiter
-highlight default link repTypeValid   Special
-highlight default link repTypeInvalid Error
-highlight default link repBoolean     Boolean
-highlight default link repDate        Constant
-highlight default link repTime        Number
-highlight default link repNumber      Number
-highlight default link repRelOp       Operator
-highlight default link repPathSep     Delimiter
-highlight default link repItemTitle   Normal
+highlight default link repTypeDot       Delimiter
+highlight default link repTypeDateValid Constant
+highlight default link repTypeTimeValid Special
+highlight default link repTypeTextValid String
+highlight default link repTypeNumValid  Number
+highlight default link repTypeMsrValid  Float
+highlight default link repTypeProgValid Boolean
+highlight default link repTypeRatValid  Error
+highlight default link repTypeLvlValid  Type
+highlight default link repTypeUnkValid  Comment
+highlight default link repTypeInvalid   Error
+highlight default link repProgress      Boolean
+highlight default link repBoolLit       Boolean
+highlight default link repDate          Constant
+highlight default link repTime          Special
+highlight default link repNumber        Number
+highlight default link repRelOp         Operator
+highlight default link repPathSep       Delimiter
+highlight default link repValueTxt      String
+highlight default link repItemTitle     Normal
 
 let b:current_syntax = "rep"
