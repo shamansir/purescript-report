@@ -2,11 +2,12 @@ module Report.Utils.Pagination where
 
 import Prelude
 
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Foldable (foldl)
-import Data.Array (snoc) as Array
+import Data.Array (snoc, find) as Array
 import Data.Array.NonEmpty (length) as NEA
 -- import Data.Text.Format as F
 
@@ -36,3 +37,11 @@ withOffset = unwrap >>> foldl foldF (0 /\ []) >>> Tuple.snd >>> wrap
         foldF (prevOffset /\ prevPg) { count, index } =
             let nextOffset = prevOffset + count
             in nextOffset /\ Array.snoc prevPg { count, index : { pos : index, offset : prevOffset } }
+
+
+at :: forall idx. Eq idx => idx -> Pagination idx -> Maybe (Cell idx)
+at idx = unwrap >>> Array.find (_.index >>> (_ == idx))
+
+
+toArray :: forall idx. Pagination idx -> Array (Cell idx)
+toArray = unwrap
