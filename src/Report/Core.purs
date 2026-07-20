@@ -46,6 +46,18 @@ derive instance Eq Language
 derive instance Ord Language
 
 
+allLanguages :: Array Language
+allLanguages =
+    [ En
+    , Ru
+    , Es
+    , De
+    , Uk
+    , Fr
+    , Jp
+    ]
+
+
 langToCode :: Language -> String
 langToCode = case _ of
     En -> "en"

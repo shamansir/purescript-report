@@ -14,7 +14,9 @@ First intended to visualize game statistics, now supports many things similar to
 In works / Planned:
 
 * DONE Better keyboard navigation for editing values;
-* Ability to add groups and values right in the UI and store them;
+* DONE Custom `REP` format: be able to import from it and export to it, both in Terminal and GUI;
+* DONE Editor syntax highlighting for custom `REP` format;
+* DOING Ability to add groups and values right in the UI and store them;
 * DOING Load the data from `org-mode`;
 * Dark mode;
 * DONE Support `smos` format; [https://smos.online/];
