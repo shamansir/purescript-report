@@ -57,6 +57,14 @@ make :: forall idx item. Ord idx => Array (idx /\ item) -> Pages idx item
 make = Grouping.make
 
 
+fromArray :: forall idx item. Array (idx /\ NonEmptyArray item) -> Pages idx item
+fromArray = Grouping.fromArray
+
+
+toArray :: forall idx item. Pages idx item -> Array (idx /\ NonEmptyArray item)
+toArray = Grouping.toArray
+
+
 indices :: forall idx item. Pages idx item -> Array idx
 indices = extract >>> map Tuple.fst
 
@@ -71,6 +79,10 @@ injectIndex = Grouping.injectIndex
 
 withItems :: forall idx itemA itemB. (idx -> NonEmptyArray itemA -> NonEmptyArray itemB) -> Pages idx itemA -> Pages idx itemB
 withItems = Grouping.withItems
+
+
+switchIndices :: forall ia ib a. (ia -> ib) -> Pages ia a -> Pages ib a
+switchIndices = switchHeaders
 
 
 switchHeaders :: forall a b c. (a -> c) -> Pages a b -> Pages c b
@@ -121,3 +133,6 @@ toTree = Grouping.toTree
 toTree' :: forall idx a. a -> Pages idx a -> Tree (Either idx a)
 toTree' = Grouping.toTree'
 
+
+morphWith :: forall idxa idxb a b. (idxa -> NonEmptyArray a -> idxb /\ NonEmptyArray b) -> Pages idxa a -> Pages idxb b
+morphWith = Grouping.morphWith

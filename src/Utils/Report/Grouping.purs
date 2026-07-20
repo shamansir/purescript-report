@@ -214,6 +214,10 @@ toTreeWithIndex :: forall idx a c. (idx -> c) -> (idx -> a -> c) -> c -> Groupin
 toTreeWithIndex idxToC aIdxToC root = Tree.node root <<< groupsTreesWithIndex idxToC aIdxToC
 
 
+morphWith :: forall idxa idxb a b. (idxa -> NonEmptyArray a -> idxb /\ NonEmptyArray b) -> Grouping idxa a -> Grouping idxb b
+morphWith f = toArray >>> map (Tuple.uncurry f) >>> fromArray
+
+
 data Helper ia ib x
   = HRoot
   | IdxA ia
@@ -260,8 +264,17 @@ toReportG' =
 
 {- TODO: fromReport -}
 
-fromArray :: forall idxa idxb a. Array (idxa /\ (Array (idxb /\ (Array a)))) -> Grouping idxa (Group idxb a)
-fromArray = map toGroup >>> Array.catMaybes >>> map toGrouping >>> Array.catMaybes >>> Grouping
+
+toArray :: forall idx item. Grouping idx item -> Array (idx /\ NonEmptyArray item)
+toArray = unwrap >>> map unwrap
+
+
+fromArray :: forall idx item. Array (idx /\ NonEmptyArray item) -> Grouping idx item
+fromArray = map Group >>> Grouping
+
+
+fromArrayNested :: forall idxa idxb a. Array (idxa /\ (Array (idxb /\ (Array a)))) -> Grouping idxa (Group idxb a)
+fromArrayNested = map toGroup >>> Array.catMaybes >>> map toGrouping >>> Array.catMaybes >>> Grouping
     where
         toGroup :: forall x z. x /\ Array z -> Maybe (Group x z)
         toGroup (_ /\ []) = Nothing
@@ -272,21 +285,21 @@ fromArray = map toGroup >>> Array.catMaybes >>> map toGrouping >>> Array.catMayb
             in  NEA.fromArray mbItems <#> \nea' -> Group $ idxa /\ nea'
 
 
-build :: forall idxa idxb a. Ord idxa => Ord idxb => (a -> idxa) -> (a -> idxb) -> Array a -> Grouping idxa (Group idxb a)
-build aToIdxa aToIdxb = buildWithIndex (const aToIdxa) (const aToIdxb)
+buildNested :: forall idxa idxb a. Ord idxa => Ord idxb => (a -> idxa) -> (a -> idxb) -> Array a -> Grouping idxa (Group idxb a)
+buildNested aToIdxa aToIdxb = buildNestedWithIndex (const aToIdxa) (const aToIdxb)
 
 
-buildWithIndex :: forall idxa idxb a. Ord idxa => Ord idxb => (Int -> a -> idxa) -> (Int -> a -> idxb) -> Array a -> Grouping idxa (Group idxb a)
-buildWithIndex aToIdxa aToIdxb = buildWithIndex' aToIdxa aToIdxb identity
+buildNestedWithIndex :: forall idxa idxb a. Ord idxa => Ord idxb => (Int -> a -> idxa) -> (Int -> a -> idxb) -> Array a -> Grouping idxa (Group idxb a)
+buildNestedWithIndex aToIdxa aToIdxb = buildNestedWithIndex' aToIdxa aToIdxb identity
 
 
-buildWithIndex' :: forall idxa idxb x a. Ord idxa => Ord x => (Int -> a -> idxa) -> (Int -> a -> x) -> (x -> idxb) -> Array a -> Grouping idxa (Group idxb a)
-buildWithIndex' aToIdxa indexToX xToIdxb =
+buildNestedWithIndex' :: forall idxa idxb x a. Ord idxa => Ord x => (Int -> a -> idxa) -> (Int -> a -> x) -> (x -> idxb) -> Array a -> Grouping idxa (Group idxb a)
+buildNestedWithIndex' aToIdxa indexToX xToIdxb =
     -- ArrayExt.groupExt aToIdxa identity
     mapWithIndex (\idx a -> aToIdxa idx a /\ a)
     >>> ArrayExt.groupExt Tuple.fst Tuple.snd
     >>> map (map applyGrouping)
-    >>> fromArray
+    >>> fromArrayNested
     where
         applyGrouping :: Array a -> Array (idxb /\ Array a)
         applyGrouping =

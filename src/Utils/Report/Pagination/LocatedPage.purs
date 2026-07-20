@@ -1,4 +1,4 @@
-module Utils.Report.Pagination.LocatedPage where
+module Report.Utils.Pagination.LocatedPage where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (length, toArray) as NEA
 import Data.Tuple (curry, uncurry)
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Bifunctor (class Bifunctor, lmap)
 
 import Report.Utils.Pages as P
 import Report.Utils.Pagination
@@ -21,6 +22,10 @@ newtype LocatedPage idx item
         }
 
 
+derive instance Functor (LocatedPage idx)
+derive instance Bifunctor LocatedPage
+
+
 {-
 data PageLoc idx
     = Before idx
@@ -29,13 +34,23 @@ data PageLoc idx
 -}
 
 
-morph :: forall idx item. P.Pages idx item -> P.Pages idx (LocatedPage idx item)
-morph thePages =
+locate :: forall idx item. P.Pages idx item -> P.Pages idx (LocatedPage idx item)
+locate thePages =
     thePages
         # P.withItems (curry $ pure <<< toLocatedPage)
     where
         thePagination = Pagination.make thePages
         toLocatedPage (index /\ items) = LocatedPage { pagination : thePagination, index, items }
+
+
+locateToIndex :: forall idx item. P.Pages idx item -> P.Pages (LocatedPage idx Unit) item
+locateToIndex thePages =
+    thePages
+        # P.morphWith (\idx theItems -> toLocatedPage (idx /\ pure unit) /\ theItems)
+    where
+        thePagination = Pagination.make thePages
+        toLocatedPage (index /\ items) = LocatedPage { pagination : thePagination, index, items }
+
 
 
 pages :: forall idx item. P.Pages idx item -> Array (LocatedPage idx item)
