@@ -21,7 +21,7 @@ derive newtype instance Show PathSegment
 derive newtype instance Eq PathSegment
 
 newtype GroupPath = GroupPath (Array PathSegment)
-
+derive newtype instance Semigroup GroupPath
 
 derive instance Newtype PathSegment _
 derive instance Newtype GroupPath _

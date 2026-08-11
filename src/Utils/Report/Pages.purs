@@ -136,3 +136,6 @@ toTree' = Grouping.toTree'
 
 morphWith :: forall idxa idxb a b. (idxa -> NonEmptyArray a -> idxb /\ NonEmptyArray b) -> Pages idxa a -> Pages idxb b
 morphWith = Grouping.morphWith
+
+
+-- catMaybes =

@@ -60,9 +60,31 @@ class
     , HasTabular item
     , EncodableKey subj_id
     -- => WriteForeign subj_tag
-    , ToReport subj group item x
     )
     <= ToExport subj_id subj_tag item_tag subj group item (x :: Type)
+
+
+class
+    ( Ord group
+    , Eq subj_id
+    , ConvertTo (Chain String) item_tag
+    , ConvertTo (Chain String) subj_tag
+    , IsTag subj_tag
+    , IsTag item_tag
+    , IsItem item
+    , IsGroup group
+    , IsSubject subj_id subj
+    , HasTags subj_tag subj
+    , HasDecorators item
+    , HasTags item_tag item
+    , HasTabular subj
+    , HasStats subj
+    , HasStats group
+    , HasTabular item
+    , EncodableKey subj_id
+    -- => WriteForeign subj_tag
+    )
+    <= ToExportX subj_id subj_tag item_tag subj group item
 
 
 
@@ -85,7 +107,6 @@ instance
     , EncodableKey subj_id
     , HasTabular item
     -- => WriteForeign subj_tag
-    , ToReport subj group item x
     )
     => ToExport subj_id subj_tag item_tag subj group item (Report subj group item)
 

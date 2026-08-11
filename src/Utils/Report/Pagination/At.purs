@@ -9,7 +9,10 @@ import Data.Array (snoc, cons) as Array
 import Report.Utils.Pagination (Pagination)
 
 
-newtype At idx = At { before :: Array idx, current :: idx, after :: Array idx }
+type AtRec idx = { before :: Array idx, current :: idx, after :: Array idx }
+
+
+newtype At idx = At (AtRec idx)
 derive instance Newtype (At idx) _
 
 
@@ -58,3 +61,15 @@ position = map position_
 
 position_ :: forall idx. At idx -> Array (AtPos idx)
 position_ (At { before, current, after }) = (Before <$> before) <> [ Current current ] <> (After <$> after)
+
+
+current :: forall idx. At idx -> idx
+current = unwrap >>> _.current
+
+
+before :: forall idx. At idx -> Array idx
+before = unwrap >>> _.before
+
+
+after :: forall idx. At idx -> Array idx
+after = unwrap >>> _.after

@@ -257,3 +257,14 @@ from grp =
         , path : g_path grp
         , stats : i_stats grp
         }
+
+{-| Concatenate paths of two groups in given order, take stats and title from the second group. |-}
+_cons :: Group -> Group -> Group
+_cons (Group { path : pathA }) (Group { path : pathB, stats, title }) =
+    Group { path : pathA <> pathB, stats, title }
+
+
+{-| Concatenate paths of two groups in reverse to given order, take stats and title from the first group. |-}
+_snoc :: Group -> Group -> Group
+_snoc (Group { path : pathA, stats, title }) (Group { path : pathB }) =
+    Group { path : pathB <> pathA, stats, title }
