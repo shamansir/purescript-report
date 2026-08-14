@@ -130,11 +130,16 @@ export default function rep(_hljs) {
         className: 'section',
       },
 
-      // Tag line: [indent]# <content>
+      // Tag line: [indent]# <tag-id> [// <tag-content>]
       {
         begin: /^[ \t]*# /,
         end: /$/,
-        className: 'comment',
+        returnBegin: true,
+        contains: [
+          { match: /#/, className: 'punctuation' },
+          { begin: / \/\//, end: /$/, className: 'comment' },
+        ],
+        className: 'variable',
       },
 
       // Tabular header: [indent]- <label> [// id]

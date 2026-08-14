@@ -67,3 +67,30 @@ sh ./run-cli.sh -i ./test/games-samples/AstralChain.dhall --from dhall
 sh ./run-cli.sh -i ./test/games-samples/AstralChain.dhall --from dhall --to rep -o ./test/games-samples/AstralChain.rep
 sh ./run-cli.sh -i ./test/games-samples/AstralChain.rep --from rep --to text
 ```
+## REP Syntax Highlighting
+
+Highlighter files live in `utils/`.
+
+**VS Code:**
+
+```bash
+cp -r utils/vscode-ext/shamansir.rep-lang-0.0.1 ~/.vscode/extensions/shamansir.rep-lang-0.0.1
+```
+
+Reload window (`Cmd+Shift+P` → `Developer: Reload Window`). To update after grammar changes, re-run the same `cp` command and reload.
+
+**Vim / Neovim:**
+
+```bash
+cp utils/grammar/rep.vim ~/.vim/syntax/rep.vim
+# Neovim:
+cp utils/grammar/rep.vim ~/.config/nvim/syntax/rep.vim
+```
+
+Add to `~/.vim/filetype.vim` (or `~/.config/nvim/filetype.vim`):
+
+```vim
+au BufRead,BufNewFile *.rep setfiletype rep
+```
+
+To update: re-run the `cp` command, then `:syntax off` + `:syntax on` (or reopen the file).

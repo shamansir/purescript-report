@@ -57,9 +57,12 @@ syntax match repIdClause / \/\/.*$/ contained contains=repIdSep,repIdValue
 syntax match repIdSep    / \/\//    contained
 syntax match repIdValue  /[^\s\n]\+/ contained
 
-" ── Tag line:  [indent]# <content> ───────────────────────────────────────────
+" ── Tag line:  [indent]# <tag-id> [// <tag-content>] ────────────────────────
 
-syntax match repTag /^\s*#.\+$/
+syntax region repTagLine start=/^\s*# / end=/$/ oneline keepend
+  \ contains=repTagHash,repTagComment
+syntax match repTagHash    /#/          contained
+syntax match repTagComment / \/\/.*$/   contained
 
 " ── Tabular header:  [indent]- <label> [// id] ───────────────────────────────
 
@@ -107,7 +110,9 @@ highlight default link repSubjectName Title
 highlight default link repGroupTitle  Type
 highlight default link repIdSep       Operator
 highlight default link repIdValue     Comment
-highlight default link repTag         Comment
+highlight default link repTagLine     Identifier
+highlight default link repTagHash     Delimiter
+highlight default link repTagComment  Comment
 highlight default link repTabDash     Delimiter
 highlight default link repTabLabel    Identifier
 highlight default link repTabSemi     Delimiter

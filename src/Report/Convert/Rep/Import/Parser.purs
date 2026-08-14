@@ -266,9 +266,14 @@ tagAtSpaces :: Int -> Parser (Maybe RawTag)
 tagAtSpaces spaces = do
   matchingIndent spaces
   _ <- SP.string "# "
-  t <- restOfLine
+  rol <- restOfLine
+  let tagId = case String.split (String.Pattern "//") rol of
+        [ ]        -> String.trim rol
+        [ itagId ] -> String.trim itagId
+        [ itagId, itagContent ] -> String.trim itagId
+        _          -> String.trim rol
   eol
-  pure $ parseTag t
+  pure $ parseTag tagId
 
 
 tabularFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe TabularAtomicValue

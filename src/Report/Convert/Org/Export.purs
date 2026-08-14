@@ -82,8 +82,8 @@ toOrg inclRule =
             <> D.break <> propertiesBlock
                 (Array.catMaybes
                     [ Just $ "Id" /\ D.text (unwrap subjectRec.id)
-                    , Just $ "Platform" /\ D.text "TODO"
-                    , Just $ "Playtime" /\ D.text "TODO"
+                    , Just $ "Platform" /\ D.text "FOFO"
+                    , Just $ "Playtime" /\ D.text "FOFO"
                     , mbTrackedAt subjectRec.tabulars <#> \dateRec -> "TrackedAt" /\ orgDate dateRec
                     ]
                 )

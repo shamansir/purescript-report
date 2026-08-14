@@ -36,10 +36,11 @@
     },
 
     "tag": {
-      "match": "^( *)(#) (.+)$",
+      "match": "^( *)(#) (.+?)( //.+)?$",
       "captures": {
         "2": { "name": "punctuation.definition.tag.rep" },
-        "3": { "name": "entity.name.tag.rep" }
+        "3": { "name": "entity.name.tag.rep" },
+        "4": { "name": "comment.line.tag.rep" }
       }
     },
 

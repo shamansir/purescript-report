@@ -15,6 +15,7 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.String as String
 
 import Report (Report)
+import Report.Class (tagContent) as CT
 import Report.Core (SDateRec, STimeRec, dateToRec, dateFromRec, toLeadingZero) as CT
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
@@ -110,8 +111,8 @@ toRep inclRule =
         subjTabularsToPrepend :: SubjectRec -> Array (Maybe TabularRec)
         subjTabularsToPrepend subjectRec =
             [ Just { tkey : "id", tlabel : "Id", value : TV.TVAtomic $ TV.TVString $ unwrap subjectRec.id }
-            , Just { tkey : "platform", tlabel : "Platform", value : TV.TVAtomic $ TV.TVString "TODO" }
-            , Just { tkey : "playtime", tlabel : "Playtime", value : TV.TVAtomic $ TV.TVString "TODO" }
+            , Just { tkey : "platform", tlabel : "Platform", value : TV.TVAtomic $ TV.TVString "FOFO" }
+            , Just { tkey : "playtime", tlabel : "Playtime", value : TV.TVAtomic $ TV.TVString "FOFO" }
             , mbTrackedAt subjectRec.tabulars <#>
                 \dateRec -> { tkey : "trackedAt", tlabel : "Tracked At", value : TV.TVAtomic $ TV.TVDate $ CT.dateFromRec dateRec }
                 -- \dateRec -> "trackedAt" /\ tmfp P.PTOnDate /\ pure (orgDate dateRec)
@@ -287,7 +288,8 @@ convertPath path =
 
 convertTagToDocLine :: RawTag -> Doc Unit
 convertTagToDocLine tag =
-    D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag
+    (D.text $ MbW.toString $ CT.loadRawId {- tagContent -} tag)
+    <> D.space <> D.text "//" <> D.space <> (D.text $ MbW.toString $ CT.tagContent tag)
 
 
 _progressDocLines :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
