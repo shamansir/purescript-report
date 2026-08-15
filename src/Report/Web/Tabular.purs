@@ -19,6 +19,7 @@ import Report.Decorator (empty) as Decorators
 import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
 import Report.Decorators.Tags (RawTag)
 
+import Report.Web.CSS as CSS
 import Report.Web.Helpers
 import Report.Web.Helpers.InlineOrBlock
 import Report.Web.Decorators (renderDecorator, renderTags)
@@ -39,7 +40,7 @@ renderSubjectTabularValues item =
     in
         if Array.length tabularItems > 0 then
             HH.span
-                [ HP.style "display: block; margin: 0 0 14px 2px; color: royalblue; font-size: 0.8em; position: relative; top: -19px;" ]
+                [ HP.style CSS.subjectTabularValues ]
                 $ tabularItems <#> renderTabularValue
         else
             HH.span_ []
@@ -55,17 +56,12 @@ renderItemTabularValues =
     S.i_tabular >>> renderTabular
 
 
-tabularStyle = "display: block; margin: 0 0 0 25px; color: royalblue; font-size: 0.8em;" :: String
-nestStyle = "border-left: 2px solid color-mix(in srgb, royalblue 20%, transparent); padding-left: 5px;" :: String
-innerTabularStyle = "border-left: 2px solid color-mix(in srgb, darkgreen 20%, transparent); padding-left: 5px; margin: 10px 0;" :: String
-
-
 renderTabular :: forall w. Tabular TabularValue -> H w Unit
 renderTabular = Tabular.items >>> \tabularItems ->
     if Array.length tabularItems > 0 then
             HH.span
-                [ HP.style tabularStyle ]
-                $ HH.span [ HP.style "display: block;" ] <$> pure <$> renderTabularValue <$> tabularItems
+                [ HP.style CSS.tabularBlock ]
+                $ HH.span [ HP.style CSS.tabularRow ] <$> pure <$> renderTabularValue <$> tabularItems
         else
             HH.span_ []
 
@@ -97,13 +93,13 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                 , renderTabularValue $ mkItem key "" tabValB
                 ]
         where
-            wrapInnerTabular = HH.div [ HP.style innerTabularStyle ]
+            wrapInnerTabular = HH.div [ HP.style CSS.tabularInnerNest ]
             mkItem :: forall a. String -> String -> a -> Tabular.Item a
             mkItem key label v = Tabular.Item { key, label, value : v }
             nestValues :: forall a. (a -> H w Unit) -> Array a -> H w Unit
             nestValues renderF valuesArr =
                 HH.div
-                    [ HP.style nestStyle ]
+                    [ HP.style CSS.tabularNest ]
                     [ {- HH.text "Nest"
                     , -} HH.div_ $ renderF <$> valuesArr
                     ]

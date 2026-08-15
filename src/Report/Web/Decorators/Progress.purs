@@ -25,6 +25,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 
+import Report.Web.CSS as CSS
 import Report.Web.Helpers
 import Report.Web.Helpers.InlineOrBlock
 import Report.Web.Helpers.VisualState (ProgressVState(..))
@@ -659,14 +660,12 @@ percentage' completeColor incompleteColor total amount =
         toGoWidth = min pctWidth $ amount * factor
         completedWidth = min pctWidth $ (total - amount) * factor
     in HH.span
-        [ HP.style $ "display: inline-block; position: relative; top: 2px; margin-right: 3px;" ]
+        [ HP.style CSS.progressBarWrapper ]
         [ HH.span
-            [ HP.style $ "display: inline-block; background-color: " <> completeColor <> "; height: 1em; width: " <> (show toGoWidth) <> "px;"
-            ]
+            [ HP.style $ CSS.progressBarFilled completeColor toGoWidth ]
             [ ]
         , HH.span
-            [ HP.style $ "display: inline-block; background-color: " <> incompleteColor <> "; height: 1em; width: " <> (show completedWidth) <> "px;"
-            ]
+            [ HP.style $ CSS.progressBarEmpty incompleteColor completedWidth ]
             [ ]
         ]
 
@@ -675,7 +674,7 @@ renderLevelI reached { maximum, name } =
     let
         isDone = reached >= maximum
     in HH.div
-        [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
+        [ HP.style CSS.levelRow ]
         [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -691,7 +690,7 @@ renderLevelN reached { maximum, name } =
     let
         isDone = reached >= maximum
     in HH.div
-        [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
+        [ HP.style CSS.levelRow ]
         [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -707,7 +706,7 @@ renderLevelS reached levenN { gives } =
     let
         isDone = reached > levenN
     in HH.div
-        [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
+        [ HP.style CSS.levelRow ]
         [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -724,7 +723,7 @@ renderLevelO reached { mbMaximum, name } =
             Just maximum -> reached >= maximum
             Nothing -> false
     in HH.div
-        [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
+        [ HP.style CSS.levelRow ]
         [ HH.span_
             [ qlevelmarkerSpan $ if isDone then completeColor else incompleteColor
             , qspacerSpan
@@ -742,7 +741,7 @@ renderLevelP levelN { proc, name } =
     let
         isDone = proc == S.TDone
     in HH.div
-        [ HP.style $ "margin-left: " <> show levelsMargin <> "px;" ]
+        [ HP.style CSS.levelRow ]
         [ HH.span_
             [ qlevelmarkerSpan $ taskTextColor proc
             , qspacerSpan

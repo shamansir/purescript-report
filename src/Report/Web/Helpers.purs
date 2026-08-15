@@ -11,6 +11,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Events as HE
 import Halogen.Svg.Attributes.Color as HAC
+import Report.Web.CSS as CSS
 
 type H w i = HH.HTML w i
 type Color = String
@@ -80,13 +81,5 @@ qcompleteCheckbox =
 qcheckbox :: forall w i a. (a -> String) -> (a -> String) -> a -> H w i
 qcheckbox toColor toText a =
     HH.span
-        [ HP.style $ "display: inline-block;"
-                    <> "border: 1px solid darkgray;"
-                    <> "border-radius: 3px;"
-                    <> "width: 1em;"
-                    <> "height: 1em;"
-                    <> "color: white;"
-                    <> "position: relative; top: 2px; left: -2px;"
-                    <> "background-color: " <> toColor a <> ";"
-        ]
+        [ HP.style $ CSS.checkboxStyle $ toColor a ]
         [ HH.text $ toText a ]

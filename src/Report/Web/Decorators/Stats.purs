@@ -15,6 +15,7 @@ import Halogen.Svg.Elements as HS
 import Halogen.Svg.Attributes as HA
 import Halogen.Svg.Attributes.Color as HAC
 
+import Report.Web.CSS as CSS
 import Report.Web.Helpers
 import Report.Web.Decorators.Progress (percentage')
 
@@ -26,7 +27,7 @@ renderGroupStats = S.gotTotalFromStats >>> case _ of
             isDone = got >= total
         in
             HH.div
-                [ HP.style "opacity: 0.55;" ]
+                [ HP.style CSS.groupStatsDefinedWrapper ]
                 [ {- qitemmarkerSpan $ if isDone then completeColor else incompleteColor
                 , qspacerSpan
                 , -} percentage' groupProgressBarCompleteColor groupProgressBarIncompleteColor (Int.toNumber total) (Int.toNumber got)
@@ -37,7 +38,7 @@ renderGroupStats = S.gotTotalFromStats >>> case _ of
         --     [ HH.text $ " (" <> show got <> "/" <> show total <> ")" ]
     S.JustCount { count } ->
         HH.div
-            [ HP.style "display: inline-block; position: relative; top: 1px;" ]
+            [ HP.style CSS.groupStatsCountWrapper ]
             [ qcolorSpan completeColor $ "(" <> formatInt count <> ")" ]
     S.GTStatsValue -> HH.text ""
     S.Undefined -> HH.text ""
@@ -46,7 +47,7 @@ renderGroupStats = S.gotTotalFromStats >>> case _ of
 gotTotalBadge :: forall r w i. { got :: Int, total :: Int | r } -> H w i
 gotTotalBadge { got, total } =
     HH.span
-        [ HP.style "font-size: 0.8em; opacity: 0.8; margin: 5px 0;" ]
+        [ HP.style CSS.groupStatsBadge ]
         [ HH.text $ " (" <> show got <> "/" <> show total <> ")" ]
 
 
@@ -81,7 +82,7 @@ renderProgressPlates itemsProgress =
     in
         HS.svg
             [ HA.width svgWidth, HA.height svgHeight
-            , HP.style "display: inline-block; position: relative; align-self: center; margin-left: 12px;border:1px solid lightblue;border-radius:3px;background-color:ghostwhite;" --  opacity: 0.8;
+            , HP.style CSS.progressPlatesSvg
             ]
             $ mapWithIndex renderPlate itemsProgress
     where

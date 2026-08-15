@@ -68,6 +68,7 @@ import Report.Web.Decorators.Stats (renderGroupStats, renderProgressPlates, gotT
 import Report.Web.Decorators.Tags (subjTagBadge, subjTagWrap, itemTagBadge, itemTagKindBadge)
 import Report.Web.GroupPath (groupPathId) as GP
 import Report.Web.GroupPath (groupPathId, renderPath)
+import Report.Web.CSS as CSS
 import Report.Web.Helpers (qspacerSpan, qcolorSpan, qitemmarkerSpan, lineHeight, nestMargin, qemptySpan, H)
 import Report.Web.Helpers.InlineOrBlock as IoB
 import Report.Web.Helpers.UrlConfig as UC
@@ -415,10 +416,10 @@ component cfg =
     render :: ReportComponentState subj_id subj_tag item_tag_kind item_tag subj group item -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) () m
     render state =
         HH.div
-            [ HP.style "font-family: \"JetBrains Mono\", sans-serif; display: flex; flex-direction: row;"
+            [ HP.style CSS.rootLayout
             ]
             [ HH.div
-                [ HP.style "height: 100vh; min-width: 75%; overflow-y: scroll;outline:none;"
+                [ HP.style CSS.reportArea
                 -- , HE.onClick $ const ClearNavigation
                 , HE.onKeyDown TryNavigateWithKeyboard
                 , HP.ref reportAreaRefLabel
@@ -438,16 +439,14 @@ component cfg =
                 <> pure subjSelNavigation
                 <> pure groupSelNavigation
             , HH.div
-                [ HP.style "margin: 0 auto; max-width: 900px; padding: 20px 20px 50px 20px;" ]
+                [ HP.style CSS.mainContent ]
                 [ subjectsToc state allSubjects ]
             , case state.mbExportTo of
                 Just exportTarget ->
                     HH.div
-                        [ HP.style $ "position: absolute; right: 25%; top: 43px; width: 25%; max-height: 50%; overflow-y: scroll;"
-                        <> "background-color: aliceblue; border-radius: 5px; padding: 5px;"
-                        ]
+                        [ HP.style CSS.importExportPanel ]
                         [ HH.textarea
-                            [ HP.style "white-space: pre-wrap; background: white; border: none; font-size: 0.7em;"
+                            [ HP.style CSS.importExportTextarea
                             , HP.value $ exportTextFor exportTarget, HP.cols 75, HP.rows 30
                             , HP.ref importExportTextareaRefLabel
                             , HE.onFocus $ const StartedEditingExportContent
@@ -455,7 +454,7 @@ component cfg =
                             , HE.onValueInput $ StoreContentToImport exportTarget
                             ]
                         , HH.div
-                            [ HP.style "position: absolute; right: 0; top: 0; padding: 6px 0px;" ]
+                            [ HP.style CSS.importExportCloseArea ]
                             [ if importSupportedFor exportTarget
                                 then menuButton
                                     { enabled : true
@@ -500,7 +499,7 @@ component cfg =
 
             menuButtons =
                 HH.div
-                    [ HP.style "position: fixed; right: 25%; top: 0; border-radius: 5px; background: aliceblue; padding: 5px;" ]
+                    [ HP.style CSS.toolbar ]
                     $ menuButton <$>
                         (if not state.flags.readOnlyMode && Navigation.isEditing state.navigatedTo then
                             [ { label : "✎", onClick : const CancelEditing, enabled : true } ]
@@ -522,7 +521,7 @@ component cfg =
             menuButton { label, onClick, enabled } =
                 HH.button
                     [ HE.onClick onClick
-                    , HP.style $ "margin: 0 5px; padding: 3px 8px; cursor: pointer; border-radius: 10px;"
+                    , HP.style $ CSS.toolbarButton
                         <> "background-color: " <> (if enabled then "#d0e7ff" else "white") <> ";"
                         <> (if enabled then "border: 1px solid beige; opacity: 0.8" else "border: 1px solid lightgray; opacity: 0.6;")
                     ]
@@ -530,7 +529,7 @@ component cfg =
 
             subjSelNavigation =
                 HH.div
-                    [ HP.style $ "position: fixed;right: 25%;top: 3em;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.9em;"
+                    [ HP.style CSS.subjectsNav
                         -- <> if state.flags.subjectNavigationExpanded then "line-height: 1.6em;" else "line-height : 1.1em;"
                     , HE.onMouseEnter $ const $ if not state.flags.subjectNavigationPinned then ExpandSubjectNavigation   else NoOp
                     , HE.onMouseLeave $ const $ if not state.flags.subjectNavigationPinned then CollapseSubjectNavigation else NoOp
@@ -544,11 +543,11 @@ component cfg =
                 in HH.span
                     []
                     [ HH.a
-                        [ HP.href $ "#subject-" <> uniqueId, HP.style "color: darkgoldenrod; text-decoration: none;"
+                        [ HP.href $ "#subject-" <> uniqueId, HP.style CSS.subjectsNavLink
                         ]
                         [ if state.flags.subjectNavigationExpanded || state.flags.subjectNavigationPinned
                             then HH.span
-                                [ HP.style "color: black; margin-right: 5px; font-size: 0.7em; position: relative; top: -1px; margin-left: 4px; " ]
+                                [ HP.style CSS.subjectsNavBadge ]
                                 [ HH.text subjName ]
                             else HH.text ""
                         , HH.text "⦿"
@@ -560,32 +559,31 @@ component cfg =
                     let
                         reportBuilder = R.toBuilder state.processedReport
                     in HH.div
-                        [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 15%; opacity: 0.8;max-height:400px;overflow:scroll;padding:9px;"
+                        [ HP.style CSS.groupsNavExpanded
                         , HE.onMouseEnter $ const ExpandGroupNavigation
                         , HE.onMouseLeave $ const CollapseGroupNavigation
                         ]
-                        $ HH.div [ HP.style "position:absolute;right:0;width:40px;" ]
+                        $ HH.div [ HP.style CSS.groupsNavCollapseBtn ]
                             [ groupSelNavigationPinButton ]
                         : (mapWithIndex groupsSelNavigationItems $ (\subjId -> subjId /\ RB.allGroupsOfCX subjId reportBuilder) <$> state.subjects)
                 else
                     HH.div
-                        [ HP.style $ "position: fixed;right: 25%;bottom:0;border-radius: 5px;background: beige;padding: 5px;flex-direction: column;display: flex;text-align: end;font-size: 0.6em; width: 15%; opacity: 0.5;max-height:2.4em;overflow:scroll;min-height: 2.4em;"
+                        [ HP.style CSS.groupsNavCollapsed
                             -- <> if state.flags.subjectNavigationExpanded then "line-height: 1.6em;" else "line-height : 1.1em;"
                         , HE.onMouseEnter $ const ExpandGroupNavigation
                         ]
-                        [ HH.span [ HP.style "position:absolute;right:40px;top:10px;"] [ HH.text "GROUPS" ]
-                        , HH.div [ HP.style "display: inline-block;position:absolute;right:0;width:40px;" ]
+                        [ HH.span [ HP.style CSS.groupsNavLabel ] [ HH.text "GROUPS" ]
+                        , HH.div [ HP.style CSS.groupsNavBtn ]
                             [ groupSelNavigationPinButton ]
                         ]
 
             groupsSelNavigationItems idx (subjId /\ groupsC) =
                 let
                     subjName = findSubjName subjId # fromMaybe "--"
-                    padding = if idx == 0 then "padding:0 0 5px 0;" else "padding:15px 0 5px 0;"
                 in
                     HH.div
                         [ ]
-                        $ HH.div [ HP.style $ "min-width:100%;text-align:start;font-weight:bold;" <> padding ] [ HH.text subjName ]
+                        $ HH.div [ HP.style $ CSS.groupsNavSubjectName (idx == 0) ] [ HH.text subjName ]
                         : (groupsSelNavigationChain {- <$> Chain.toArray <$> map R.g_title -} <$> groupsC)
 
             groupsSelNavigationChain groupC =
@@ -596,12 +594,12 @@ component cfg =
                     renderGroupRep idx gtitle =
                         if idx == chainLen - 1
                         then HH.span [] [ HH.text gtitle ]
-                        else HH.span [ HP.style "display: inline-block; width: 20px;opacity:0.3;" ] [ HH.text ">" ]
+                        else HH.span [ HP.style CSS.groupsNavUnselectedIndicator ] [ HH.text ">" ]
 
                 in HH.div
-                    [ HP.style $ "min-width:100%;text-align:start;" ]
+                    [ HP.style CSS.groupsNavGroupRow ]
                     $  (mapWithIndex renderGroupRep {- (HH.text >>> pure >>> HH.span []) -} <$> Chain.toArray $ R.g_title <$> groupC)
-                    <> (pure $ HH.a [ HP.style "padding-left: 5px;text-decoration:none;", HP.href $ "#" <> GP.groupPathId curGroupPath ] [ HH.text "#" ])
+                    <> (pure $ HH.a [ HP.style CSS.groupsNavGroupLink, HP.href $ "#" <> GP.groupPathId curGroupPath ] [ HH.text "#" ])
                 -- HH.div $
                 --     Chain.toString <$> map R.g_title <$> groupsC
                 --     HH.text $ (String.joinWith "-" $ show <$> Chain.length <$> groupsC ) <> ":" <> (String.joinWith "--" $ Chain.toString <$> map R.g_title <$> groupsC)
@@ -619,11 +617,11 @@ component cfg =
             filteredSubjects =
                 applyFilter state.tagFilter state.sortBy state.filter allSubjects
         in HH.div
-            [ HP.style "padding: 9px 9px 0 0; width: 400px;" ]
+            [ HP.style CSS.tagFilterPanel ]
             $ filterInput state
             : optionsPane state
             : (HH.div
-                    [ HP.style $ "overflow-y: scroll; height: 100%; position: absolute;" ]
+                    [ HP.style CSS.tagFilterScrollable ]
                     $ subjTocRow state.subjects <$> filteredSubjects)
             : []
 
@@ -653,7 +651,7 @@ component cfg =
             [ HP.style "" ]
             [ HH.input
                 [ HE.onValueInput ChangeListFilter
-                , HP.style "border: 1px solid lightgray; border-radius: 5px; padding: 5px 6px; margin-bottom: 15px; min-width: 250px;"
+                , HP.style CSS.tagFilterSearchInput
                 , HP.placeholder $ case state.filter of
                     FromUrl str -> str
                     FromUser _ -> ""
@@ -661,19 +659,19 @@ component cfg =
                 ]
             , HH.span
                 [ HE.onClick $ const ToggleOptionsPane
-                , HP.style "padding: 1px 3px 0 5px; cursor: pointer;"
+                , HP.style CSS.tagFilterOptionsBtn
                 , HP.title $ if state.flags.optionsPaneExpanded then "Expand tags list" else "Collapse tags list"
                 ]
                 [ HH.text $ if state.flags.optionsPaneExpanded then "○" else "●" ]
             , HH.span
                 [ HE.onClick $ const ToggleItemsTagsInOptions
-                , HP.style $ "padding: 1px 3px 0 5px; cursor: pointer;" <> if state.flags.showItemsTags then "" {- }"font-weight: bold;" -} else "opacity: 0.3;"
+                , HP.style $ CSS.tagFilterTagsBtn state.flags.showItemsTags
                 , HP.title $ if state.flags.showItemsTags then "Hide items tags" else "Show items tags"
                 ]
                 [ HH.text $ "I" ]
             , HH.span
                 [ HE.onClick $ const NextSort
-                , HP.style "padding: 1px 3px; cursor: pointer;"
+                , HP.style CSS.tagFilterSortBtn
                 , HP.title $ "Sort " <> (case state.sortBy of
                     ByWeight -> "alphabetically"
                     Alpha -> "by weight")
@@ -703,7 +701,7 @@ component cfg =
                         [] -> [ HH.text "" ]
                         tags ->
                             [ HH.span
-                                [ HP.style "display: block; padding: 5px 0; max-height: 300px; overflow-y: scroll;" ]
+                                [ HP.style CSS.tagFilterTagsList ]
                                 $ (\tag -> HH.span_ [ itemTagBadge (makeTagClickEvt tag) tag, HH.wbr [] ]) <$> tags
                             ]
                 else []
@@ -712,15 +710,13 @@ component cfg =
 
     processingButtons = case _ of
         [] -> HH.text ""
-        procs -> HH.span [ HP.style "display: block; margin: 7px 4px;" ] $ processButton <$> procs
-
-    processStyle = "background-color: rgb(139, 121, 182); color: white; border-radius: 5px; padding: 3px 5px; margin: 0 3px; cursor: pointer;"
+        procs -> HH.span [ HP.style CSS.processingButtonsRow ] $ processButton <$> procs
 
     processButton = case _ of
         FilterBy tag    -> [ HH.text "F", itemTagBadge     (flip CancelProcess $ FilterBy tag)    tag     ]
         SortBy  tagKind -> [ HH.text "S", itemTagKindBadge (flip CancelProcess $ SortBy tagKind)  tagKind ]
         GroupBy tagKind -> [ HH.text "G", itemTagKindBadge (flip CancelProcess $ GroupBy tagKind) tagKind ]
-        >>> HH.span [ HP.style processStyle ]
+        >>> HH.span [ HP.style CSS.processButton ]
 
     subjTagIsOn tagFilter tag =
         tag /\ Array.elem tag tagFilter
@@ -728,7 +724,7 @@ component cfg =
     subjTagButton (tag /\ tagEnabled) =
         HH.span
             [ HE.onClick $ const $ if tagEnabled then ExcludeTag tag else IncludeTag tag
-            , HP.style $ "display: inline-block; cursor: pointer; padding: 3px 0; opacity: " <> show (if tagEnabled then 1.0 else 0.5) <> ";"
+            , HP.style $ CSS.subjectTagButton tagEnabled
             ]
             [ subjTagBadge tag ]
 
@@ -742,16 +738,16 @@ component cfg =
             subjId = R.s_id subj
             isSelected = Array.elem subjId selectedSubjectsIds
         in HH.div
-            [ HP.style "margin: 5px 0;" ]
+            [ HP.style CSS.subjectTocRow ]
             [ HH.span
                 [ HE.onClick $ const $ if isSelected then DeselectSubject subjId else AddSubjectToSelection subjId
-                , HP.style "cursor: pointer;"
+                , HP.style CSS.subjectTocSelectBtn
                 ]
                 [ HH.text $ if isSelected then "(-)" else "(+)"
                 ]
             , HH.span
                 [ HE.onClick $ const $ SelectSubject subjId
-                , HP.style $ "background-color: " <> (if isSelected then "bisque" else "transparent") <> "; cursor: pointer; padding: 5px; margin-left: 5px;"
+                , HP.style $ CSS.subjectTocNameBtn isSelected
                 ]
                 (
                     [ HH.text $ R.s_name @subj_id subj
@@ -1198,16 +1194,15 @@ renderSubject
     -> HH.ComponentHTML (ReportComponentAction subj_id subj_tag item_tag_kind item_tag subj group item) slots m
 renderSubject options navigatedTo collapsedMap subj groupsArr =
     HH.div
-        [ HP.style "padding: 10px 0 10px 20px;"
+        [ HP.style CSS.subjectWrapper
         , HP.id $ "subject-" <> subjUniqueId
         ]
         $ HH.div
-            [ HP.style $ "margin: 15px 0 30px 0; max-width: 60%; border-bottom: 1px solid gray; padding-bottom: 5px; font-size: 1.2em;"
-                <> if isNavigatedToSubj then subjSelectedStyle else subjUsualStyle
+            [ HP.style $ CSS.subjectHeader isNavigatedToSubj
             , HE.onClick $ const ClearNavigation
             ]
             [ HH.text $ R.s_name @subj_id subj
-            , HH.span [ HP.style "font-size: 0.8em; margin-left: 5px;" ] $ pure $ renderSubjTags (R.i_tags @subj_tag subj)
+            , HH.span [ HP.style CSS.subjectTagsSpan ] $ pure $ renderSubjTags (R.i_tags @subj_tag subj)
             ]
         : (const NoOp <$> renderSubjectTabularValues subj)
         : (renderTree <$> groupsArr)
@@ -1216,10 +1211,6 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
             subjUniqueId = R.convertTo @String subjId
             isNavigatedToSubj = navigatedTo # Navigation.atSubj subjId
             marginFor groupPath = (max 0.0 $ (Int.toNumber $ GP.howDeep groupPath) - 1.0) * nestMargin
-            subjSelectedStyle = "background-color: cornsilk;" -- ghostwhite
-            subjUsualStyle = ""
-            groupSelectedStyle = "border: 1px dashed #95bad8ff; background-color: #f0f8ff;"
-            groupUsualStyle = "border: 1px dashed transparent;"
 
             renderSubjTags :: Array subj_tag -> _
             renderSubjTags subj_tags = HH.span [] $ subjTagWrap <$> subj_tags
@@ -1233,23 +1224,19 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     groupCollapsed = fromMaybe Map.empty $ Map.lookup subjId collapsedMap
                     isCollapsed = fromMaybe false $ Map.lookup groupPath groupCollapsed
                in HH.div
-                    [ HP.style $ "padding-bottom: 10px; line-height: "
-                        <> show lineHeight <> "em; margin-left: "
-                        <> (show $ marginFor groupPath) <> "px;"
+                    [ HP.style $ CSS.groupWrapper (marginFor groupPath)
                         -- <> (if isNavigatedTo then " background-color: #2e9eff;" else "")
                     , HP.id $ groupPathId groupPath
                     , HE.onClick $ \mevt -> NavigateByMouseClickTo mevt $ AtGroup subjId groupPath
                     ]
-                    [ HH.div [ HP.style "display: flex; flex-direction: row;" ]
+                    [ HH.div [ HP.style CSS.groupRowFlex ]
                         [ HH.div [ {- HP.style "display: flex; flex-direction: column;" -} ]
                             [ HH.div_
                                 [ HH.span
-                                    [ HP.style $ "font-weight: bold;"
-                                        <> if isNavigatedTo then groupSelectedStyle else groupUsualStyle
-                                    ]
+                                    [ HP.style $ CSS.groupHeader isNavigatedTo ]
                                     [ HH.span
                                         [ HE.onClick \mevt -> ToggleGroupCollapse mevt subjId groupPath
-                                        , HP.style $ "cursor: pointer; user-select: none; margin-right: 5px;" <> if isCollapsed then "" else "opacity: 0.25;" -- 0.6?
+                                        , HP.style $ CSS.groupCollapseToggle isCollapsed
                                         ]
                                         [ HH.text $ if isCollapsed then "▶" else "▼" ]
                                     , HH.text $ R.g_title group
@@ -1270,7 +1257,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     , if isCollapsed
                         then HH.text ""
                         else HH.div
-                            [ HP.style "border-left: 4px solid #eee; padding-left: 5px; margin-top: 10px; margin-bottom: 15px;" ]
+                            [ HP.style CSS.groupItemsContainer ]
                             $ mapWithIndex (renderGroupItem groupPath) groupItems
 
                   ]
@@ -1283,11 +1270,6 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                     isEditingItemName = navigatedTo # Navigation.editingItemName subjId groupPath itemIdx
                     isEditingDecorator decorator = navigatedTo # Navigation.editingAtDecorator subjId groupPath itemIdx decorator
                     mbCurrentDecorator = if isNavigatedToItem then (Navigation._toNavigationRec navigatedTo).mbDecorator else Nothing
-                    itemSelectedStyle = "background-color: #f0f8ff; border-radius: 3px;"
-                    itemUsualStyle = "background-color: transparent;"
-                    -- itemTitleSelectedStyle = "background-color: #fff8ff; border-radius: 3px;"
-                    itemTitleSelectedStyle = "background-color: #fbd6fb; border-radius: 3px;"
-                    itemTitleUsualStyle = ""
                     makeItemNameEditEvt = ApplyEditAt $ AtItem subjId groupPath itemIdx
                     makeDecoratorClickEvt decoratorKey mevt = NavigateByMouseClickTo mevt $ AtDecorator subjId groupPath itemIdx decoratorKey
                     makeDecoratorEditEvt decoratorKey = ApplyEditAt $ AtDecorator subjId groupPath itemIdx decoratorKey
@@ -1353,8 +1335,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                         <$>
                         (renderedPrefixes <> renderedSuffixes)
                 in HH.div
-                    [ HP.style
-                        $ if isNavigatedToItem then itemSelectedStyle else itemUsualStyle
+                    [ HP.style $ CSS.itemWrapper isNavigatedToItem
                     , HE.onClick $ \mevt -> NavigateByMouseClickTo mevt $ AtItem subjId groupPath itemIdx
                     ]
                     $ HH.span_ (Array.intersperse qspacerSpan inlinePrefixes)
@@ -1362,9 +1343,7 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
                         "" -> HH.text ""
                         _ ->
                             HH.span
-                                [ HP.style
-                                    $ if isNavigatedToItemName then itemTitleSelectedStyle else itemTitleUsualStyle
-                                ]
+                                [ HP.style $ CSS.itemTitleWrapper isNavigatedToItemName ]
                                 [ if hasPrefixes then qspacerSpan else qemptySpan
                                 , qitemmarkerSpan itemNameColor
                                 , qspacerSpan
@@ -1385,7 +1364,6 @@ renderSubject options navigatedTo collapsedMap subj groupsArr =
 navigationHint :: forall @subj subj_id w i. R.IsSubject subj_id subj => NavigatedTo subj_id -> HH.HTML w i
 navigationHint navigation =
     let
-        navigationHintStyle = "position: fixed; border: 1px solid black; background-color: #ffffe0ff; padding: 5px 10px; bottom: -5px; left: 60px; max-width: 70%; font-size: 0.7em; box-shadow: 2px 2px 5px gray; border-radius: 5px; overflow: hidden;"
         hintIfEditing Nothing = HH.text ""
         hintIfEditing (Just (CT.EncodedValue val )) = HH.text $ "E:" <> show val
         showSubjId = R.convertTo @String @subj_id
@@ -1402,7 +1380,7 @@ navigationHint navigation =
         Nowhere -> HH.text ""
         _ ->
             HH.div
-                [ HP.style navigationHintStyle ]
+                [ HP.style CSS.navigationHint ]
                 [ HH.text hintText
                 , qspacerSpan
                 , hintIfEditing $ Navigation.mbEditing navigation
