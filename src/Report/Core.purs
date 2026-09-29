@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array ((:))
 import Data.Array (filter, reverse, splitAt, intersperse) as Array
-import Data.Date (Month(..)) as N
+import Data.Date (Month(..), Weekday(..)) as N
 import Data.Either (Either(..))
 import Data.Int (floor, toNumber, trunc, fromString) as Int
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -204,6 +204,67 @@ fromNativeMonth = case _ of
   N.December  -> Dec
 
 
+data SWeekday
+    = Mon
+    | Tue
+    | Wed
+    | Thu
+    | Fri
+    | Sat
+    | Sun
+
+
+derive instance Eq SWeekday
+
+
+instance showWeekday :: Show SWeekday where
+  show = weekdayFullName
+
+
+weekdayFullName :: SWeekday -> String
+weekdayFullName = case _ of
+  Mon -> "Monday"
+  Tue -> "Tuesday"
+  Wed -> "Wednesday"
+  Thu -> "Thursday"
+  Fri -> "Friday"
+  Sat -> "Saturday"
+  Sun -> "Sunday"
+
+
+weekdayThreeLetter :: SWeekday -> String
+weekdayThreeLetter = case _ of
+  Mon -> "Mon"
+  Tue -> "Tue"
+  Wed -> "Wed"
+  Thu -> "Thu"
+  Fri -> "Fri"
+  Sat -> "Sat"
+  Sun -> "Sun"
+
+
+toNativeWeekday :: SWeekday -> N.Weekday
+toNativeWeekday = case _ of
+  Mon -> N.Monday
+  Tue -> N.Tuesday
+  Wed -> N.Wednesday
+  Thu -> N.Thursday
+  Fri -> N.Friday
+  Sat -> N.Saturday
+  Sun -> N.Sunday
+
+
+fromNativeWeekday :: N.Weekday -> SWeekday
+fromNativeWeekday = case _ of
+  N.Monday    -> Mon
+  N.Tuesday   -> Tue
+  N.Wednesday -> Wed
+  N.Thursday  -> Thu
+  N.Friday    -> Fri
+  N.Saturday  -> Sat
+  N.Sunday    -> Sun
+
+
 newtype Year = Year Int -- TODO: replace with Year from Data.Date
 
 
@@ -302,6 +363,29 @@ monthToInt = case _ of
     Oct -> 10
     Nov -> 11
     Dec -> 12
+
+
+weekdayFromInt :: Int -> SWeekday
+weekdayFromInt = case _ of
+    1 -> Mon
+    2 -> Tue
+    3 -> Wed
+    4 -> Thu
+    5 -> Fri
+    6 -> Sat
+    7 -> Sun
+    _ -> Mon
+
+
+weekdayToInt :: SWeekday -> Int
+weekdayToInt = case _ of
+    Mon -> 1
+    Tue -> 2
+    Wed -> 3
+    Thu -> 4
+    Fri -> 5
+    Sat -> 6
+    Sun -> 7
 
 
 type SDateRec = { day :: Int, mon :: Int, year :: Int }
