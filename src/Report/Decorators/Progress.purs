@@ -6,12 +6,16 @@ import Foreign (F, Foreign)
 
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
+import Data.Either (Either)
 import Data.String (joinWith) as String
 import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
 import Data.Array (length, all) as Array
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Encode (class EncodeJson, encodeJson)
+import Data.Argonaut.Decode.Error (JsonDecodeError)
 
 import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec) as CT
 import Report.Core.Logic (foreignToMaybe) as CT
@@ -83,6 +87,12 @@ data Relation
 
 
 derive instance Eq Relation
+
+
+instance DecodeJson Relation where
+    decodeJson js = (decodeJson js :: Either JsonDecodeError String) <#> decodeRel
+instance EncodeJson Relation where
+    encodeJson = encodeRel >>> encodeJson
 
 
 -- data IProgress

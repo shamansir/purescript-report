@@ -9,6 +9,7 @@ import Data.Array ((:), (..))
 import Data.Array (uncons, snoc, cons, length, take, catMaybes) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty (cons, uncons, snoc, snoc') as NEA
+import Data.Either (note) as Either
 import Data.List (List(..))
 import Data.Tuple (fst) as Tuple
 import Data.Foldable (class Foldable, foldl)
@@ -18,6 +19,9 @@ import Data.String (joinWith, split, Pattern(..)) as String
 import Data.Tuple.Nested (type (/\), (/\))
 
 import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl, writeImpl)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Encode (class EncodeJson, encodeJson)
+import Data.Argonaut.Decode.Error (JsonDecodeError(..)) as A
 
 {- Chain -}
 
@@ -214,6 +218,17 @@ instance ReadForeign (Chain String) where
         case fromArray arr of
             Just mbw -> pure mbw
             Nothing  -> fail $ ForeignError "Chain: cannot read from empty array"
+
+
+instance EncodeJson (Chain String) where
+    encodeJson = toArray >>> encodeJson
+
+
+instance DecodeJson (Chain String) where
+    decodeJson f = do
+        (arr :: Array String) <- decodeJson f
+        fromArray arr # Either.note (A.TypeMismatch "Chain: cannot read from empty array")
+
 
 
 length :: forall a. Chain a -> Int

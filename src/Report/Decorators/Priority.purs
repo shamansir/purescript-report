@@ -22,6 +22,9 @@ instance WriteForeign Priority where
     writeImpl = toString >>> writeImpl
 
 
+derive newtype instance Eq Priority
+
+
 priorityChar :: Priority -> String
 priorityChar (Priority (Left str)) = str
 priorityChar (Priority (Right n)) = show n

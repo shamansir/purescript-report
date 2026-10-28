@@ -18,6 +18,9 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Foreign (F)
 
 import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Encode (class EncodeJson, encodeJson)
+import Data.Argonaut.Decode.Error (JsonDecodeError)
 
 
 newtype SDate = SDate { day :: Int, month :: SMonth, year :: Int }
@@ -30,6 +33,10 @@ instance ReadForeign SDate where
     readImpl f = (readImpl f :: F SDateRec) <#> dateFromRec
 instance WriteForeign SDate where
     writeImpl = dateToRec >>> writeImpl
+instance DecodeJson SDate where
+    decodeJson js = (decodeJson js :: Either JsonDecodeError SDateRec) <#> dateFromRec
+instance EncodeJson SDate where
+    encodeJson = dateToRec >>> encodeJson
 
 
 data Language

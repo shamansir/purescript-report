@@ -10,6 +10,9 @@ import Data.FoldableWithIndex (foldlWithIndex)
 
 import Yoga.JSON (class ReadForeign, class WriteForeign)
 
+import Report.Chain (Chain)
+import Report.Chain (fromArray) as Chain
+
 
 {- GroupPath -}
 
@@ -114,3 +117,11 @@ decode :: String -> Maybe GroupPath
 decode str = case String.split (String.Pattern "::") str of
     [] -> Nothing
     arr -> Just $ pathFromArray arr
+
+
+toChain :: GroupPath -> Maybe (Chain String)
+toChain = pathToArray >>> Chain.fromArray
+
+
+toChainPS :: GroupPath -> Maybe (Chain PathSegment)
+toChainPS = pathToArray >>> map wrap >>> Chain.fromArray
