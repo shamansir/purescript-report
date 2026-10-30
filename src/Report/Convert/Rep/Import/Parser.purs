@@ -311,13 +311,14 @@ parseBooleanAtomic = String.toLower >>> case _ of
 
 decoratorFromRep :: Key -> NonEmptyArray String -> Maybe Decorator
 decoratorFromRep dk raw = case dk of
-  KProgress pvTag -> SProgress  <$> progressFromRep (RE.tmfp $ P._vtagFrom pvTag) raw
-  KDescription    -> Just        $  SDescription fraw
-  KEarnedAt       -> SEarnedAt  <$> parseDate fraw
-  KRating         -> PRating    <$> parseRating fraw
-  KTask           -> Just        $  PTask $ taskPFromString fraw
-  KReference      -> SReference <$> parseGroupPath fraw
-  KPriority       -> PPriority  <$> Priority.fromString fraw
+  KProgress pvTag -> SProgress      <$> progressFromRep (RE.tmfp $ P._vtagFrom pvTag) raw
+  KDescription    -> Just            $  SDescription fraw
+  KEarnedAt       -> SEarnedAt      <$> parseDate fraw
+  KRating         -> PRating        <$> parseRating fraw
+  KTask           -> Just            $  PTask $ taskPFromString fraw
+  KReference      -> SReference     <$> parseGroupPath fraw
+  KJoinReference  -> SJoinReference <$> parseGroupPath fraw
+  KPriority       -> PPriority      <$> Priority.fromString fraw
   where
     fraw = NEA.head raw
 

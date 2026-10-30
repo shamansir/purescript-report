@@ -509,4 +509,5 @@ move report dir loc =
                 Nav.PKEarnedAt ->         AtDecorator subjId groupPath itemIdx Dec.KEarnedAt
                 Nav.PKDescription ->      AtDecorator subjId groupPath itemIdx Dec.KDescription
                 Nav.PKReference ->        AtDecorator subjId groupPath itemIdx Dec.KReference
+                Nav.PKJoinReference ->    AtDecorator subjId groupPath itemIdx Dec.KJoinReference
                 Nav.PKTags ->             AtTag subjId groupPath itemIdx 0

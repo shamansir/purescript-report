@@ -32,6 +32,8 @@ encodeDecorator s = case s of
         KDescription /\ CT.EncodedValue desc
     SReference gpath ->
         KReference /\ (CT.EncodedValue $ GP.encode gpath)
+    SJoinReference gpath ->
+        KJoinReference /\ (CT.EncodedValue $ GP.encode gpath)
 
 
 decodeDecorator :: Key -> CT.EncodedValue -> Maybe Decorator
@@ -55,3 +57,5 @@ decodeDecorator key encVal@(CT.EncodedValue evStr) = case key of
         Just $ SDescription evStr
     KReference ->
         GP.decode evStr <#> SReference
+    KJoinReference ->
+        GP.decode evStr <#> SJoinReference

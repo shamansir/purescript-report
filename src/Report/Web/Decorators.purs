@@ -217,6 +217,10 @@ renderDecorator conf =
         --         whenNotEditing $ HH.span_ $ (\tag -> itemTagBadge (conf.onTagClick tag) tag) <$> tags
         --     Just _ -> HH.text ""
         --     Nothing -> HH.text ""
+        Dec.KJoinReference -> case currentDecorator of
+            Just (Dec.SJoinReference _) -> qskip -- FIXME
+            Just _ -> qskip
+            Nothing -> qskip
     where
         progressConfig =
             { onEdit : conf.onEdit

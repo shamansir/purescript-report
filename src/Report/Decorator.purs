@@ -37,6 +37,7 @@ data Decorator
     | SEarnedAt CT.SDate
     | SDescription String
     | SReference GP.GroupPath
+    | SJoinReference GP.GroupPath
     -- | STags (Tags t)
 
 
@@ -58,6 +59,7 @@ data Key
     | KEarnedAt
     | KDescription
     | KReference
+    | KJoinReference
 
 
 instance CK.Keyed Key Decorator where
@@ -133,6 +135,7 @@ encodeKey = case _ of
     KEarnedAt -> "EARN"
     KDescription -> "DESC"
     KReference -> "REF"
+    KJoinReference -> "JREF"
 
 
 decodeKey :: String -> Maybe Key
@@ -144,6 +147,7 @@ decodeKey str =
             "EARN" -> Just KEarnedAt
             "DESC" -> Just KDescription
             "REF"  -> Just KReference
+            "JREF" -> Just KJoinReference
             "RATING"   -> Just KRating
             "PRIORITY" -> Just KPriority
             "TASK"     -> Just KTask
@@ -159,6 +163,7 @@ decodeWithKey key f = case key of
     KEarnedAt -> SEarnedAt <$> readImpl f
     KDescription -> SDescription <$> readImpl f
     KReference -> SReference <$> readImpl f
+    KJoinReference -> SJoinReference <$> readImpl f
 
 
 decodeWithKey' :: Key -> Foreign -> Maybe Decorator
@@ -174,6 +179,7 @@ writeValue = case _ of
     SEarnedAt d -> writeImpl d
     SDescription desc -> writeImpl desc
     SReference path -> writeImpl path
+    SJoinReference path -> writeImpl path
 
 
 debugNavLabel :: Key -> String
@@ -269,8 +275,9 @@ orderOf = case _ of
     KDescription -> 22
     KReference -> 23
     -- KTags -> 24
+    KJoinReference -> 25
     where
-        levelShift = 25
+        levelShift = 26
 
 
 {-
@@ -378,3 +385,4 @@ keyOf = case _ of
     SEarnedAt _ -> KEarnedAt
     SDescription _ -> KDescription
     SReference _ -> KReference
+    SJoinReference _ -> KJoinReference

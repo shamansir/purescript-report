@@ -418,6 +418,8 @@ _decoratorDocLines =
             tmf D.KDescription /\ (pure $ D.text desc)
         D.SReference path ->
             tmf D.KReference /\ (pure $ convertPath path)
+        D.SJoinReference path ->
+            tmf D.KJoinReference /\ (pure $ convertPath path)
 
 
 _tabValKeyOf :: TV.TabularAtomicValue -> TV.TabValTypeKey

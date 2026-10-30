@@ -180,6 +180,12 @@ toDhall inclRule =
                     # ilarrayD
                     # prefixD "// T.inj/self"
                     # _ol
+            D.SJoinReference path ->
+                unwrap path
+                    # map (unwrap >>> quote)
+                    # ilarrayD
+                    # prefixD "// T.inj/join"
+                    # _ol
 
 
         convertDecoratorRec :: DecoratorRec -> RenderedAs (Doc Unit)

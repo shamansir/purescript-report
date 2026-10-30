@@ -19,6 +19,7 @@ data PosKey -- merge with `Decorator.Key`
     | PKEarnedAt
     | PKDescription
     | PKReference
+    | PKJoinReference
     | PKTags
 
 
@@ -53,6 +54,7 @@ toPosKey = case _ of
     D.KEarnedAt -> PKEarnedAt
     D.KDescription -> PKDescription
     D.KReference -> PKReference
+    D.KJoinReference -> PKJoinReference
 
 
 nextPos :: PosKey -> Maybe PosKey
@@ -64,7 +66,8 @@ nextPos = case _ of
     PKProgress _ -> Just PKEarnedAt
     PKEarnedAt -> Just PKDescription
     PKDescription -> Just PKReference
-    PKReference -> Just PKTags
+    PKReference -> Just PKJoinReference
+    PKJoinReference -> Just PKTags
     PKTags -> Nothing
 
 
@@ -78,7 +81,8 @@ prevPos = case _ of
     PKEarnedAt -> Just $ PKProgress Nothing
     PKDescription -> Just PKEarnedAt
     PKReference -> Just PKDescription
-    PKTags -> Just PKReference
+    PKJoinReference -> Just PKReference
+    PKTags -> Just PKJoinReference
 
 
 orderOf :: PosKey -> Int
@@ -91,7 +95,8 @@ orderOf = case _ of
     PKEarnedAt -> 2
     PKDescription -> 3
     PKReference -> 4
-    PKTags -> 5
+    PKJoinReference -> 5
+    PKTags -> 6
 
 
 {-

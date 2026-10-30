@@ -42,6 +42,7 @@ triMarkerForDecorator = case _ of
    D.KEarnedAt ->       TM "ERN"
    D.KDescription ->    TM "DSC"
    D.KReference ->      TM "REF"
+   D.KJoinReference ->  TM "JRF"
 
 
 tmfp :: P.PTValueTag -> TriMarker
@@ -94,6 +95,7 @@ decoratorKeyFromTriMarker (TM marker) = case marker of
     "ERN" -> D.KEarnedAt
     "DSC" -> D.KDescription
     "REF" -> D.KReference
+    "JRF" -> D.KJoinReference
     _     -> D.KProgress $ P._vtagTo $ ptftm $ TM marker
 
 

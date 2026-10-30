@@ -179,6 +179,8 @@ toOrg inclRule =
                         pure $ "Description" /\ D.text desc
                     D.SReference path ->
                         pure $ "Reference" /\ convertPath path
+                    D.SJoinReference path ->
+                        pure $ "JoinReference" /\ convertPath path
                 )
                 modRec.fvalue
 

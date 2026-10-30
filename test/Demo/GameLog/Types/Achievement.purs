@@ -267,6 +267,7 @@ applyDecorators decorators = with \achRec ->
             Dec.SEarnedAt sdate -> acc { mbEarnedAt = Just sdate }
             Dec.SDescription descr -> acc { mbDescription = Just descr }
             Dec.SReference gpath -> acc { mbReference = Just gpath }
+            Dec.SJoinReference gpath -> acc
             Dec.PRating _ -> acc
             Dec.PPriority _ -> acc
             Dec.PTask _ -> acc

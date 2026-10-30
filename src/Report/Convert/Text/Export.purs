@@ -331,6 +331,7 @@ _tabularAtomicValueDoc = case _ of
         D.PRating rating -> D.text $ Rating.toStars rating
         D.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
         D.PTask task -> D.text $ Task.taskPToString task
+        D.SJoinReference _ -> mempty
     TV.TVTags theTags -> case theTags of
         RawTags [] -> mempty
         RawTags tagArr ->
