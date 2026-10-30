@@ -9,6 +9,8 @@ import Data.Int (floor, fromString, toNumber) as Int
 import Data.String (joinWith, split, Pattern(..)) as String
 
 import Yoga.JSON (class ReadForeign, class WriteForeign)
+import Data.Argonaut.Encode (class EncodeJson)
+import Data.Argonaut.Decode (class DecodeJson)
 
 
 newtype Rating
@@ -19,6 +21,8 @@ derive instance Eq Rating
 derive instance Ord Rating
 derive newtype instance ReadForeign  Rating
 derive newtype instance WriteForeign Rating
+derive newtype instance EncodeJson   Rating
+derive newtype instance DecodeJson   Rating
 
 
 -- get value between 0.0 and 1.0, where 1.0 is max

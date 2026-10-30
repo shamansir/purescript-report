@@ -506,7 +506,7 @@ loadNProgress =
         RangeN _ -> StatsValue
         RelTime _ _ -> StatsValue
         ToComplete { done } -> if done then Achieved else NotAchieved
-        ToGetI { got, total } -> if got >= total && total /=   0 then Achieved else if got == 0   || total == 0   then NotAchieved else OnTheWay $ Int.toNumber $ got / total
+        ToGetI { got, total } -> if got >= total && total /=   0 then Achieved else if got == 0   || total == 0   then NotAchieved else OnTheWay $ Int.toNumber got / Int.toNumber total
         ToGetN { got, total } -> if got >= total && total /= 0.0 then Achieved else if got == 0.0 || total == 0.0 then NotAchieved else OnTheWay $ got / total
         PercentI i -> if i >= 100 then Achieved else if i == 0   then NotAchieved else OnTheWay $ Int.toNumber i / 100.0
         PercentN n -> if n >= 1.0 then Achieved else if n == 0.0 then NotAchieved else OnTheWay n

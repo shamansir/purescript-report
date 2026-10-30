@@ -5,10 +5,13 @@ import Prelude
 import Foreign (fail, ForeignError(..))
 
 import Data.Maybe (Maybe(..))
-import Data.Either (Either(..))
+import Data.Either (Either(..), hush)
 import Data.Int (fromString, toNumber) as Int
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Decode (JsonDecodeError(..)) as AD
+import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 
 
 newtype Priority = Priority (Either String Int)
@@ -20,6 +23,15 @@ instance ReadForeign Priority where
             Nothing -> fail $ ForeignError $ "Invalid Priority string: " <> str
 instance WriteForeign Priority where
     writeImpl = toString >>> writeImpl
+
+instance DecodeJson Priority where
+    decodeJson f = do
+        (str :: String) <- decodeJson f
+        case fromString str :: Maybe Priority of
+            Just priority  -> pure priority
+            Nothing -> Left $ AD.TypeMismatch $ "Invalid Priority string: " <> str
+instance EncodeJson Priority where
+    encodeJson = toString >>> encodeJson
 
 
 derive newtype instance Eq Priority
@@ -44,8 +56,7 @@ maxRPriority = 20 :: Int
 
 
 toString :: Priority -> String
-toString (Priority (Left str)) = str
-toString (Priority (Right n)) = show n
+toString = priorityChar
 
 
 fromString :: String -> Maybe Priority
@@ -63,8 +74,10 @@ fromString str =
 toValue :: Priority -> Number
 toValue (Priority (Left str)) =
     case str of
-        "A" -> 1.0 / Int.toNumber maxLPriority
+        "A" -> 3.0 / Int.toNumber maxLPriority
         "B" -> 2.0 / Int.toNumber maxLPriority
-        "C" -> 3.0 / Int.toNumber maxLPriority
-        _   -> 1.1
-toValue (Priority (Right n)) = Int.toNumber n / Int.toNumber maxRPriority
+        "C" -> 1.0 / Int.toNumber maxLPriority
+        _   -> 0.5 / Int.toNumber maxLPriority
+        -- FIXME: use Ord of the char?
+toValue (Priority (Right n)) =
+    Int.toNumber n / Int.toNumber maxRPriority
