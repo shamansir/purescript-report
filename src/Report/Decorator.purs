@@ -358,6 +358,12 @@ getReference sfx = get KReference sfx >>= case _ of
     _ -> Nothing
 
 
+getJoin :: Decorators -> Maybe GP.GroupPath
+getJoin sfx = get KJoinReference sfx >>= case _ of
+    SJoinReference path -> Just path
+    _ -> Nothing
+
+
 getRating :: Decorators -> Maybe Rating
 getRating pfx = get KRating pfx >>= case _ of
     PRating r -> Just r

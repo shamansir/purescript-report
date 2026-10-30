@@ -60,6 +60,7 @@ type DhallItemRec =
     , ref :: Ref
     , detailed :: Maybe String
     , selfRef :: Maybe Ref
+    , joinRef :: Maybe Ref
     , date :: Maybe DateRec
     , tags :: Maybe (Array String)
     , value ::
@@ -174,9 +175,10 @@ fromDhall jsonStr =
                             $ Array.cons
                                 ( mbProgress       <#> Dec.SProgress <#> \p -> Dec.keyOf p /\ p )
                                 -- [ mbTask        <#>                   \t -> Dec.KTask        /\ Dec.PTask t -- FIXME: could duplicate task since takes from decorator
-                                [ itemRec.detailed <#>                   \d -> Dec.KDescription /\ Dec.SDescription d
-                                , itemRec.selfRef  <#> pathFromRef   <#> \p -> Dec.KReference   /\ Dec.SReference p
-                                , itemRec.date     <#>                   \d -> Dec.KEarnedAt    /\ Dec.SEarnedAt (CT.dateFromRec d)
+                                [ itemRec.detailed <#>                   \d -> Dec.KDescription   /\ Dec.SDescription d
+                                , itemRec.selfRef  <#> pathFromRef   <#> \p -> Dec.KReference     /\ Dec.SReference p
+                                , itemRec.joinRef  <#> pathFromRef   <#> \p -> Dec.KJoinReference /\ Dec.SJoinReference p
+                                , itemRec.date     <#>                   \d -> Dec.KEarnedAt      /\ Dec.SEarnedAt (CT.dateFromRec d)
                                 ]
                     , tabular : Tabular.empty -- FIXME: items contains no tabular. TV.progress <$> loadTabular itemRec.tabular
                     , tags : Tags $
