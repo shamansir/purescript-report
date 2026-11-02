@@ -410,36 +410,65 @@ dateToRec (SDate { day, month, year }) =
     { day, mon : monthToInt month, year }
 
 
-formatWithCommas :: Int -> String
-formatWithCommas n =
+data Fmt
+    = FmtDigits String
+    | FmtDelim
+    | FmtDecimalSep
+    | FmtSign String
+    | FmtEmpty
+
+
+repFormat :: Fmt -> String
+repFormat = case _ of
+    FmtDigits s -> s
+    FmtDelim -> ","
+    FmtSign s -> s
+    FmtDecimalSep -> "."
+    FmtEmpty -> ""
+
+
+formatInt :: Int -> Array Fmt
+formatInt n =
     let
         s = show n -- Int.toStringAs Int.decimal n
-        sign /\ digits =
+        sign /\ tail =
             if String.take 1 s == "-"
-                then "-" /\ String.drop 1 s
-                else "" /\ s
+                then FmtSign "-" /\ String.drop 1 s
+                else FmtEmpty /\ s
 
-        charArr = Array.reverse $ CU.toCharArray digits
+        charArr = Array.reverse $ CU.toCharArray tail
 
         grouped = charArr
              # chunksOf 3
             <#> Array.reverse
             <#> CU.fromCharArray
-             # Array.intersperse ","
+            <#> FmtDigits
+             # Array.intersperse FmtDelim
              # Array.reverse
-             # String.joinWith ""
 
-    in sign <> grouped
+    in sign : grouped
 
 
-formatNumWithCommas :: { fixedTo :: Maybe Int } -> Number -> String
-formatNumWithCommas { fixedTo } num =
+applyRepFormat :: Array Fmt -> String
+applyRepFormat = map repFormat >>> String.joinWith ""
+
+
+formatWithCommas :: Int -> String
+formatWithCommas = formatInt >>> applyRepFormat
+
+
+formatNum :: { fixedTo :: Maybe Int } -> Number ->  Array Fmt
+formatNum { fixedTo } num =
     let
         integerPart = Int.trunc num
 
         fractionalPart = num - Int.toNumber integerPart
     in
-        formatWithCommas integerPart <> (String.drop 1 $ NF.toStringWith (NF.fixed $ fromMaybe 6 fixedTo) fractionalPart)
+        formatInt integerPart <> pure FmtDecimalSep <> pure (FmtDigits $ String.drop 2 $ NF.toStringWith (NF.fixed $ fromMaybe 6 fixedTo) fractionalPart)
+
+
+formatNumWithCommas :: { fixedTo :: Maybe Int } -> Number -> String
+formatNumWithCommas ft = formatNum ft >>> applyRepFormat
 
 
 chunksOf :: forall a. Int -> Array a -> Array (Array a)
