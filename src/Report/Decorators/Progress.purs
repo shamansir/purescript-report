@@ -4,6 +4,7 @@ import Prelude
 
 import Foreign (F, Foreign)
 
+import Data.Generic.Rep (class Generic)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Either (Either)
@@ -15,6 +16,8 @@ import Data.Array (length, all) as Array
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
+import Data.Argonaut.Decode.Generic (genericDecodeJson)
+import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 
 import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec) as CT
@@ -87,6 +90,11 @@ data Relation
 
 
 derive instance Eq Relation
+
+
+derive instance Generic NProgress _
+instance EncodeJson NProgress where encodeJson = genericEncodeJson
+instance DecodeJson NProgress where decodeJson = genericDecodeJson
 
 
 instance DecodeJson Relation where

@@ -244,6 +244,7 @@ achievementToDhallRec (Achievement ach) =
     , ref : []
     , detailed : ach.mbDescription
     , selfRef : Nothing
+    , joinRef : Nothing
     , date : ach.mbEarnedAt <#> CT.dateToRec
     , tags : if ach.tags == [] then Nothing else Just ach.tags
     , value : Nothing

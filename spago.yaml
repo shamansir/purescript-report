@@ -1,6 +1,7 @@
 package:
   name: report
   dependencies:
+    - argonaut-generic
     - console
     - dodo-printer
     - dotlang

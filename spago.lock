@@ -5,6 +5,7 @@
         "path": "./",
         "core": {
           "dependencies": [
+            "argonaut-generic",
             "console",
             "dodo-printer",
             "dotlang",
@@ -29,7 +30,9 @@
           "build_plan": [
             "aff",
             "ansi",
+            "argonaut-codecs",
             "argonaut-core",
+            "argonaut-generic",
             "arraybuffer-types",
             "arrays",
             "avar",
@@ -945,6 +948,22 @@
         "prelude",
         "strings",
         "tailrec"
+      ]
+    },
+    "argonaut-generic": {
+      "type": "registry",
+      "version": "8.0.0",
+      "integrity": "sha256-qUuZpoEip2knLFPT14OnRc1BkZcr3Nyy+GSfqVQGM9c=",
+      "dependencies": [
+        "argonaut-codecs",
+        "argonaut-core",
+        "arrays",
+        "bifunctors",
+        "control",
+        "either",
+        "foreign-object",
+        "partial",
+        "prelude"
       ]
     },
     "arraybuffer-types": {

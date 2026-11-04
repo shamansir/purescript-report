@@ -9,7 +9,7 @@ import Data.Either (Either(..))
 import Data.Int (floor, toNumber, trunc, fromString) as Int
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype)
-import Data.Number (pow) as Number
+import Data.Number (pow, abs) as Number
 import Data.String as String
 import Data.String.CodeUnits (fromCharArray, toCharArray) as CU
 import Data.Number.Format as NF
@@ -460,11 +460,11 @@ formatWithCommas = formatInt >>> applyRepFormat
 formatNum :: { fixedTo :: Maybe Int } -> Number ->  Array Fmt
 formatNum { fixedTo } num =
     let
-        integerPart = Int.trunc num
-
-        fractionalPart = num - Int.toNumber integerPart
+        integerPart = Int.trunc $ Number.abs num
+        fractionalPart = Number.abs num - Int.toNumber integerPart
+        sign = if num < 0.0 then FmtSign "-" else FmtEmpty
     in
-        formatInt integerPart <> pure FmtDecimalSep <> pure (FmtDigits $ String.drop 2 $ NF.toStringWith (NF.fixed $ fromMaybe 6 fixedTo) fractionalPart)
+        sign : formatInt integerPart <> pure FmtDecimalSep <> pure (FmtDigits $ String.drop 2 $ NF.toStringWith (NF.fixed $ fromMaybe 6 fixedTo) fractionalPart)
 
 
 formatNumWithCommas :: { fixedTo :: Maybe Int } -> Number -> String
