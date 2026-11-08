@@ -19,7 +19,7 @@ import Report.Convert.Keyed (class EncodableKey, encodeKey, decodeKey)
 import Report.Tabular as Tabular
 import Report.Decorator (Decorator(..))
 import Report.Decorators.Tabular.TabularValue as TV
-import Report.Decorators.Progress (Progress(..), Relation)
+import Report.Decorators.Progress (Progress(..))
 
 import GameLog.Types as GLT
 
@@ -60,7 +60,7 @@ newtype Game =
         , mbPlatform :: Maybe GLT.Platform
         , mbSource :: Maybe Source
         , mbTrackedAt :: Maybe CT.SDate
-        , mbPlaytime :: Maybe (Relation /\ CT.STimeRec)
+        , mbPlaytime :: Maybe (CT.Relation /\ CT.STimeRec)
         , stats :: Stats
         }
 

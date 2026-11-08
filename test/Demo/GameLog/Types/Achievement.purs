@@ -10,6 +10,7 @@ import Data.Array (length, filter, all, unsnoc) as Array
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
+import Report.Core (NProgress(..))
 import Report.Class
 import Report.Chain (Chain(..))
 import Report.Chain as Chain
@@ -18,7 +19,7 @@ import Report.GroupPath (GroupPath, PathSegment(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Stats (Stats(..))
 import Report.Decorators.Tags (Tags(..))
-import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
+import Report.Decorators.Progress (Progress(..), loadNProgress)
 import Report.Web.Decorators.Tags.Colors as TC
 import Report.Modify
 import Report.Decorator (Decorator, Decorators)

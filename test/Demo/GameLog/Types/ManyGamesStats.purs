@@ -11,6 +11,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 
 import Report (Report, class ToReport)
 import Report (buildG) as Report
+import Report.Core (Relation(..)) as CT
 import Report.Class (convertFrom)
 import Report.Group (Group)
 import Report.Convert.Generic (class ToExport, class ToImport, uniqueIdFromTitle)
@@ -20,7 +21,7 @@ import Report.Impl.Item (Item(..))
 import Report.Impl.Subject (Subject(..), SubjectId)
 import Report.Tabular as Tabular
 import Report.Decorator as Dec
-import Report.Decorators.Progress (Progress(..), Relation(..)) as Progress
+import Report.Decorators.Progress (Progress(..)) as Progress
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Decorators.Tags (RawTag)
 
@@ -88,7 +89,7 @@ convertSubject (Subject subjectRec) =
         TV.TVAtomic (TV.TVDate date) -> Just date
         _ -> Nothing)
     , mbPlaytime  : subjectRec.tabular # Tabular.findMapV "playtime" (case _ of
-        TV.TVAtomic (TV.TVTime time) -> Just $ Progress.REqual /\ time
+        TV.TVAtomic (TV.TVTime time) -> Just $ CT.REqual /\ time
         TV.TVAtomic (TV.TVDecorator (Dec.SProgress (Progress.RelTime rel time))) -> Just $ rel /\ time
         _ -> Nothing)
     , stats       : subjectRec.stats
