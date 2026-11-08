@@ -11,8 +11,9 @@ import Data.Array (length) as Array
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
+import Report.Core (NProgress(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..), NProgress(..))
+import Report.Decorators.Progress (Progress(..))
 
 {- Stats -}
 

@@ -32,7 +32,7 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
+import Report.Decorators.Progress (Progress(..), PValueTag(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag(..), RawTags(..))
 import Report.Decorators.Progress (Progress(..)) as P
@@ -431,9 +431,9 @@ _progressToDhall = case _ of
     RelTime rel timeRec ->
         let relText =
                 case rel of
-                    RMoreThan -> "T.rel_more_than"
-                    REqual -> "T.rel_equal"
-                    RLessThan -> "T.rel_less_than"
+                    CT.RMoreThan -> "T.rel_more_than"
+                    CT.REqual -> "T.rel_equal"
+                    CT.RLessThan -> "T.rel_less_than"
         in _ol $ wrapbrkD $ D.text "T.v_relt" <+> (wrapbrkD $ D.text "T.v_rel_" <> D.text relText <+> D.text "T.TIME" <+> timereccf timeRec)
         -- T.v_relt (T.rel_more_than T.TIME time)
     Error err ->

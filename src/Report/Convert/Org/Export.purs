@@ -32,7 +32,7 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..), PValueTag(..), Relation(..))
+import Report.Decorators.Progress (Progress(..), PValueTag(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Progress (Progress(..)) as P
@@ -317,9 +317,9 @@ _progressProperties = case _ of
     RelTime rel timeRec ->
         let relText =
                 case rel of
-                    RMoreThan -> "more_than"
-                    REqual -> "equal"
-                    RLessThan -> "less_than"
+                    CT.RMoreThan -> "more_than"
+                    CT.REqual -> "equal"
+                    CT.RLessThan -> "less_than"
         in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
     Error err ->
         mempty
@@ -381,9 +381,9 @@ _progressSuffixOneLiner = case _ of
     RelTime rel timeRec ->
         let relText =
                 case rel of
-                    RMoreThan -> ">"
-                    REqual -> "="
-                    RLessThan -> "<"
+                    CT.RMoreThan -> ">"
+                    CT.REqual -> "="
+                    CT.RLessThan -> "<"
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty

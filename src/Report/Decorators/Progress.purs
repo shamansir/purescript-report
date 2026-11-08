@@ -20,7 +20,8 @@ import Data.Argonaut.Decode.Generic (genericDecodeJson)
 import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 
-import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec) as CT
+import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec, Relation(..), encodeRel, decodeRel) as CT
+import Report.Core (NProgress(..))
 import Report.Core.Logic (foreignToMaybe) as CT
 import Report.Convert.Keyed as CK
 import Report.Decorators.Task (TaskP(..))
@@ -64,54 +65,12 @@ data Progress
     | LevelsP LevelsP -- every level has task inside, name and probably a date when was achieved, reached value is not stored and intended to be calculated from the task data
     -- | RelN Relation Number -- TODO
     -- | RelI Relation Integer -- TODO
-    | RelTime Relation TimeRec
+    | RelTime CT.Relation TimeRec
     | Error String
 
 
 instance Show Progress where show = progressToString
 derive instance Eq Progress
-
-
-{- NProgress -}
-
-
-data NProgress
-    = Achieved
-    | OnTheWay Number -- FIXME: OnTheWay 1.0 == Achieved, OnTheWay 0.0 == NotAchieved
-    | NotAchieved
-    | StatsValue
-    | Skip
-
-
-data Relation
-    = RMoreThan
-    | REqual
-    | RLessThan
-
-
-derive instance Eq Relation
-
-
-derive instance Generic NProgress _
-instance EncodeJson NProgress where encodeJson = genericEncodeJson
-instance DecodeJson NProgress where decodeJson = genericDecodeJson
-
-
-instance DecodeJson Relation where
-    decodeJson js = (decodeJson js :: Either JsonDecodeError String) <#> decodeRel
-instance EncodeJson Relation where
-    encodeJson = encodeRel >>> encodeJson
-
-
--- data IProgress
---     = IAchieved
---     | IOnTheWay { got :: Int, total :: Int } -- FIXME: OnTheWay 1.0 == Achieved, OnTheWay 0.0 == NotAchieved
---     | INotAchieved
---     | IStatsValue
---     | ISkip
-
-
-derive instance Eq NProgress
 
 
 {- Classes -}
@@ -198,9 +157,9 @@ progressToString = case _ of
         showLevelS reached n { gives } =
             show n <> " : " <>  gives
         relation = case _ of
-            RMoreThan -> ">"
-            REqual -> "="
-            RLessThan -> "<"
+            CT.RMoreThan -> ">"
+            CT.REqual -> "="
+            CT.RLessThan -> "<"
 
 
 {- JSON -}
@@ -306,7 +265,7 @@ _writeProgress = case _ of
     LevelsC levelsC ->
         { t : pvt "LVLC", v : writeImpl $ convertLevelsC levelsC }
     RelTime rel timeRec ->
-        { t : pvt "RELT", v : writeImpl { rel : encodeRel rel, focus : timeRec } }
+        { t : pvt "RELT", v : writeImpl { rel : CT.encodeRel rel, focus : timeRec } }
     Error err ->
         { t : pvt "X", v : writeImpl err }
     where
@@ -353,7 +312,7 @@ _readProgress (PValueTag atag) frgn =
         "LVLP" -> LevelsP <$> (readImpl frgn :: F LevelsP)
         "LVLC" -> LevelsC <$> convertLevelsC <$> (readImpl frgn :: F { reached :: Int, levels :: Int, current :: Int, maxcurrent :: Int, date :: Maybe DateRec })
         "RELT" ->
-            (readImpl frgn :: F { rel :: String, focus :: TimeRec }) <#> \{ rel, focus } -> RelTime (decodeRel rel) focus
+            (readImpl frgn :: F { rel :: String, focus :: TimeRec }) <#> \{ rel, focus } -> RelTime (CT.decodeRel rel) focus
         "X" -> Error <$> (readImpl frgn :: F String)
         _ -> pure None
     where
@@ -565,22 +524,6 @@ nProgressToNumber = case _ of
     NotAchieved -> 0.0
     StatsValue -> -1.0
     Skip -> -2.0
-
-
-encodeRel :: Relation -> String
-encodeRel = case _ of
-    RMoreThan -> ">"
-    REqual -> "="
-    RLessThan -> "<"
-
-
-decodeRel :: String -> Relation
-decodeRel = case _ of
-    ">" -> RMoreThan
-    "=" -> REqual
-    "<" -> RLessThan
-    _   -> REqual
-
 
 
 data PTValueTag -- FIXME: use it everywhere above for consistency

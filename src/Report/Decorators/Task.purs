@@ -12,6 +12,8 @@ import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 
+import Report.Core (NProgress(..)) as RP
+
 
 data TaskP
     = TTodo
@@ -102,3 +104,11 @@ isCanceled :: TaskP -> Boolean
 isCanceled = case _ of
     TCanceled -> true
     _ -> false
+
+
+toNProgress :: TaskP -> RP.NProgress
+toNProgress = case _ of
+    TTodo -> RP.NotAchieved
+    TDoing -> RP.OnTheWay 0.5
+    TDone -> RP.Achieved
+    _ -> RP.NotAchieved

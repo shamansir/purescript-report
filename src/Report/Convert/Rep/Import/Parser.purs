@@ -28,7 +28,7 @@ import Report.Decorator (Decorator(..), Key(..))
 import Report.Tabular (Item(..)) as Tab
 import Report.Decorators.Tabular.TabularValue (TabularAtomicValue(..))
 import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
-import Report.Decorators.Progress (Progress(..), Relation(..))
+import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Progress (PTValueTag(..), _vtagFrom) as P
 import Report.Decorators.Task (taskPFromString)
 import Report.Decorators.Rating (Rating(..))
@@ -595,9 +595,9 @@ parseRelTime s = do
   let relS  = String.take idx s
       timeS = String.drop (idx + 1) s
   rel  <- case relS of
-    ">" -> Just RMoreThan
-    "=" -> Just REqual
-    "<" -> Just RLessThan
+    ">" -> Just CT.RMoreThan
+    "=" -> Just CT.REqual
+    "<" -> Just CT.RLessThan
     _   -> Nothing
   timeRec <- parseTime timeS
   pure $ RelTime rel timeRec

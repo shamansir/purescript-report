@@ -7,9 +7,10 @@ import Data.Maybe (Maybe(..))
 import Data.Number (fromString) as Number
 import Data.String (split, Pattern(..)) as String
 import Data.Tuple.Nested ((/\), type (/\))
-import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt, toLeadingZero) as CT
+import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt, toLeadingZero, Relation(..)) as CT
+import Report.Core (Relation(..), encodeRel, decodeRel)
 import Report.Core.Logic (EncodedValue(..)) as CT
-import Report.Decorators.Progress (PValueTag(..), Progress(..), Relation(..), unwrapValueTag, valueTagOf, encodeRel, decodeRel)
+import Report.Decorators.Progress (PValueTag(..), Progress(..), unwrapValueTag, valueTagOf)
 import Report.Decorators.Task (taskPFromString, taskPToString)
 
 

@@ -6,7 +6,7 @@ import Data.Int (toNumber) as Int
 import Data.Array (length) as Array
 import Data.FunctorWithIndex (mapWithIndex)
 
-import Report.Decorators.Progress (NProgress(..))
+import Report.Core (NProgress(..))
 import Report.Decorators.Stats (Stats, GotTotal(..), gotTotalFromStats) as S
 
 import Halogen.HTML as HH

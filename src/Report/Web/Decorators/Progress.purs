@@ -17,7 +17,7 @@ import Web.UIEvent.KeyboardEvent as KE
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Decorators.Task (TaskP(..)) as S
-import Report.Decorators.Progress (Progress(..), Relation(..)) as Prog
+import Report.Decorators.Progress (Progress(..)) as Prog
 import Report.Web.Decorators.EditInput as EI
 import Report.Convert.Keyed
 
@@ -643,9 +643,9 @@ renderProgress events voeItemName voeProgress = case progress of
         mkValueEditInput = EI.mkValueEditInput events
         editingProgress  = CT.isEditing voeProgress
         relMarker = case _ of
-            Prog.RMoreThan -> ">"
-            Prog.REqual -> "="
-            Prog.RLessThan -> "<"
+            CT.RMoreThan -> ">"
+            CT.REqual -> "="
+            CT.RLessThan -> "<"
         vsFrom true = Complete
         vsFrom false = Incomplete
 

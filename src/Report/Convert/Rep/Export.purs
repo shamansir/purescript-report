@@ -16,7 +16,7 @@ import Data.String as String
 
 import Report (Report)
 import Report.Class (tagContent) as CT
-import Report.Core (SDateRec, STimeRec, dateToRec, dateFromRec, toLeadingZero) as CT
+import Report.Core (SDateRec, STimeRec, dateToRec, dateFromRec, toLeadingZero, Relation(..)) as CT
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
@@ -27,7 +27,7 @@ import Report.Convert.Text.Decorators.Tags (loadRawId) as CT
 import Report.Convert.Keyed (encodeKey)
 
 import Report.Decorator (Key(..), Decorator(..), keyOf) as D
-import Report.Decorators.Progress (Progress(..), Relation(..))
+import Report.Decorators.Progress (Progress(..))
 --import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Progress (Progress(..), PTValueTag(..)) as P
@@ -382,9 +382,9 @@ _progressDocLines = case _ of
     RelTime rel timeRec ->
         let relText =
                 case rel of
-                    RMoreThan -> ">"
-                    REqual -> "="
-                    RLessThan -> "<"
+                    CT.RMoreThan -> ">"
+                    CT.REqual -> "="
+                    CT.RLessThan -> "<"
         in tmfp P.PTRelTime /\ pure (D.text relText <> D.space <> orgTime timeRec)
     Error err ->
         tmfp P.PTError /\ pure (D.text err) -- TODO

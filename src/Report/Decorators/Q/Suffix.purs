@@ -4,7 +4,7 @@ import Prelude
 
 import Report.Core as CT
 import Report.Decorators.Task (TaskP(..)) as T
-import Report.Decorators.Progress (Progress(..), Relation) as P
+import Report.Decorators.Progress (Progress(..)) as P
 import Report.Decorators.Levels (LevelsC, LevelsE, LevelsI, LevelsN, LevelsO, LevelsP, LevelsS) as P
 import Report.GroupPath (GroupPath)
 import Report.Decorator (Decorator(..))
@@ -162,7 +162,7 @@ levels_p :: P.LevelsP -> Decorator
 levels_p = SProgress <<< P.LevelsP
 
 
-rel_time :: P.Relation -> CT.STimeRec -> Decorator
+rel_time :: CT.Relation -> CT.STimeRec -> Decorator
 rel_time rel timeRec = SProgress $ P.RelTime rel timeRec
 
 

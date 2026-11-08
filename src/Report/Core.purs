@@ -2,6 +2,8 @@ module Report.Core where
 
 import Prelude
 
+import Data.Generic.Rep (class Generic)
+
 import Data.Array ((:))
 import Data.Array (filter, reverse, splitAt, intersperse) as Array
 import Data.Date (Month(..), Weekday(..)) as N
@@ -21,6 +23,8 @@ import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
+import Data.Argonaut.Decode.Generic (genericDecodeJson)
+import Data.Argonaut.Encode.Generic (genericEncodeJson)
 
 
 newtype SDate = SDate { day :: Int, month :: SMonth, year :: Int }
@@ -546,4 +550,76 @@ instance Show ReportFormat where
 
 derive instance Eq ReportFormat
 derive instance Ord ReportFormat
+
+
+data Relation
+    = RMoreThan
+    | REqual
+    | RLessThan
+
+
+derive instance Eq Relation
+
+
+instance DecodeJson Relation where
+    decodeJson js = (decodeJson js :: Either JsonDecodeError String) <#> decodeRel
+instance EncodeJson Relation where
+    encodeJson = encodeRel >>> encodeJson
+
+
+
+encodeRel :: Relation -> String
+encodeRel = case _ of
+    RMoreThan -> ">"
+    REqual -> "="
+    RLessThan -> "<"
+
+
+decodeRel :: String -> Relation
+decodeRel = case _ of
+    ">" -> RMoreThan
+    "=" -> REqual
+    "<" -> RLessThan
+    _   -> REqual
+
+
+
+{- NProgress -}
+
+
+data NProgress
+    = Achieved
+    | OnTheWay Number -- FIXME: OnTheWay 1.0 == Achieved, OnTheWay 0.0 == NotAchieved
+    | NotAchieved
+    | StatsValue
+    | Skip
+
+
+derive instance Generic NProgress _
+instance EncodeJson NProgress where encodeJson = genericEncodeJson
+instance DecodeJson NProgress where decodeJson = genericDecodeJson
+
+
+-- data IProgress
+--     = IAchieved
+--     | IOnTheWay { got :: Int, total :: Int } -- FIXME: OnTheWay 1.0 == Achieved, OnTheWay 0.0 == NotAchieved
+--     | INotAchieved
+--     | IStatsValue
+--     | ISkip
+
+
+derive instance Eq NProgress
+
+
+{- ReachedOrNot -}
+
+
+data ReachedOrNot
+    = Reached
+    | ReachedAt SDateRec
+    | ReachedDuring { start :: Maybe SDateRec, end :: Maybe SDateRec }
+    | InProgress
+    | NotReached
+    | RUnknown
+
 

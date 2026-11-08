@@ -6,9 +6,10 @@ import Data.Tuple (snd) as Tuple
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Array (filter, length, head) as Array
 
+import Report.Core (NProgress(..))
 import Report.Class (class HasDecorators, i_decorators)
 import Report.Decorators.Stats (Stats(..))
-import Report.Decorators.Progress (Progress(..), NProgress(..), loadNProgress)
+import Report.Decorators.Progress (Progress(..), loadNProgress)
 import Report.Decorator (firstProgress) as Decorator
 
 
