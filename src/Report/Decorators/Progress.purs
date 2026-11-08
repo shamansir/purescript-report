@@ -6,12 +6,13 @@ import Foreign (F, Foreign)
 
 import Data.Generic.Rep (class Generic)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either)
 import Data.String (joinWith) as String
 import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
 import Data.Array (length, all) as Array
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
@@ -20,12 +21,14 @@ import Data.Argonaut.Decode.Generic (genericDecodeJson)
 import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 
-import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec, Relation(..), encodeRel, decodeRel) as CT
+import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec, Relation(..), encodeRel, decodeRel, ReachedOrNot(..)) as CT
 import Report.Core (NProgress(..))
 import Report.Core.Logic (foreignToMaybe) as CT
 import Report.Convert.Keyed as CK
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Levels (LevelI, LevelN, LevelO, LevelS, LevelsC, LevelsE, LevelsI, LevelsN, LevelsO, LevelsP, LevelsS)
+
+import Report.AtomicValue as AV
 
 type DateRec = CT.SDateRec
 type TimeRec = CT.STimeRec
@@ -662,3 +665,89 @@ _vtagOf = case _ of
     LevelsE _ -> PTLevelsE
     RelTime _ _ -> PTRelTime
     Error _ -> PTError
+
+
+toAtomic :: Progress -> AV.AtomicValue /\ Array { name :: String, reached :: CT.ReachedOrNot, v :: Maybe AV.AtomicValue }
+toAtomic = case _ of
+    None -> AV.None /\ []
+    Unknown -> AV.Unknown /\ []
+    PText text -> AV.PText text /\ []
+    PNumber pnumber -> AV.PNumber pnumber /\ []
+    PInt pint -> AV.PInt pint /\ []
+    ToComplete tocomplete -> AV.ToComplete tocomplete /\ []
+    ToGetI togeti -> AV.ToGetI togeti /\ []
+    ToGetN togetn -> AV.ToGetN togetn /\ []
+    -- ToGetIX togetix -> ToGetIX togetix /\ []
+    -- ToGetNX togetnx -> ToGetNX togetnx /\ []
+    PercentI percenti -> AV.PercentI percenti /\ []
+    PercentN percentn -> AV.PercentN percentn /\ []
+    PercentSign percentsign -> AV.PercentSign percentsign /\ []
+    MeasuredI measuredi -> AV.MeasuredI measuredi /\ []
+    MeasuredN measuredn -> AV.MeasuredN measuredn /\ []
+    MeasuredSign measuredsign -> AV.MeasuredSign measuredsign /\ []
+    PerI peri -> AV.PerI peri /\ []
+    PerN pern -> AV.PerN pern /\ []
+    OnDate ondate -> AV.OnDate ondate /\ []
+    OnTime ontime -> AV.OnTime ontime /\ []
+    -- OnDateTime ondatetime -> OnDateTime ondatetime /\ []
+    -- TimeRange timerange -> TimeRange timerange /\ []
+    -- DateRange daterange -> DateRange daterange /\ []
+    -- DateTimeRange datetimerange -> DateTimeRange datetimerange /\ []
+    RangeI rangei -> AV.RangeI rangei /\ []
+    RangeN rangen -> AV.RangeN rangen /\ []
+    RelTime rel time -> AV.RelTime rel time /\ []
+    Task taskP -> AV.PTask taskP /\ []
+    LevelsI levelsI -> levelsIVal levelsI /\ mapWithIndex (mapLevelI levelsI.reached) levelsI.levels
+    LevelsN levelsN -> levelsNVal levelsN /\ mapWithIndex (mapLevelN levelsN.reached) levelsN.levels
+    LevelsO levelsO -> levelsOVal levelsO /\ mapWithIndex (mapLevelO levelsO.reached) levelsO.levels
+    LevelsS levelsS -> levelsSVal levelsS /\ mapWithIndex (mapLevelS levelsS.reached) levelsS.levels
+    LevelsE levelsE -> levelsEVal levelsE /\ []
+    LevelsC levelsC -> levelsCVal levelsC /\ pure (levelCHelper levelsC)
+    LevelsP levelsP -> levelsPVal levelsP /\ mapWithIndex mapLevelP levelsP.levels
+    Error error -> AV.Error error /\ []
+    where
+
+        levelsIVal { levels, reached } = AV.ToGetI { got : foldl (\g lmax -> if reached >= lmax then g + 1 else g) 0 $ _.maximum <$> levels, total : Array.length levels }
+        levelsNVal { levels, reached } = AV.ToGetI { got : foldl (\g lmax -> if reached >= lmax then g + 1 else g) 0 $ _.maximum <$> levels, total : Array.length levels }
+        levelsEVal {  total, reached } = AV.ToGetI { got : reached, total }
+        levelsSVal { levels, reached } = AV.ToGetI { got : reached, total : Array.length levels }
+        levelsCVal { levelReached, totalLevels }
+                                       = AV.ToGetI { got : levelReached, total : totalLevels }
+        levelsPVal { levels }          = AV.ToGetI { got : foldl (\g lproc -> if isTaskPDone lproc then g + 1 else g) 0 $ _.proc <$> levels, total : Array.length levels }
+        levelsOVal { levels, reached } = let mbMaxs = _.mbMaximum <$> levels in
+                                         AV.ToGetIX { got : foldl (levelOGotFoldF reached) 0 mbMaxs, doing : foldl (levelODoingFoldF reached) 0 mbMaxs, total : Array.length levels }
+
+        mapLevelI reached idx levelI = { name : levelI.name,  reached : if reached >= levelI.maximum then levelI.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ AV.PInt levelI.maximum }
+        mapLevelN reached idx levelN = { name : levelN.name,  reached : if reached >= levelN.maximum then levelN.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ AV.PNumber levelN.maximum }
+        mapLevelO reached idx levelO = { name : levelO.name,  reached : levelOHelper reached levelO.mbMaximum levelO.date, v : AV.PInt <$> levelO.mbMaximum }
+        mapLevelS reached idx levelS = { name : levelS.gives, reached : if idx < reached then levelS.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Nothing }
+        mapLevelP idx levelP         = { name : levelP.name,  reached : levelPHelper levelP.proc levelP.date, v : Just $ AV.PTask levelP.proc }
+
+        levelOGotFoldF   reached g lmbmax = if maybe false (reached >= _) lmbmax then g + 1 else g
+        levelODoingFoldF reached d lmbmax = maybe (d + 1) (\max -> d) lmbmax -- FIXME: we count only Nothing as "doing"
+
+        levelOHelper reached mbMax mbDate =
+            case mbMax, mbDate of
+                Just max, Just date -> if reached >= max then CT.ReachedAt date else CT.NotReached
+                Nothing,  Just date -> CT.ReachedAt date
+                Just max, Nothing   -> if reached >= max then CT.Reached else CT.NotReached
+                Nothing,  Nothing   -> CT.RUnknown
+
+        levelCHelper { reachedAtCurrent, maximumAtCurrent, date } =
+            { name : "Current"
+            , reached : if reachedAtCurrent >= maximumAtCurrent then date # maybe CT.Reached CT.ReachedAt else CT.NotReached
+            , v : Just $ AV.ToGetI { got : reachedAtCurrent, total : maximumAtCurrent }
+            }
+
+        levelPHelper taskP mbDate =
+            if isTaskPDone taskP then mbDate # maybe CT.Reached CT.ReachedAt
+            else if isTaskPDoing taskP then CT.InProgress
+            else CT.NotReached
+
+        isTaskPDone = case _ of
+            TDone -> true
+            _ -> false
+
+        isTaskPDoing = case _ of
+            TDoing -> true
+            _ -> false
