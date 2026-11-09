@@ -4,15 +4,27 @@ import Prelude
 
 import Data.Array as Array
 import Data.Array.NonEmpty as NEA
-import Data.String (joinWith) as String
+import Data.String (joinWith, toUpper, trim) as String
+import Data.Tuple (fst) as Tuple
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (uncurry)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested ((/\), type (/\))
 
 import Effect.Exception (Error)
 import Control.Monad.Error.Class (class MonadThrow)
 
-import Yoga.JSON (readJSON_, writeJSON) as JSON
+import Data.Either (Either(..))
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Console (warn) as Console
+import Effect.Exception (try)
+import Foreign (Foreign)
+import Node.Buffer (toString) as Buffer
+import Node.ChildProcess (execSync)
+import Node.Encoding (Encoding(..))
+import Node.FS.Sync (writeTextFile)
+
+import Yoga.JSON (read_, readJSON_, writeJSON) as JSON
 
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
@@ -33,6 +45,9 @@ import Report.Convert.Rep.Export (_atomicDocLines) as Rep
 import Report.Convert.Rep.Import.Parser (_atomicFromRep) as Rep
 import Report.Convert.Rep.Keys (ptftm) as Rep
 import Report.Convert.Text.Decorators.Progress (encodeProgress, decodeProgress) as Text
+import Report.Convert.Dhall.Export (RenderedAs(..), _atomicToDhall) as Dhall
+import Report.Convert.Org.Export (_atomicProperties) as Org
+import Report.Convert.Org.Import.Properties (propertyToAtomic) as OrgProps
 import Utils.Data.WColor (fromHex) as WColor
 
 
@@ -123,16 +138,23 @@ describeAV aval = show (AV.encodeAtomicValueTag $ AV.valueTagOf aval) <> " " <> 
 
 
 roundTrips :: forall m. MonadThrow Error m => String -> (AtomicValue -> Maybe AtomicValue) -> m Unit
-roundTrips format roundTrip =
-    case Array.mapMaybe check samples of
-        [] -> pure unit
-        failures -> fail $ format <> ":\n" <> String.joinWith "\n" failures
+roundTrips format roundTrip = samplesCameBack format samples $ roundTrip <$> samples
+
+
+-- compares samples with what came back from the conversion, in the same order
+samplesCameBack :: forall m. MonadThrow Error m => String -> Array AtomicValue -> Array (Maybe AtomicValue) -> m Unit
+samplesCameBack format theSamples results =
+    if Array.length results /= Array.length theSamples
+        then fail $ format <> ": expected " <> show (Array.length theSamples) <> " values, got " <> show (Array.length results)
+        else
+            case Array.catMaybes $ Array.zipWith check theSamples results of
+                [] -> pure unit
+                failures -> fail $ format <> ":\n" <> String.joinWith "\n" failures
     where
-        check aval =
-            case roundTrip aval of
-                Just result | result == aval -> Nothing
-                Just result -> Just $ describeAV aval <> " came back as " <> describeAV result
-                Nothing -> Just $ describeAV aval <> " failed to be read back"
+        check aval = case _ of
+            Just result | result == aval -> Nothing
+            Just result -> Just $ describeAV aval <> " came back as " <> describeAV result
+            Nothing -> Just $ describeAV aval <> " failed to be read back"
 
 
 viaJson :: AtomicValue -> Maybe AtomicValue
@@ -147,6 +169,49 @@ viaRep aval =
     in case Rep.ptftm marker of
         PTAV avTag -> Rep._atomicFromRep avTag lines
         _ -> Nothing
+
+
+-- all the samples as a Dhall list of tagged values, to be converted with `dhall-to-json`
+samplesAsDhall :: String
+samplesAsDhall =
+    "let T = ../test/games-samples/Types.dhall in\n[ "
+        <> String.joinWith "\n, " (toDhall <$> samples)
+        <> "\n]\n"
+    where
+        toDhall aval = "T.tag " <> case Dhall._atomicToDhall aval of
+            Dhall.OneLine doc -> print doc
+            Dhall.MutliLine docs -> String.joinWith "\n" $ print <$> docs
+        print = D.print D.plainText D.twoSpaces
+
+
+viaDhall :: Aff (Maybe (Array (Maybe AtomicValue)))
+viaDhall = liftEffect do
+    let dhallPath = "./output/atomic-value-samples.dhall"
+    writeTextFile UTF8 dhallPath samplesAsDhall
+    result <- try $ execSync ("dhall-to-json --file " <> dhallPath) >>= Buffer.toString UTF8
+    pure $ case result of
+        Left _ -> Nothing
+        Right jsonStr -> Just $ map JSON.read_ $ fromMaybe [] (JSON.readJSON_ jsonStr :: Maybe (Array Foreign))
+
+
+-- `None` and `Unknown` are the absence of the value, so they are not written to org properties
+orgSamples :: Array AtomicValue
+orgSamples = Array.filter (not <<< isEmptyValue) samples
+    where
+        isEmptyValue = case _ of
+            None -> true
+            Unknown -> true
+            _ -> false
+
+
+orgProperties :: AtomicValue -> Array (String /\ String)
+orgProperties = Org._atomicProperties >>> map (map $ D.print D.plainText D.twoSpaces)
+
+
+viaOrg :: AtomicValue -> Maybe AtomicValue
+viaOrg aval = case orgProperties aval of
+    [ key /\ value ] -> OrgProps.propertyToAtomic key (String.trim value)
+    _ -> Nothing
 
 
 viaEncodedValue :: AtomicValue -> Maybe AtomicValue
@@ -168,3 +233,19 @@ spec =
             roundTrips "REP" viaRep
         it "round-trip through encoded (editable) value" do
             roundTrips "EncodedValue" viaEncodedValue
+        it "round-trip through org properties" do
+            samplesCameBack "Org" orgSamples $ viaOrg <$> orgSamples
+        it "org property keys are different for different options (case-insensitive)" do
+            let
+                keysWithTags =
+                    Array.nubEq $ orgSamples >>= \aval ->
+                        orgProperties aval <#> \(key /\ _) -> String.toUpper key /\ show (AV.encodeAtomicValueTag $ AV.valueTagOf aval)
+                sameKey = Array.groupAllBy (comparing Tuple.fst) keysWithTags
+                    # Array.filter (\group -> NEA.length group > 1)
+            case sameKey of
+                [] -> pure unit
+                groups -> fail $ "Shared org keys: " <> show (NEA.toArray <$> groups)
+        it "round-trip through Dhall (requires `dhall-to-json`)" do
+            viaDhall >>= case _ of
+                Just results -> samplesCameBack "Dhall" samples results
+                Nothing -> liftEffect $ Console.warn "`dhall-to-json` is not available (run tests in `nix develop`), skipped the Dhall round-trip"

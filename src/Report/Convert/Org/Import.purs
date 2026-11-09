@@ -26,6 +26,7 @@ import Report.Decorators.Tabular.Logbook (Logbook(..))
 import Report.Tabular (empty, fromArray') as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Convert.Rep.Import.Parser as Parser
+import Report.Convert.Org.Import.Properties (propertiesToDecorators) as OrgProps
 import Report.Convert.Types (ImportError(..))
 import Report.Convert.Generic
 import Report.Core (dateToRec) as CT
@@ -109,8 +110,10 @@ fromOrg orgStr =
     collectItem :: OrgNode -> Maybe item
     collectItem (OrgNode n) =
         let mbTask     = n.taskState >>= smosStateToTask
-            decorators = Decorators.fromArray' $ Array.catMaybes
-                [ mbTask <#> Dec.PTask ]
+            decorators = Decorators.fromArray' $
+                -- the later ones win, so the state from the heading is preferred over the `Task` property
+                OrgProps.propertiesToDecorators n.properties
+                <> Array.catMaybes [ mbTask <#> Dec.PTask ]
             tsEntries  = Array.catMaybes
                 [ n.scheduled >>= smosTimestampToTabular "SCHEDULED"
                 , n.deadline  >>= smosTimestampToTabular "DEADLINE"

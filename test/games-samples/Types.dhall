@@ -70,6 +70,14 @@ let LVLS = { reached : Integer, levels : List LevelS }
 let LVLC = { reached : Integer, levels : Integer, current : Integer, maxcurrent : Integer }
 let LVLP = { levels : List LevelP }
 let PCTX = { sign : Integer, pct : Double }
+let PIX = { total : Integer, done : Integer, doing : Integer }
+let PNX = { total : Double, done : Double, doing : Double }
+let MI = { min : Integer, done : Integer, max : Integer }
+let MN = { min : Double, done : Double, max : Double }
+let MIX = { min : Integer, done : Integer, doing : Integer, max : Integer }
+let MNX = { min : Double, done : Double, doing : Double, max : Double }
+let RawTag = { id : List Text, content : List Text }
+let Rating = { value : Double, max : Integer }
 
 
 let Relation =
@@ -118,6 +126,26 @@ let Value =
     | RELI : RawRelation Integer
     | RELD : RawRelation Double
     | RELT : RawRelation TIME
+    | BOOL : Bool
+    | YEAR : Integer
+    | UID : Integer -- integer which is an identifier
+    | PIX : PIX -- total/done/doing : int
+    | PNX : PNX -- total/done/doing : double
+    | MI : MI -- min/done/max : int
+    | MN : MN -- min/done/max : double
+    | MIX : MIX -- min/done/doing/max : int
+    | MNX : MNX -- min/done/doing/max : double
+    | PDT : { date : DATE, time : TIME } -- date and time
+    | PTRNG : { from : TIME, to : TIME } -- time range
+    | PDRRNG : { from : DATE, to : DATE } -- date range
+    | PDTRNG : { from : { date : DATE, time : TIME }, to : { date : DATE, time : TIME } } -- date and time range
+    | PATH : List Text
+    | TAGS : List (List Text)
+    | RTAGS : List RawTag
+    | COL : Text -- hex color
+    | PRAT : Rating
+    | PPRI : Text -- priority: "A", "B", "C" or a number
+    | X : Text -- error
     >
 
 
@@ -161,6 +189,26 @@ let tag
         , RELN = \(x : RawRelation Natural) -> { t = "RELN", v = v }
         , RELD = \(x : RawRelation Double)  -> { t = "RELD", v = v }
         , RELT = \(x : RawRelation TIME)    -> { t = "RELT", v = v }
+        , BOOL = \(x : Bool) -> { t = "BOOL", v = v }
+        , YEAR = \(x : Integer) -> { t = "YEAR", v = v }
+        , UID = \(x : Integer) -> { t = "UID", v = v }
+        , PIX = \(x : PIX) -> { t = "PIX", v = v }
+        , PNX = \(x : PNX) -> { t = "PNX", v = v }
+        , MI = \(x : MI) -> { t = "MI", v = v }
+        , MN = \(x : MN) -> { t = "MN", v = v }
+        , MIX = \(x : MIX) -> { t = "MIX", v = v }
+        , MNX = \(x : MNX) -> { t = "MNX", v = v }
+        , PDT = \(x : { date : DATE, time : TIME }) -> { t = "PDT", v = v }
+        , PTRNG = \(x : { from : TIME, to : TIME }) -> { t = "PTRNG", v = v }
+        , PDRRNG = \(x : { from : DATE, to : DATE }) -> { t = "PDRRNG", v = v }
+        , PDTRNG = \(x : { from : { date : DATE, time : TIME }, to : { date : DATE, time : TIME } }) -> { t = "PDTRNG", v = v }
+        , PATH = \(x : List Text) -> { t = "PATH", v = v }
+        , TAGS = \(x : List (List Text)) -> { t = "TAGS", v = v }
+        , RTAGS = \(x : List RawTag) -> { t = "RTAGS", v = v }
+        , COL = \(x : Text) -> { t = "COL", v = v }
+        , PRAT = \(x : Rating) -> { t = "PRAT", v = v }
+        , PPRI = \(x : Text) -> { t = "PPRI", v = v }
+        , X = \(x : Text) -> { t = "X", v = v }
         }
         v
 
@@ -478,6 +526,29 @@ let v_reli : Relation Integer -> Value = \(r : Relation Integer) -> Value.RELI (
 let v_reld : Relation Double  -> Value = \(r : Relation Double)  -> Value.RELD (Relation/rawify Double r)
 let v_relt : Relation TIME    -> Value = \(r : Relation TIME)    -> Value.RELT (Relation/rawify TIME r)
 let v_unk : Value = Value.UNK
+let v_bool : Bool -> Value = Value.BOOL
+let v_year : Integer -> Value = Value.YEAR
+let v_uid : Integer -> Value = Value.UID
+let v_pix : PIX -> Value = Value.PIX
+let v_pnx : PNX -> Value = Value.PNX
+let v_mi : MI -> Value = Value.MI
+let v_mn : MN -> Value = Value.MN
+let v_mix : MIX -> Value = Value.MIX
+let v_mnx : MNX -> Value = Value.MNX
+let v_datetime : DATE -> TIME -> Value = \(date : DATE) -> \(time : TIME) -> Value.PDT { date = date, time = time }
+let v_trng : TIME -> TIME -> Value = \(from : TIME) -> \(to : TIME) -> Value.PTRNG { from = from, to = to }
+let v_drng : DATE -> DATE -> Value = \(from : DATE) -> \(to : DATE) -> Value.PDRRNG { from = from, to = to }
+let v_dtrng
+    : DATE -> TIME -> DATE -> TIME -> Value
+    = \(fromDate : DATE) -> \(fromTime : TIME) -> \(toDate : DATE) -> \(toTime : TIME) ->
+        Value.PDTRNG { from = { date = fromDate, time = fromTime }, to = { date = toDate, time = toTime } }
+let v_path : List Text -> Value = Value.PATH
+let v_tags : List (List Text) -> Value = Value.TAGS
+let v_rtags : List RawTag -> Value = Value.RTAGS
+let v_color : Text -> Value = Value.COL
+let v_rating : Double -> Integer -> Value = \(value : Double) -> \(max : Integer) -> Value.PRAT { value = value, max = max }
+let v_priority : Text -> Value = Value.PPRI
+let v_err : Text -> Value = Value.X
 
 
 let kv_unk : KeyValRec = kv_ "???" Value.UNK
@@ -576,6 +647,11 @@ in
     , v_per, v_perd
     , v_reli, v_reld, v_reln, v_relt
     , v_empty, v_unk
+    , v_bool, v_year, v_uid
+    , v_pix, v_pnx, v_mi, v_mn, v_mix, v_mnx
+    , v_datetime, v_trng, v_drng, v_dtrng
+    , v_path, v_tags, v_rtags, v_color, v_rating, v_priority, v_err
+    , RawTag, Rating
     , inj/date, inj/no_date, inj/det, inj/self, inj/stat_i, inj/stat_pct, inj/count, inj/tag, inj/tags, inj/tab, inj/ltab, inj/tabs
     , collapse, introduce, collapseWith
     , p_todo, p_doing, p_done, p_now, p_later, p_canceled, p_wait, p_locked

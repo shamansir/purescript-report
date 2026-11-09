@@ -22,7 +22,8 @@ import Report.GroupPath (pathToArray) as GP
 import Report.Tabular (items) as Tabular
 import Report.Decorator (get, Key(..), Decorator(..)) as Dec
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), PValueTag(..))
+import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Tags (RawTag)
 import Report.Convert.Types (ImportError, printImportError)
 import Report.Convert.Generic (RR, includeAll)
@@ -30,10 +31,11 @@ import Report.Convert.Org (fromOrg) as Org
 import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
 import Report.Convert.Types (ImportError, printImportError, Input(..), Output(..))
 import Report.Impl.Subject (SubjectId)
-import Report.Core (ReportFormat(..), SDate(..), monthToInt) as CT
+import Report.Core (ReportFormat(..), SDate(..), Relation(..), monthToInt) as CT
 import Report.Decorators.Tabular.TabularValue (TabularValue(..)) as TV
 import Report.Decorators.Tabular.Logbook (Logbook(..))
 import Data.Tuple.Nested ((/\))
+import Data.Tuple (snd) as Tuple
 
 import Report.Impl.Subject (Subject(..)) as Impl
 import Report.Impl.Group (Group) as Impl
@@ -238,6 +240,29 @@ spec =
                                                 let tags = unwrap item.tags
                                                 in Array.length tags `A.shouldEqual` 1
 
+            it "reads value and decorator properties into decorators" do
+                case parseOrg orgWithProperties of
+                    Left err -> A.fail $ printImportError err
+                    Right report ->
+                        case Array.head (unfold report) >>= Tuple.snd >>> Array.head >>= Tuple.snd >>> Array.head of
+                            Nothing -> A.fail "No first item"
+                            Just (Impl.Item item) -> do
+                                case Dec.get (Dec.KProgress $ PValueTag "PI") item.decorators of
+                                    Just (Dec.SProgress (AV (AV.ToGetI { got, total }))) -> (got /\ total) `A.shouldEqual` (3 /\ 10)
+                                    _ -> A.fail "Expected `TOGETI` to be read as `ToGetI`"
+                                case Dec.get (Dec.KProgress $ PValueTag "MESI") item.decorators of
+                                    Just (Dec.SProgress (AV (AV.MeasuredI { amount, measure }))) -> (amount /\ measure) `A.shouldEqual` (12 /\ "km")
+                                    _ -> A.fail "Expected lower-case `mesi` to be read as `MeasuredI`"
+                                case Dec.get (Dec.KProgress $ PValueTag "RELT") item.decorators of
+                                    Just (Dec.SProgress (AV (AV.RelTime CT.RMoreThan { hrs }))) -> hrs `A.shouldEqual` 40
+                                    _ -> A.fail "Expected `RELTIME` to be read as `RelTime`"
+                                case Dec.get Dec.KDescription item.decorators of
+                                    Just (Dec.SDescription desc) -> desc `A.shouldEqual` "Some details"
+                                    _ -> A.fail "Expected `Description` to be read as a decorator"
+                                case Dec.get Dec.KTask item.decorators of
+                                    Just (Dec.PTask task) -> task `A.shouldEqual` TTodo -- from the heading, not from the `Task` property
+                                    _ -> A.fail "Expected a task from the heading"
+
         describe "export" do
 
             let options = defaultOptions
@@ -282,3 +307,17 @@ spec =
                         String.contains (String.Pattern "SCHEDULED") smosStr `A.shouldEqual` true
                     )
                     commandResult
+
+
+orgWithProperties :: String
+orgWithProperties = """* Work
+** TODO Measure things
+   :PROPERTIES:
+   :Title: Measure things
+   :TOGETI: 3 10
+   :mesi: 12 km
+   :RELTIME: more_than 40:00:00
+   :Description: Some details
+   :Task: DONE
+   :END:
+"""

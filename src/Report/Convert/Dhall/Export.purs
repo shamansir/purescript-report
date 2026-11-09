@@ -23,6 +23,7 @@ import Report (Report)
 import Report.Core as CT
 import Report.Chain (Chain)
 import Report.Chain as MbW
+import Report.Chain (toArray) as Chain
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.Class (class IsGroup, class IsItem, class IsSubject, class IsTag, tagContent, convertFrom, convertTo)
@@ -41,6 +42,10 @@ import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
 import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Decorators.Rating (toNumber, maxValue) as Rating
+import Report.Decorators.Priority (priorityChar) as Priority
+import Utils.Data.WColor (toHex) as WColor
+import Data.Array.NonEmpty (toArray) as NEA
 
 import Dodo
 import Dodo as D
@@ -323,20 +328,73 @@ _atomicToDhall = case _ of
         _ol $ wrapbrkD $ D.text "T.v_reli" <+> (wrapbrkD $ relD rel <+> D.text "Integer" <+> xint int)
     RelNum rel num ->
         _ol $ wrapbrkD $ D.text "T.v_reld" <+> (wrapbrkD $ relD rel <+> D.text "Double" <+> D.text (show num))
+    PBoolean bool ->
+        _ol $ wrapbrkD $ D.text "T.v_bool" <+> D.text (if bool then "True" else "False")
     PYear year ->
-        _ol $ wrapbrkD $ D.text "T.v_i" <+> (xint year)
+        _ol $ wrapbrkD $ D.text "T.v_year" <+> xint year
     PID id ->
-        _ol $ wrapbrkD $ D.text "T.v_i" <+> (xint id)
+        _ol $ wrapbrkD $ D.text "T.v_uid" <+> xint id
+    ToGetIX { got, doing, total } ->
+        _ol $ wrapbrkD $ D.text "T.v_pix " <> wrecord
+            [ "done" /\ ints got, "doing" /\ ints doing, "total" /\ ints total ]
+    ToGetNX { got, doing, total } ->
+        _ol $ wrapbrkD $ D.text "T.v_pnx " <> wrecord
+            [ "done" /\ show got, "doing" /\ show doing, "total" /\ show total ]
+    ToGetMI { min, got, max } ->
+        _ol $ wrapbrkD $ D.text "T.v_mi " <> wrecord
+            [ "min" /\ ints min, "done" /\ ints got, "max" /\ ints max ]
+    ToGetMN { min, got, max } ->
+        _ol $ wrapbrkD $ D.text "T.v_mn " <> wrecord
+            [ "min" /\ show min, "done" /\ show got, "max" /\ show max ]
+    ToGetMIX { min, got, doing, max } ->
+        _ol $ wrapbrkD $ D.text "T.v_mix " <> wrecord
+            [ "min" /\ ints min, "done" /\ ints got, "doing" /\ ints doing, "max" /\ ints max ]
+    ToGetMNX { min, got, doing, max } ->
+        _ol $ wrapbrkD $ D.text "T.v_mnx " <> wrecord
+            [ "min" /\ show min, "done" /\ show got, "doing" /\ show doing, "max" /\ show max ]
+    OnDateTime sdate timeRec ->
+        _ol $ wrapbrkD $ D.text "T.v_datetime" <+> sdaterec sdate <+> timereccf timeRec
+    TimeRange { from, to } ->
+        _ol $ wrapbrkD $ D.text "T.v_trng" <+> timereccf from <+> timereccf to
+    DateRange { from, to } ->
+        _ol $ wrapbrkD $ D.text "T.v_drng" <+> sdaterec from <+> sdaterec to
+    DateTimeRange { from, to } ->
+        _ol $ wrapbrkD $ D.text "T.v_dtrng"
+            <+> sdaterec from.date <+> timereccf from.time
+            <+> sdaterec to.date   <+> timereccf to.time
+    PPath path ->
+        _ol $ wrapbrkD $ D.text "T.v_path" <+> textList (Chain.toArray path)
+    Tags tags ->
+        _ol $ wrapbrkD $ D.text "T.v_tags" <+>
+            case tags of
+                [] -> D.text "([] : List (List Text))"
+                _  -> listD $ textList <$> Chain.toArray <$> tags
+    PRawTags (RawTags rawTags) ->
+        _ol $ wrapbrkD $ D.text "T.v_rtags" <+>
+            case rawTags of
+                [] -> D.text "([] : List T.RawTag)"
+                _  -> listD $ rawTagD <$> rawTags
+    PColor color ->
+        _ol $ wrapbrkD $ D.text "T.v_color" <+> quote (WColor.toHex color)
+    PRating rating ->
+        _ol $ wrapbrkD $ D.text "T.v_rating" <+> D.text (show $ Rating.toNumber rating) <+> xint (Rating.maxValue rating)
+    PPriority priority ->
+        _ol $ wrapbrkD $ D.text "T.v_priority" <+> quote (Priority.priorityChar priority)
     Error err ->
-        _ol $ D.text "T.v_unk" <+> D.text ("{- error: " <> err <> " -}")
-    aval ->
-        -- not supported by the Dhall schema yet, so stored as text
-        _ol $ wrapbrkD (D.text "T.v_t" <+> quote (AV.toReadableString aval)) <+> D.text "{- unsupported -}"
+        _ol $ wrapbrkD $ D.text "T.v_err" <+> quote err
     where
         relD = case _ of
             CT.RMoreThan -> D.text "T.rel_more_than"
             CT.REqual    -> D.text "T.rel_exact"
             CT.RLessThan -> D.text "T.rel_less_than"
+        listD :: Array (Doc Unit) -> Doc Unit
+        listD items = D.text "[" <+> joinWith (D.text "," <> D.space) items <+> D.text "]"
+        textList :: Array String -> Doc Unit
+        textList = case _ of
+            [] -> D.text "([] : List Text)"
+            items -> listD $ quote <$> items
+        rawTagD (RawTag { id, content }) =
+            wrecordD [ "id" /\ textList (NEA.toArray id), "content" /\ textList (NEA.toArray content) ]
 
 
 
@@ -466,6 +524,7 @@ vtaskP = D.text <<< case _ of
     TNow -> "T.p_now"
     TCanceled -> "T.p_canceled"
     TLater -> "T.p_later"
+
 
 pvptaskP :: forall a. TaskP -> Doc a
 pvptaskP task = vtaskP task <> D.text "_"

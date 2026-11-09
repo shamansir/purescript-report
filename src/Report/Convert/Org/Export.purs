@@ -35,7 +35,8 @@ import Report.Decorator (Key(..), Decorator(..)) as D
 import Report.AtomicValue (AtomicValue(..))
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Levels(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (Tags, RawTag)
+import Report.Decorators.Tags (Tags, RawTag(..))
+import Data.Array.NonEmpty (toArray) as NEA
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
@@ -291,25 +292,20 @@ _atomicProperties = case _ of
         pure $ "MESN" /\ (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "MESX" /\ (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text "    " <> D.text measure)
+        in pure $ "MESX" /\ (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text " " <> D.text measure)
     RangeI { from, to } ->
         pure $ "RANGEI" /\ D.text (show from <> " " <> show to)
     RangeN { from, to } ->
         pure $ "RANGEN" /\ D.text (show from <> " " <> show to)
     PTask taskP ->
-        pure $ "TASK" /\ D.text (Task.taskPToString taskP)
+        pure $ "PROCVAL" /\ D.text (Task.taskPToString taskP) -- `TASK` would be the same as `Task`, org properties are case-insensitive
     RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> "more_than"
-                    CT.REqual -> "equal"
-                    CT.RLessThan -> "less_than"
-        in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
+        pure $ "RELTIME" /\ (D.text (orgRelation rel) <> D.space <> orgTime timeRec)
     Error err ->
-        mempty
+        pure $ "ERRORVAL" /\ D.text err
     PBoolean b -> pure $ "BOOLVAL" /\ D.text (if b then "true" else "false")
-    PYear year -> pure $ "YEAR" /\ D.text (show year)
-    PID id -> pure $ "ID" /\ D.text (show id)
+    PYear year -> pure $ "YEARVAL" /\ D.text (show year)
+    PID id -> pure $ "UIDVAL" /\ D.text (show id) -- `ID` is a special property in org
     ToGetIX { got, doing, total } -> pure $
         "TOGETIX" /\ D.text (show got <> " " <> show doing <> " " <> show total)
     ToGetNX { got, doing, total } -> pure $
@@ -335,21 +331,33 @@ _atomicProperties = case _ of
             <> orgDate (CT.dateToRec to.date) <> D.space <> orgTime to.time
             )
     RelInt rel int ->
-        pure $ "RELINT" /\ (D.text (CT.encodeRel rel) <> D.space <> D.text (show int))
+        pure $ "RELINT" /\ (D.text (orgRelation rel) <> D.space <> D.text (show int))
     RelNum rel num ->
-        pure $ "RELNUM" /\ (D.text (CT.encodeRel rel) <> D.space <> D.text (show num))
+        pure $ "RELNUM" /\ (D.text (orgRelation rel) <> D.space <> D.text (show num))
     PPath path ->
-        pure $ "PATH" /\ D.text (MbW.toStringSep "::" path)
+        pure $ "PATHVAL" /\ D.text (MbW.toStringSep "::" path)
     Tags tags ->
-        pure $ "TAGS" /\ D.text (String.joinWith "," $ MbW.toStringSep "::" <$> tags)
+        pure $ "TAGSVAL" /\ D.text (String.joinWith "," $ MbW.toStringSep "::" <$> tags) -- `TAGS` is a special property in org
     PRawTags rawTags ->
-        pure $ "TAGS" /\ D.text (AV.toReadableString $ PRawTags rawTags)
+        pure $ "RAWTAGSVAL" /\ D.text (String.joinWith "," $ orgRawTag <$> unwrap rawTags)
     PColor color ->
-        pure $ "COLOR" /\ D.text (AV.toReadableString $ PColor color)
+        pure $ "COLORVAL" /\ D.text (AV.toReadableString $ PColor color)
     PRating rating ->
-        pure $ "RATING" /\ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating))
+        pure $ "RATINGVAL" /\ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating)) -- `RATING` would be the same as `Rating`
     PPriority priority ->
-        pure $ "PRIORITY" /\ D.text (Priority.priorityChar priority)
+        pure $ "PRIORITYVAL" /\ D.text (Priority.priorityChar priority) -- `PRIORITY` is a special property in org
+
+
+orgRelation :: CT.Relation -> String
+orgRelation = case _ of
+    CT.RMoreThan -> "more_than"
+    CT.REqual -> "equal"
+    CT.RLessThan -> "less_than"
+
+
+orgRawTag :: RawTag -> String
+orgRawTag (RawTag { id, content }) =
+    String.joinWith "::" (NEA.toArray id) <> " // " <> String.joinWith "::" (NEA.toArray content)
 
 
 _levelsProperties :: Levels -> Array ( String /\ Doc Unit )
