@@ -32,7 +32,8 @@ import Report.Decorator (Decorator(..)) as Dec
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..), Levels(..))
+import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Tabular.Logbook (Logbook(..))
 import Report.Tabular (empty, fromArray') as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Convert.Rep.Import.Parser as Parser
@@ -174,14 +175,14 @@ smosLogbookToTabular
     -> Maybe { key :: String, label :: String, value :: TV.TabularValue }
 smosLogbookToTabular [] = Nothing
 smosLogbookToTabular entries =
-    let levels = Array.mapWithIndex toLevelP entries
-    in Just { key: "logbook", label: "Logbook", value: TV.progress (LS (LevelsP { levels })) }
+    let logEntries = Array.mapWithIndex toEntry entries
+    in Just { key: "logbook", label: "Logbook", value: TV.logbook (Logbook logEntries) }
     where
-        toLevelP idx (SmosLogbookEntry { start, end }) =
-            { name    : "entry-" <> show (idx + 1)
-            , proc    : if isNothing end then TDoing else TDone
-            , date    : parseSmosTime start <#> CT.dateToRec
-            , endDate : end >>= parseSmosTime <#> CT.dateToRec
+        toEntry idx (SmosLogbookEntry { start, end }) =
+            { name  : "entry-" <> show (idx + 1)
+            , task  : if isNothing end then TDoing else TDone
+            , start : parseSmosTime start <#> CT.dateToRec
+            , end   : end >>= parseSmosTime <#> CT.dateToRec
             }
 
 
@@ -190,14 +191,14 @@ smosStateHistoryToTabular
     -> Maybe { key :: String, label :: String, value :: TV.TabularValue }
 smosStateHistoryToTabular [] = Nothing
 smosStateHistoryToTabular entries =
-    let levels = Array.mapWithIndex toLevel entries
-    in Just { key: "state-history", label: "State History", value: TV.progress (LS (LevelsP { levels })) }
+    let logEntries = Array.mapWithIndex toEntry entries
+    in Just { key: "state-history", label: "State History", value: TV.logbook (Logbook logEntries) }
     where
-        toLevel idx (SmosStateEntry { state, time }) =
-            { name    : "state-" <> show (idx + 1)
-            , proc    : fromMaybe TTodo (state >>= smosStateToTask)
-            , date    : parseSmosTime time <#> CT.dateToRec
-            , endDate : Nothing
+        toEntry idx (SmosStateEntry { state, time }) =
+            { name  : "state-" <> show (idx + 1)
+            , task  : fromMaybe TTodo (state >>= smosStateToTask)
+            , start : parseSmosTime time <#> CT.dateToRec
+            , end   : Nothing
             }
 
 

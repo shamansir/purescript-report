@@ -6,17 +6,20 @@ import Data.Newtype (unwrap, wrap)
 import Data.Array (length, intersperse) as Array
 import Data.Tuple (snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 
-import Report.Core (SDate(..), toLeadingZero) as CT
+import Report.Core (SDate(..), toLeadingZero, dateFromRec) as CT
 import Report.Class as S
 import Report.Tabular (Tabular)
 import Report.Tabular as Tabular
-import Report.Decorator (empty) as Decorators
-import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..))
+import Report.Decorator (fromArray') as Decorators
+import Report.AtomicValue (AtomicValue(..)) as AV
+import Report.Decorators.Tabular.TabularValue (TabularValue(..))
+import Report.Decorators.Tabular.TabularValue (toDecorator) as TV
+import Report.Decorators.Tabular.Logbook (entries) as Logbook
 import Report.Decorators.Tags (RawTag)
 
 import Report.Web.CSS as CSS
@@ -92,8 +95,15 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                     , -} renderTabularValue $ mkItem key ""  tabValA
                 , renderTabularValue $ mkItem key "" tabValB
                 ]
+        TVLogbook logbook ->
+            nestValues (renderLogbookEntry key) $ Logbook.entries logbook
         where
             wrapInnerTabular = HH.div [ HP.style CSS.tabularInnerNest ]
+            renderLogbookEntry key { name, task, start, end } =
+                HH.div_
+                    $ [ renderTabularAtomicValue $ mkItem key name $ AV.PTask task ]
+                    <> maybe [] (pure <<< renderTabularAtomicValue <<< mkItem key "start" <<< AV.OnDate <<< CT.dateFromRec) start
+                    <> maybe [] (pure <<< renderTabularAtomicValue <<< mkItem key "end" <<< AV.OnDate <<< CT.dateFromRec) end
             mkItem :: forall a. String -> String -> a -> Tabular.Item a
             mkItem key label v = Tabular.Item { key, label, value : v }
             nestValues :: forall a. (a -> H w Unit) -> Array a -> H w Unit
@@ -115,7 +125,7 @@ renderTabularValue = unwrap >>> \{ key, label, value } ->
                     ]
 
 
-renderTabularAtomicValue :: forall w. Tabular.Item TabularAtomicValue -> H w Unit -- TODO: InlineOrBlock
+renderTabularAtomicValue :: forall w. Tabular.Item AV.AtomicValue -> H w Unit -- TODO: InlineOrBlock
 renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
     HH.span_
         [ qcolorSpan tabularLabelColor label
@@ -127,19 +137,19 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
     where
         valueSpan =
             case _ of
-                TVString text ->
+                AV.PText text ->
                     qcolorSpan textColor text
-                TVNumber num ->
+                AV.PNumber num ->
                     qcolorSpan numColor $ formatNum num
-                TVInt int ->
+                AV.PInt int ->
                     qcolorSpan numColor $ formatInt int
-                TVYear int ->
+                AV.PYear int ->
                     qcolorSpan numColor $ show int
-                TVID int ->
+                AV.PID int ->
                     qcolorSpan numColor $ show int
-                TVBoolean bool ->
+                AV.PBoolean bool ->
                     qcompleteCheckbox bool
-                TVTime ({ hrs, min, sec }) ->
+                AV.OnTime ({ hrs, min, sec }) ->
                     HH.span_
                         [ qcolorSpan timeColor $ CT.toLeadingZero hrs
                         , qtimesplitSpan
@@ -147,7 +157,7 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , qtimesplitSpan
                         , qcolorSpan timeColor $ CT.toLeadingZero sec
                         ]
-                TVDate (CT.SDate { day, month, year }) ->
+                AV.OnDate (CT.SDate { day, month, year }) ->
                     HH.span_
                         [ qcolorSpan timeColor $ CT.toLeadingZero day
                         , qspacerSpan
@@ -155,55 +165,39 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , qspacerSpan
                         , qcolorSpan timeColor $ show year
                         ]
-                TVDateTime date time ->
+                AV.OnDateTime date time ->
                     HH.span_
-                        [ valueSpan (TVDate date)
+                        [ valueSpan (AV.OnDate date)
                         , qspacerSpan
-                        , valueSpan (TVTime time)
+                        , valueSpan (AV.OnTime time)
                         ]
-                TVTimeRange { from, to } ->
+                AV.TimeRange { from, to } ->
                     HH.span_
-                        [ valueSpan (TVTime from)
+                        [ valueSpan (AV.OnTime from)
                         -- , qspacerSpan
                         , qrangesplitSpan
                         -- , qspacerSpan
-                        , valueSpan (TVTime to)
+                        , valueSpan (AV.OnTime to)
                         ]
-                TVDateRange { from, to } ->
+                AV.DateRange { from, to } ->
                     HH.span_
-                        [ valueSpan (TVDate from)
+                        [ valueSpan (AV.OnDate from)
                         -- , qspacerSpan
                         , qrangesplitSpan
                         -- , qspacerSpan
-                        , valueSpan (TVDate to)
+                        , valueSpan (AV.OnDate to)
                         ]
-                TVDateTimeRange { from, to } ->
+                AV.DateTimeRange { from, to } ->
                     HH.span_
-                        [ valueSpan (TVDate from.date)
+                        [ valueSpan (AV.OnDate from.date)
                         , qspacerSpan
-                        , valueSpan (TVTime from.time)
+                        , valueSpan (AV.OnTime from.time)
                         , qrangesplitSpan
-                        , valueSpan (TVDate to.date)
+                        , valueSpan (AV.OnDate to.date)
                         , qspacerSpan
-                        , valueSpan (TVTime to.time)
+                        , valueSpan (AV.OnTime to.time)
                         ]
-                TVDecorator decorator ->
-                    fromMaybe (HH.text "BLOCK (TODO)")
-                    $ loadInlineContent $ Tuple.snd $ renderDecorator -- TODO: use InlineOrBlock
-                        { isEditingDecorator : Nothing
-                        , isEditingItemName : Nothing
-                        , isSelected : false
-                        , key : keyOf decorator
-                        , noop : unit
-                        , onCancelEditing : unit
-                        , onClick : const unit
-                        , onEdit : const unit
-                        , onStartEditing : const unit
-                        , onEditItemName : const unit
-                        , parentItemName : ""
-                        , allDecorators : Decorators.empty
-                        }
-                TVTags tags ->
+                AV.PRawTags tags ->
                     renderTags
                         (wrap $ unwrap tags)
                         { isEditingTags : Nothing
@@ -232,3 +226,20 @@ renderTabularAtomicValue = unwrap >>> \{ key, label, value } ->
                         , allDecorators : Decorators.empty
                         }
                     -}
+                aval ->
+                    let decorator = TV.toDecorator aval in
+                    fromMaybe (HH.text "BLOCK (TODO)")
+                    $ loadInlineContent $ Tuple.snd $ renderDecorator -- TODO: use InlineOrBlock
+                        { isEditingDecorator : Nothing
+                        , isEditingItemName : Nothing
+                        , isSelected : false
+                        , key : keyOf decorator
+                        , noop : unit
+                        , onCancelEditing : unit
+                        , onClick : const unit
+                        , onEdit : const unit
+                        , onStartEditing : const unit
+                        , onEditItemName : const unit
+                        , parentItemName : ""
+                        , allDecorators : Decorators.fromArray' [ decorator ]
+                        }

@@ -39,6 +39,7 @@ import Report.Decorators.Tags (Tags, RawTag(..), RawTags(..))
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
 import Report.Tabular (findV) as Tabular
+import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
 
 import Dodo
@@ -63,11 +64,11 @@ toDhall inclRule =
         -- >>> String.joinWith "\n"
     where
         mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
-            TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (AV.OnDate sdate) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic ((OnDate sdate)) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
-        --     TV.TVTime timeRec -> Just timeRec
+        --     AV.OnTime timeRec -> Just timeRec
         --     _ -> Nothing
 
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
@@ -209,22 +210,22 @@ toDhall inclRule =
                     mempty
 
 
-        convertTabularAV :: TV.TabularAtomicValue -> RenderedAs (Doc Unit)
+        convertTabularAV :: AtomicValue -> RenderedAs (Doc Unit)
         convertTabularAV = case _ of
-            TV.TVString t -> OneLine $ quote t
-            TV.TVNumber n -> OneLine $ D.text $ show n
-            TV.TVInt i -> OneLine $ D.text $ show i
-            TV.TVDecorator dec -> convertDecorator dec
-            TV.TVID id -> OneLine $ D.text $ show id
-            TV.TVYear y -> OneLine $ D.text $ show y
-            TV.TVBoolean b -> OneLine $ D.text $ if b then "True" else "False"
-            TV.TVTime timeRec -> OneLine $ timereccf timeRec
-            TV.TVDate sdate -> OneLine $ sdaterec sdate
-            TV.TVDateTime dtRec timeRec -> OneLine $ mempty -- TODO
-            TV.TVTimeRange tRange -> OneLine $ mempty -- TODO
-            TV.TVDateTimeRange dtRange -> OneLine $ mempty -- TODO
-            TV.TVDateRange dRange -> OneLine $ mempty -- TODO
-            TV.TVTags tags -> OneLine $ convertTags $ unwrap tags
+            AV.PText t -> OneLine $ quote t
+            AV.PNumber n -> OneLine $ D.text $ show n
+            AV.PInt i -> OneLine $ D.text $ show i
+            AV.PID id -> OneLine $ D.text $ show id
+            AV.PYear y -> OneLine $ D.text $ show y
+            AV.PBoolean b -> OneLine $ D.text $ if b then "True" else "False"
+            AV.OnTime timeRec -> OneLine $ timereccf timeRec
+            AV.OnDate sdate -> OneLine $ sdaterec sdate
+            AV.OnDateTime dtRec timeRec -> OneLine $ mempty -- TODO
+            AV.TimeRange tRange -> OneLine $ mempty -- TODO
+            AV.DateTimeRange dtRange -> OneLine $ mempty -- TODO
+            AV.DateRange dRange -> OneLine $ mempty -- TODO
+            AV.PRawTags tags -> OneLine $ convertTags $ unwrap tags
+            aval -> convertDecorator $ TV.toDecorator aval
 
 
 

@@ -2,7 +2,7 @@ module Report.Convert.Rep.Export where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Newtype (unwrap)
@@ -37,7 +37,9 @@ import Report.Tabular (findV, items, Item(..)) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
+import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Decorators.Tabular.Logbook (entries) as Logbook
 -- import Report.Convert.Text.Export as TextExport
 import Report.Convert.Rep.Keys
 
@@ -73,11 +75,11 @@ toRep inclRule =
         -- >>> String.joinWith "\n"
     where
         mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
-            TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (AV.OnDate sdate) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic ((OnDate sdate)) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
-        --     TV.TVTime timeRec -> Just timeRec
+        --     AV.OnTime timeRec -> Just timeRec
         --     _ -> Nothing
 
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
@@ -111,11 +113,11 @@ toRep inclRule =
 
         subjTabularsToPrepend :: SubjectRec -> Array (Maybe TabularRec)
         subjTabularsToPrepend subjectRec =
-            [ Just { tkey : "id", tlabel : "Id", value : TV.TVAtomic $ TV.TVString $ unwrap subjectRec.id }
-            , Just { tkey : "platform", tlabel : "Platform", value : TV.TVAtomic $ TV.TVString "FOFO" }
-            , Just { tkey : "playtime", tlabel : "Playtime", value : TV.TVAtomic $ TV.TVString "FOFO" }
+            [ Just { tkey : "id", tlabel : "Id", value : TV.TVAtomic $ AV.PText $ unwrap subjectRec.id }
+            , Just { tkey : "platform", tlabel : "Platform", value : TV.TVAtomic $ AV.PText "FOFO" }
+            , Just { tkey : "playtime", tlabel : "Playtime", value : TV.TVAtomic $ AV.PText "FOFO" }
             , mbTrackedAt subjectRec.tabulars <#>
-                \dateRec -> { tkey : "trackedAt", tlabel : "Tracked At", value : TV.TVAtomic $ TV.TVDate $ CT.dateFromRec dateRec }
+                \dateRec -> { tkey : "trackedAt", tlabel : "Tracked At", value : TV.TVAtomic $ AV.OnDate $ CT.dateFromRec dateRec }
                 -- \dateRec -> "trackedAt" /\ tmfp (P.PTAV AVTOnDate) /\ pure (orgDate dateRec)
             ]
 
@@ -169,6 +171,7 @@ toRep inclRule =
                     TV.TVValuesNest _ -> TM "TVN"
                     TV.TVTabulars _ -> TM "TVT"
                     TV.TVTabularsNest _ -> TM "TVX"
+                    TV.TVLogbook _ -> TM "TVL"
 
         convertDecoratorToDocLine :: DecoratorRec -> TriMarker /\ NonEmptyArray (Doc Unit)
         convertDecoratorToDocLine modRec =
@@ -235,6 +238,19 @@ _tabularValueDocLines = case _ of
             Just $ NEA.cons'
                 (prepend (SM "+++") $ D.text sizesString)
                 $ (convertTabular <$> direct) <> (convertPart <$> mapWithIndex (/\) parts)
+    TV.TVLogbook logbook ->
+        let
+            entryLine { name, task, start, end } =
+                D.text ">>>" <> D.space
+                    <> maybe mempty (\date -> orgDate date <> D.space) start
+                    <> maybe mempty (\date -> D.text "--" <> D.space <> orgDate date <> D.space) end
+                    <> D.text (Task.taskPToString task) <> D.space <> D.text name
+        in
+            Array.uncons (Logbook.entries logbook)
+            <#> \{ head, tail } ->
+                NEA.cons
+                    (prepend (SM "+++") $ D.text $ show $ Array.length tail + 1)
+                    (entryLine <$> NEA.cons' head tail)
         -- prepend (SM "+++") <$> (_tabularValueDocLines tabularA <> _tabularValueDocLines tabularB)
 
 
@@ -434,37 +450,23 @@ _decoratorDocLines =
             tmf D.KJoinReference /\ (pure $ convertPath path)
 
 
-_tabValKeyOf :: TV.TabularAtomicValue -> TV.TabValTypeKey
-_tabValKeyOf = case _ of
-    TV.TVString _ -> TV.TVTString
-    TV.TVInt _ -> TV.TVTInt
-    TV.TVID _ -> TV.TVTID
-    TV.TVYear _ -> TV.TVTYear
-    TV.TVNumber _ -> TV.TVTNumber
-    TV.TVBoolean _ -> TV.TVTBoolean
-    TV.TVTime _ -> TV.TVTTime
-    TV.TVDate _ -> TV.TVTDate
-    TV.TVDateTime _ _ -> TV.TVTDateTime
-    TV.TVTimeRange _ -> TV.TVTTimeRange
-    TV.TVDateRange _ -> TV.TVTDateRange
-    TV.TVDateTimeRange _ -> TV.TVTDateTimeRange
-    TV.TVDecorator dec -> TV.TVTDecorator $ D.keyOf dec
-    TV.TVTags _ -> TV.TVTTags
+_tabValKeyOf :: AtomicValue -> TV.TabValTypeKey
+_tabValKeyOf = TV.typeKeyOf
 
 
-_tabularDocLines :: TV.TabularAtomicValue -> NonEmptyArray (Doc Unit)
+_tabularDocLines :: AtomicValue -> NonEmptyArray (Doc Unit)
 _tabularDocLines = case _ of
-    TV.TVString text  -> pure $ D.text text
-    TV.TVInt i        -> pure $ D.text $ show i
-    TV.TVNumber n     -> pure $ D.text $ show n
-    TV.TVID id        -> pure $ D.text $ show id
-    TV.TVYear year    -> pure $ D.text $ show year
-    TV.TVTime timeRec -> pure $ orgTime timeRec
-    TV.TVBoolean bool -> pure $ D.text $ if bool then "true" else "one"
-    TV.TVDate sdate   -> pure $ orgDate $ CT.dateToRec sdate
-    TV.TVDateTime sdate timeRec -> pure $ (orgDate $ CT.dateToRec sdate) <> D.text "@" <> (orgTime timeRec)
-    TV.TVTimeRange { from, to } -> pure $ (orgTime from) <> D.text "--" <> (orgTime to)
-    TV.TVDateRange { from, to } -> pure $ (orgDate $ CT.dateToRec from) <> D.text "--" <> (orgDate $ CT.dateToRec to)
-    TV.TVDateTimeRange { from, to } -> pure $ (orgDate $ CT.dateToRec from.date) <> D.text "@" <> (orgTime from.time) <> D.text "--" <> (orgDate $ CT.dateToRec to.date) <> D.text "@" <> (orgTime to.time)
-    TV.TVDecorator dec -> Tuple.snd $ _decoratorDocLines dec
-    TV.TVTags rawTags -> pure $ joinWith (D.text ",") $ convertTagToDocLine <$> unwrap rawTags
+    AV.PText text  -> pure $ D.text text
+    AV.PInt i        -> pure $ D.text $ show i
+    AV.PNumber n     -> pure $ D.text $ show n
+    AV.PID id        -> pure $ D.text $ show id
+    AV.PYear year    -> pure $ D.text $ show year
+    AV.OnTime timeRec -> pure $ orgTime timeRec
+    AV.PBoolean bool -> pure $ D.text $ if bool then "true" else "one"
+    AV.OnDate sdate   -> pure $ orgDate $ CT.dateToRec sdate
+    AV.OnDateTime sdate timeRec -> pure $ (orgDate $ CT.dateToRec sdate) <> D.text "@" <> (orgTime timeRec)
+    AV.TimeRange { from, to } -> pure $ (orgTime from) <> D.text "--" <> (orgTime to)
+    AV.DateRange { from, to } -> pure $ (orgDate $ CT.dateToRec from) <> D.text "--" <> (orgDate $ CT.dateToRec to)
+    AV.DateTimeRange { from, to } -> pure $ (orgDate $ CT.dateToRec from.date) <> D.text "@" <> (orgTime from.time) <> D.text "--" <> (orgDate $ CT.dateToRec to.date) <> D.text "@" <> (orgTime to.time)
+    AV.PRawTags rawTags -> pure $ joinWith (D.text ",") $ convertTagToDocLine <$> unwrap rawTags
+    aval -> Tuple.snd $ _decoratorDocLines $ TV.toDecorator aval

@@ -13,6 +13,7 @@ import Data.Newtype (unwrap)
 import Data.String (joinWith) as String
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (toNumber) as Int
+import Data.Array.NonEmpty (toArray) as NEA
 
 import Yoga.JSON (class WriteForeign, writeImpl, class ReadForeign, readImpl)
 import Data.Argonaut.Decode (class DecodeJson)
@@ -36,6 +37,7 @@ import Report.Decorators.Priority (Priority)
 import Report.Decorators.Priority (priorityChar, toString) as Priority
 import Report.Chain (Chain)
 import Report.Chain (toString, toStringSep) as Chain
+import Report.Decorators.Tags (RawTags(..), RawTag(..))
 
 -- import Report.Decorators.Task (isDone) as TaskP
 
@@ -46,6 +48,9 @@ data AtomicValue
     | PText String
     | PNumber Number
     | PInt Int
+    | PBoolean Boolean
+    | PYear Int
+    | PID Int -- integer which is an identifier, not a quantity
     | ToComplete { done :: Boolean }
     | ToGetI { got :: Int, total :: Int }
     | ToGetN { got :: Number, total :: Number }
@@ -80,6 +85,7 @@ data AtomicValue
     | PTask TaskP
     | PPath (Chain String)
     | Tags (Array (Chain String))
+    | PRawTags RawTags -- FIXME: use instead of `Tags`
     | PColor WColor
     | PRating Rating
     | PPriority Priority
@@ -102,6 +108,9 @@ data AtomicValueTag
     | AVTPText
     | AVTPNumber
     | AVTPInt
+    | AVTPBoolean
+    | AVTPYear
+    | AVTPID
     | AVTToComplete
     | AVTToGetI
     | AVTToGetN
@@ -133,6 +142,7 @@ data AtomicValueTag
     | AVTPTask
     | AVTPPath
     | AVTTags
+    | AVTPRawTags
     | AVTColor
     -- | AVTTaskRef
     | AVTPRating
@@ -256,6 +266,9 @@ _writeAtomicValue aval = case aval of
     PInt i ->      { t : avtag, v : writeImpl i }
     PNumber n ->   { t : avtag, v : writeImpl n }
     PText text ->  { t : avtag, v : writeImpl text }
+    PBoolean b ->  { t : avtag, v : writeImpl b }
+    PYear y ->     { t : avtag, v : writeImpl y }
+    PID id ->      { t : avtag, v : writeImpl id }
     ToComplete { done } -> { t : avtag, v : writeImpl done }
     PercentI i ->  { t : avtag, v : writeImpl i }
     PercentN n ->  { t : avtag, v : writeImpl n }
@@ -325,6 +338,7 @@ _writeAtomicValue aval = case aval of
         }
 
     Tags tags -> { t : avtag, v : writeImpl tags }
+    PRawTags rawTags -> { t : avtag, v : writeImpl rawTags }
     -- TaskRef ref -> { t : avtag, v : writeImpl ref }
     PRating rating -> { t : avtag, v : writeImpl rating }
     PPriority priority -> { t : avtag, v : writeImpl priority }
@@ -341,6 +355,9 @@ _readAtomicValue atag frgn =
         AVTPInt -> PInt <$> (readImpl frgn :: F Int)
         AVTPNumber -> PNumber <$> (readImpl frgn :: F Number)
         AVTPText -> PText <$> (readImpl frgn :: F String)
+        AVTPBoolean -> PBoolean <$> (readImpl frgn :: F Boolean)
+        AVTPYear -> PYear <$> (readImpl frgn :: F Int)
+        AVTPID -> PID <$> (readImpl frgn :: F Int)
         AVTToComplete -> (\b -> ToComplete { done : b }) <$> (readImpl frgn :: F Boolean)
         AVTPercentI -> PercentI <$> (readImpl frgn :: F Int)
         AVTPercentN  -> PercentN <$> (readImpl frgn :: F Number)
@@ -387,6 +404,7 @@ _readAtomicValue atag frgn =
             <$> (readImpl frgn :: F { from :: { date :: DateRec, time :: TimeRec }, to :: { date :: DateRec, time :: TimeRec } })
 
         AVTTags -> Tags <$> (readImpl frgn :: F (Array (Chain String)))
+        AVTPRawTags -> PRawTags <$> (readImpl frgn :: F RawTags)
         -- AVTTaskRef -> TaskRef <$> (readImpl frgn :: F TaskId)
         AVTPRating -> PRating <$> (readImpl frgn :: F Rating)
         AVTPPriority -> PPriority <$> (readImpl frgn :: F Priority)
@@ -409,6 +427,9 @@ valueTagOf = case _ of
     PInt _ ->        AVTPInt
     PNumber _ ->     AVTPNumber
     PText _ ->       AVTPText
+    PBoolean _ ->    AVTPBoolean
+    PYear _ ->       AVTPYear
+    PID _ ->         AVTPID
     ToComplete _ ->  AVTToComplete
     PercentI _ ->    AVTPercentI
     PercentN _ ->    AVTPercentN
@@ -443,6 +464,7 @@ valueTagOf = case _ of
     DateRange _ ->   AVTDateRange
     DateTimeRange _ -> AVTDateTimeRange
     Tags _ ->        AVTTags
+    PRawTags _ ->    AVTPRawTags
     -- TaskRef _ ->     AVTTaskRef
     PRating _ ->     AVTPRating
     PPriority _ ->   AVTPPriority
@@ -455,6 +477,9 @@ encodeAtomicValueTag = AVStrValueTag <<< case _ of
     AVTPInt ->        "I"
     AVTPNumber ->     "N"
     AVTPText ->       "T"
+    AVTPBoolean ->    "BOOL"
+    AVTPYear ->       "YEAR"
+    AVTPID ->         "UID"
     AVTToComplete ->  "D"
     AVTPercentI ->    "PCTI"
     AVTPercentN ->    "PCT"
@@ -490,6 +515,7 @@ encodeAtomicValueTag = AVStrValueTag <<< case _ of
     AVTDateTimeRange -> "PDTRNG"
 
     AVTTags ->        "TAGS"
+    AVTPRawTags ->    "RTAGS"
     -- AVTTaskRef ->     "TREF"
     AVTPRating ->     "PRAT"
     AVTPPriority ->   "PPRI"
@@ -502,6 +528,9 @@ decodeAtomicValueTag (AVStrValueTag avstag) = case avstag of
     "I" -> Just AVTPInt
     "N" -> Just AVTPNumber
     "T" -> Just AVTPText
+    "BOOL" -> Just AVTPBoolean
+    "YEAR" -> Just AVTPYear
+    "UID" -> Just AVTPID
     "D" -> Just AVTToComplete
     "PCTI" -> Just AVTPercentI
     "PCT" -> Just AVTPercentN
@@ -539,6 +568,7 @@ decodeAtomicValueTag (AVStrValueTag avstag) = case avstag of
     "PDTRNG" -> Just AVTDateTimeRange
 
     "TAGS" -> Just AVTTags
+    "RTAGS" -> Just AVTPRawTags
     -- "TREF" -> Just AVTTaskRef
     "PRAT" -> Just AVTPRating
     "PPRI" -> Just AVTPPriority
@@ -565,6 +595,9 @@ toReadableString = case _ of
     PText t -> t
     PInt i -> fwc i
     PNumber n -> fnwc n
+    PBoolean b -> if b then "true" else "false"
+    PYear y -> show y
+    PID id -> "#" <> show id
     ToComplete { done } -> if done then "[V]" else "[X]"
     ToGetI { got, total } -> fwc got <> "/" <> fwc total
     ToGetN { got, total } -> fnwc got <> "/" <> fnwc total
@@ -596,6 +629,7 @@ toReadableString = case _ of
     RelInt rel int -> srel rel <> " " <> fwc int
     RelNum rel num -> srel rel <> " " <> fnwc num
     Tags tags -> String.joinWith "," $ Chain.toStringSep "::" <$> tags
+    PRawTags (RawTags rawTags) -> String.joinWith "," $ (\(RawTag { id }) -> String.joinWith "::" $ NEA.toArray id) <$> rawTags
     -- TaskRef ref -> "{" <> show ref <> "}"
     PRating rating -> Rating.toStars rating -- Rating.toString rating
     PPriority priority -> "[#" <> Priority.priorityChar priority <> "]"
@@ -717,6 +751,9 @@ toNProgress =
         PText _ -> RP.StatsValue
         PNumber _ -> RP.StatsValue
         PInt _ -> RP.StatsValue
+        PBoolean _ -> RP.StatsValue
+        PYear _ -> RP.StatsValue
+        PID _ -> RP.StatsValue
         MeasuredI _ -> RP.StatsValue
         MeasuredN _ -> RP.StatsValue
         MeasuredSign _ -> RP.StatsValue
@@ -735,6 +772,7 @@ toNProgress =
         RelNum _ _ -> RP.StatsValue
         PPath _ -> RP.StatsValue
         Tags _ -> RP.StatsValue
+        PRawTags _ -> RP.StatsValue
         PColor _ -> RP.StatsValue
         -- TaskRef _ -> RP.StatsValue
         PRating _ -> RP.StatsValue
@@ -745,12 +783,12 @@ toNProgress =
         ToGetN { got, total }  -> if got >= total && total /= 0.0 then RP.Achieved else if got == 0.0 || total == 0.0 then RP.NotAchieved else RP.OnTheWay $ got / total
         ToGetIX { got, total } -> if got >= total && total /=   0 then RP.Achieved else if got == 0   || total == 0   then RP.NotAchieved else RP.OnTheWay $ Int.toNumber got / Int.toNumber total
         ToGetNX { got, total } -> if got >= total && total /= 0.0 then RP.Achieved else if got == 0.0 || total == 0.0 then RP.NotAchieved else RP.OnTheWay $ got / total
-        ToGetMI { min, got, max }  -> if got >= max && max /=   0 then RP.Achieved else if got == min   || max == 0   then RP.NotAchieved else RP.OnTheWay $ Int.toNumber (got - min) / Int.toNumber (max - min)
-        ToGetMN { min, got, max }  -> if got >= max && max /= 0.0 then RP.Achieved else if got == min   || max == 0.0 then RP.NotAchieved else RP.OnTheWay $ (got - min) / (max - min)
-        ToGetMIX { min, got, max } -> if got >= max && max /=   0 then RP.Achieved else if got == min   || max == 0   then RP.NotAchieved else RP.OnTheWay $ Int.toNumber (got - min) / Int.toNumber (max - min)
-        ToGetMNX { min, got, max } -> if got >= max && max /= 0.0 then RP.Achieved else if got == min   || max == 0.0 then RP.NotAchieved else RP.OnTheWay $ (got - min) / (max - min)
-        PercentI i -> if i >= 100 then RP.Achieved else if i == 0   then RP.NotAchieved else RP.OnTheWay $ Int.toNumber i / 100.0
-        PercentN n -> if n >= 1.0 then RP.Achieved else if n == 0.0 then RP.NotAchieved else RP.OnTheWay n
+        ToGetMI { min, got, max }  -> if max <= min then RP.NotAchieved else if got >= max then RP.Achieved else if got <= min then RP.NotAchieved else RP.OnTheWay $ Int.toNumber (got - min) / Int.toNumber (max - min)
+        ToGetMN { min, got, max }  -> if max <= min then RP.NotAchieved else if got >= max then RP.Achieved else if got <= min then RP.NotAchieved else RP.OnTheWay $ (got - min) / (max - min)
+        ToGetMIX { min, got, max } -> if max <= min then RP.NotAchieved else if got >= max then RP.Achieved else if got <= min then RP.NotAchieved else RP.OnTheWay $ Int.toNumber (got - min) / Int.toNumber (max - min)
+        ToGetMNX { min, got, max } -> if max <= min then RP.NotAchieved else if got >= max then RP.Achieved else if got <= min then RP.NotAchieved else RP.OnTheWay $ (got - min) / (max - min)
+        PercentI i -> if i >= 100 then RP.Achieved else if i <= 0   then RP.NotAchieved else RP.OnTheWay $ Int.toNumber i / 100.0
+        PercentN n -> if n >= 1.0 then RP.Achieved else if n <= 0.0 then RP.NotAchieved else RP.OnTheWay n
         PercentSign { pct, sign } ->
             if (sign > 0) && (pct >= 1.0) then RP.Achieved
             else if (sign < 0) || (pct <= 0.0) then RP.NotAchieved

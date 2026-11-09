@@ -32,7 +32,9 @@ import Report.Decorator (Key(..), Decorator(..), encodeKey) as D
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Progress (Progress(..), PTValueTag(..), Levels(..), _vtagTo) as P
+import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Decorators.Tabular.Logbook (LogbookEntry, entries) as Logbook
 
 import Data.YAML.Foreign.Encode (YValue, class ToYAML, toYAML, printYAML, object)
 
@@ -133,14 +135,14 @@ toSmos inclRule =
         itemLogbook :: ItemRec -> Array YValue
         itemLogbook itemRec =
             case Array.find (\{ tkey } -> tkey == "logbook") itemRec.tabulars of
-                Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LS (P.LevelsP { levels })))) } ->
-                    logbookEntryYV <$> levels
+                Just { value: TV.TVLogbook logbook } ->
+                    logbookEntryYV <$> Logbook.entries logbook
                 _ -> []
 
-        logbookEntryYV :: { date :: Maybe CT.SDateRec, endDate :: Maybe CT.SDateRec | _ } -> YValue
-        logbookEntryYV { date, endDate } =
-            let startStr = maybe "1970-01-01 00:00:00.000" (smosTime <<< CT.dateFromRec) date
-            in case endDate of
+        logbookEntryYV :: Logbook.LogbookEntry -> YValue
+        logbookEntryYV { start, end } =
+            let startStr = maybe "1970-01-01 00:00:00.000" (smosTime <<< CT.dateFromRec) start
+            in case end of
                 Just ed ->
                     object
                         [ Tuple "end"   (toYAML $ smosTime $ CT.dateFromRec ed)
@@ -152,8 +154,8 @@ toSmos inclRule =
         itemStateHistory :: ItemRec -> Array YValue
         itemStateHistory itemRec =
             let fromTabular = case Array.find (\{ tkey } -> tkey == "state-history") itemRec.tabulars of
-                    Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LS (P.LevelsP { levels })))) }
-                        | not (Array.null levels) -> stateEntryYV <$> levels
+                    Just { value: TV.TVLogbook logbook }
+                        | not (Array.null $ Logbook.entries logbook) -> stateEntryYV <$> Logbook.entries logbook
                     _ -> []
             in if not (Array.null fromTabular) then fromTabular
                else
@@ -186,11 +188,11 @@ toSmos inclRule =
                            ]
                        Nothing -> []
 
-        stateEntryYV :: { proc :: TaskP, date :: Maybe CT.SDateRec | _ } -> YValue
-        stateEntryYV { proc, date } =
-            let timeStr = maybe "1970-01-01 00:00:00.000" (smosTime <<< CT.dateFromRec) date
+        stateEntryYV :: Logbook.LogbookEntry -> YValue
+        stateEntryYV { task, start } =
+            let timeStr = maybe "1970-01-01 00:00:00.000" (smosTime <<< CT.dateFromRec) start
             in object
-                [ Tuple "state" (toYAML $ taskToSmosState proc)
+                [ Tuple "state" (toYAML $ taskToSmosState task)
                 , Tuple "time"  (toYAML timeStr)
                 ]
 
@@ -215,9 +217,9 @@ toSmos inclRule =
                     "CANCELED"  -> Just "CANCELED"
                     _           -> Nothing
                 mbValStr = case value of
-                    TV.TVAtomic (TV.TVDate sdate)         -> Just $ orgDate sdate
-                    TV.TVAtomic (TV.TVDateTime sdate _)   -> Just $ orgDate sdate
-                    TV.TVAtomic (TV.TVDateRange { from }) -> Just $ orgDate from
+                    TV.TVAtomic (AV.OnDate sdate)         -> Just $ orgDate sdate
+                    TV.TVAtomic (AV.OnDateTime sdate _)   -> Just $ orgDate sdate
+                    TV.TVAtomic (AV.DateRange { from }) -> Just $ orgDate from
                     _                                     -> Nothing
             in do
                 k <- smosKey

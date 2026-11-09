@@ -8,6 +8,8 @@ import Data.Array (catMaybes) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 
 import Yoga.JSON (class WriteForeign, class ReadForeign)
+import Data.Argonaut.Decode (class DecodeJson)
+import Data.Argonaut.Encode (class EncodeJson)
 
 import Report.Chain (Chain)
 
@@ -49,11 +51,16 @@ derive instance Newtype RawTag _
 derive newtype instance Eq RawTag
 derive newtype instance Ord RawTag
 derive newtype instance WriteForeign RawTag
+derive newtype instance EncodeJson RawTag
+derive newtype instance DecodeJson RawTag
 derive newtype instance ReadForeign  RawTag
 
 
 newtype RawTags = RawTags (Array RawTag)
 derive instance Newtype RawTags _
+derive newtype instance Eq RawTags
+derive newtype instance EncodeJson RawTags
+derive newtype instance DecodeJson RawTags
 derive newtype instance WriteForeign RawTags
 derive newtype instance ReadForeign  RawTags
 

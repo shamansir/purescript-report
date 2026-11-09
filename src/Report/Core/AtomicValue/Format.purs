@@ -95,6 +95,12 @@ formatTextual = case _ of
         fmt_int int
     RAV.PNumber num ->
         fmt_num3 num
+    RAV.PBoolean bool ->
+        pure $ c_text $ if bool then "true" else "false"
+    RAV.PYear year ->
+        pure $ c_text $ show year -- not formatted as a number
+    RAV.PID id ->
+        pure $ c_text $ "#" <> show id -- not formatted as a number
     RAV.ToComplete { done } ->
         pure $ c_prog $ if done then "DONE" else "TODO" -- FIXME
     RAV.ToGetI { got, total } ->
@@ -170,6 +176,8 @@ formatTextual = case _ of
     RAV.PPath pathC ->
         pure Empty -- FIXME: implement
     RAV.Tags tags ->
+        pure Empty -- FIXME: implement
+    RAV.PRawTags rawTags ->
         pure Empty -- FIXME: implement
     RAV.PRating rating ->
         pure Empty -- FIXME: implement

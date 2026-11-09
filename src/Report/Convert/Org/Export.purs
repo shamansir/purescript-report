@@ -42,6 +42,7 @@ import Report.Tabular (findV) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
+import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
 -- import Report.Convert.Text.Export as TextExport
 
@@ -69,11 +70,11 @@ toOrg inclRule =
         -- >>> String.joinWith "\n"
     where
         mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
-            TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (AV.OnDate sdate) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic ((OnDate sdate)) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
-        --     TV.TVTime timeRec -> Just timeRec
+        --     AV.OnTime timeRec -> Just timeRec
         --     _ -> Nothing
 
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit

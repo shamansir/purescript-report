@@ -57,6 +57,9 @@ triMarkerForProgress = TM <<< case _ of
     P.PTAV AV.AVTPInt -> "INT"
     P.PTAV AV.AVTPNumber -> "NUM"
     P.PTAV AV.AVTPText -> "TXT"
+    P.PTAV AV.AVTPBoolean -> "BOL"
+    P.PTAV AV.AVTPYear -> "YER"
+    P.PTAV AV.AVTPID -> "UID"
     P.PTAV AV.AVTToComplete -> "CMP"
     P.PTAV AV.AVTPercentI -> "PCI"
     P.PTAV AV.AVTPercentN -> "PCN"
@@ -88,9 +91,10 @@ triMarkerForProgress = TM <<< case _ of
     P.PTAV AV.AVTRelNum -> "REN"
     P.PTAV AV.AVTPPath -> "PTH"
     P.PTAV AV.AVTTags -> "TAG"
+    P.PTAV AV.AVTPRawTags -> "RTG"
     P.PTAV AV.AVTColor -> "CLR"
-    P.PTAV AV.AVTPRating -> "RAT"
-    P.PTAV AV.AVTPPriority -> "RTN"
+    P.PTAV AV.AVTPRating -> "RTN" -- not to intersect with `RAT`
+    P.PTAV AV.AVTPPriority -> "PRT" -- not to intersect with `PRI`
     P.PTAV AV.AVTError -> "XXX"
 
     P.PTLevelsI -> "LVI"
@@ -126,6 +130,9 @@ progressTagFromTriMarker (TM marker) = case marker of
     "INT" -> P.PTAV AV.AVTPInt
     "NUM" -> P.PTAV AV.AVTPNumber
     "TXT" -> P.PTAV AV.AVTPText
+    "BOL" -> P.PTAV AV.AVTPBoolean
+    "YER" -> P.PTAV AV.AVTPYear
+    "UID" -> P.PTAV AV.AVTPID
     "CMP" -> P.PTAV AV.AVTToComplete
     "PCI" -> P.PTAV AV.AVTPercentI
     "PCN" -> P.PTAV AV.AVTPercentN
@@ -159,6 +166,7 @@ progressTagFromTriMarker (TM marker) = case marker of
     "REN" -> P.PTAV AV.AVTRelNum
     "PTH" -> P.PTAV AV.AVTPPath
     "TAG" -> P.PTAV AV.AVTTags
+    "RTG" -> P.PTAV AV.AVTPRawTags
     "CLR" -> P.PTAV AV.AVTColor
     "RTN" -> P.PTAV AV.AVTPRating
     "PRT" -> P.PTAV AV.AVTPPriority

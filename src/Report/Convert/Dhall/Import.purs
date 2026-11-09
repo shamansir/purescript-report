@@ -203,7 +203,7 @@ fromDhall jsonStr =
                         Progress.rawToProgressJson value
                             # Progress.fromJson
                             # fromMaybe (AV AV.Unknown)
-                            -- # maybe (TV.TVString "---") (TV.TVSuffix <<< S.SProgress)
+                            -- # maybe (AV.PText "---") (TV.TVSuffix <<< S.SProgress)
                     }
 
 

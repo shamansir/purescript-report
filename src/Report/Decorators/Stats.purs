@@ -94,6 +94,10 @@ _gotTotalFromAV =
         PColor _ -> GTStatsValue
         DateTimeRange _ -> GTStatsValue
         Tags _ -> GTStatsValue
+        PRawTags _ -> GTStatsValue
+        PBoolean _ -> GTStatsValue
+        PYear _ -> GTStatsValue
+        PID _ -> GTStatsValue
         PRating _ -> GTStatsValue
         PPriority _ -> GTStatsValue
         Error _ -> Undefined

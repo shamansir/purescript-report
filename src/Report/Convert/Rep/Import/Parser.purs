@@ -28,8 +28,7 @@ import Report.Decorator (Decorator(..), Key(..))
 import Report.Tabular (Item(..)) as Tab
 import Report.AtomicValue (AtomicValue)
 import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..)) as AV
-import Report.Decorators.Tabular.TabularValue (TabularAtomicValue(..))
-import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
+import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..), fromDecorator) as TV
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Progress (PTValueTag(..), _vtagFrom, Levels(..)) as P
 import Report.Decorators.Task (taskPFromString)
@@ -54,7 +53,7 @@ type RepTabular =
   , id       :: Maybe String
   , marker   :: RE.TriMarker
   , rawValue :: NonEmptyArray String
-  , parsed   :: Maybe (Tab.Item TabularAtomicValue) -- TODO support all kinds of TabularValues
+  , parsed   :: Maybe (Tab.Item AtomicValue) -- TODO support all kinds of TabularValues
   }
 
 type RepDecorator =
@@ -278,22 +277,22 @@ tagAtSpaces spaces = do
   pure $ parseTag tagId
 
 
-tabularFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe TabularAtomicValue
+tabularFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe AtomicValue
 tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
-  TV.TVTString        -> Just      $  TVString          fraw
-  TV.TVTInt           -> TVInt    <$> Int.fromString    fraw
-  TV.TVTID            -> TVID     <$> Int.fromString    fraw
-  TV.TVTYear          -> TVYear   <$> Int.fromString    fraw
-  TV.TVTNumber        -> TVNumber <$> Number.fromString fraw
-  TV.TVTBoolean       -> parseBooleanAtomic             fraw
-  TV.TVTTime          -> TVTime   <$> parseTime         fraw
-  TV.TVTDate          -> TVDate   <$> parseDate         fraw
-  TV.TVTDateTime      -> uncurry TVDateTime              <$> parseDateTime fraw
-  TV.TVTTimeRange     -> TVTimeRange     <$> toFromToRec <$> parseRange parseTime parseTime fraw
-  TV.TVTDateRange     -> TVDateRange     <$> toFromToRec <$> parseRange parseDate parseDate fraw
-  TV.TVTDateTimeRange -> TVDateTimeRange <$> toFromToRec <$> bimap toDateTimeRec toDateTimeRec <$> (parseRange parseDateTime parseDateTime fraw)
-  TV.TVTDecorator dk  -> TVDecorator <$> decoratorFromRep dk raw
-  TV.TVTTags          -> Just $ TVTags $ RawTags $ parseTags fraw
+  TV.TVTString        -> Just       $  AV.PText          fraw
+  TV.TVTInt           -> AV.PInt    <$> Int.fromString    fraw
+  TV.TVTID            -> AV.PID     <$> Int.fromString    fraw
+  TV.TVTYear          -> AV.PYear   <$> Int.fromString    fraw
+  TV.TVTNumber        -> AV.PNumber <$> Number.fromString fraw
+  TV.TVTBoolean       -> parseBooleanAtomic               fraw
+  TV.TVTTime          -> AV.OnTime  <$> parseTime         fraw
+  TV.TVTDate          -> AV.OnDate  <$> parseDate         fraw
+  TV.TVTDateTime      -> uncurry AV.OnDateTime            <$> parseDateTime fraw
+  TV.TVTTimeRange     -> AV.TimeRange     <$> toFromToRec <$> parseRange parseTime parseTime fraw
+  TV.TVTDateRange     -> AV.DateRange     <$> toFromToRec <$> parseRange parseDate parseDate fraw
+  TV.TVTDateTimeRange -> AV.DateTimeRange <$> toFromToRec <$> bimap toDateTimeRec toDateTimeRec <$> (parseRange parseDateTime parseDateTime fraw)
+  TV.TVTDecorator dk  -> TV.fromDecorator <$> decoratorFromRep dk raw
+  TV.TVTTags          -> Just $ AV.PRawTags $ RawTags $ parseTags fraw
   where
     fraw = NEA.head raw
     toDateTimeRec :: (CT.SDate /\ CT.STimeRec) -> { date :: CT.SDate, time :: CT.STimeRec }
@@ -302,12 +301,12 @@ tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
     toFromToRec (from /\ to) = { from, to }
 
 
-parseBooleanAtomic :: String -> Maybe TabularAtomicValue
+parseBooleanAtomic :: String -> Maybe AtomicValue
 parseBooleanAtomic = String.toLower >>> case _ of
-  "true"  -> Just $ TVBoolean true
-  "false" -> Just $ TVBoolean false
-  "1"     -> Just $ TVBoolean true
-  "0"     -> Just $ TVBoolean false
+  "true"  -> Just $ AV.PBoolean true
+  "false" -> Just $ AV.PBoolean false
+  "1"     -> Just $ AV.PBoolean true
+  "0"     -> Just $ AV.PBoolean false
   _       -> Nothing
 
 
@@ -369,6 +368,10 @@ _atomicFromRep avTag raw = case avTag of
   AV.AVTColor         -> Nothing -- FIXME
   AV.AVTPRating       -> Nothing -- FIXME
   AV.AVTPPriority     -> Nothing -- FIXME
+  AV.AVTPBoolean      -> parseBooleanAtomic fraw
+  AV.AVTPYear         -> AV.PYear <$> Int.fromString fraw
+  AV.AVTPID           -> AV.PID <$> Int.fromString fraw
+  AV.AVTPRawTags      -> Just $ AV.PRawTags $ RawTags $ parseTags fraw
   where
     fraw = NEA.head raw
 

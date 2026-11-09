@@ -46,7 +46,9 @@ import Report.Tabular (findV, Item(..), items) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
+import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Decorators.Tabular.Logbook (entries) as Logbook
 
 import Report.Convert.Dhall.Export as DH
 
@@ -102,11 +104,11 @@ toTextWith cfg inclRule =
         -- >>> String.joinWith "\n"
     where
         -- mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
-        --     TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-        --     TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
+        --     TV.TVAtomic (AV.OnDate sdate) -> Just $ CT.dateToRec sdate
+        --     TV.TVAtomic ((OnDate sdate)) -> Just $ CT.dateToRec sdate
         --     _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
-        --     TV.TVTime timeRec -> Just timeRec
+        --     AV.OnTime timeRec -> Just timeRec
         --     _ -> Nothing
 
         convertSubject :: { subject :: Subject, groups :: Array { group :: Group, items :: Array ItemRec } } -> Doc Unit
@@ -308,35 +310,37 @@ _tabularValueDoc = case _ of
             <$> tabulars
     TV.TVPair left right -> _tabularValueDoc left <> D.text " | " <> _tabularValueDoc right
     TV.TVTabularsNest tabularsNest -> mempty -- TODO: implement -- joinWith D.break $ ?wh <$> tabularsNest
+    TV.TVLogbook logbook ->
+        let
+            entryDoc { name, task, start, end } =
+                D.text (Task.taskPToString task) <> D.space <> D.text name
+                    <> maybe mempty (\date -> D.space <> textDate date) start
+                    <> maybe mempty (\date -> D.text "--" <> textDate date) end
+        in joinWith (D.break <> D.text "- ") $ entryDoc <$> Logbook.entries logbook
 
 
-_tabularAtomicValueDoc :: TV.TabularAtomicValue -> Doc Unit
+_tabularAtomicValueDoc :: AtomicValue -> Doc Unit
 _tabularAtomicValueDoc = case _ of
-    TV.TVString str -> D.text str
-    TV.TVNumber num -> D.text $ show num
-    TV.TVBoolean b -> D.text $ show b
-    TV.TVInt i -> D.text $ show i
-    TV.TVDate dateRec -> textDate $ CT.dateToRec dateRec
-    TV.TVTime timeRec -> textTime timeRec
-    TV.TVYear year -> D.text $ show year
-    TV.TVID n -> D.text $ show n
-    TV.TVDateTime dateRec timeRec -> textDate (CT.dateToRec dateRec) <> D.text " " <> textTime timeRec
-    TV.TVTimeRange { from, to } -> textTime from <> D.text "--" <> textTime to
-    TV.TVDateRange { from, to } -> textDate (CT.dateToRec from) <> D.text "--" <> textDate (CT.dateToRec to)
-    TV.TVDateTimeRange { from, to } -> textDate (CT.dateToRec from.date) <> D.text " " <> textTime from.time <> D.text "--" <> textDate (CT.dateToRec to.date) <> D.text " " <> textTime to.time
-    TV.TVDecorator decorator -> case decorator of
-        D.SProgress p -> fromMaybe mempty $ _progressSuffixOneLiner p
-        D.SEarnedAt ea -> D.text " at " <> textDate (CT.dateToRec ea)
-        D.SDescription desc -> D.text "/ " <> D.text desc <> D.text " /"
-        D.SReference _ -> mempty
-        D.PRating rating -> D.text $ Rating.toStars rating
-        D.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
-        D.PTask task -> D.text $ Task.taskPToString task
-        D.SJoinReference _ -> mempty
-    TV.TVTags theTags -> case theTags of
+    AV.PText str -> D.text str
+    AV.PNumber num -> D.text $ show num
+    AV.PBoolean b -> D.text $ show b
+    AV.PInt i -> D.text $ show i
+    AV.OnDate dateRec -> textDate $ CT.dateToRec dateRec
+    AV.OnTime timeRec -> textTime timeRec
+    AV.PYear year -> D.text $ show year
+    AV.PID n -> D.text $ show n
+    AV.OnDateTime dateRec timeRec -> textDate (CT.dateToRec dateRec) <> D.text " " <> textTime timeRec
+    AV.TimeRange { from, to } -> textTime from <> D.text "--" <> textTime to
+    AV.DateRange { from, to } -> textDate (CT.dateToRec from) <> D.text "--" <> textDate (CT.dateToRec to)
+    AV.DateTimeRange { from, to } -> textDate (CT.dateToRec from.date) <> D.text " " <> textTime from.time <> D.text "--" <> textDate (CT.dateToRec to.date) <> D.text " " <> textTime to.time
+    AV.PRawTags theTags -> case theTags of
         RawTags [] -> mempty
         RawTags tagArr ->
             tags tagArr
+    AV.PRating rating -> D.text $ Rating.toStars rating
+    AV.PPriority priority -> D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
+    AV.PTask task -> D.text $ Task.taskPToString task
+    aval -> fromMaybe mempty $ _atomicSuffixOneLiner aval
 
 
 _atomicSuffixOneLiner :: AtomicValue -> Maybe (Doc Unit)
