@@ -6,7 +6,7 @@ import Data.Array ((:))
 import Data.Maybe (Maybe(..), maybe)
 
 import Report.Core (Fmt(..), formatInt, formatNum, dateToRec, SDate(..), toLeadingZero, monthThreeLetter) as RC
-import Report.Core (Relation(..), NProgress(..)) as RP
+import Report.Core (Relation(..)) as RP
 import Report.Decorators.Task (taskPToString) as RT
 import Report.AtomicValue as RAV
 

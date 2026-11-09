@@ -31,8 +31,9 @@ import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags as CT
 
+import Report.AtomicValue (AtomicValue(..))
 import Report.Decorator (Key(..), Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..), PValueTag(..))
+import Report.Decorators.Progress (Progress(..), PValueTag(..), Levels(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag(..), RawTags(..))
 import Report.Decorators.Progress (Progress(..)) as P
@@ -63,7 +64,7 @@ toDhall inclRule =
     where
         mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
@@ -263,8 +264,8 @@ _ml :: forall a. Array (Doc a) -> RenderedAs (Doc a)
 _ml = MutliLine
 
 
-_progressToDhall :: Progress -> RenderedAs (Doc Unit)
-_progressToDhall = case _ of
+_atomicToDhall :: AtomicValue -> RenderedAs (Doc Unit)
+_atomicToDhall = case _ of
     None ->        _ol $ D.text "T.v_empty"
     Unknown ->     _ol $ D.text "T.v_unk"
     PInt i ->      _ol $ wrapbrkD $ D.text "T.v_i" <+> (prefixnosp "+" $ show i)
@@ -326,8 +327,25 @@ _progressToDhall = case _ of
             [ "from" /\ show from
             , "to" /\ show to
             ]
-    Task taskP ->
+    PTask taskP ->
         _ol $ wrapbrkD $ D.text "T.v_proc " <> quoteD (vtaskP taskP)
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    CT.RMoreThan -> "T.rel_more_than"
+                    CT.REqual -> "T.rel_equal"
+                    CT.RLessThan -> "T.rel_less_than"
+        in _ol $ wrapbrkD $ D.text "T.v_relt" <+> (wrapbrkD $ D.text "T.v_rel_" <> D.text relText <+> D.text "T.TIME" <+> timereccf timeRec)
+        -- T.v_relt (T.rel_more_than T.TIME time)
+    Error err ->
+        _ol $ D.text "ERR" -- FIXME:
+    _ ->
+        _ol $ D.text "NSUP" -- FIXME:
+
+
+
+_levelsToDhall :: Levels -> RenderedAs (Doc Unit)
+_levelsToDhall = case _ of
     LevelsI { reached, levels } ->
         let
             levelrec lrec =
@@ -428,31 +446,30 @@ _progressToDhall = case _ of
             [ D.indent recend
             , D.text ")"
             ]
-    RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> "T.rel_more_than"
-                    CT.REqual -> "T.rel_equal"
-                    CT.RLessThan -> "T.rel_less_than"
-        in _ol $ wrapbrkD $ D.text "T.v_relt" <+> (wrapbrkD $ D.text "T.v_rel_" <> D.text relText <+> D.text "T.TIME" <+> timereccf timeRec)
-        -- T.v_relt (T.rel_more_than T.TIME time)
-    Error err ->
-        _ol $ D.text "ERR" -- FIXME:
     where
         sfield p = D.text "{" <+> field p
         nfield p = D.text "," <+> field p
         xfield n = D.text "," <+> D.text n <+> D.text "="
         sxfield n = D.text "{" <+> D.text n <+> D.text "="
         recend = D.text "}"
-        vtaskP = D.text <<< case _ of
-            TTodo -> "T.p_todo"
-            TDoing -> "T.p_doing"
-            TDone -> "T.p_done"
-            TWait -> "T.p_wait"
-            TNow -> "T.p_now"
-            TCanceled -> "T.p_canceled"
-            TLater -> "T.p_later"
-        pvptaskP task = vtaskP task <> D.text "_"
+
+
+
+_progressToDhall :: Progress -> RenderedAs (Doc Unit)
+_progressToDhall = case _ of
+    AV aval   -> _atomicToDhall aval
+    LS levels -> _levelsToDhall levels
+
+
+vtaskP = D.text <<< case _ of
+    TTodo -> "T.p_todo"
+    TDoing -> "T.p_doing"
+    TDone -> "T.p_done"
+    TWait -> "T.p_wait"
+    TNow -> "T.p_now"
+    TCanceled -> "T.p_canceled"
+    TLater -> "T.p_later"
+pvptaskP task = vtaskP task <> D.text "_"
 
 
 ilarray :: forall a. Array String -> Doc a

@@ -2,6 +2,7 @@ module Report.Convert.Rep.Keys where
 
 import Prelude
 
+import Report.AtomicValue as AV
 import Report.Decorator (Key(..)) as D
 import Report.Decorators.Progress (PTValueTag(..), _vtagFrom, _vtagTo) as P
 import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
@@ -51,27 +52,47 @@ tmfp = triMarkerForProgress
 
 triMarkerForProgress :: P.PTValueTag -> TriMarker
 triMarkerForProgress = TM <<< case _ of
-    P.PTNone -> "NON"
-    P.PTUnknown -> "UNK"
-    P.PTInt -> "INT"
-    P.PTNumber -> "NUM"
-    P.PTText -> "TXT"
-    P.PTToComplete -> "CMP"
-    P.PTPercentI -> "PCI"
-    P.PTPercentN -> "PCN"
-    P.PTPercentSign -> "PCX"
-    P.PTToGetI -> "GTI"
-    P.PTToGetN -> "GTN"
-    P.PTOnTime -> "TIM"
-    P.PTOnDate -> "DAT"
-    P.PTPerI -> "PPI"
-    P.PTPerN -> "PPN"
-    P.PTMeasuredI -> "MSI"
-    P.PTMeasuredN -> "MSN"
-    P.PTMeasuredSign -> "MSX"
-    P.PTRangeI -> "RGI"
-    P.PTRangeN -> "RGN"
-    P.PTTask -> "PRG" -- not to intersect with `TSK`
+    P.PTAV AV.AVTNone -> "NON"
+    P.PTAV AV.AVTUnknown -> "UNK"
+    P.PTAV AV.AVTPInt -> "INT"
+    P.PTAV AV.AVTPNumber -> "NUM"
+    P.PTAV AV.AVTPText -> "TXT"
+    P.PTAV AV.AVTToComplete -> "CMP"
+    P.PTAV AV.AVTPercentI -> "PCI"
+    P.PTAV AV.AVTPercentN -> "PCN"
+    P.PTAV AV.AVTPercentSign -> "PCX"
+    P.PTAV AV.AVTToGetI -> "GTI"
+    P.PTAV AV.AVTToGetN -> "GTN"
+    P.PTAV AV.AVTToGetIX -> "GIX"
+    P.PTAV AV.AVTToGetNX -> "GNX"
+    P.PTAV AV.AVTToGetMI -> "GIM"
+    P.PTAV AV.AVTToGetMN -> "GNM"
+    P.PTAV AV.AVTToGetMIX -> "GIF"
+    P.PTAV AV.AVTToGetMNX -> "GNF"
+    P.PTAV AV.AVTOnTime -> "TIM"
+    P.PTAV AV.AVTOnDate -> "DAT"
+    P.PTAV AV.AVTOnDateTime -> "DTM"
+    P.PTAV AV.AVTPerI -> "PPI"
+    P.PTAV AV.AVTPerN -> "PPN"
+    P.PTAV AV.AVTMeasuredI -> "MSI"
+    P.PTAV AV.AVTMeasuredN -> "MSN"
+    P.PTAV AV.AVTMeasuredSign -> "MSX"
+    P.PTAV AV.AVTRangeI -> "RGI"
+    P.PTAV AV.AVTRangeN -> "RGN"
+    P.PTAV AV.AVTDateRange -> "DRG"
+    P.PTAV AV.AVTTimeRange -> "TRG"
+    P.PTAV AV.AVTDateTimeRange -> "DTR"
+    P.PTAV AV.AVTPTask -> "PRG" -- not to intersect with `TSK`
+    P.PTAV AV.AVTRelTime -> "REL"
+    P.PTAV AV.AVTRelInt -> "REI"
+    P.PTAV AV.AVTRelNum -> "REN"
+    P.PTAV AV.AVTPPath -> "PTH"
+    P.PTAV AV.AVTTags -> "TAG"
+    P.PTAV AV.AVTColor -> "CLR"
+    P.PTAV AV.AVTPRating -> "RAT"
+    P.PTAV AV.AVTPPriority -> "RTN"
+    P.PTAV AV.AVTError -> "XXX"
+
     P.PTLevelsI -> "LVI"
     P.PTLevelsN -> "LVN"
     P.PTLevelsO -> "LVO"
@@ -79,8 +100,7 @@ triMarkerForProgress = TM <<< case _ of
     P.PTLevelsE -> "LVE"
     P.PTLevelsP -> "LVP"
     P.PTLevelsC -> "LVC"
-    P.PTRelTime -> "REL"
-    P.PTError -> "XXX"
+
 
 
 ptftm :: TriMarker -> P.PTValueTag
@@ -101,27 +121,28 @@ decoratorKeyFromTriMarker (TM marker) = case marker of
 
 progressTagFromTriMarker :: TriMarker -> P.PTValueTag
 progressTagFromTriMarker (TM marker) = case marker of
-    "NON" -> P.PTNone
-    "UNK" -> P.PTUnknown
-    "INT" -> P.PTInt
-    "NUM" -> P.PTNumber
-    "TXT" -> P.PTText
-    "CMP" -> P.PTToComplete
-    "PCI" -> P.PTPercentI
-    "PCN" -> P.PTPercentN
-    "PCX" -> P.PTPercentSign
-    "GTI" -> P.PTToGetI
-    "GTN" -> P.PTToGetN
-    "TIM" -> P.PTOnTime
-    "DAT" -> P.PTOnDate
-    "PPI" -> P.PTPerI
-    "PPN" -> P.PTPerN
-    "MSI" -> P.PTMeasuredI
-    "MSN" -> P.PTMeasuredN
-    "MSX" -> P.PTMeasuredSign
-    "RGI" -> P.PTRangeI
-    "RGN" -> P.PTRangeN
-    "PRG" -> P.PTTask -- not to intersect with `TSK`
+    "NON" -> P.PTAV AV.AVTNone
+    "UNK" -> P.PTAV AV.AVTUnknown
+    "INT" -> P.PTAV AV.AVTPInt
+    "NUM" -> P.PTAV AV.AVTPNumber
+    "TXT" -> P.PTAV AV.AVTPText
+    "CMP" -> P.PTAV AV.AVTToComplete
+    "PCI" -> P.PTAV AV.AVTPercentI
+    "PCN" -> P.PTAV AV.AVTPercentN
+    "PCX" -> P.PTAV AV.AVTPercentSign
+    "GTI" -> P.PTAV AV.AVTToGetI
+    "GTN" -> P.PTAV AV.AVTToGetN
+    "TIM" -> P.PTAV AV.AVTOnTime
+    "DAT" -> P.PTAV AV.AVTOnDate
+    "DTM" -> P.PTAV AV.AVTOnDateTime
+    "PPI" -> P.PTAV AV.AVTPerI
+    "PPN" -> P.PTAV AV.AVTPerN
+    "MSI" -> P.PTAV AV.AVTMeasuredI
+    "MSN" -> P.PTAV AV.AVTMeasuredN
+    "MSX" -> P.PTAV AV.AVTMeasuredSign
+    "RGI" -> P.PTAV AV.AVTRangeI
+    "RGN" -> P.PTAV AV.AVTRangeN
+    "PRG" -> P.PTAV AV.AVTPTask -- not to intersect with `TSK`
     "LVI" -> P.PTLevelsI
     "LVN" -> P.PTLevelsN
     "LVO" -> P.PTLevelsO
@@ -129,9 +150,20 @@ progressTagFromTriMarker (TM marker) = case marker of
     "LVE" -> P.PTLevelsE
     "LVP" -> P.PTLevelsP
     "LVC" -> P.PTLevelsC
-    "REL" -> P.PTRelTime
-    "XXX" -> P.PTError
-    _     -> P.PTUnknown
+    "REL" -> P.PTAV AV.AVTRelTime
+    "XXX" -> P.PTAV AV.AVTError
+    "DRG" -> P.PTAV AV.AVTDateRange
+    "TRG" -> P.PTAV AV.AVTTimeRange
+    "DTR" -> P.PTAV AV.AVTDateTimeRange
+    "REI" -> P.PTAV AV.AVTRelInt
+    "REN" -> P.PTAV AV.AVTRelNum
+    "PTH" -> P.PTAV AV.AVTPPath
+    "TAG" -> P.PTAV AV.AVTTags
+    "CLR" -> P.PTAV AV.AVTColor
+    "RTN" -> P.PTAV AV.AVTPRating
+    "PRT" -> P.PTAV AV.AVTPPriority
+
+    _     -> P.PTAV AV.AVTUnknown
 
 
 tmft :: TV.TabValTypeKey -> TriMarker

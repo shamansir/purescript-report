@@ -10,6 +10,7 @@ import Data.Tuple.Nested ((/\), type (/\))
 import Report.Core (SDate(..), STimeRec, monthFromInt, monthToInt, toLeadingZero, Relation(..)) as CT
 import Report.Core (Relation(..), encodeRel, decodeRel)
 import Report.Core.Logic (EncodedValue(..)) as CT
+import Report.AtomicValue (AtomicValue(..))
 import Report.Decorators.Progress (PValueTag(..), Progress(..), unwrapValueTag, valueTagOf)
 import Report.Decorators.Task (taskPFromString, taskPToString)
 
@@ -85,8 +86,8 @@ decodeTime evStr = case qsplit ":" evStr of
     _ -> Nothing
 
 
-encodeProgress :: Progress -> PValueTag /\ CT.EncodedValue
-encodeProgress p = valueTagOf p /\ (CT.EncodedValue $ case p of
+_encodeAtomic :: AtomicValue -> CT.EncodedValue
+_encodeAtomic = CT.EncodedValue <<< case _ of
     None -> ""
     Unknown -> ""
     PInt i -> show i
@@ -107,22 +108,26 @@ encodeProgress p = valueTagOf p /\ (CT.EncodedValue $ case p of
     MeasuredSign { sign, amount, measure } -> show sign <> ";" <> show amount <> ";" <> measure
     RangeI { from, to } -> show from <> "-" <> show to
     RangeN { from, to } -> show from <> "-" <> show to
-    Task taskP -> taskPToString taskP
-    LevelsI _ -> "" -- TODO
-    LevelsN _ -> "" -- TODO
-    LevelsO _ -> "" -- TODO
-    LevelsS _ -> "" -- TODO
-    LevelsP _ -> "" -- TODO
-    LevelsC _ -> "" -- TODO
-    LevelsE _ -> "" -- TODO
+    PTask taskP -> taskPToString taskP
     RelTime rel timeRec ->
         encodeRel rel <> ";" <> encodeTime timeRec
     Error err -> err
+    _ -> "" -- FIXME: TODO
+
+
+encodeProgress :: Progress -> PValueTag /\ CT.EncodedValue
+encodeProgress p = valueTagOf p /\ (case p of
+    AV aval -> _encodeAtomic aval
+    LS levels -> CT.EncodedValue "" -- FIXME: TODO
     )
 
 
 decodeProgress :: PValueTag -> CT.EncodedValue -> Maybe Progress
-decodeProgress pvt (CT.EncodedValue evStr) = case unwrapValueTag pvt of
+decodeProgress pvt encv = _decodeAtomic pvt encv <#> AV
+
+
+_decodeAtomic :: PValueTag -> CT.EncodedValue -> Maybe AtomicValue
+_decodeAtomic pvt (CT.EncodedValue evStr) = case unwrapValueTag pvt of
     "E" -> Just None
     "UNK" -> Just Unknown
     "I" -> PInt <$> Int.fromString evStr
@@ -198,7 +203,7 @@ decodeProgress pvt (CT.EncodedValue evStr) = case unwrapValueTag pvt of
             <$> Number.fromString fromStr
             <*> Number.fromString toStr
         _ -> Nothing
-    "PROC" -> Just $ Task $ taskPFromString evStr
+    "PROC" -> Just $ PTask $ taskPFromString evStr
     "LVLI" -> Nothing -- TODO
     "LVLD" -> Nothing -- TODO
     "LVLO" -> Nothing -- TODO

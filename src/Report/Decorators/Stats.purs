@@ -11,9 +11,11 @@ import Data.Array (length) as Array
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
-import Report.Core (NProgress(..))
+import Report.Core.ProgressRefl (NProgress(..), GotTotal(..))
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), Levels(..))
+import Report.AtomicValue as AV
+import Report.AtomicValue (AtomicValue(..))
 
 {- Stats -}
 
@@ -35,20 +37,6 @@ instance Ord Stats where
 
 defaultStats :: Stats
 defaultStats = SYetUnknown
-
-
-{- GotTotal -}
-
-
-data GotTotal -- very close to `NProgress`, merge?
-    = Defined { got :: Int, total :: Int }
-    | JustCount { count :: Int }
-    | GTStatsValue
-    | Undefined
-
-
-derive instance Eq GotTotal
-derive instance Ord GotTotal
 
 
 weightOf :: Stats -> Number
@@ -79,8 +67,8 @@ gotTotalFromStats = case _ of
     SYetUnknown -> Undefined
 
 
-gotTotalFrom :: Progress -> GotTotal
-gotTotalFrom =
+_gotTotalFromAV :: AtomicValue -> GotTotal
+_gotTotalFromAV =
     case _ of
         None -> Undefined
         Unknown -> Undefined
@@ -94,17 +82,41 @@ gotTotalFrom =
         PerN _ -> GTStatsValue
         OnDate _ -> GTStatsValue
         OnTime _ -> GTStatsValue
+        OnDateTime _ _ -> GTStatsValue
         RangeI _ -> GTStatsValue
         RangeN _ -> GTStatsValue
         RelTime _ _ -> GTStatsValue
+        RelInt _ _ -> GTStatsValue
+        RelNum _ _ -> GTStatsValue
+        PPath _ -> GTStatsValue
+        TimeRange _ -> GTStatsValue
+        DateRange _ -> GTStatsValue
+        PColor _ -> GTStatsValue
+        DateTimeRange _ -> GTStatsValue
+        Tags _ -> GTStatsValue
+        PRating _ -> GTStatsValue
+        PPriority _ -> GTStatsValue
+        Error _ -> Undefined
         ToComplete { done } -> Defined { got : if done then 1 else 0, total : 1 }
-        Task task -> Defined { got : if task == TDone then 1 else 0, total : 1 }
+        PTask task -> Defined { got : if task == TDone then 1 else 0, total : 1 }
         ToGetI { got, total } -> Defined { got, total }
         ToGetN { got, total } -> Defined { got : Int.floor got, total : Int.floor total }
+        ToGetIX { got, total } -> Defined { got, total }
+        ToGetNX { got, total } -> Defined { got : Int.floor got, total : Int.floor total }
+        ToGetMI { min, got, max } -> Defined { got : got - min, total : max - min }
+        ToGetMN { min, got, max } -> Defined { got : Int.floor $ got - min, total : Int.floor $ max - min }
+        ToGetMIX { min, got, max } -> Defined { got : got - min, total : max - min }
+        ToGetMNX { min, got, max } -> Defined { got : Int.floor $ got - min, total : Int.floor $ max - min }
         PercentI i -> Defined { got : i, total : 100 }
         PercentN n -> Defined { got : Int.floor $ n * 100.0 , total : 100 }
         PercentSign { pct, sign } ->
             Defined { got : if (sign > 0) then Int.floor $ pct * 100.0 else 0, total : 100 }
+
+
+gotTotalFrom :: Progress -> GotTotal
+gotTotalFrom = case _ of
+    AV aval -> _gotTotalFromAV aval
+    LS levels -> case levels of
         LevelsN { reached, levels } ->
             let
                 maximumTotal = foldl max 0.0 $ _.maximum <$> levels
@@ -131,7 +143,6 @@ gotTotalFrom =
                 { got : foldl (+) 0 $ (\lvl -> if lvl == TDone then 1 else 0) <$> _.proc <$> levels
                 , total : Array.length levels
                 }
-        Error _ -> Undefined
 
 
 instance ReadForeign Stats where
@@ -173,8 +184,8 @@ instance WriteForeign Stats where
 toProgress :: Stats -> Progress
 toProgress = case _ of
     SFromProgress progress -> progress
-    SGotTotal { got, total } -> ToGetI { got, total }
-    SWithProgress { got, total } _ -> ToGetI { got, total }
-    SCount { count } -> PInt count
-    SNotRelevant -> None
-    SYetUnknown -> None
+    SGotTotal { got, total } -> AV $ AV.ToGetI { got, total }
+    SWithProgress { got, total } _ -> AV $ AV.ToGetI { got, total }
+    SCount { count } -> AV $ AV.PInt count
+    SNotRelevant -> AV $ AV.None
+    SYetUnknown -> AV $ AV.None

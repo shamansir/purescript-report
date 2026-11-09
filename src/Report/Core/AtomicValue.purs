@@ -24,7 +24,7 @@ import Utils.Data.WColor (WColor)
 import Utils.Data.WColor (toHex) as WColor
 
 import Report.Core (SDate(..), SDateRec, STimeRec, dateFromRec, dateToRec, formatWithCommas, formatNumWithCommas, monthThreeLetter, toLeadingZero, Relation(..), encodeRel, decodeRel) as RCT
-import Report.Core (NProgress(..)) as RP
+import Report.Core.ProgressRefl (NProgress(..), NormalizedProgress) as RP
 import Report.Core.Logic (foreignToMaybe) as RCT
 -- import Report.Decorators.Progress (Progress(..), Relation(..), encodeRel, decodeRel, NProgress(..)) as RP
 -- import Report.Decorators.Tabular.TabularValue (TabularAtomicValue) as RAV
@@ -613,10 +613,7 @@ toReadableString = case _ of
         srel  = RCT.encodeRel
 
 
-type NormalizedProgress = { got :: Number, doing :: Number } -- both <= 1.0
-
-
-normalizeProgress :: AtomicValue -> Maybe NormalizedProgress
+normalizeProgress :: AtomicValue -> Maybe RP.NormalizedProgress
 normalizeProgress = case _ of
     ToGetI { got, total } ->
         if (total == 0) then zeroes else

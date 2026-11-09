@@ -26,6 +26,7 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags (loadRawId) as CT
 import Report.Convert.Keyed (encodeKey)
 
+import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..))
 import Report.Decorator (Key(..), Decorator(..), keyOf) as D
 import Report.Decorators.Progress (Progress(..))
 --import Report.Decorators.Task (TaskP(..))
@@ -73,7 +74,7 @@ toRep inclRule =
     where
         mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
@@ -136,8 +137,8 @@ toRep inclRule =
                     Just pathId -> D.space <> markSym pathKW <> (D.text $ unwrap pathId)
                     Nothing -> mempty
                 <> D.break <> tabularBlock
-                    [ { id : "path",  label : "Path",  marker : tmfp P.PTText, valueLines : pure $ convertPath groupRec.path }
-                    , { id : "index", label : "Index", marker : tmfp P.PTInt, valueLines : pure $ D.text $ show index        }
+                    [ { id : "path",  label : "Path",  marker : tmfp (P.PTAV AVTPText), valueLines : pure $ convertPath groupRec.path }
+                    , { id : "index", label : "Index", marker : tmfp (P.PTAV AVTPTInt), valueLines : pure $ D.text $ show index        }
                     ]
                 <> case items of
                     [] -> mempty

@@ -2,7 +2,7 @@ module Report.Decorators.Progress where
 
 import Prelude
 
-import Foreign (F, Foreign)
+import Foreign (F, Foreign, fail, ForeignError(..))
 
 import Data.Generic.Rep (class Generic)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -13,6 +13,9 @@ import Data.Int (toNumber) as Int
 import Data.Foldable (foldl)
 import Data.Array (length, all) as Array
 import Data.Tuple.Nested ((/\), type (/\))
+import Data.Newtype (unwrap)
+
+import Control.Alt ((<|>))
 
 import Yoga.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
@@ -21,8 +24,9 @@ import Data.Argonaut.Decode.Generic (genericDecodeJson)
 import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 
-import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec, Relation(..), encodeRel, decodeRel, ReachedOrNot(..)) as CT
-import Report.Core (NProgress(..))
+import Report.Core (SDate, SDateRec, STimeRec, dateFromRec, dateToRec, Relation(..), encodeRel, decodeRel) as CT
+import Report.Core.ProgressRefl (NProgress(..))
+import Report.Core.ProgressRefl (ReachedOrNot(..)) as CT
 import Report.Core.Logic (foreignToMaybe) as CT
 import Report.Convert.Keyed as CK
 import Report.Decorators.Task (TaskP(..))
@@ -38,82 +42,78 @@ type TimeRec = CT.STimeRec
 
 
 data Progress
-    = None
-    | Unknown
-    | PText String
-    | PNumber Number
-    | PInt Int
-    | ToComplete { done :: Boolean }
-    | ToGetI { got :: Int, total :: Int }
-    | ToGetN { got :: Number, total :: Number }
-    | PercentI Int
-    | PercentN Number
-    | PercentSign { sign :: Int, pct :: Number }
-    | MeasuredI { amount :: Int, measure :: String }
-    | MeasuredN { amount :: Number, measure :: String }
-    | MeasuredSign { sign :: Int, amount :: Number, measure :: String }
-    | PerI { amount :: Int, per :: String }
-    | PerN { amount :: Number, per :: String }
-    | OnDate CT.SDate
-    | OnTime TimeRec
-    | RangeI { from :: Int, to :: Int }
-    | RangeN { from :: Number, to :: Number }
-    | Task TaskP
-    | LevelsN LevelsN -- every level has number maximum, name and probably a date when was achieved, `reached` value is also a number and holds the scored value
+    = AV AV.AtomicValue
+    | LS Levels
+
+
+data Levels
+    = LevelsN LevelsN -- every level has number maximum, name and probably a date when was achieved, `reached` value is also a number and holds the scored value
     | LevelsI LevelsI -- every level has integer maximum, name and probably a date when was achieved, `reached` value is also an integerr and holds the scored value
     | LevelsO LevelsO -- every level has optional integer maximum (when known), name and probably a date when was achieved, reached value is also an integer
     | LevelsS LevelsS -- every level gives something textual, `reached` value is a level index
     | LevelsE LevelsE -- exact levels are unknown, we only have a value of levels achieved and total level count
     | LevelsC LevelsC -- exact levels are unknown, we only have a value of levels achieved, total level count, and a value reached at current level and maximum value at current level
     | LevelsP LevelsP -- every level has task inside, name and probably a date when was achieved, reached value is not stored and intended to be calculated from the task data
-    -- | RelN Relation Number -- TODO
-    -- | RelI Relation Integer -- TODO
-    | RelTime CT.Relation TimeRec
-    | Error String
+
 
 
 instance Show Progress where show = progressToString
+derive instance Eq Levels
 derive instance Eq Progress
 
 
 {- Classes -}
 
 
-progressToString :: Progress -> String
-progressToString = case _ of
-    None -> "<None>"
-    Unknown -> "<Unknown>"
-    PText text -> done_ <> " " <> text
-    PNumber n -> done_ <> " " <> show n
-    PInt n -> done_ <> " " <> show n
-    ToComplete { done } -> if done then done_ else todo_
-    ToGetI { got, total } ->
+_avToString :: AV.AtomicValue -> String -- FIXME: use `AV.toReadableString aval` everywhere
+_avToString = case _ of
+    AV.None -> "<None>"
+    AV.Unknown -> "<Unknown>"
+    AV.PText text -> done_ <> " " <> text
+    AV.PNumber n -> done_ <> " " <> show n
+    AV.PInt n -> done_ <> " " <> show n
+    AV.ToComplete { done } -> if done then done_ else todo_
+    AV.ToGetI { got, total } ->
         let strRepr = show got <> "/" <> show total
         in if got == total then done_ <> " " <> strRepr else todo_ <> " " <> strRepr
-    ToGetN { got, total } ->
+    AV.ToGetN { got, total } ->
         let strRepr = show got <> "/" <> show total
         in if got == total then done_ <> " " <> strRepr else todo_ <> " " <> strRepr
-    PercentI i -> if i == 100 then done_ <> " " <> show i <> "%" else todo_ <> " " <> show i <> "%"
-    PercentN n -> if n >= 1.00 then done_ <> " " <> show (n * 100.0) <> "%" else todo_ <> " " <> show n <> "%"
-    PercentSign { sign, pct } ->
+    AV.PercentI i -> if i == 100 then done_ <> " " <> show i <> "%" else todo_ <> " " <> show i <> "%"
+    AV.PercentN n -> if n >= 1.00 then done_ <> " " <> show (n * 100.0) <> "%" else todo_ <> " " <> show n <> "%"
+    AV.PercentSign { sign, pct } ->
         let signChar = if sign >= 0 then "+" else "-"
         in
             if sign >= 0 && pct >= 1.00
                 then done_ <> " " <> signChar <> show (pct * 100.0) <> "%"
                 else todo_ <> " " <> signChar <> show pct <> "%"
-    MeasuredI { amount, measure } -> done_ <> " " <> show amount <> measure
-    MeasuredN { amount, measure } -> done_ <> " " <> show amount <> measure
-    MeasuredSign { sign, amount, measure } ->
+    AV.MeasuredI { amount, measure } -> done_ <> " " <> show amount <> measure
+    AV.MeasuredN { amount, measure } -> done_ <> " " <> show amount <> measure
+    AV.MeasuredSign { sign, amount, measure } ->
         let signChar = if sign >= 0 then "+" else "-"
         in
             done_ <> " " <> signChar <> show amount <> measure
-    PerI { amount, per } -> done_ <> " " <> show amount <> "/" <> per
-    PerN { amount, per } -> done_ <> " " <> show amount <> "/" <> per
-    OnDate sdate -> done_ <> " @ " <> show sdate
-    OnTime { hrs, min, sec } -> done_ <> " : " <> show hrs <> ":" <> show min <> ":" <> show sec
-    RangeI { from, to } -> done_ <> " " <> show from <> "-" <> show to
-    RangeN { from, to } -> done_ <> " " <> show from <> "-" <> show to
-    Task taskP -> show taskP
+    AV.PerI { amount, per } -> done_ <> " " <> show amount <> "/" <> per
+    AV.PerN { amount, per } -> done_ <> " " <> show amount <> "/" <> per
+    AV.OnDate sdate -> done_ <> " @ " <> show sdate
+    AV.OnTime { hrs, min, sec } -> done_ <> " : " <> show hrs <> ":" <> show min <> ":" <> show sec
+    AV.RangeI { from, to } -> done_ <> " " <> show from <> "-" <> show to
+    AV.RangeN { from, to } -> done_ <> " " <> show from <> "-" <> show to
+    AV.PTask taskP -> show taskP
+    AV.RelTime rel { hrs, min, sec } -> relation rel <> " " <> show hrs <> ":" <> show min <> ":" <> show sec
+    AV.Error err -> "ERROR: " <> show err
+    aval -> AV.toReadableString aval
+    where
+        done_ = "[V]"
+        todo_ = "[ ]"
+        relation = case _ of
+            CT.RMoreThan -> ">"
+            CT.REqual -> "="
+            CT.RLessThan -> "<"
+
+
+_levelsToString :: Levels -> String
+_levelsToString = case _ of
     LevelsN { reached, levels } ->
         levelPrefix <> (String.joinWith levelSep $ showLevelN reached <$> levels)
     LevelsI { reached, levels } ->
@@ -130,8 +130,7 @@ progressToString = case _ of
         show levelReached <> "/" <> show totalLevels <> "L" <> ":" <> show reachedAtCurrent <> "/" <> show maximumAtCurrent
     LevelsP { levels } ->
         levelPrefix <> (String.joinWith levelSep $ show <$> levels)
-    RelTime rel { hrs, min, sec } -> relation rel <> " " <> show hrs <> ":" <> show min <> ":" <> show sec
-    Error err -> "ERROR: " <> show err
+
     where
         done_ = "[V]"
         todo_ = "[ ]"
@@ -159,10 +158,12 @@ progressToString = case _ of
         showLevelS :: Int -> Int -> LevelS -> String
         showLevelS reached n { gives } =
             show n <> " : " <>  gives
-        relation = case _ of
-            CT.RMoreThan -> ">"
-            CT.REqual -> "="
-            CT.RLessThan -> "<"
+
+
+progressToString :: Progress -> String -- FIXME: replace with AtomicValue.Format
+progressToString = case _ of
+    AV avVal -> _avToString avVal
+    LS levels -> _levelsToString levels
 
 
 {- JSON -}
@@ -217,42 +218,8 @@ instance WriteForeign Progress where
     writeImpl = writeImpl <<< _writeProgress
 
 
-_writeProgress :: Progress -> ProgressJsonRec
-_writeProgress = case _ of
-    None ->        { t : pvt "E", v : writeImpl "" }
-    Unknown ->     { t : pvt "UNK", v : writeImpl "" }
-    PInt i ->      { t : pvt "I", v : writeImpl i }
-    PNumber n ->   { t : pvt "N", v : writeImpl n }
-    PText text ->  { t : pvt "T", v : writeImpl text }
-    ToComplete { done } -> { t : pvt "D", v : writeImpl done }
-    PercentI i ->  { t : pvt "PCTI", v : writeImpl i }
-    PercentN n ->  { t : pvt "PCT", v : writeImpl n }
-    PercentSign { sign, pct } ->
-        { t : pvt "PCTX", v : writeImpl { sign, pct } }
-    ToGetI { got, total } ->
-        { t : pvt "PI", v : writeImpl { done : got, total } }
-    ToGetN { got, total } ->
-        { t : pvt "PD", v : writeImpl { done : got, total } }
-    OnTime timeRec ->
-        { t : pvt "TIME", v : writeImpl timeRec }
-    OnDate sdate ->
-        { t : pvt "DATE", v : writeImpl $ CT.dateToRec sdate }
-    PerI { amount, per } ->
-        { t : pvt "PERI", v : writeImpl { i : amount, per } }
-    PerN { amount, per } ->
-        { t : pvt "PERD", v : writeImpl { d : amount, per } }
-    MeasuredI { amount, measure } ->
-        { t : pvt "MESI", v : writeImpl { i : amount, measure } }
-    MeasuredN { amount, measure } ->
-        { t : pvt "MESD", v : writeImpl { d : amount, measure } }
-    MeasuredSign { sign, amount, measure } ->
-        { t : pvt "MESX", v : writeImpl { d : amount, measure, sign } }
-    RangeI { from, to } ->
-        { t : pvt "RNGI", v : writeImpl { from, to } }
-    RangeN { from, to } ->
-        { t : pvt "RNGD", v : writeImpl { from, to } }
-    Task taskP ->
-        { t : pvt "PROC", v : writeImpl taskP }
+_writeLevels :: Levels -> ProgressJsonRec
+_writeLevels = case _ of
     LevelsI levelsI ->
         { t : pvt "LVLI", v : writeImpl levelsI }
     LevelsO levelsO ->
@@ -267,10 +234,6 @@ _writeProgress = case _ of
         { t : pvt "LVLP", v : writeImpl levelsP }
     LevelsC levelsC ->
         { t : pvt "LVLC", v : writeImpl $ convertLevelsC levelsC }
-    RelTime rel timeRec ->
-        { t : pvt "RELT", v : writeImpl { rel : CT.encodeRel rel, focus : timeRec } }
-    Error err ->
-        { t : pvt "X", v : writeImpl err }
     where
         pvt = PValueTag
         convertLevelsC
@@ -283,41 +246,28 @@ _writeProgress = case _ of
           }
 
 
-_readProgress :: PValueTag -> Foreign -> F Progress
-_readProgress (PValueTag atag) frgn =
+_unsafeConvertAVStrTag :: AV.AVStrValueTag -> PValueTag
+_unsafeConvertAVStrTag (AV.AVStrValueTag avStrTag) = PValueTag avStrTag
+
+
+_writeProgress :: Progress -> ProgressJsonRec
+_writeProgress = case _ of
+    AV aval -> unsafeConvertAVTag $ AV._writeAtomicValue aval
+    LS levels -> _writeLevels levels
+    where
+        unsafeConvertAVTag { t, v } = { t : _unsafeConvertAVStrTag t, v }
+
+
+_readLevels :: PValueTag -> Foreign -> F Levels
+_readLevels (PValueTag atag) frgn =
     case atag of
-        "E" -> pure None
-        "UNK" -> pure Unknown
-        "I" -> PInt <$> (readImpl frgn :: F Int)
-        "N" -> PNumber <$> (readImpl frgn :: F Number)
-        "F" -> PNumber <$> (readImpl frgn :: F Number)
-        "T" -> PText <$> (readImpl frgn :: F String)
-        "D" -> (\b -> ToComplete { done : b }) <$> (readImpl frgn :: F Boolean)
-        "PCTI" -> PercentI <$> (readImpl frgn :: F Int)
-        "PCT"  -> PercentN <$> (readImpl frgn :: F Number)
-        "PCTX" -> (\{ sign, pct } -> PercentSign { sign, pct })    <$> (readImpl frgn :: F { sign :: Int, pct :: Number })
-        "PI" -> (\{ done, total } -> ToGetI { got : done, total }) <$> (readImpl frgn :: F { done :: Int, total :: Int })
-        "PD" -> (\{ done, total } -> ToGetN { got : done, total }) <$> (readImpl frgn :: F { done :: Number, total :: Number })
-        "TIME" -> OnTime <$> (readImpl frgn :: F TimeRec)
-        "DATE" -> OnDate <$> CT.dateFromRec <$> (readImpl frgn :: F DateRec)
-        "PERI" -> (\{ i, per } -> PerI { amount : i, per }) <$> (readImpl frgn :: F { i :: Int, per :: String })
-        "PERD" -> (\{ d, per } -> PerN { amount : d, per }) <$> (readImpl frgn :: F { d :: Number, per :: String })
-        "MESI" -> (\{ i, measure } -> MeasuredI { amount : i, measure }) <$> (readImpl frgn :: F { i :: Int, measure :: String })
-        "MESD" -> (\{ d, measure } -> MeasuredN { amount : d, measure }) <$> (readImpl frgn :: F { d :: Number, measure :: String })
-        "MESX" -> (\{ d, measure, sign } -> MeasuredSign { amount : d, measure, sign }) <$> (readImpl frgn :: F { d :: Number, measure :: String, sign :: Int })
-        "RNGI" -> (\{ from, to } -> RangeI { from, to }) <$> (readImpl frgn :: F { from :: Int, to :: Int })
-        "RNGD" -> (\{ from, to } -> RangeN { from, to }) <$> (readImpl frgn :: F { from :: Number, to :: Number })
-        "PROC" -> Task <$> (readImpl frgn :: F TaskP)
         "LVLI" -> LevelsI <$> (readImpl frgn :: F LevelsI)
         "LVLD" -> LevelsN <$> (readImpl frgn :: F LevelsN)
         "LVLO" -> LevelsO <$> (readImpl frgn :: F LevelsO)
         "LVLS" -> LevelsS <$> (readImpl frgn :: F LevelsS)
         "LVLP" -> LevelsP <$> (readImpl frgn :: F LevelsP)
         "LVLC" -> LevelsC <$> convertLevelsC <$> (readImpl frgn :: F { reached :: Int, levels :: Int, current :: Int, maxcurrent :: Int, date :: Maybe DateRec })
-        "RELT" ->
-            (readImpl frgn :: F { rel :: String, focus :: TimeRec }) <#> \{ rel, focus } -> RelTime (CT.decodeRel rel) focus
-        "X" -> Error <$> (readImpl frgn :: F String)
-        _ -> pure None
+        other  -> fail $ ForeignError $ "unknown levels tag: " <> other
     where
         convertLevelsC
           { reached, levels, current, maxcurrent, date } =
@@ -329,42 +279,35 @@ _readProgress (PValueTag atag) frgn =
           }
 
 
+_readProgress :: PValueTag -> Foreign -> F Progress
+_readProgress (PValueTag atag) frgn =
+    (fAVTag >>= flip AV._readAtomicValue frgn <#> AV)
+    <|>
+    (_readLevels (PValueTag atag) frgn <#> LS)
+    where
+        mbAVTag = AV.decodeAtomicValueTag $ AV.AVStrValueTag atag
+        fAVTag = maybe (fail $ ForeignError $ "unknown tag: " <> atag) pure mbAVTag
+
+
 fromJson :: ProgressJson -> Maybe Progress
 fromJson = _decodeProgress >>> CT.foreignToMaybe
 
 
 valueTagOf :: Progress -> PValueTag
 valueTagOf = case _ of
-    None ->          PValueTag "E"
-    Unknown ->       PValueTag "UNK"
-    PInt _ ->        PValueTag "I"
-    PNumber _ ->     PValueTag "N"
-    PText _ ->       PValueTag "T"
-    ToComplete _ ->  PValueTag "D"
-    PercentI _ ->    PValueTag "PCTI"
-    PercentN _ ->    PValueTag "PCT"
-    PercentSign _ -> PValueTag "PCTX"
-    ToGetI _ ->      PValueTag "PI"
-    ToGetN _ ->      PValueTag "PD"
-    OnTime _ ->      PValueTag "TIME"
-    OnDate _ ->      PValueTag "DATE"
-    PerI _ ->        PValueTag "PERI"
-    PerN _ ->        PValueTag "PERD"
-    MeasuredI _ ->   PValueTag "MESI"
-    MeasuredN _ ->   PValueTag "MESD"
-    MeasuredSign _ -> PValueTag "MESX"
-    RangeI _ ->      PValueTag "RNGI"
-    RangeN _ ->      PValueTag "RNGD"
-    Task _ ->        PValueTag "PROC"
-    LevelsI _ ->     PValueTag "LVLI"
-    LevelsN _ ->     PValueTag "LVLD"
-    LevelsO _ ->     PValueTag "LVLO"
-    LevelsS _ ->     PValueTag "LVLS"
-    LevelsP _ ->     PValueTag "LVLP"
-    LevelsC _ ->     PValueTag "LVLC"
-    LevelsE _ ->     PValueTag "LVLE"
-    RelTime _ _ ->   PValueTag "RELT"
-    Error _ ->       PValueTag "X"
+    AV aval ->
+        AV.valueTagOf aval
+        # AV.encodeAtomicValueTag
+        # _unsafeConvertAVStrTag
+    LS levels ->
+        case levels of
+            LevelsI _ ->     PValueTag "LVLI"
+            LevelsN _ ->     PValueTag "LVLD"
+            LevelsO _ ->     PValueTag "LVLO"
+            LevelsS _ ->     PValueTag "LVLS"
+            LevelsP _ ->     PValueTag "LVLP"
+            LevelsC _ ->     PValueTag "LVLC"
+            LevelsE _ ->     PValueTag "LVLE"
 
 
 orderOf :: PValueTag -> Int
@@ -460,64 +403,40 @@ instance CK.Keyed PValueTag Progress where
 loadNProgress :: Progress -> NProgress
 loadNProgress =
     case _ of
-        None -> NotAchieved
-        Unknown -> NotAchieved
-        PText _ -> StatsValue
-        PNumber _ -> StatsValue
-        PInt _ -> StatsValue
-        MeasuredI _ -> StatsValue
-        MeasuredN _ -> StatsValue
-        MeasuredSign _ -> StatsValue
-        PerI _ -> StatsValue
-        PerN _ -> StatsValue
-        OnDate _ -> StatsValue
-        OnTime _ -> StatsValue
-        RangeI _ -> StatsValue
-        RangeN _ -> StatsValue
-        RelTime _ _ -> StatsValue
-        ToComplete { done } -> if done then Achieved else NotAchieved
-        ToGetI { got, total } -> if got >= total && total /=   0 then Achieved else if got == 0   || total == 0   then NotAchieved else OnTheWay $ Int.toNumber got / Int.toNumber total
-        ToGetN { got, total } -> if got >= total && total /= 0.0 then Achieved else if got == 0.0 || total == 0.0 then NotAchieved else OnTheWay $ got / total
-        PercentI i -> if i >= 100 then Achieved else if i == 0   then NotAchieved else OnTheWay $ Int.toNumber i / 100.0
-        PercentN n -> if n >= 1.0 then Achieved else if n == 0.0 then NotAchieved else OnTheWay n
-        PercentSign { pct, sign } ->
-            if (sign > 0) && (pct >= 1.0) then Achieved
-            else if (sign < 0) || (pct <= 0.0) then NotAchieved
-            else OnTheWay $ if sign >= 0 then pct else 0.0
-        Task task -> if task == TDone then Achieved else if task == TDoing then OnTheWay 0.5 else NotAchieved
-        LevelsN { reached, levels } ->
-            let
-                maximumTotal = foldl max 0.0 $ _.maximum <$> levels
-            in
-                if reached >= maximumTotal then Achieved
-                else if reached == 0.0 then NotAchieved
-                else OnTheWay $ reached / maximumTotal
-        LevelsI { reached, levels } ->
-            let
-                maximumTotal = foldl max 0 $ _.maximum <$> levels
-            in
-                if reached >= maximumTotal then Achieved
-                else if reached == 0 then NotAchieved
-                else OnTheWay $ Int.toNumber reached / Int.toNumber maximumTotal
-        LevelsO { reached, levels } ->
-            Skip -- Some values for levels are Maybe so we don't know for sure if user achieved something
-        LevelsS { reached, levels } -> -- FIXME: reached `0` is both reached first level and reached nothing?
-            if reached + 1 >= Array.length levels then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
-        LevelsE { reached, total } -> -- FIXME: reached `0` is both reached first level and reached nothing?
-            if reached >= total then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber total
-        LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } -> -- FIXME: can be unfair
-            if (levelReached == totalLevels) && (reachedAtCurrent == maximumAtCurrent) then Achieved
-            else if (levelReached == 0) && (totalLevels /= 0) && (reachedAtCurrent == 0) then NotAchieved
-            else OnTheWay $ Int.toNumber levelReached / Int.toNumber totalLevels -- FIXME: we don't add `reachedAtCurrent`
-        LevelsP { levels } ->
-            if Array.all (_ == TDone) $ _.proc <$> levels
-              then Achieved
-              else
-                let reached = foldl (+) 0 $ (\lvl -> if lvl == TDone then 1 else 0) <$> _.proc <$> levels
-                in if reached > 0 && Array.length levels > 0 then
-                      OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
-                   else NotAchieved
-        Error _ -> Skip
+        AV aval -> AV.toNProgress aval
+        LS levels -> case levels of
+            LevelsN { reached, levels } ->
+                let
+                    maximumTotal = foldl max 0.0 $ _.maximum <$> levels
+                in
+                    if reached >= maximumTotal then Achieved
+                    else if reached == 0.0 then NotAchieved
+                    else OnTheWay $ reached / maximumTotal
+            LevelsI { reached, levels } ->
+                let
+                    maximumTotal = foldl max 0 $ _.maximum <$> levels
+                in
+                    if reached >= maximumTotal then Achieved
+                    else if reached == 0 then NotAchieved
+                    else OnTheWay $ Int.toNumber reached / Int.toNumber maximumTotal
+            LevelsO { reached, levels } ->
+                Skip -- Some values for levels are Maybe so we don't know for sure if user achieved something
+            LevelsS { reached, levels } -> -- FIXME: reached `0` is both reached first level and reached nothing?
+                if reached + 1 >= Array.length levels then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
+            LevelsE { reached, total } -> -- FIXME: reached `0` is both reached first level and reached nothing?
+                if reached >= total then Achieved else if reached == 0 then NotAchieved else OnTheWay $ Int.toNumber reached / Int.toNumber total
+            LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } -> -- FIXME: can be unfair
+                if (levelReached == totalLevels) && (reachedAtCurrent == maximumAtCurrent) then Achieved
+                else if (levelReached == 0) && (totalLevels /= 0) && (reachedAtCurrent == 0) then NotAchieved
+                else OnTheWay $ Int.toNumber levelReached / Int.toNumber totalLevels -- FIXME: we don't add `reachedAtCurrent`
+            LevelsP { levels } ->
+                if Array.all (_ == TDone) $ _.proc <$> levels
+                then Achieved
+                else
+                    let reached = foldl (+) 0 $ (\lvl -> if lvl == TDone then 1 else 0) <$> _.proc <$> levels
+                    in if reached > 0 && Array.length levels > 0 then
+                        OnTheWay $ Int.toNumber reached / Int.toNumber (Array.length levels)
+                    else NotAchieved
 
 
 nProgressToNumber :: NProgress -> Number
@@ -530,27 +449,7 @@ nProgressToNumber = case _ of
 
 
 data PTValueTag -- FIXME: use it everywhere above for consistency
-    = PTNone
-    | PTUnknown
-    | PTInt
-    | PTNumber
-    | PTText
-    | PTToComplete
-    | PTPercentI
-    | PTPercentN
-    | PTPercentSign
-    | PTToGetI
-    | PTToGetN
-    | PTOnTime
-    | PTOnDate
-    | PTPerI
-    | PTPerN
-    | PTMeasuredI
-    | PTMeasuredN
-    | PTMeasuredSign
-    | PTRangeI
-    | PTRangeN
-    | PTTask
+    = PTAV AV.AtomicValueTag
     | PTLevelsI
     | PTLevelsO
     | PTLevelsN
@@ -558,35 +457,32 @@ data PTValueTag -- FIXME: use it everywhere above for consistency
     | PTLevelsE
     | PTLevelsP
     | PTLevelsC
-    | PTRelTime
-    | PTError
-
 
 
 _vtagFrom :: PValueTag -> PTValueTag
 _vtagFrom (PValueTag str) = case str of
-    "E" -> PTNone
-    "UNK" -> PTUnknown
-    "I" -> PTInt
-    "N" -> PTNumber
-    "F" -> PTNumber
-    "T" -> PTText
-    "D" -> PTToComplete
-    "PCTI" -> PTPercentI
-    "PCT"  -> PTPercentN
-    "PCTX" -> PTPercentSign
-    "PI" -> PTToGetI
-    "PD" -> PTToGetN
-    "TIME" -> PTOnTime
-    "DATE" -> PTOnDate
-    "PERI" -> PTPerI
-    "PERD" -> PTPerN
-    "MESI" -> PTMeasuredI
-    "MESD" -> PTMeasuredN
-    "MESX" -> PTMeasuredSign
-    "RNGI" -> PTRangeI
-    "RNGD" -> PTRangeN
-    "PROC" -> PTTask
+    -- "E" -> PTNone
+    -- "UNK" -> PTUnknown
+    -- "I" -> PTInt
+    -- "N" -> PTNumber
+    -- "F" -> PTNumber
+    -- "T" -> PTText
+    -- "D" -> PTToComplete
+    -- "PCTI" -> PTPercentI
+    -- "PCT"  -> PTPercentN
+    -- "PCTX" -> PTPercentSign
+    -- "PI" -> PTToGetI
+    -- "PD" -> PTToGetN
+    -- "TIME" -> PTOnTime
+    -- "DATE" -> PTOnDate
+    -- "PERI" -> PTPerI
+    -- "PERD" -> PTPerN
+    -- "MESI" -> PTMeasuredI
+    -- "MESD" -> PTMeasuredN
+    -- "MESX" -> PTMeasuredSign
+    -- "RNGI" -> PTRangeI
+    -- "RNGD" -> PTRangeN
+    -- "PROC" -> PTTask
     "LVLI" -> PTLevelsI
     "LVLD" -> PTLevelsN
     "LVLO" -> PTLevelsO
@@ -594,109 +490,66 @@ _vtagFrom (PValueTag str) = case str of
     "LVLE" -> PTLevelsE
     "LVLP" -> PTLevelsP
     "LVLC" -> PTLevelsC
-    "RELT" -> PTRelTime
-    "X" -> PTError
-    _ -> PTUnknown
+    other ->
+        maybe (PTAV AV.AVTUnknown) PTAV
+        $ AV.decodeAtomicValueTag
+        $ AV.AVStrValueTag other
 
 
 _vtagTo :: PTValueTag -> PValueTag
-_vtagTo = PValueTag <<< case _ of
-    PTNone -> "E"
-    PTUnknown -> "UNK"
-    PTInt -> "I"
-    PTNumber -> "N"
-    PTText -> "T"
-    PTToComplete -> "D"
-    PTPercentI -> "PCTI"
-    PTPercentN -> "PCT"
-    PTPercentSign -> "PCTX"
-    PTToGetI -> "PI"
-    PTToGetN -> "PD"
-    PTOnTime -> "TIME"
-    PTOnDate -> "DATE"
-    PTPerI -> "PERI"
-    PTPerN -> "PERD"
-    PTMeasuredI -> "MESI"
-    PTMeasuredN -> "MESD"
-    PTMeasuredSign -> "MESX"
-    PTRangeI -> "RNGI"
-    PTRangeN -> "RNGD"
-    PTTask -> "PROC"
-    PTLevelsI -> "LVLI"
-    PTLevelsN -> "LVLD"
-    PTLevelsO -> "LVLO"
-    PTLevelsS -> "LVLS"
-    PTLevelsE -> "LVLE"
-    PTLevelsP -> "LVLP"
-    PTLevelsC -> "LVLC"
-    PTRelTime -> "RELT"
-    PTError -> "X"
+_vtagTo = case _ of
+    -- PTNone -> "E"
+    -- PTUnknown -> "UNK"
+    -- PTInt -> "I"
+    -- PTNumber -> "N"
+    -- PTText -> "T"
+    -- PTToComplete -> "D"
+    -- PTPercentI -> "PCTI"
+    -- PTPercentN -> "PCT"
+    -- PTPercentSign -> "PCTX"
+    -- PTToGetI -> "PI"
+    -- PTToGetN -> "PD"
+    -- PTOnTime -> "TIME"
+    -- PTOnDate -> "DATE"
+    -- PTPerI -> "PERI"
+    -- PTPerN -> "PERD"
+    -- PTMeasuredI -> "MESI"
+    -- PTMeasuredN -> "MESD"
+    -- PTMeasuredSign -> "MESX"
+    -- PTRangeI -> "RNGI"
+    -- PTRangeN -> "RNGD"
+    -- PTTask -> "PROC"
+    PTAV avTag ->
+        avTag
+        # AV.encodeAtomicValueTag
+        # _unsafeConvertAVStrTag
+    PTLevelsI -> pvt "LVLI"
+    PTLevelsN -> pvt "LVLD"
+    PTLevelsO -> pvt "LVLO"
+    PTLevelsS -> pvt "LVLS"
+    PTLevelsE -> pvt "LVLE"
+    PTLevelsP -> pvt "LVLP"
+    PTLevelsC -> pvt "LVLC"
+    where pvt = PValueTag
+    -- PTError -> "X"
 
 
 _vtagOf :: Progress -> PTValueTag
 _vtagOf = case _ of
-    None -> PTNone
-    Unknown -> PTUnknown
-    PInt _ -> PTInt
-    PNumber _ -> PTNumber
-    PText _ -> PTText
-    ToComplete _ -> PTToComplete
-    PercentI _ -> PTPercentI
-    PercentN _ -> PTPercentN
-    PercentSign _ -> PTPercentSign
-    ToGetI _ -> PTToGetI
-    ToGetN _ -> PTToGetN
-    OnTime _ -> PTOnTime
-    OnDate _ -> PTOnDate
-    PerI _ -> PTPerI
-    PerN _ -> PTPerN
-    MeasuredI _ -> PTMeasuredI
-    MeasuredN _ -> PTMeasuredN
-    MeasuredSign _ -> PTMeasuredSign
-    RangeI _ -> PTRangeI
-    RangeN _ -> PTRangeN
-    Task _ -> PTTask
-    LevelsI _ -> PTLevelsI
-    LevelsN _ -> PTLevelsN
-    LevelsO _ -> PTLevelsO
-    LevelsS _ -> PTLevelsS
-    LevelsP _ -> PTLevelsP
-    LevelsC _ -> PTLevelsC
-    LevelsE _ -> PTLevelsE
-    RelTime _ _ -> PTRelTime
-    Error _ -> PTError
+    AV aval -> PTAV $ AV.valueTagOf aval
+    LS levels ->
+        case levels of
+            LevelsI _ -> PTLevelsI
+            LevelsN _ -> PTLevelsN
+            LevelsO _ -> PTLevelsO
+            LevelsS _ -> PTLevelsS
+            LevelsP _ -> PTLevelsP
+            LevelsC _ -> PTLevelsC
+            LevelsE _ -> PTLevelsE
 
 
-toAtomic :: Progress -> AV.AtomicValue /\ Array { name :: String, reached :: CT.ReachedOrNot, v :: Maybe AV.AtomicValue }
-toAtomic = case _ of
-    None -> AV.None /\ []
-    Unknown -> AV.Unknown /\ []
-    PText text -> AV.PText text /\ []
-    PNumber pnumber -> AV.PNumber pnumber /\ []
-    PInt pint -> AV.PInt pint /\ []
-    ToComplete tocomplete -> AV.ToComplete tocomplete /\ []
-    ToGetI togeti -> AV.ToGetI togeti /\ []
-    ToGetN togetn -> AV.ToGetN togetn /\ []
-    -- ToGetIX togetix -> ToGetIX togetix /\ []
-    -- ToGetNX togetnx -> ToGetNX togetnx /\ []
-    PercentI percenti -> AV.PercentI percenti /\ []
-    PercentN percentn -> AV.PercentN percentn /\ []
-    PercentSign percentsign -> AV.PercentSign percentsign /\ []
-    MeasuredI measuredi -> AV.MeasuredI measuredi /\ []
-    MeasuredN measuredn -> AV.MeasuredN measuredn /\ []
-    MeasuredSign measuredsign -> AV.MeasuredSign measuredsign /\ []
-    PerI peri -> AV.PerI peri /\ []
-    PerN pern -> AV.PerN pern /\ []
-    OnDate ondate -> AV.OnDate ondate /\ []
-    OnTime ontime -> AV.OnTime ontime /\ []
-    -- OnDateTime ondatetime -> OnDateTime ondatetime /\ []
-    -- TimeRange timerange -> TimeRange timerange /\ []
-    -- DateRange daterange -> DateRange daterange /\ []
-    -- DateTimeRange datetimerange -> DateTimeRange datetimerange /\ []
-    RangeI rangei -> AV.RangeI rangei /\ []
-    RangeN rangen -> AV.RangeN rangen /\ []
-    RelTime rel time -> AV.RelTime rel time /\ []
-    Task taskP -> AV.PTask taskP /\ []
+_levelsToAtomic :: Levels -> AV.AtomicValue /\ Array { name :: String, reached :: CT.ReachedOrNot, v :: Maybe AV.AtomicValue }
+_levelsToAtomic = case _ of
     LevelsI levelsI -> levelsIVal levelsI /\ mapWithIndex (mapLevelI levelsI.reached) levelsI.levels
     LevelsN levelsN -> levelsNVal levelsN /\ mapWithIndex (mapLevelN levelsN.reached) levelsN.levels
     LevelsO levelsO -> levelsOVal levelsO /\ mapWithIndex (mapLevelO levelsO.reached) levelsO.levels
@@ -704,7 +557,6 @@ toAtomic = case _ of
     LevelsE levelsE -> levelsEVal levelsE /\ []
     LevelsC levelsC -> levelsCVal levelsC /\ pure (levelCHelper levelsC)
     LevelsP levelsP -> levelsPVal levelsP /\ mapWithIndex mapLevelP levelsP.levels
-    Error error -> AV.Error error /\ []
     where
 
         levelsIVal { levels, reached } = AV.ToGetI { got : foldl (\g lmax -> if reached >= lmax then g + 1 else g) 0 $ _.maximum <$> levels, total : Array.length levels }
@@ -751,3 +603,9 @@ toAtomic = case _ of
         isTaskPDoing = case _ of
             TDoing -> true
             _ -> false
+
+
+toAtomic :: Progress -> AV.AtomicValue /\ Array { name :: String, reached :: CT.ReachedOrNot, v :: Maybe AV.AtomicValue }
+toAtomic = case _ of
+    AV aval -> aval /\ []
+    LS levels -> _levelsToAtomic levels

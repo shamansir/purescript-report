@@ -27,10 +27,11 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Chain as Chain
 import Report.Convert.Text.Decorators.Tags as CT
 
+import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..))
 import Report.Decorator (Key(..), Decorator(..), encodeKey) as D
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
-import Report.Decorators.Progress (Progress(..), PTValueTag(..), _vtagTo) as P
+import Report.Decorators.Progress (Progress(..), PTValueTag(..), Levels(..), _vtagTo) as P
 import Report.Decorators.Tabular.TabularValue as TV
 
 import Data.YAML.Foreign.Encode (YValue, class ToYAML, toYAML, printYAML, object)
@@ -132,7 +133,7 @@ toSmos inclRule =
         itemLogbook :: ItemRec -> Array YValue
         itemLogbook itemRec =
             case Array.find (\{ tkey } -> tkey == "logbook") itemRec.tabulars of
-                Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LevelsP { levels }))) } ->
+                Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LS (P.LevelsP { levels })))) } ->
                     logbookEntryYV <$> levels
                 _ -> []
 
@@ -151,7 +152,7 @@ toSmos inclRule =
         itemStateHistory :: ItemRec -> Array YValue
         itemStateHistory itemRec =
             let fromTabular = case Array.find (\{ tkey } -> tkey == "state-history") itemRec.tabulars of
-                    Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LevelsP { levels }))) }
+                    Just { value: TV.TVAtomic (TV.TVDecorator (D.SProgress (P.LS (P.LevelsP { levels })))) }
                         | not (Array.null levels) -> stateEntryYV <$> levels
                     _ -> []
             in if not (Array.null fromTabular) then fromTabular
@@ -165,11 +166,13 @@ toSmos inclRule =
                            (\ptag ->
                                findDecorator @D.Decorator itemRec.decorators (D.encodeKey (D.KProgress (P._vtagTo ptag)))
                                    >>= case _ of
-                                       D.SProgress prog -> progressToSmosState prog
-                                       _                -> Nothing
+                                       D.SProgress (P.AV aval) -> atomicToSmosState aval
+                                       _                       -> Nothing
                            )
-                           [ P.PTTask, P.PTToComplete, P.PTToGetI, P.PTToGetN
-                           , P.PTPercentI, P.PTPercentN, P.PTPercentSign
+                           $ map P.PTAV
+                           $
+                           [ AVTPTask, AVTToComplete, AVTToGetI, AVTToGetN
+                           , AVTPercentI, AVTPercentN, AVTPercentSign
                            ]
                        mbTaskP = case mbTask of
                            Just (D.PTask t) -> Just t
@@ -244,15 +247,15 @@ taskToSmosState = case _ of
     TLater    -> "LATER"
 
 
-progressToSmosState :: P.Progress -> Maybe TaskP
-progressToSmosState = case _ of
-    P.Task taskP               -> Just taskP
-    P.ToComplete { done }      -> Just $ if done then TDone else TTodo
-    P.ToGetI { got, total }    -> Just $ if got >= total && total > 0   then TDone else if got > 0   then TDoing else TTodo
-    P.ToGetN { got, total }    -> Just $ if got >= total && total > 0.0 then TDone else if got > 0.0 then TDoing else TTodo
-    P.PercentI n               -> Just $ if n >= 100                    then TDone else if n > 0     then TDoing else TTodo
-    P.PercentN n               -> Just $ if n >= 1.0                    then TDone else if n > 0.0   then TDoing else TTodo
-    P.PercentSign { sign, pct } -> Just $ if sign >= 0 && pct >= 1.0   then TDone else if pct > 0.0 then TDoing else TTodo
+atomicToSmosState :: AtomicValue -> Maybe TaskP
+atomicToSmosState = case _ of
+    PTask taskP              -> Just taskP
+    ToComplete { done }      -> Just $ if done then TDone else TTodo
+    ToGetI { got, total }    -> Just $ if got >= total && total > 0   then TDone else if got > 0   then TDoing else TTodo
+    ToGetN { got, total }    -> Just $ if got >= total && total > 0.0 then TDone else if got > 0.0 then TDoing else TTodo
+    PercentI n               -> Just $ if n >= 100                    then TDone else if n > 0     then TDoing else TTodo
+    PercentN n               -> Just $ if n >= 1.0                    then TDone else if n > 0.0   then TDoing else TTodo
+    PercentSign { sign, pct } -> Just $ if sign >= 0 && pct >= 1.0   then TDone else if pct > 0.0 then TDoing else TTodo
     _                          -> Nothing
 
 

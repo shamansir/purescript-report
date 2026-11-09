@@ -26,10 +26,12 @@ import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
 import Report.Core as CT
 import Report.Decorator (Decorator(..), Key(..))
 import Report.Tabular (Item(..)) as Tab
+import Report.AtomicValue (AtomicValue)
+import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..)) as AV
 import Report.Decorators.Tabular.TabularValue (TabularAtomicValue(..))
 import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..)) as TV
 import Report.Decorators.Progress (Progress(..))
-import Report.Decorators.Progress (PTValueTag(..), _vtagFrom) as P
+import Report.Decorators.Progress (PTValueTag(..), _vtagFrom, Levels(..)) as P
 import Report.Decorators.Task (taskPFromString)
 import Report.Decorators.Rating (Rating(..))
 import Report.Decorators.Priority as Priority
@@ -323,32 +325,56 @@ decoratorFromRep dk raw = case dk of
     fraw = NEA.head raw
 
 
--- | Reconstruct a Progress value from a Rep marker and raw value string.
--- | Returns Nothing for unrecognised markers or malformed values.
+_atomicFromRep :: AV.AtomicValueTag -> NonEmptyArray String -> Maybe AtomicValue
+_atomicFromRep avTag raw = case avTag of
+  AV.AVTNone         -> Just AV.None
+  AV.AVTUnknown      -> Just AV.Unknown
+  AV.AVTPInt         -> AV.PInt    <$> Int.fromString fraw
+  AV.AVTPNumber      -> AV.PNumber <$> Number.fromString fraw
+  AV.AVTPText        -> Just $ AV.PText fraw
+  AV.AVTToComplete   -> Just $ AV.ToComplete { done: (fraw == "DONE") || (fraw == "1") }
+  AV.AVTPercentI     -> AV.PercentI <$> Int.fromString    (stripPercent fraw)
+  AV.AVTPercentN     -> AV.PercentN <$> Number.fromString (stripPercent fraw)
+  AV.AVTPercentSign  -> parsePercentSign fraw
+  AV.AVTToGetI       -> parseToGetI fraw
+  AV.AVTToGetN       -> parseToGetN fraw
+  AV.AVTOnTime       -> AV.OnTime <$> parseTime fraw
+  AV.AVTOnDate       -> AV.OnDate <$> parseDate fraw
+  AV.AVTPerI         -> parsePerI fraw
+  AV.AVTPerN         -> parsePerN fraw
+  AV.AVTMeasuredI    -> parseMeasuredI fraw
+  AV.AVTMeasuredN    -> parseMeasuredN fraw
+  AV.AVTMeasuredSign -> parseMeasuredSign fraw
+  AV.AVTRangeI       -> parseRangeI fraw
+  AV.AVTRangeN       -> parseRangeN fraw
+  AV.AVTPTask        -> Just $ AV.PTask $ taskPFromString fraw
 
-progressFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe Progress
-progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
-  P.PTNone         -> Just None
-  P.PTUnknown      -> Just Unknown
-  P.PTInt          -> PInt    <$> Int.fromString fraw
-  P.PTNumber       -> PNumber <$> Number.fromString fraw
-  P.PTText         -> Just $ PText fraw
-  P.PTToComplete   -> Just $ ToComplete { done: (fraw == "DONE") || (fraw == "1") }
-  P.PTPercentI     -> PercentI <$> Int.fromString    (stripPercent fraw)
-  P.PTPercentN     -> PercentN <$> Number.fromString (stripPercent fraw)
-  P.PTPercentSign  -> parsePercentSign fraw
-  P.PTToGetI       -> parseToGetI fraw
-  P.PTToGetN       -> parseToGetN fraw
-  P.PTOnTime       -> OnTime <$> parseTime fraw
-  P.PTOnDate       -> OnDate <$> parseDate fraw
-  P.PTPerI         -> parsePerI fraw
-  P.PTPerN         -> parsePerN fraw
-  P.PTMeasuredI    -> parseMeasuredI fraw
-  P.PTMeasuredN    -> parseMeasuredN fraw
-  P.PTMeasuredSign -> parseMeasuredSign fraw
-  P.PTRangeI       -> parseRangeI fraw
-  P.PTRangeN       -> parseRangeN fraw
-  P.PTTask         -> Just $ Task $ taskPFromString fraw
+  AV.AVTRelTime      -> parseRelTime fraw
+  AV.AVTError        -> Just $ AV.Error fraw
+
+  AV.AVTToGetIX       -> Nothing -- FIXME
+  AV.AVTToGetNX       -> Nothing -- FIXME
+  AV.AVTToGetMI       -> Nothing -- FIXME
+  AV.AVTToGetMIX      -> Nothing -- FIXME
+  AV.AVTToGetMN       -> Nothing -- FIXME
+  AV.AVTToGetMNX      -> Nothing -- FIXME
+  AV.AVTOnDateTime    -> Nothing -- FIXME
+  AV.AVTTimeRange     -> Nothing -- FIXME
+  AV.AVTDateRange     -> Nothing -- FIXME
+  AV.AVTDateTimeRange -> Nothing -- FIXME
+  AV.AVTRelInt        -> Nothing -- FIXME
+  AV.AVTRelNum        -> Nothing -- FIXME
+  AV.AVTPPath         -> Nothing -- FIXME
+  AV.AVTTags          -> Nothing -- FIXME
+  AV.AVTColor         -> Nothing -- FIXME
+  AV.AVTPRating       -> Nothing -- FIXME
+  AV.AVTPPriority     -> Nothing -- FIXME
+  where
+    fraw = NEA.head raw
+
+
+_levelsFromRep :: P.PTValueTag -> NonEmptyArray String -> Maybe P.Levels
+_levelsFromRep pvTag raw = case pvTag of
   P.PTLevelsI      -> parseLevelsI unit
   P.PTLevelsN      -> parseLevelsN unit
   P.PTLevelsO      -> parseLevelsO unit
@@ -356,11 +382,9 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
   P.PTLevelsP      -> parseLevelsP unit -- { reached: 0.0, levels: [] }
   P.PTLevelsC      -> parseLevelsC unit -- { reached: 0.0, levels: [] }
   P.PTLevelsE      -> parseLevelsE fraw
-  P.PTRelTime      -> parseRelTime fraw
-  P.PTError        -> Just $ Error fraw
+  _                -> Nothing
   where
     fraw = NEA.head raw
-
     -- Peel an optional date token from the front of a level entry string,
     -- parsing it with parseDate. For '<…>' tokens the bracketed content is
     -- extracted; for plain tokens the first space-separated word is tried.
@@ -391,8 +415,7 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
     parseLevelsI _ = do
       reached <- Int.fromString fraw
       let levels = Array.catMaybes $ parseLevelI <$> NEA.tail raw
-      pure $ LevelsI { reached, levels }
-
+      pure $ P.LevelsI { reached, levels }
     parseLevelN str = do
       let (date /\ rest) = peelDate str
       spIdx   <- indexOfSpace rest
@@ -402,7 +425,7 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
     parseLevelsN _ = do
       reached <- Number.fromString fraw
       let levels = Array.catMaybes $ parseLevelN <$> NEA.tail raw
-      pure $ LevelsN { reached, levels }
+      pure $ P.LevelsN { reached, levels }
 
     -- maximum is optional: if the first remaining token parses as Int it is
     -- the maximum, otherwise the whole remaining string is the name.
@@ -420,7 +443,7 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
     parseLevelsO _ = do
       reached <- Int.fromString fraw
       let levels = Array.catMaybes $ parseLevelO <$> NEA.tail raw
-      pure $ LevelsO { reached, levels }
+      pure $ P.LevelsO { reached, levels }
 
     -- After the optional date the rest is the entire `gives` string.
     parseLevelS str =
@@ -429,7 +452,7 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
     parseLevelsS _ = do
       reached <- Int.fromString fraw
       let levels = Array.catMaybes $ parseLevelS <$> NEA.tail raw
-      pure $ LevelsS { reached, levels }
+      pure $ P.LevelsS { reached, levels }
 
     -- After the optional date: first token = task status, rest = name.
     parseLevelP str = do
@@ -440,7 +463,7 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
       pure { date: CT.dateToRec <$> date, proc: taskPFromString taskStr, name, endDate: Nothing }
     parseLevelsP _ =
       let levels = Array.catMaybes $ parseLevelP <$> NEA.tail raw
-      in Just $ LevelsP { levels }
+      in Just $ P.LevelsP { levels }
 
     parseLevelsC _ = case splitWithSpace fraw of
       [ levelReachedStr, totalLevelsStr, reachedAtCurrentStr, maximumAtCurrentStr, dateStr ] -> do
@@ -449,14 +472,25 @@ progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
         reachedAtCurrent <- Int.fromString reachedAtCurrentStr
         maximumAtCurrent <- Int.fromString maximumAtCurrentStr
         date             <- parseDate dateStr
-        pure $ LevelsC { date : Just $ CT.dateToRec date, levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }
+        pure $ P.LevelsC { date : Just $ CT.dateToRec date, levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }
       [ levelReachedStr, totalLevelsStr, reachedAtCurrentStr, maximumAtCurrentStr ] -> do
         levelReached     <- Int.fromString levelReachedStr
         totalLevels      <- Int.fromString totalLevelsStr
         reachedAtCurrent <- Int.fromString reachedAtCurrentStr
         maximumAtCurrent <- Int.fromString maximumAtCurrentStr
-        pure $ LevelsC { date : Nothing, levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }
+        pure $ P.LevelsC { date : Nothing, levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }
       _ -> Nothing
+
+
+
+
+-- | Reconstruct a Progress value from a Rep marker and raw value string.
+-- | Returns Nothing for unrecognised markers or malformed values.
+
+progressFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe Progress
+progressFromRep triMarker raw = RE.ptftm triMarker # case _ of
+  P.PTAV avTag     -> AV <$> _atomicFromRep avTag raw
+  levelsTag        -> LS <$> _levelsFromRep levelsTag raw
 
 
 -- Private parser helpers
@@ -497,21 +531,21 @@ toArr = List.toUnfoldable
 
 -- Progress value parsers
 
-parseToGetI :: String -> Maybe Progress
+parseToGetI :: String -> Maybe AtomicValue
 parseToGetI s = do
   (gotS /\ totS) <- splitPair s
   got   <- Int.fromString gotS
   total <- Int.fromString totS
-  pure $ ToGetI { got, total }
+  pure $ AV.ToGetI { got, total }
 
-parseToGetN :: String -> Maybe Progress
+parseToGetN :: String -> Maybe AtomicValue
 parseToGetN s = do
   (gotS /\ totS) <- splitPair s
   got   <- Number.fromString gotS
   total <- Number.fromString totS
-  pure $ ToGetN { got, total }
+  pure $ AV.ToGetN { got, total }
 
-parsePercentSign :: String -> Maybe Progress
+parsePercentSign :: String -> Maybe AtomicValue
 parsePercentSign s = case splitWithSpace s of
   [signS, pctS] -> do
     sign <- case signS of
@@ -520,38 +554,38 @@ parsePercentSign s = case splitWithSpace s of
       "*" -> Just 0
       _    -> Nothing
     pct <- Number.fromString (stripPercent pctS)
-    pure $ PercentSign { sign, pct }
+    pure $ AV.PercentSign { sign, pct }
   _ -> Nothing
 
-parsePerI :: String -> Maybe Progress
+parsePerI :: String -> Maybe AtomicValue
 parsePerI s = do
   idx    <- indexOfSpace s
   amount <- Int.fromString (String.take idx s)
   let per = String.drop (idx + 1) s
-  pure $ PerI { amount, per }
+  pure $ AV.PerI { amount, per }
 
-parsePerN :: String -> Maybe Progress
+parsePerN :: String -> Maybe AtomicValue
 parsePerN s = do
   idx    <- indexOfSpace s
   amount <- Number.fromString (String.take idx s)
   let per = String.drop (idx + 1) s
-  pure $ PerN { amount, per }
+  pure $ AV.PerN { amount, per }
 
-parseMeasuredI :: String -> Maybe Progress
+parseMeasuredI :: String -> Maybe AtomicValue
 parseMeasuredI s = do
   idx    <- indexOfSpace s
   amount <- Int.fromString (String.take idx s)
   let measure = String.drop (idx + 1) s
-  pure $ MeasuredI { amount, measure }
+  pure $ AV.MeasuredI { amount, measure }
 
-parseMeasuredN :: String -> Maybe Progress
+parseMeasuredN :: String -> Maybe AtomicValue
 parseMeasuredN s = do
   idx    <- indexOfSpace s
   amount <- Number.fromString (String.take idx s)
   let measure = String.drop (idx + 1) s
-  pure $ MeasuredN { amount, measure }
+  pure $ AV.MeasuredN { amount, measure }
 
-parseMeasuredSign :: String -> Maybe Progress
+parseMeasuredSign :: String -> Maybe AtomicValue
 parseMeasuredSign s = do
   spaceIdx1 <- indexOfSpace s
   let signS = String.take spaceIdx1 s
@@ -562,34 +596,34 @@ parseMeasuredSign s = do
     "*" -> Just 0
     _   -> Nothing
   spaceIdx2 <- indexOfSpace rest
-  amount    <- Number.fromString (String.take spaceIdx2 rest)
+  amount    <- Number.fromString $ String.take spaceIdx2 rest
   let measure = String.drop (spaceIdx2 + 1) rest
-  pure $ MeasuredSign { sign, amount, measure }
+  pure $ AV.MeasuredSign { sign, amount, measure }
 
-parseRangeI :: String -> Maybe Progress
+parseRangeI :: String -> Maybe AtomicValue
 parseRangeI s = case splitWithSpace s of
   [fromS, toS] -> do
     from <- Int.fromString fromS
     to   <- Int.fromString toS
-    pure $ RangeI { from, to }
+    pure $ AV.RangeI { from, to }
   _ -> Nothing
 
-parseRangeN :: String -> Maybe Progress
+parseRangeN :: String -> Maybe AtomicValue
 parseRangeN s = case splitWithSpace s of
   [fromS, toS] -> do
     from <- Number.fromString fromS
     to   <- Number.fromString toS
-    pure $ RangeN { from, to }
+    pure $ AV.RangeN { from, to }
   _ -> Nothing
 
-parseLevelsE :: String -> Maybe Progress
+parseLevelsE :: String -> Maybe P.Levels
 parseLevelsE s = do
   (reachedS /\ totalS) <- splitPair s
   reached <- Int.fromString reachedS
   total   <- Int.fromString totalS
-  pure $ LevelsE { reached, total }
+  pure $ P.LevelsE { reached, total }
 
-parseRelTime :: String -> Maybe Progress
+parseRelTime :: String -> Maybe AtomicValue
 parseRelTime s = do
   idx  <- indexOfSpace s
   let relS  = String.take idx s
@@ -600,7 +634,7 @@ parseRelTime s = do
     "<" -> Just CT.RLessThan
     _   -> Nothing
   timeRec <- parseTime timeS
-  pure $ RelTime rel timeRec
+  pure $ AV.RelTime rel timeRec
 
 parseTime :: String -> Maybe CT.STimeRec
 parseTime s = case String.split (String.Pattern ":") s of

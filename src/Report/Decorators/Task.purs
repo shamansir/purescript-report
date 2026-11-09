@@ -12,7 +12,7 @@ import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 
-import Report.Core (NProgress(..)) as RP
+import Report.Core.ProgressRefl (NProgress(..)) as RP
 
 
 data TaskP
