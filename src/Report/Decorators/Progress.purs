@@ -264,11 +264,16 @@ _readLevels (PValueTag atag) frgn =
         "LVLI" -> LevelsI <$> (readImpl frgn :: F LevelsI)
         "LVLD" -> LevelsN <$> (readImpl frgn :: F LevelsN)
         "LVLO" -> LevelsO <$> (readImpl frgn :: F LevelsO)
+        "LVLIO" -> LevelsO <$> convertLevelsIO <$> (readImpl frgn :: F { reached :: Int, levels :: Array { maximum :: Maybe Int, name :: String, date :: Maybe DateRec } }) -- legacy, from Dhall
         "LVLS" -> LevelsS <$> (readImpl frgn :: F LevelsS)
         "LVLP" -> LevelsP <$> (readImpl frgn :: F LevelsP)
         "LVLC" -> LevelsC <$> convertLevelsC <$> (readImpl frgn :: F { reached :: Int, levels :: Int, current :: Int, maxcurrent :: Int, date :: Maybe DateRec })
         other  -> fail $ ForeignError $ "unknown levels tag: " <> other
     where
+        convertLevelsIO { reached, levels } =
+          { reached
+          , levels : (\{ maximum, name, date } -> { mbMaximum : maximum, name, date }) <$> levels
+          }
         convertLevelsC
           { reached, levels, current, maxcurrent, date } =
           { levelReached : reached

@@ -139,6 +139,12 @@ progressTagFromTriMarker (TM marker) = case marker of
     "PCX" -> P.PTAV AV.AVTPercentSign
     "GTI" -> P.PTAV AV.AVTToGetI
     "GTN" -> P.PTAV AV.AVTToGetN
+    "GIX" -> P.PTAV AV.AVTToGetIX
+    "GNX" -> P.PTAV AV.AVTToGetNX
+    "GIM" -> P.PTAV AV.AVTToGetMI
+    "GNM" -> P.PTAV AV.AVTToGetMN
+    "GIF" -> P.PTAV AV.AVTToGetMIX
+    "GNF" -> P.PTAV AV.AVTToGetMNX
     "TIM" -> P.PTAV AV.AVTOnTime
     "DAT" -> P.PTAV AV.AVTOnDate
     "DTM" -> P.PTAV AV.AVTOnDateTime

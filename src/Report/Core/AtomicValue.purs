@@ -392,7 +392,7 @@ _readAtomicValue atag frgn =
         AVTToGetMIX -> (\{ done, doing, min, max } -> ToGetMIX { got : done, min, max, doing }) <$> (readImpl frgn :: F { min :: Int, max :: Int, done :: Int, doing :: Int })
         AVTToGetMNX -> (\{ done, doing, min, max } -> ToGetMNX { got : done, min, max, doing }) <$> (readImpl frgn :: F { min :: Number, max :: Number, done :: Number, doing :: Number })
         AVTOnDateTime -> (\{ date, time } -> OnDateTime (RCT.dateFromRec date) time) <$> (readImpl frgn :: F { date :: DateRec, time :: TimeRec })
-        AVTDateRange -> (\{ from, to } -> DateRange { from : RCT.dateFromRec from, to : RCT.dateFromRec from }) <$> (readImpl frgn :: F { from :: DateRec, to :: DateRec })
+        AVTDateRange -> (\{ from, to } -> DateRange { from : RCT.dateFromRec from, to : RCT.dateFromRec to }) <$> (readImpl frgn :: F { from :: DateRec, to :: DateRec })
         AVTTimeRange -> (\{ from, to } -> TimeRange { from, to }) <$> (readImpl frgn :: F { from :: TimeRec, to :: TimeRec })
         AVTDateTimeRange ->
             (\{ from, to } ->
@@ -527,6 +527,7 @@ decodeAtomicValueTag (AVStrValueTag avstag) = case avstag of
     "UNK" -> Just AVTUnknown
     "I" -> Just AVTPInt
     "N" -> Just AVTPNumber
+    "F" -> Just AVTPNumber -- legacy, `Double` in Dhall
     "T" -> Just AVTPText
     "BOOL" -> Just AVTPBoolean
     "YEAR" -> Just AVTPYear
@@ -542,6 +543,7 @@ decodeAtomicValueTag (AVStrValueTag avstag) = case avstag of
     "DATE" -> Just AVTOnDate
     "PERI" -> Just AVTPerI
     "PERN" -> Just AVTPerN
+    "PERD" -> Just AVTPerN -- legacy
     "MESI" -> Just AVTMeasuredI
     "MESD" -> Just AVTMeasuredN
     "MESN" -> Just AVTMeasuredN
@@ -550,8 +552,10 @@ decodeAtomicValueTag (AVStrValueTag avstag) = case avstag of
     "RNGN" -> Just AVTRangeN
     "RNGD" -> Just AVTRangeN
     "PROC" -> Just AVTPTask
+    "PATH" -> Just AVTPPath
     "RELT" -> Just AVTRelTime
     "RELI" -> Just AVTRelInt
+    "RELN" -> Just AVTRelInt -- legacy, `Natural` in Dhall
     "RELD" -> Just AVTRelNum
     "COL"  -> Just AVTColor
     "X" -> Just AVTError

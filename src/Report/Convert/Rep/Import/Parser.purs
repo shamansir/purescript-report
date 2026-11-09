@@ -16,6 +16,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number as Number
 import Data.String as String
 import Data.String.CodeUnits (toCharArray, fromCharArray) as CU
+import Data.Traversable (traverse)
 import Data.Tuple (uncurry)
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Bifunctor (bimap)
@@ -24,6 +25,9 @@ import StringParser (Parser, ParseError, runParser, fail)
 import StringParser (string, regex, eof, try, many, optionMaybe, tryAhead) as SP
 
 import Report.Core as CT
+import Report.Chain (Chain)
+import Report.Chain (fromArray) as Chain
+import Utils.Data.WColor (fromHex) as WColor
 import Report.Decorator (Decorator(..), Key(..))
 import Report.Tabular (Item(..)) as Tab
 import Report.AtomicValue (AtomicValue)
@@ -351,29 +355,47 @@ _atomicFromRep avTag raw = case avTag of
   AV.AVTRelTime      -> parseRelTime fraw
   AV.AVTError        -> Just $ AV.Error fraw
 
-  AV.AVTToGetIX       -> Nothing -- FIXME
-  AV.AVTToGetNX       -> Nothing -- FIXME
-  AV.AVTToGetMI       -> Nothing -- FIXME
-  AV.AVTToGetMIX      -> Nothing -- FIXME
-  AV.AVTToGetMN       -> Nothing -- FIXME
-  AV.AVTToGetMNX      -> Nothing -- FIXME
-  AV.AVTOnDateTime    -> Nothing -- FIXME
-  AV.AVTTimeRange     -> Nothing -- FIXME
-  AV.AVTDateRange     -> Nothing -- FIXME
-  AV.AVTDateTimeRange -> Nothing -- FIXME
-  AV.AVTRelInt        -> Nothing -- FIXME
-  AV.AVTRelNum        -> Nothing -- FIXME
-  AV.AVTPPath         -> Nothing -- FIXME
-  AV.AVTTags          -> Nothing -- FIXME
-  AV.AVTColor         -> Nothing -- FIXME
-  AV.AVTPRating       -> Nothing -- FIXME
-  AV.AVTPPriority     -> Nothing -- FIXME
+  AV.AVTToGetIX       -> ints   >>= case _ of
+                           [ got, doing, total ] -> Just $ AV.ToGetIX { got, doing, total }
+                           _ -> Nothing
+  AV.AVTToGetNX       -> nums   >>= case _ of
+                           [ got, doing, total ] -> Just $ AV.ToGetNX { got, doing, total }
+                           _ -> Nothing
+  AV.AVTToGetMI       -> ints   >>= case _ of
+                           [ min, got, max ] -> Just $ AV.ToGetMI { min, got, max }
+                           _ -> Nothing
+  AV.AVTToGetMIX      -> ints   >>= case _ of
+                           [ min, got, doing, max ] -> Just $ AV.ToGetMIX { min, got, doing, max }
+                           _ -> Nothing
+  AV.AVTToGetMN       -> nums   >>= case _ of
+                           [ min, got, max ] -> Just $ AV.ToGetMN { min, got, max }
+                           _ -> Nothing
+  AV.AVTToGetMNX      -> nums   >>= case _ of
+                           [ min, got, doing, max ] -> Just $ AV.ToGetMNX { min, got, doing, max }
+                           _ -> Nothing
+  AV.AVTOnDateTime    -> uncurry AV.OnDateTime <$> parseDateTime fraw
+  AV.AVTTimeRange     -> AV.TimeRange <$> toFromToRec <$> parseRange parseTime parseTime fraw
+  AV.AVTDateRange     -> AV.DateRange <$> toFromToRec <$> parseRange parseDate parseDate fraw
+  AV.AVTDateTimeRange -> AV.DateTimeRange <$> toFromToRec <$> bimap toDateTimeRec toDateTimeRec <$> parseRange parseDateTime parseDateTime fraw
+  AV.AVTRelInt        -> parseRel Int.fromString fraw <#> uncurry AV.RelInt
+  AV.AVTRelNum        -> parseRel Number.fromString fraw <#> uncurry AV.RelNum
+  AV.AVTPPath         -> AV.PPath <$> parseChain fraw
+  AV.AVTTags          -> AV.Tags <$> traverse parseChain (String.split (String.Pattern ",") fraw)
+  AV.AVTColor         -> AV.PColor <$> WColor.fromHex fraw
+  AV.AVTPRating       -> AV.PRating <$> parseRating fraw
+  AV.AVTPPriority     -> AV.PPriority <$> Priority.fromString fraw
   AV.AVTPBoolean      -> parseBooleanAtomic fraw
   AV.AVTPYear         -> AV.PYear <$> Int.fromString fraw
   AV.AVTPID           -> AV.PID <$> Int.fromString fraw
   AV.AVTPRawTags      -> Just $ AV.PRawTags $ RawTags $ parseTags fraw
   where
     fraw = NEA.head raw
+    ints = traverse Int.fromString $ splitWithSpace fraw
+    nums = traverse Number.fromString $ splitWithSpace fraw
+    toDateTimeRec :: (CT.SDate /\ CT.STimeRec) -> { date :: CT.SDate, time :: CT.STimeRec }
+    toDateTimeRec (date /\ time) = { date, time }
+    toFromToRec :: forall f t. (f /\ t) -> { from :: f, to :: t }
+    toFromToRec (from /\ to) = { from, to }
 
 
 _levelsFromRep :: P.PTValueTag -> NonEmptyArray String -> Maybe P.Levels
@@ -627,17 +649,23 @@ parseLevelsE s = do
   pure $ P.LevelsE { reached, total }
 
 parseRelTime :: String -> Maybe AtomicValue
-parseRelTime s = do
+parseRelTime = parseRel parseTime >>> map (uncurry AV.RelTime)
+
+parseRel :: forall a. (String -> Maybe a) -> String -> Maybe (CT.Relation /\ a)
+parseRel parseFocus s = do
   idx  <- indexOfSpace s
-  let relS  = String.take idx s
-      timeS = String.drop (idx + 1) s
+  let relS   = String.take idx s
+      focusS = String.drop (idx + 1) s
   rel  <- case relS of
     ">" -> Just CT.RMoreThan
     "=" -> Just CT.REqual
     "<" -> Just CT.RLessThan
     _   -> Nothing
-  timeRec <- parseTime timeS
-  pure $ AV.RelTime rel timeRec
+  focus <- parseFocus focusS
+  pure $ rel /\ focus
+
+parseChain :: String -> Maybe (Chain String)
+parseChain = String.split (String.Pattern "::") >>> Chain.fromArray
 
 parseTime :: String -> Maybe CT.STimeRec
 parseTime s = case String.split (String.Pattern ":") s of
@@ -719,15 +747,21 @@ parseGroupPath s =
 parseTags :: String -> Array RawTag
 parseTags s =
   case String.split (String.Pattern ",") s of
-    [ one ] -> Array.catMaybes $ parseTag <$> splitWithSpace one
+    [ one ] | not (String.contains (String.Pattern " // ") one) -> Array.catMaybes $ parseTag <$> splitWithSpace one
     some -> Array.catMaybes $ parseTag <$> some
 
 
 parseTag :: String -> Maybe RawTag
 parseTag s =
-  case Array.uncons $ String.split (String.Pattern "::") s of
-    Just { head, tail } -> Just $ RawTag { content : NEA.cons' head tail, id : NEA.cons' head tail }
-    Nothing -> Nothing
+  case String.split (String.Pattern " // ") s of
+    [ idS, contentS ] -> do
+      id      <- NEA.fromArray $ String.split (String.Pattern "::") $ String.trim idS
+      content <- NEA.fromArray $ String.split (String.Pattern "::") $ String.trim contentS
+      pure $ RawTag { id, content }
+    _ ->
+      case Array.uncons $ String.split (String.Pattern "::") s of
+        Just { head, tail } -> Just $ RawTag { content : NEA.cons' head tail, id : NEA.cons' head tail }
+        Nothing -> Nothing
 
 
 parseRange :: forall from to. (String -> Maybe from) -> (String -> Maybe to) -> String -> Maybe (from /\ to)

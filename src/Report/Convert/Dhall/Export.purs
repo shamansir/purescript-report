@@ -112,15 +112,15 @@ toDhall inclRule =
                             Just $ OneLine
                                 $ (D.text $ if index == 0 then "[" else ",")
                                 <> D.space <> D.text "{ key = " <> quote tkey
-                                <> D.space <> D.text ", label = " <> quote tlabel
-                                <> D.space <> D.text ", value = " <> oneLineV
+                                <> D.space <> D.text ", label = Some " <> quote tlabel
+                                <> D.space <> D.text ", value = T.tag " <> oneLineV
                                 <> D.space <> D.text "}" <> (if index /= count - 1 then D.break else mempty)
                         MutliLine multiLineV  ->
                             Just $ MutliLine $
                                 [ (D.text $ if index == 0 then "[" else ",")
                                 <> D.space <> D.text "{ key = " <> quote tkey
-                                <> D.space <> D.text ", label = " <> quote tlabel
-                                <> D.space <> D.text ", value = " ]
+                                <> D.space <> D.text ", label = Some " <> quote tlabel
+                                <> D.space <> D.text ", value = T.tag" ]
                                 <> (D.indent <$> multiLineV)
                                 <> [ D.text "}" ]
                 _ -> Nothing
@@ -211,21 +211,7 @@ toDhall inclRule =
 
 
         convertTabularAV :: AtomicValue -> RenderedAs (Doc Unit)
-        convertTabularAV = case _ of
-            AV.PText t -> OneLine $ quote t
-            AV.PNumber n -> OneLine $ D.text $ show n
-            AV.PInt i -> OneLine $ D.text $ show i
-            AV.PID id -> OneLine $ D.text $ show id
-            AV.PYear y -> OneLine $ D.text $ show y
-            AV.PBoolean b -> OneLine $ D.text $ if b then "True" else "False"
-            AV.OnTime timeRec -> OneLine $ timereccf timeRec
-            AV.OnDate sdate -> OneLine $ sdaterec sdate
-            AV.OnDateTime dtRec timeRec -> OneLine $ mempty -- TODO
-            AV.TimeRange tRange -> OneLine $ mempty -- TODO
-            AV.DateTimeRange dtRange -> OneLine $ mempty -- TODO
-            AV.DateRange dRange -> OneLine $ mempty -- TODO
-            AV.PRawTags tags -> OneLine $ convertTags $ unwrap tags
-            aval -> convertDecorator $ TV.toDecorator aval
+        convertTabularAV = _atomicToDhall -- tabular values are tagged `T.Value`s in the schema
 
 
 
@@ -269,11 +255,11 @@ _atomicToDhall :: AtomicValue -> RenderedAs (Doc Unit)
 _atomicToDhall = case _ of
     None ->        _ol $ D.text "T.v_empty"
     Unknown ->     _ol $ D.text "T.v_unk"
-    PInt i ->      _ol $ wrapbrkD $ D.text "T.v_i" <+> (prefixnosp "+" $ show i)
-    PNumber n ->   _ol $ wrapbrkD $ D.text "T.v_n" <+> D.text (show n)
+    PInt i ->      _ol $ wrapbrkD $ D.text "T.v_i" <+> xint i
+    PNumber n ->   _ol $ wrapbrkD $ D.text "T.v_f" <+> D.text (show n)
     PText text ->  _ol $ wrapbrkD $ D.text "T.v_t" <+> quote text
     ToComplete { done } -> _ol $ wrapbrkD $ D.text $ if done then "T.v_done" else "T.v_none"
-    PercentI i ->  _ol $ wrapbrkD $ D.text "T.v_pcti" <+> (prefixnosp "+" $ show i)
+    PercentI i ->  _ol $ wrapbrkD $ D.text "T.v_pcti" <+> xint i
     PercentN n ->  _ol $ wrapbrkD $ D.text "T.v_pct" <+> D.text (show n)
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
@@ -287,12 +273,12 @@ _atomicToDhall = case _ of
             wrapbrkD $ D.text "T.v_vone_"
         else
             wrapbrkD $ D.text "T.v_pi " <> wrecord
-                [ "done" /\ ("+" <> show got)
-                , "total" /\ ("+" <> show total)
+                [ "done"  /\ ints got
+                , "total" /\ ints total
                 ]
     ToGetN { got, total } ->
         _ol $ wrapbrkD $ D.text "T.v_pd " <> wrecord
-            [ "got" /\ show got
+            [ "done" /\ show got
             , "total" /\ show total
             ]
     OnTime timeRec ->
@@ -302,26 +288,26 @@ _atomicToDhall = case _ of
         {-
         let dateRec = CT.dateToRec sdate
         in pure $ "T.v_date " <> wrecord
-            [ "day"  /\ ("+" <> show dateRec.day)
-            , "mon"  /\ ("+" <> show dateRec.mon)
-            , "year" /\ ("+" <> show dateRec.year)
+            [ "day"  /\ ints dateRec.day
+            , "mon"  /\ ints dateRec.mon
+            , "year" /\ ints dateRec.year
             ]
         -}
     PerI { amount, per } ->
-        _ol $ wrapbrkD $ D.text "T.v_per" <+> (prefixnosp "+" $ show amount) <+> quote per
+        _ol $ wrapbrkD $ D.text "T.v_per" <+> xint amount <+> quote per
     PerN { amount, per } ->
-        _ol $ wrapbrkD $ D.text "T.v_per" <+> D.text (show amount) <+> quote per
+        _ol $ wrapbrkD $ D.text "T.v_perd" <+> D.text (show amount) <+> quote per
     MeasuredI { amount, measure } ->
-        _ol $ wrapbrkD $ D.text "T.v_mes" <+> (prefixnosp "+" $ show amount) <+> quote measure
+        _ol $ wrapbrkD $ D.text "T.v_mes" <+> xint amount <+> quote measure
     MeasuredN { amount, measure } ->
         _ol $ wrapbrkD $ D.text "T.v_mesd" <+> D.text (show amount) <+> quote measure
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in _ol $ wrapbrkD $ D.text "T.v_mesx" <+> D.text sign_s <+> (prefixnosp "+" $ show amount) <+> quote measure
+        in _ol $ wrapbrkD $ D.text "T.v_mesx" <+> D.text sign_s <+> D.text (show amount) <+> quote measure
     RangeI { from, to } ->
         _ol $ wrapbrkD $ D.text "T.v_rng " <> wrecord
-            [ "from" /\ ("+" <> show from)
-            , "to" /\ ("+" <> show to)
+            [ "from" /\ ints from
+            , "to" /\ ints to
             ]
     RangeN { from, to } ->
         _ol $ wrapbrkD $ D.text "T.v_rngd " <> wrecord
@@ -329,19 +315,28 @@ _atomicToDhall = case _ of
             , "to" /\ show to
             ]
     PTask taskP ->
-        _ol $ wrapbrkD $ D.text "T.v_proc " <> quoteD (vtaskP taskP)
+        _ol $ vtaskP taskP -- `T.p_*` are already values
     RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> "T.rel_more_than"
-                    CT.REqual -> "T.rel_equal"
-                    CT.RLessThan -> "T.rel_less_than"
-        in _ol $ wrapbrkD $ D.text "T.v_relt" <+> (wrapbrkD $ D.text "T.v_rel_" <> D.text relText <+> D.text "T.TIME" <+> timereccf timeRec)
+        _ol $ wrapbrkD $ D.text "T.v_relt" <+> (wrapbrkD $ relD rel <+> D.text "T.TIME" <+> timereccf timeRec)
         -- T.v_relt (T.rel_more_than T.TIME time)
+    RelInt rel int ->
+        _ol $ wrapbrkD $ D.text "T.v_reli" <+> (wrapbrkD $ relD rel <+> D.text "Integer" <+> xint int)
+    RelNum rel num ->
+        _ol $ wrapbrkD $ D.text "T.v_reld" <+> (wrapbrkD $ relD rel <+> D.text "Double" <+> D.text (show num))
+    PYear year ->
+        _ol $ wrapbrkD $ D.text "T.v_i" <+> (xint year)
+    PID id ->
+        _ol $ wrapbrkD $ D.text "T.v_i" <+> (xint id)
     Error err ->
-        _ol $ D.text "ERR" -- FIXME:
-    _ ->
-        _ol $ D.text "NSUP" -- FIXME:
+        _ol $ D.text "T.v_unk" <+> D.text ("{- error: " <> err <> " -}")
+    aval ->
+        -- not supported by the Dhall schema yet, so stored as text
+        _ol $ wrapbrkD (D.text "T.v_t" <+> quote (AV.toReadableString aval)) <+> D.text "{- unsupported -}"
+    where
+        relD = case _ of
+            CT.RMoreThan -> D.text "T.rel_more_than"
+            CT.REqual    -> D.text "T.rel_exact"
+            CT.RLessThan -> D.text "T.rel_less_than"
 
 
 
@@ -351,13 +346,13 @@ _levelsToDhall = case _ of
         let
             levelrec lrec =
                 wrecordDWithDate lrec.date
-                    [ "maximum" /\ (prefixnosp "+" $ show lrec.maximum)
+                    [ "maximum" /\ xint lrec.maximum
                     , "name" /\ quote lrec.name
                     ]
         in
         _ml $
             [ D.text "(" <+> D.text "T.v_lvli"
-            , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+            , D.indent $ sfield $ "reached" /\ ints reached
             , D.indent $ xfield "levels"
             ]
             <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
@@ -390,7 +385,7 @@ _levelsToDhall = case _ of
         in
         _ml $
             [ D.text "(" <+> D.text "T.v_lvls"
-            , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+            , D.indent $ sfield $ "reached" /\ ints reached
             , D.indent $ xfield "levels"
             ]
             <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
@@ -401,8 +396,8 @@ _levelsToDhall = case _ of
         _ml $
             [ D.text "(" <+> D.text "T.v_lvlio"
             , wrecord
-                [ "reached" /\ ("+" <> show levelsE.reached)
-                , "total" /\ ("+" <> show levelsE.total)
+                [ "reached" /\ ints levelsE.reached
+                , "total" /\ ints levelsE.total
                 ]
             , D.text ")"
             ]
@@ -425,22 +420,22 @@ _levelsToDhall = case _ of
     LevelsC levelsC ->
         _ol $ wrapbrkD $ D.text "T.v_lvlc" <+>
             wrecordDWithDate levelsC.date
-                [ "reached" /\ (prefixnosp "+" $ show levelsC.levelReached)
-                , "current" /\ (prefixnosp "+" $ show levelsC.reachedAtCurrent)
-                , "total" /\ (prefixnosp "+" $ show levelsC.totalLevels)
-                , "maxcurrent" /\ (prefixnosp "+" $ show levelsC.maximumAtCurrent)
+                [ "reached" /\ xint levelsC.levelReached
+                , "current" /\ xint levelsC.reachedAtCurrent
+                , "total" /\ xint levelsC.totalLevels
+                , "maxcurrent" /\ xint levelsC.maximumAtCurrent
                 ]
     LevelsO { reached, levels } ->
         let
             levelrec lrec =
                 wrecordDWithDate lrec.date
-                    [ "maximum" /\ mbgenD (D.text "Integer") (\v -> prefixnosp "+" $ show v) lrec.mbMaximum
+                    [ "maximum" /\ mbgenD (D.text "Integer") xint lrec.mbMaximum
                     , "name" /\ quote lrec.name
                     ]
         in
         _ml $
-            [ D.text "(" <+> D.text "T.v_lvli"
-            , D.indent $ sfield $ "reached" /\ ("+" <> show reached)
+            [ D.text "(" <+> D.text "T.v_lvlio"
+            , D.indent $ sfield $ "reached" /\ ints reached
             , D.indent $ xfield "levels"
             ]
             <> ((D.indent <<< D.indent) <$> arrayD (levelrec <$> levels)) <>
@@ -462,6 +457,7 @@ _progressToDhall = case _ of
     LS levels -> _levelsToDhall levels
 
 
+vtaskP :: forall a. TaskP -> Doc a
 vtaskP = D.text <<< case _ of
     TTodo -> "T.p_todo"
     TDoing -> "T.p_doing"
@@ -470,6 +466,8 @@ vtaskP = D.text <<< case _ of
     TNow -> "T.p_now"
     TCanceled -> "T.p_canceled"
     TLater -> "T.p_later"
+
+pvptaskP :: forall a. TaskP -> Doc a
 pvptaskP task = vtaskP task <> D.text "_"
 
 
@@ -527,6 +525,15 @@ prefixnosp :: forall a. String -> String -> Doc a
 prefixnosp p s = D.text p <> D.text s
 
 
+-- Dhall `Integer` literals always have a sign
+ints :: Int -> String
+ints i = if i >= 0 then "+" <> show i else show i
+
+
+xint :: forall a. Int -> Doc a
+xint = D.text <<< ints
+
+
 field :: forall a. (String /\ String) -> Doc a
 field = Tuple.uncurry $ \n v -> D.text n <+> D.text "=" <+> D.text v
 
@@ -580,18 +587,18 @@ wrecordDWithDate mbDateRec fields =
 daterecf :: forall a. CT.SDateRec -> Doc a
 daterecf dateRec =
     wrecord
-        [ "day"  /\ ("+" <> show dateRec.day)
-        , "mon"  /\ ("+" <> show dateRec.mon)
-        , "year" /\ ("+" <> show dateRec.year)
+        [ "day"  /\ ints dateRec.day
+        , "mon"  /\ ints dateRec.mon
+        , "year" /\ ints dateRec.year
         ]
 
 
 timereccf :: forall a. CT.STimeRec -> Doc a
 timereccf timeRec =
     wrecord
-        [ "hrs" /\ ("+" <> show timeRec.hrs)
-        , "min" /\ ("+" <> show timeRec.min)
-        , "sec" /\ ("+" <> show timeRec.sec)
+        [ "hrs" /\ ints timeRec.hrs
+        , "min" /\ ints timeRec.min
+        , "sec" /\ ints timeRec.sec
         ]
 
 sdaterec :: forall a. CT.SDate -> Doc a

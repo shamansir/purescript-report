@@ -390,7 +390,25 @@ _atomicSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> textTime timeRec
     Error err ->
         mempty
-    _ -> mempty -- FIXME: TODO
+    OnDateTime sdate timeRec ->
+        pure $ textDate (CT.dateToRec sdate) <> D.space <> textTime timeRec
+    TimeRange { from, to } ->
+        pure $ textTime from <> D.text "--" <> textTime to
+    DateRange { from, to } ->
+        pure $ textDate (CT.dateToRec from) <> D.text "--" <> textDate (CT.dateToRec to)
+    DateTimeRange { from, to } ->
+        pure
+            $  textDate (CT.dateToRec from.date) <> D.space <> textTime from.time
+            <> D.text "--"
+            <> textDate (CT.dateToRec to.date) <> D.space <> textTime to.time
+    RelInt rel int -> pure $ D.text (CT.encodeRel rel) <> D.space <> D.text (show int)
+    RelNum rel num -> pure $ D.text (CT.encodeRel rel) <> D.space <> D.text (show num)
+    PRating rating ->
+        pure $ D.text $ Rating.toStars rating
+    PPriority priority ->
+        pure $ D.text "[#" <> D.text (Priority.priorityChar priority) <> D.text "]"
+    aval ->
+        pure $ D.text $ AV.toReadableString aval
 
 
 _levelsSuffixOneLiner :: Levels -> Maybe (Doc Unit)
@@ -430,31 +448,7 @@ levelMark = "-" :: String
 
 
 _atomicRestLines :: AtomicValue -> Array (Doc Unit)
-_atomicRestLines = case _ of
-    None -> []
-    Unknown -> []
-    PInt _ -> []
-    PNumber _ -> []
-    PText _ -> []
-    ToComplete _ -> []
-    PercentI _ -> []
-    PercentN _ -> []
-    PercentSign _ -> []
-    ToGetI _ -> []
-    ToGetN _ -> []
-    OnTime  _ -> []
-    OnDate _ -> []
-    PerI _ -> []
-    PerN _ -> []
-    MeasuredI _ -> []
-    MeasuredN _ -> []
-    MeasuredSign _ -> []
-    RangeI _ -> []
-    RangeN _ -> []
-    PTask _ -> []
-    RelTime _ _ -> []
-    Error _ -> []
-    _ -> [] -- FIXME: TODO
+_atomicRestLines = const [] -- atomic values always fit in one line
 
 
 _levelsRestLines :: Levels -> Array (Doc Unit)

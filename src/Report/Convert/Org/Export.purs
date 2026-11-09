@@ -307,7 +307,49 @@ _atomicProperties = case _ of
         in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
     Error err ->
         mempty
-    _ -> mempty -- FIXME: TODO
+    PBoolean b -> pure $ "BOOLVAL" /\ D.text (if b then "true" else "false")
+    PYear year -> pure $ "YEAR" /\ D.text (show year)
+    PID id -> pure $ "ID" /\ D.text (show id)
+    ToGetIX { got, doing, total } -> pure $
+        "TOGETIX" /\ D.text (show got <> " " <> show doing <> " " <> show total)
+    ToGetNX { got, doing, total } -> pure $
+        "TOGETNX" /\ D.text (show got <> " " <> show doing <> " " <> show total)
+    ToGetMI { min, got, max } -> pure $
+        "TOGETMI" /\ D.text (show min <> " " <> show got <> " " <> show max)
+    ToGetMN { min, got, max } -> pure $
+        "TOGETMN" /\ D.text (show min <> " " <> show got <> " " <> show max)
+    ToGetMIX { min, got, doing, max } -> pure $
+        "TOGETMIX" /\ D.text (show min <> " " <> show got <> " " <> show doing <> " " <> show max)
+    ToGetMNX { min, got, doing, max } -> pure $
+        "TOGETMNX" /\ D.text (show min <> " " <> show got <> " " <> show doing <> " " <> show max)
+    OnDateTime sdate timeRec ->
+        pure $ "ONDATETIME" /\ (orgDate (CT.dateToRec sdate) <> D.space <> orgTime timeRec)
+    TimeRange { from, to } ->
+        pure $ "TIMERANGE" /\ (orgTime from <> D.text "--" <> orgTime to)
+    DateRange { from, to } ->
+        pure $ "DATERANGE" /\ (orgDate (CT.dateToRec from) <> D.text "--" <> orgDate (CT.dateToRec to))
+    DateTimeRange { from, to } ->
+        pure $ "DATETIMERANGE" /\
+            (  orgDate (CT.dateToRec from.date) <> D.space <> orgTime from.time
+            <> D.text "--"
+            <> orgDate (CT.dateToRec to.date) <> D.space <> orgTime to.time
+            )
+    RelInt rel int ->
+        pure $ "RELINT" /\ (D.text (CT.encodeRel rel) <> D.space <> D.text (show int))
+    RelNum rel num ->
+        pure $ "RELNUM" /\ (D.text (CT.encodeRel rel) <> D.space <> D.text (show num))
+    PPath path ->
+        pure $ "PATH" /\ D.text (MbW.toStringSep "::" path)
+    Tags tags ->
+        pure $ "TAGS" /\ D.text (String.joinWith "," $ MbW.toStringSep "::" <$> tags)
+    PRawTags rawTags ->
+        pure $ "TAGS" /\ D.text (AV.toReadableString $ PRawTags rawTags)
+    PColor color ->
+        pure $ "COLOR" /\ D.text (AV.toReadableString $ PColor color)
+    PRating rating ->
+        pure $ "RATING" /\ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating))
+    PPriority priority ->
+        pure $ "PRIORITY" /\ D.text (Priority.priorityChar priority)
 
 
 _levelsProperties :: Levels -> Array ( String /\ Doc Unit )
@@ -386,7 +428,25 @@ _atomicSuffixOneLiner = case _ of
         in pure $ D.text relText <> D.space <> orgTime timeRec
     Error err ->
         mempty
-    _ -> mempty -- FIXME: TODO
+    OnDateTime sdate timeRec ->
+        pure $ orgDate (CT.dateToRec sdate) <> D.space <> orgTime timeRec
+    TimeRange { from, to } ->
+        pure $ orgTime from <> D.text "--" <> orgTime to
+    DateRange { from, to } ->
+        pure $ orgDate (CT.dateToRec from) <> D.text "--" <> orgDate (CT.dateToRec to)
+    DateTimeRange { from, to } ->
+        pure
+            $  orgDate (CT.dateToRec from.date) <> D.space <> orgTime from.time
+            <> D.text "--"
+            <> orgDate (CT.dateToRec to.date) <> D.space <> orgTime to.time
+    RelInt rel int -> pure $ D.text (CT.encodeRel rel) <> D.space <> D.text (show int)
+    RelNum rel num -> pure $ D.text (CT.encodeRel rel) <> D.space <> D.text (show num)
+    PRating rating ->
+        pure $ D.text $ Rating.toStars rating
+    PPriority priority ->
+        mempty -- goes as prefix
+    aval ->
+        pure $ D.text $ AV.toReadableString aval
 
 
 _levelsSuffixOneLiner :: Levels -> Maybe (Doc Unit)

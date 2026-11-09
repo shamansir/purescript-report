@@ -16,7 +16,7 @@ import Data.String as String
 
 import Report (Report)
 import Report.Class (tagContent) as CT
-import Report.Core (SDateRec, STimeRec, dateToRec, dateFromRec, toLeadingZero, Relation(..)) as CT
+import Report.Core (SDateRec, STimeRec, dateToRec, dateFromRec, toLeadingZero, Relation(..), encodeRel) as CT
 import Report.Group (Group)
 import Report.GroupPath (GroupPath)
 import Report.GroupPath as GroupPath
@@ -30,7 +30,8 @@ import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..))
 import Report.Decorator (Key(..), Decorator(..), keyOf) as D
 import Report.Decorators.Progress (Progress(..), Levels(..))
 --import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Tags (RawTag)
+import Report.Decorators.Tags (RawTag(..), RawTags(..))
+import Utils.Data.WColor (toHex) as WColor
 import Report.Decorators.Progress (Progress(..), PTValueTag(..)) as P
 --import Report.Tabular (Tabular)
 import Report.Tabular (findV, items, Item(..)) as Tabular
@@ -354,9 +355,54 @@ _atomicDocLines = case _ of
                     CT.REqual -> "="
                     CT.RLessThan -> "<"
         in tmfp (P.PTAV AVTRelTime) /\ pure (D.text relText <> D.space <> orgTime timeRec)
+    RelInt rel int ->
+        tmfp (P.PTAV AVTRelInt) /\ pure (D.text (CT.encodeRel rel) <> D.space <> D.text (show int))
+    RelNum rel num ->
+        tmfp (P.PTAV AVTRelNum) /\ pure (D.text (CT.encodeRel rel) <> D.space <> D.text (show num))
+    PBoolean bool ->
+        tmfp (P.PTAV AVTPBoolean) /\ pure (D.text $ if bool then "true" else "false")
+    PYear year ->
+        tmfp (P.PTAV AVTPYear) /\ pure (D.text $ show year)
+    PID id ->
+        tmfp (P.PTAV AVTPID) /\ pure (D.text $ show id)
+    ToGetIX { got, doing, total } ->
+        tmfp (P.PTAV AVTToGetIX) /\ pure (D.text $ show got <> " " <> show doing <> " " <> show total)
+    ToGetNX { got, doing, total } ->
+        tmfp (P.PTAV AVTToGetNX) /\ pure (D.text $ show got <> " " <> show doing <> " " <> show total)
+    ToGetMI { min, got, max } ->
+        tmfp (P.PTAV AVTToGetMI) /\ pure (D.text $ show min <> " " <> show got <> " " <> show max)
+    ToGetMN { min, got, max } ->
+        tmfp (P.PTAV AVTToGetMN) /\ pure (D.text $ show min <> " " <> show got <> " " <> show max)
+    ToGetMIX { min, got, doing, max } ->
+        tmfp (P.PTAV AVTToGetMIX) /\ pure (D.text $ show min <> " " <> show got <> " " <> show doing <> " " <> show max)
+    ToGetMNX { min, got, doing, max } ->
+        tmfp (P.PTAV AVTToGetMNX) /\ pure (D.text $ show min <> " " <> show got <> " " <> show doing <> " " <> show max)
+    OnDateTime sdate timeRec ->
+        tmfp (P.PTAV AVTOnDateTime) /\ pure (orgDateTime sdate timeRec)
+    TimeRange { from, to } ->
+        tmfp (P.PTAV AVTTimeRange) /\ pure (orgTime from <> D.text "--" <> orgTime to)
+    DateRange { from, to } ->
+        tmfp (P.PTAV AVTDateRange) /\ pure ((orgDate $ CT.dateToRec from) <> D.text "--" <> (orgDate $ CT.dateToRec to))
+    DateTimeRange { from, to } ->
+        tmfp (P.PTAV AVTDateTimeRange) /\ pure (orgDateTime from.date from.time <> D.text "--" <> orgDateTime to.date to.time)
+    PPath path ->
+        tmfp (P.PTAV AVTPPath) /\ pure (D.text $ MbW.toStringSep "::" path)
+    Tags tags ->
+        tmfp (P.PTAV AVTTags) /\ pure (D.text $ String.joinWith "," $ MbW.toStringSep "::" <$> tags)
+    PRawTags (RawTags rawTags) ->
+        tmfp (P.PTAV AVTPRawTags) /\ pure (D.text $ String.joinWith "," $ rawTagStr <$> rawTags)
+    PColor color ->
+        tmfp (P.PTAV AVTColor) /\ pure (D.text $ WColor.toHex color)
+    PRating rating ->
+        tmfp (P.PTAV AVTPRating) /\ pure (D.text $ show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating))
+    PPriority priority ->
+        tmfp (P.PTAV AVTPPriority) /\ pure (D.text $ Priority.priorityChar priority)
     Error err ->
-        tmfp (P.PTAV AVTError) /\ pure (D.text err) -- TODO
-    _ -> tmfp (P.PTAV AVTError) /\ pure (D.text "TODO") -- FIXME: TODO
+        tmfp (P.PTAV AVTError) /\ pure (D.text err)
+    where
+        orgDateTime sdate timeRec = (orgDate $ CT.dateToRec sdate) <> D.text "@" <> orgTime timeRec
+        rawTagStr (RawTag { id, content }) =
+            String.joinWith "::" (NEA.toArray id) <> " // " <> String.joinWith "::" (NEA.toArray content)
 
 
 _levelsDocLines :: Levels -> TriMarker /\ NonEmptyArray (Doc Unit)
