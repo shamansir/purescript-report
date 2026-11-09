@@ -40,7 +40,8 @@ import Report.Core.Logic (EncodedValue(..), view, edit, isEditing, loadViewOrEdi
 import Report.Decorator (get, put, debugNavLabel, prefixes, suffixes) as Decorator
 import Report.Decorator (size, keys, collectProgress, hasProgress) as Decorators
 import Report.Decorators.Class.ValueModify as VModify
-import Report.Decorators.Stats (GotTotal(..), gotTotalFromStats, weightOf, Stats(..)) as R
+import Report.Core.ProgressRefl (GotTotal(..)) as R
+import Report.Decorators.Stats (gotTotalFromStats, weightOf, Stats(..)) as R
 import Report.Decorators.Stats.Collect as Collect
 import Report.Decorators.Tags (TagAction(..), RawTag, RawTagKind)
 import Report.GroupPath (GroupPath)

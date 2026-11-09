@@ -31,6 +31,7 @@ import Report.GroupPath (pathFromArray) as GP
 import Report.Decorator (fromArray) as Decorators
 import Report.Decorator (Key(..), keyOf) as Dec
 import Report.Decorator (Decorator(..)) as Dec
+import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Progress (Progress(..), DateRec)
 import Report.Decorators.Progress (fromJson, rawToProgressJson) as Progress
 import Report.Decorators.Tags (Tags(..), RawTag)
@@ -201,7 +202,7 @@ fromDhall jsonStr =
                     , value :
                         Progress.rawToProgressJson value
                             # Progress.fromJson
-                            # fromMaybe Unknown
+                            # fromMaybe (AV AV.Unknown)
                             -- # maybe (TV.TVString "---") (TV.TVSuffix <<< S.SProgress)
                     }
 

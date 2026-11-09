@@ -32,7 +32,8 @@ import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags as CT
 
 import Report.Decorator (Key(..), Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..), PValueTag(..))
+import Report.AtomicValue (AtomicValue(..))
+import Report.Decorators.Progress (Progress(..), PValueTag(..), Levels(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag)
 import Report.Decorators.Progress (Progress(..)) as P
@@ -69,7 +70,7 @@ toOrg inclRule =
     where
         mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
             TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+            TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
             _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
@@ -197,8 +198,8 @@ toOrg inclRule =
                         Just $ D.text $ Task.taskPToString task
                     D.SProgress p ->
                         case p of
-                            ToComplete { done } -> pure $ D.text $ if done then "[X]" else "[ ]"
-                            Task taskP -> pure $ D.text $ Task.taskPToString taskP
+                            AV (ToComplete { done }) -> pure $ D.text $ if done then "[X]" else "[ ]"
+                            AV (PTask taskP) -> pure $ D.text $ Task.taskPToString taskP
                             _ -> mempty
                     _ ->
                         mempty
@@ -258,8 +259,8 @@ orgTime timeRec
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
 
 
-_progressProperties :: Progress -> Array ( String /\ Doc Unit )
-_progressProperties = case _ of
+_atomicProperties :: AtomicValue -> Array ( String /\ Doc Unit )
+_atomicProperties = case _ of
     None -> mempty
     Unknown -> mempty
     PInt i -> pure $ "INTVAL" /\ D.text (show i)
@@ -294,8 +295,22 @@ _progressProperties = case _ of
         pure $ "RANGEI" /\ D.text (show from <> " " <> show to)
     RangeN { from, to } ->
         pure $ "RANGEN" /\ D.text (show from <> " " <> show to)
-    Task taskP ->
+    PTask taskP ->
         pure $ "TASK" /\ D.text (Task.taskPToString taskP)
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    CT.RMoreThan -> "more_than"
+                    CT.REqual -> "equal"
+                    CT.RLessThan -> "less_than"
+        in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
+    Error err ->
+        mempty
+    _ -> mempty -- FIXME: TODO
+
+
+_levelsProperties :: Levels -> Array ( String /\ Doc Unit )
+_levelsProperties = case _ of
     LevelsI { reached, levels } ->
         mempty -- TODO
     LevelsN { reached, levels } ->
@@ -314,20 +329,17 @@ _progressProperties = case _ of
         ]
     LevelsO { reached, levels } ->
         mempty -- TODO
-    RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> "more_than"
-                    CT.REqual -> "equal"
-                    CT.RLessThan -> "less_than"
-        in pure $ "RELTIME" /\ (D.text relText <> D.space <> orgTime timeRec)
-    Error err ->
-        mempty
+
+
+_progressProperties :: Progress -> Array ( String /\ Doc Unit )
+_progressProperties = case _ of
+    AV aval -> _atomicProperties aval
+    LS levels -> _levelsProperties levels
 
 
 
-_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
-_progressSuffixOneLiner = case _ of
+_atomicSuffixOneLiner :: AtomicValue -> Maybe (Doc Unit)
+_atomicSuffixOneLiner = case _ of
     None -> mempty
     Unknown -> mempty
     PInt i -> pure $ D.text $ show i
@@ -362,8 +374,22 @@ _progressSuffixOneLiner = case _ of
         pure $ D.text (show from <> "--" <> show to)
     RangeN { from, to } ->
         pure $ D.text (show from <> "--" <> show to)
-    Task taskP ->
+    PTask taskP ->
         mempty -- FIXME: goes as prefix
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    CT.RMoreThan -> ">"
+                    CT.REqual -> "="
+                    CT.RLessThan -> "<"
+        in pure $ D.text relText <> D.space <> orgTime timeRec
+    Error err ->
+        mempty
+    _ -> mempty -- FIXME: TODO
+
+
+_levelsSuffixOneLiner :: Levels -> Maybe (Doc Unit)
+_levelsSuffixOneLiner = case _ of
     LevelsI { reached, levels } ->
         mempty -- TODO
     LevelsN { reached, levels } ->
@@ -378,12 +404,9 @@ _progressSuffixOneLiner = case _ of
         mempty -- TODO
     LevelsO { reached, levels } ->
         mempty -- TODO
-    RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> ">"
-                    CT.REqual -> "="
-                    CT.RLessThan -> "<"
-        in pure $ D.text relText <> D.space <> orgTime timeRec
-    Error err ->
-        mempty
+
+
+_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
+_progressSuffixOneLiner = case _ of
+    AV aval -> _atomicSuffixOneLiner aval
+    LS levels -> _levelsSuffixOneLiner levels

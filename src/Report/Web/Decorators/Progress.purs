@@ -17,7 +17,8 @@ import Web.UIEvent.KeyboardEvent as KE
 import Report.Core as CT
 import Report.Core.Logic as CT
 import Report.Decorators.Task (TaskP(..)) as S
-import Report.Decorators.Progress (Progress(..)) as Prog
+import Report.AtomicValue (AtomicValue(..), toReadableString) as AV
+import Report.Decorators.Progress (Progress(..), Levels(..)) as Prog
 import Report.Web.Decorators.EditInput as EI
 import Report.Convert.Keyed
 
@@ -35,7 +36,7 @@ import Report.Web.Decorators.Task (qtaskCheckbox, taskTextColor, taskVState)
 
 renderProgress :: forall w i. ProgressRenderConfig i -> CT.ViewOrEdit { itemName :: String } -> CT.ViewOrEdit Prog.Progress -> ProgressVState /\ InlineOrBlock w i
 renderProgress events voeItemName voeProgress = case progress of
-    Prog.None ->
+    Prog.AV (AV.None) ->
         Tuple Incomplete $
         Inline $ qprogress $ qcolorSpan incompleteColor "<None>"
         {-
@@ -47,7 +48,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcolorSpan incompleteColor "<None>"
             ]
         -}
-    Prog.Unknown ->
+    Prog.AV (AV.Unknown) ->
         Tuple Incomplete $
         Inline $ qprogress $ qcolorSpan incompleteColor "???"
         {-
@@ -59,7 +60,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcolorSpan incompleteColor "???"
             ]
         -}
-    Prog.Error errorStr ->
+    Prog.AV (AV.Error errorStr) ->
         Tuple Error $
         Inline $ qprogress $ qcolorSpan errorColor errorStr
         {-
@@ -71,7 +72,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcolorSpan errorColor errorStr
             ]
         -}
-    Prog.PText text ->
+    Prog.AV (AV.PText text) ->
         Tuple Neutral $
         Inline $ qprogress $ qcolorSpan textColor text
         {-
@@ -83,7 +84,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcolorSpan textColor text
             ]
         -}
-    Prog.PNumber num ->
+    Prog.AV (AV.PNumber num) ->
         Tuple Neutral $
         Inline $ qprogress $ qcolorSpan numColor $ formatNum num
         {-
@@ -95,7 +96,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcolorSpan numColor $ formatNum num
             ]
         -}
-    Prog.PInt num ->
+    Prog.AV (AV.PInt num) ->
         Tuple Neutral $
         Inline $ qprogress $ qcolorSpan numColor $ formatInt num
         {-
@@ -107,7 +108,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcolorSpan numColor $ formatInt num
             ]
         -}
-    Prog.OnDate (CT.SDate { day, month, year }) ->
+    Prog.AV (AV.OnDate (CT.SDate { day, month, year })) ->
         Tuple Neutral $ -- TODO: check if date is current?
         Inline $ qprogress $ HH.span_
             [ qcolorSpan timeColor $ CT.toLeadingZero day
@@ -131,7 +132,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.OnTime { hrs, min, sec } ->
+    Prog.AV (AV.OnTime { hrs, min, sec }) ->
         Tuple Neutral $ -- TODO: check if date is current?
         Inline $ qprogress $ HH.span_
             [ qcolorSpan timeColor $ CT.toLeadingZero hrs
@@ -155,7 +156,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.ToComplete { done } ->
+    Prog.AV (AV.ToComplete { done }) ->
         Tuple (vsFrom done) $
         Inline $ qprogress $ qcompleteCheckbox done
         {-
@@ -167,7 +168,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qcompleteCheckbox done
             ]
         -}
-    Prog.PercentI pctInt ->
+    Prog.AV (AV.PercentI pctInt) ->
         let
             isDone = pctInt >= 100
         in
@@ -188,7 +189,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.PercentN pctN ->
+    Prog.AV (AV.PercentN pctN) ->
         let
             isDone = pctN >= 1.0
         in
@@ -209,7 +210,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.PercentSign { pct, sign } ->
+    Prog.AV (AV.PercentSign { pct, sign }) ->
         let
             isDone = pct >= 1.0
             signStr = if sign >= 0 then "+" else "-"
@@ -231,7 +232,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.ToGetI { got, total } ->
+    Prog.AV (AV.ToGetI { got, total }) ->
         let
             isDone = (total > 0) && (got >= total)
         in
@@ -252,7 +253,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.ToGetN { got, total } ->
+    Prog.AV (AV.ToGetN { got, total }) ->
         let
             isDone = (total > 0.0) && (got >= total)
         in
@@ -273,7 +274,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.MeasuredI { amount, measure } ->
+    Prog.AV (AV.MeasuredI { amount, measure }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan numColor $ formatInt amount
@@ -293,7 +294,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.MeasuredN { amount, measure } ->
+    Prog.AV (AV.MeasuredN { amount, measure }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan numColor $ formatNum amount
@@ -313,7 +314,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.MeasuredSign { amount, measure, sign } ->
+    Prog.AV (AV.MeasuredSign { amount, measure, sign }) ->
         let
             signStr = if sign >= 0 then "+" else "-"
         in
@@ -336,7 +337,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.PerI { amount, per } ->
+    Prog.AV (AV.PerI { amount, per }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan numColor $ formatInt amount
@@ -356,7 +357,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.PerN { amount, per } ->
+    Prog.AV (AV.PerN { amount, per }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan numColor $ formatNum amount
@@ -376,7 +377,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.RangeI { from, to } ->
+    Prog.AV (AV.RangeI { from, to }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan numColor $ formatInt from
@@ -396,7 +397,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.RangeN { from, to } ->
+    Prog.AV (AV.RangeN { from, to }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan numColor $ formatNum from
@@ -416,7 +417,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
-    Prog.Task task ->
+    Prog.AV (AV.PTask task) ->
         Tuple (taskVState task) $
         Inline $ qprogress $ qtaskCheckbox task
         {-
@@ -428,7 +429,7 @@ renderProgress events voeItemName voeProgress = case progress of
             , qprogress $ qtaskCheckbox task
             ]
         -}
-    Prog.LevelsI { reached, levels } ->
+    Prog.LS (Prog.LevelsI { reached, levels }) ->
         let
             maximum = foldl max 0 $ _.maximum <$> levels
             isDone = reached >= maximum
@@ -455,7 +456,7 @@ renderProgress events voeItemName voeProgress = case progress of
             )
             $ renderLevelI reached <$> levels
         -}
-    Prog.LevelsN { reached, levels } ->
+    Prog.LS (Prog.LevelsN { reached, levels }) ->
         let
             maximum = foldl max 0.0 $ _.maximum <$> levels
             isDone = reached >= maximum
@@ -482,7 +483,7 @@ renderProgress events voeItemName voeProgress = case progress of
             )
             $ renderLevelN reached <$> levels
         -}
-    Prog.LevelsS { reached, levels } ->
+    Prog.LS (Prog.LevelsS { reached, levels }) ->
         let
             maximum = Array.length levels
             isDone = reached >= maximum
@@ -509,7 +510,7 @@ renderProgress events voeItemName voeProgress = case progress of
             )
             $ mapWithIndex (renderLevelS reached) levels
         -}
-    Prog.LevelsE { reached, total } ->
+    Prog.LS (Prog.LevelsE { reached, total }) ->
         let
             isDone = reached >= total
         in Tuple (vsFrom isDone) $
@@ -530,7 +531,7 @@ renderProgress events voeItemName voeProgress = case progress of
                     ]
                 ]
         -}
-    Prog.LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent } ->
+    Prog.LS (Prog.LevelsC { levelReached, totalLevels, reachedAtCurrent, maximumAtCurrent }) ->
         let
             isDone = levelReached >= totalLevels
         in Tuple (vsFrom isDone) $
@@ -558,7 +559,7 @@ renderProgress events voeItemName voeProgress = case progress of
                     ]
                 ]
         -}
-    Prog.LevelsP { levels } ->
+    Prog.LS (Prog.LevelsP { levels }) ->
         let
             maximum = Array.length levels
             reached = Array.length $ Array.filter (_ == S.TDone) $ _.proc <$> levels
@@ -586,7 +587,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 )
             $ mapWithIndex renderLevelP levels
         -}
-    Prog.LevelsO { reached, levels } ->
+    Prog.LS (Prog.LevelsO { reached, levels }) ->
         -- TODO: we only know if we are done is when all maximum values are Just
 
         {- let
@@ -605,7 +606,7 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
                 : -} renderLevelO reached <$> levels
 
-    Prog.RelTime rel { hrs, min, sec } ->
+    Prog.AV (AV.RelTime rel { hrs, min, sec }) ->
         Tuple Neutral $
         Inline $ qprogress $ HH.span_
             [ qcolorSpan measureColor $ relMarker rel
@@ -633,6 +634,9 @@ renderProgress events voeItemName voeProgress = case progress of
                 ]
             ]
         -}
+    Prog.AV aval -> -- FIXME: TODO
+        Tuple Incomplete $
+        Inline $ qprogress $ qcolorSpan incompleteColor $ AV.toReadableString aval
     where
         progress = CT.loadViewOrEdit voeProgress
         qprogress htmlWhenViewing =

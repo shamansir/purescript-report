@@ -712,8 +712,8 @@ normalizeProgress = case _ of
 toNProgress :: AtomicValue -> RP.NProgress -- use `normalizedProgress`?
 toNProgress =
     case _ of
-        None -> RP.Skip
-        Unknown -> RP.Skip
+        None -> RP.NotAchieved
+        Unknown -> RP.NotAchieved
         PText _ -> RP.StatsValue
         PNumber _ -> RP.StatsValue
         PInt _ -> RP.StatsValue
@@ -739,7 +739,7 @@ toNProgress =
         -- TaskRef _ -> RP.StatsValue
         PRating _ -> RP.StatsValue
         PPriority _ -> RP.StatsValue
-        Error _ -> RP.StatsValue
+        Error _ -> RP.Skip
         ToComplete { done } -> if done then RP.Achieved else RP.NotAchieved
         ToGetI { got, total }  -> if got >= total && total /=   0 then RP.Achieved else if got == 0   || total == 0   then RP.NotAchieved else RP.OnTheWay $ Int.toNumber got / Int.toNumber total
         ToGetN { got, total }  -> if got >= total && total /= 0.0 then RP.Achieved else if got == 0.0 || total == 0.0 then RP.NotAchieved else RP.OnTheWay $ got / total

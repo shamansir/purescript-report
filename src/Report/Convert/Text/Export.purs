@@ -36,7 +36,8 @@ import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 
 import Report.Decorator (Key(..), Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..), PValueTag(..))
+import Report.AtomicValue (AtomicValue(..))
+import Report.Decorators.Progress (Progress(..), PValueTag(..), Levels(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (Tags, RawTag, RawTags(..))
 import Report.Decorators.Progress (Progress(..)) as P
@@ -102,7 +103,7 @@ toTextWith cfg inclRule =
     where
         -- mbTrackedAt tabular = Array.find (_.tkey >>> (_ == "trackedAt")) tabular <#> _.value >>= case _ of
         --     TV.TVAtomic (TV.TVDate sdate) -> Just $ CT.dateToRec sdate
-        --     TV.TVAtomic (TV.TVDecorator (D.SProgress (P.OnDate sdate))) -> Just $ CT.dateToRec sdate
+        --     TV.TVAtomic (TV.TVDecorator (D.SProgress (P.AV (OnDate sdate)))) -> Just $ CT.dateToRec sdate
         --     _ -> Nothing
         -- mbPlaytime tabular = Tabular.findV "playtime" tabular >>= case _ of
         --     TV.TVTime timeRec -> Just timeRec
@@ -204,8 +205,8 @@ toTextWith cfg inclRule =
                         Just $ D.text $ Task.taskPToString task
                     D.SProgress p ->
                         case p of
-                            ToComplete { done } -> pure $ D.text $ if done then "[X]" else "[ ]"
-                            Task taskP -> pure $ D.text $ Task.taskPToString taskP
+                            AV (ToComplete { done }) -> pure $ D.text $ if done then "[X]" else "[ ]"
+                            AV (PTask taskP) -> pure $ D.text $ Task.taskPToString taskP
                             _ -> mempty
                     _ ->
                         mempty
@@ -338,8 +339,8 @@ _tabularAtomicValueDoc = case _ of
             tags tagArr
 
 
-_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
-_progressSuffixOneLiner = case _ of
+_atomicSuffixOneLiner :: AtomicValue -> Maybe (Doc Unit)
+_atomicSuffixOneLiner = case _ of
     None -> mempty
     Unknown -> mempty
     PInt i -> pure $ D.text $ show i
@@ -374,8 +375,22 @@ _progressSuffixOneLiner = case _ of
         pure $ D.text (show from <> "--" <> show to)
     RangeN { from, to } ->
         pure $ D.text (show from <> "--" <> show to)
-    Task taskP ->
+    PTask taskP ->
         mempty -- FIXME: goes as prefix
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    CT.RMoreThan -> ">"
+                    CT.REqual -> "="
+                    CT.RLessThan -> "<"
+        in pure $ D.text relText <> D.space <> textTime timeRec
+    Error err ->
+        mempty
+    _ -> mempty -- FIXME: TODO
+
+
+_levelsSuffixOneLiner :: Levels -> Maybe (Doc Unit)
+_levelsSuffixOneLiner = case _ of
     LevelsI { reached, levels } ->
         mempty -- TODO
     LevelsN { reached, levels } ->
@@ -397,15 +412,12 @@ _progressSuffixOneLiner = case _ of
                 Nothing -> mempty
     LevelsO { reached, levels } ->
         mempty -- TODO
-    RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> ">"
-                    CT.REqual -> "="
-                    CT.RLessThan -> "<"
-        in pure $ D.text relText <> D.space <> textTime timeRec
-    Error err ->
-        mempty
+
+
+_progressSuffixOneLiner :: Progress -> Maybe (Doc Unit)
+_progressSuffixOneLiner = case _ of
+    AV aval -> _atomicSuffixOneLiner aval
+    LS levels -> _levelsSuffixOneLiner levels
 
 
 levelDone = "◉" :: String -- • * ⦿ ◉ ●
@@ -413,8 +425,8 @@ levelTodo = "◌" :: String -- ◦ ◌
 levelMark = "-" :: String
 
 
-_progressRestLines :: Progress -> Array (Doc Unit)
-_progressRestLines = case _ of
+_atomicRestLines :: AtomicValue -> Array (Doc Unit)
+_atomicRestLines = case _ of
     None -> []
     Unknown -> []
     PInt _ -> []
@@ -435,7 +447,14 @@ _progressRestLines = case _ of
     MeasuredSign _ -> []
     RangeI _ -> []
     RangeN _ -> []
-    Task _ -> []
+    PTask _ -> []
+    RelTime _ _ -> []
+    Error _ -> []
+    _ -> [] -- FIXME: TODO
+
+
+_levelsRestLines :: Levels -> Array (Doc Unit)
+_levelsRestLines = case _ of
     LevelsI { reached, levels } ->
         let
             renderLevelI { date, maximum, name } =
@@ -501,8 +520,12 @@ _progressRestLines = case _ of
                     Just theDate -> D.space <> textDate theDate
                     Nothing -> mempty
         in renderLevelO <$> levels
-    RelTime _ _ -> []
-    Error _ -> []
+
+
+_progressRestLines :: Progress -> Array (Doc Unit)
+_progressRestLines = case _ of
+    AV aval -> _atomicRestLines aval
+    LS levels -> _levelsRestLines levels
 
 
 renderStats :: Stats -> Maybe (Doc Unit)

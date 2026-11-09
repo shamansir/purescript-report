@@ -28,7 +28,7 @@ import Report.Convert.Keyed (encodeKey)
 
 import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..))
 import Report.Decorator (Key(..), Decorator(..), keyOf) as D
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), Levels(..))
 --import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Tags (RawTag)
 import Report.Decorators.Progress (Progress(..), PTValueTag(..)) as P
@@ -116,7 +116,7 @@ toRep inclRule =
             , Just { tkey : "playtime", tlabel : "Playtime", value : TV.TVAtomic $ TV.TVString "FOFO" }
             , mbTrackedAt subjectRec.tabulars <#>
                 \dateRec -> { tkey : "trackedAt", tlabel : "Tracked At", value : TV.TVAtomic $ TV.TVDate $ CT.dateFromRec dateRec }
-                -- \dateRec -> "trackedAt" /\ tmfp P.PTOnDate /\ pure (orgDate dateRec)
+                -- \dateRec -> "trackedAt" /\ tmfp (P.PTAV AVTOnDate) /\ pure (orgDate dateRec)
             ]
 
         -- makeHeading :: Int -> Doc Unit
@@ -138,7 +138,7 @@ toRep inclRule =
                     Nothing -> mempty
                 <> D.break <> tabularBlock
                     [ { id : "path",  label : "Path",  marker : tmfp (P.PTAV AVTPText), valueLines : pure $ convertPath groupRec.path }
-                    , { id : "index", label : "Index", marker : tmfp (P.PTAV AVTPTInt), valueLines : pure $ D.text $ show index        }
+                    , { id : "index", label : "Index", marker : tmfp (P.PTAV AVTPInt), valueLines : pure $ D.text $ show index        }
                     ]
                 <> case items of
                     [] -> mempty
@@ -173,7 +173,7 @@ toRep inclRule =
         convertDecoratorToDocLine :: DecoratorRec -> TriMarker /\ NonEmptyArray (Doc Unit)
         convertDecoratorToDocLine modRec =
             DH.withImpl @D.Decorator
-                (tmfp P.PTError /\ pure (D.text "CONVERSION ERROR"))
+                (tmfp (P.PTAV AVTError) /\ pure (D.text "CONVERSION ERROR"))
                 _decoratorDocLines
                 modRec.fvalue
 
@@ -293,44 +293,58 @@ convertTagToDocLine tag =
     <> D.space <> D.text "//" <> D.space <> (D.text $ MbW.toString $ CT.tagContent tag)
 
 
-_progressDocLines :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
-_progressDocLines = case _ of
-    None -> tmfp P.PTNone /\ pure (D.text ".")
-    Unknown -> tmfp P.PTUnknown /\ pure (D.text ".")
-    PInt i -> tmfp P.PTInt /\ pure (D.text $ show i)
-    PNumber n -> tmfp P.PTNumber /\ pure (D.text $ show n)
-    PText text -> tmfp P.PTText /\ pure (D.text text)
-    ToComplete { done } -> tmfp P.PTToComplete /\ pure (D.text $ if done then "DONE" else "TODO")
-    PercentI i -> tmfp P.PTPercentI /\ pure (D.text $ show i)
-    PercentN n -> tmfp P.PTPercentN /\ pure (D.text $ show n)
+_atomicDocLines :: AtomicValue -> TriMarker /\ NonEmptyArray (Doc Unit)
+_atomicDocLines = case _ of
+    None -> tmfp (P.PTAV AVTNone) /\ pure (D.text ".")
+    Unknown -> tmfp (P.PTAV AVTUnknown) /\ pure (D.text ".")
+    PInt i -> tmfp (P.PTAV AVTPInt) /\ pure (D.text $ show i)
+    PNumber n -> tmfp (P.PTAV AVTPNumber) /\ pure (D.text $ show n)
+    PText text -> tmfp (P.PTAV AVTPText) /\ pure (D.text text)
+    ToComplete { done } -> tmfp (P.PTAV AVTToComplete) /\ pure (D.text $ if done then "DONE" else "TODO")
+    PercentI i -> tmfp (P.PTAV AVTPercentI) /\ pure (D.text $ show i)
+    PercentN n -> tmfp (P.PTAV AVTPercentN) /\ pure (D.text $ show n)
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
-        in tmfp P.PTPercentSign /\ pure (D.text $ sign_s <> " " <> show pct)
+        in tmfp (P.PTAV AVTPercentSign) /\ pure (D.text $ sign_s <> " " <> show pct)
     ToGetI { got, total } ->
-        tmfp P.PTToGetI /\ pure (D.text $ show got <> " " <> show total)
+        tmfp (P.PTAV AVTToGetI) /\ pure (D.text $ show got <> " " <> show total)
     ToGetN { got, total } ->
-        tmfp P.PTToGetN /\ pure (D.text $ show got <> " " <> show total)
+        tmfp (P.PTAV AVTToGetN) /\ pure (D.text $ show got <> " " <> show total)
     OnTime timeRec ->
-        tmfp P.PTOnTime /\ pure (orgTime timeRec)
+        tmfp (P.PTAV AVTOnTime) /\ pure (orgTime timeRec)
     OnDate sdate ->
-        tmfp P.PTOnDate /\ pure (orgDate $ CT.dateToRec sdate)
+        tmfp (P.PTAV AVTOnDate) /\ pure (orgDate $ CT.dateToRec sdate)
     PerI { amount, per } ->
-        tmfp P.PTPerI /\ pure (D.text (show amount) <> D.text " " <> D.text per)
+        tmfp (P.PTAV AVTPerI) /\ pure (D.text (show amount) <> D.text " " <> D.text per)
     PerN { amount, per } ->
-        tmfp P.PTPerN /\ pure (D.text (show amount) <> D.text " " <> D.text per)
+        tmfp (P.PTAV AVTPerN) /\ pure (D.text (show amount) <> D.text " " <> D.text per)
     MeasuredI { amount, measure } ->
-        tmfp P.PTMeasuredI /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
+        tmfp (P.PTAV AVTMeasuredI) /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredN { amount, measure } ->
-        tmfp P.PTMeasuredN /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
+        tmfp (P.PTAV AVTMeasuredN) /\ pure (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+" else if sign < 0 then "-" else "*"
-        in tmfp P.PTMeasuredSign /\ pure (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text " " <> D.text measure)
+        in tmfp (P.PTAV AVTMeasuredSign) /\ pure (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text " " <> D.text measure)
     RangeI { from, to } ->
-        tmfp P.PTRangeI /\ pure (D.text $ show from <> " " <> show to)
+        tmfp (P.PTAV AVTRangeI) /\ pure (D.text $ show from <> " " <> show to)
     RangeN { from, to } ->
-        tmfp P.PTRangeN /\ pure (D.text $ show from <> " " <> show to)
-    Task taskP ->
-        tmfp P.PTTask /\ pure (D.text $ Task.taskPToString taskP)
+        tmfp (P.PTAV AVTRangeN) /\ pure (D.text $ show from <> " " <> show to)
+    PTask taskP ->
+        tmfp (P.PTAV AVTPTask) /\ pure (D.text $ Task.taskPToString taskP)
+    RelTime rel timeRec ->
+        let relText =
+                case rel of
+                    CT.RMoreThan -> ">"
+                    CT.REqual -> "="
+                    CT.RLessThan -> "<"
+        in tmfp (P.PTAV AVTRelTime) /\ pure (D.text relText <> D.space <> orgTime timeRec)
+    Error err ->
+        tmfp (P.PTAV AVTError) /\ pure (D.text err) -- TODO
+    _ -> tmfp (P.PTAV AVTError) /\ pure (D.text "TODO") -- FIXME: TODO
+
+
+_levelsDocLines :: Levels -> TriMarker /\ NonEmptyArray (Doc Unit)
+_levelsDocLines = case _ of
     LevelsI { reached, levels } ->
         tmfp P.PTLevelsI /\
         let
@@ -380,15 +394,6 @@ _progressDocLines = case _ of
             levelStr { date, mbMaximum, name } =
                 D.text ">>>" <> D.space <> mbDateStr date <> mbIntStr mbMaximum <> D.text name
         in pure $ D.text (show reached) <> D.break <> (joinWith D.break $ levelStr <$> levels)
-    RelTime rel timeRec ->
-        let relText =
-                case rel of
-                    CT.RMoreThan -> ">"
-                    CT.REqual -> "="
-                    CT.RLessThan -> "<"
-        in tmfp P.PTRelTime /\ pure (D.text relText <> D.space <> orgTime timeRec)
-    Error err ->
-        tmfp P.PTError /\ pure (D.text err) -- TODO
     where
         mbDateStr :: Maybe CT.SDateRec -> Doc Unit
         mbDateStr = maybeSpaced orgDate
@@ -400,6 +405,12 @@ _progressDocLines = case _ of
         maybeSpaced toDoc = case _ of
             Just value -> toDoc value <> D.space
             Nothing -> mempty
+
+
+_progressDocLines :: Progress -> TriMarker /\ NonEmptyArray (Doc Unit)
+_progressDocLines = case _ of
+    AV aval -> _atomicDocLines aval
+    LS levels -> _levelsDocLines levels
 
 
 _decoratorDocLines :: D.Decorator -> TriMarker /\ NonEmptyArray (Doc Unit)

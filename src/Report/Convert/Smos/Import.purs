@@ -32,7 +32,7 @@ import Report.Decorator (Decorator(..)) as Dec
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), Levels(..))
 import Report.Tabular (empty, fromArray') as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Convert.Rep.Import.Parser as Parser
@@ -175,7 +175,7 @@ smosLogbookToTabular
 smosLogbookToTabular [] = Nothing
 smosLogbookToTabular entries =
     let levels = Array.mapWithIndex toLevelP entries
-    in Just { key: "logbook", label: "Logbook", value: TV.progress (LevelsP { levels }) }
+    in Just { key: "logbook", label: "Logbook", value: TV.progress (LS (LevelsP { levels })) }
     where
         toLevelP idx (SmosLogbookEntry { start, end }) =
             { name    : "entry-" <> show (idx + 1)
@@ -191,7 +191,7 @@ smosStateHistoryToTabular
 smosStateHistoryToTabular [] = Nothing
 smosStateHistoryToTabular entries =
     let levels = Array.mapWithIndex toLevel entries
-    in Just { key: "state-history", label: "State History", value: TV.progress (LevelsP { levels }) }
+    in Just { key: "state-history", label: "State History", value: TV.progress (LS (LevelsP { levels })) }
     where
         toLevel idx (SmosStateEntry { state, time }) =
             { name    : "state-" <> show (idx + 1)

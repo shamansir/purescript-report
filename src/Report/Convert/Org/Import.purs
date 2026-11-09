@@ -21,7 +21,7 @@ import Report.Decorator (Decorator(..)) as Dec
 import Report.Decorators.Tags (Tags(..))
 import Report.Decorators.Stats (Stats(..)) as Stats
 import Report.Decorators.Task (TaskP(..))
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorators.Progress (Progress(..), Levels(..))
 import Report.Tabular (empty, fromArray') as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Convert.Rep.Import.Parser as Parser
@@ -134,7 +134,7 @@ orgLogbookToTabular
 orgLogbookToTabular [] = Nothing
 orgLogbookToTabular entries =
     let levels = Array.mapWithIndex toLevelP entries
-    in Just { key: "logbook", label: "Logbook", value: TV.progress (LevelsP { levels }) }
+    in Just { key: "logbook", label: "Logbook", value: TV.progress (LS (LevelsP { levels })) }
   where
     toLevelP idx { start, end } =
         { name    : "entry-" <> show (idx + 1)
