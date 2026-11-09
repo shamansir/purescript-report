@@ -24,7 +24,8 @@ import Report.Group (Group(..))
 import Report.GroupPath (pathToArray) as GP
 import Report.Tabular (items) as Tabular
 import Report.Decorator (get, Key(..), Decorator(..)) as Dec
-import Report.Decorators.Tabular.TabularValue (TabularValue(..), TabularAtomicValue(..)) as TV
+import Report.Decorators.Tabular.TabularValue (TabularValue(..)) as TV
+import Report.Decorators.Tabular.Logbook (Logbook(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Tags (RawTag)
@@ -236,7 +237,7 @@ spec =
                                                         d.day `A.shouldEqual` 15
                                                     _ -> A.fail "Expected SEarnedAt for Fix login bug"
 
-            it "reads logbook into a LevelsP tabular entry" do
+            it "reads logbook into a Logbook tabular entry" do
                 fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
                 case parseSmos fileText of
                     Left err -> A.fail $ printImportError err
@@ -258,16 +259,16 @@ spec =
                                                     Nothing -> A.fail "No logbook tabular entry"
                                                     Just logRow ->
                                                         case (unwrap logRow).value of
-                                                            TV.TVAtomic (TV.TVDecorator (Dec.SProgress (LevelsP { levels }))) -> do
+                                                            TV.TVLogbook (Logbook levels) -> do
                                                                 Array.length levels `A.shouldEqual` 2
                                                                 case Array.head levels of
                                                                     Nothing -> A.fail "No first level"
                                                                     Just lv -> do
-                                                                        lv.proc `A.shouldEqual` TDone
+                                                                        lv.task `A.shouldEqual` TDone
                                                                         lv.name `A.shouldEqual` "entry-1"
-                                                            _ -> A.fail "Expected LevelsP in logbook tabular"
+                                                            _ -> A.fail "Expected Logbook in logbook tabular"
 
-            it "stores full state-history as a LevelsP tabular entry" do
+            it "stores full state-history as a Logbook tabular entry" do
                 fileText <- liftEffect $ readTextFile UTF8 simpleSmosSamplePath
                 case parseSmos fileText of
                     Left err -> A.fail $ printImportError err
@@ -289,15 +290,15 @@ spec =
                                                     Nothing -> A.fail "No state-history tabular entry"
                                                     Just shRow ->
                                                         case (unwrap shRow).value of
-                                                            TV.TVAtomic (TV.TVDecorator (Dec.SProgress (LevelsP { levels }))) -> do
+                                                            TV.TVLogbook (Logbook levels) -> do
                                                                 Array.length levels `A.shouldEqual` 2
                                                                 case Array.head levels of
                                                                     Nothing -> A.fail "No first level"
-                                                                    Just lv -> lv.proc `A.shouldEqual` TTodo
+                                                                    Just lv -> lv.task `A.shouldEqual` TTodo
                                                                 case Array.index levels 1 of
                                                                     Nothing -> A.fail "No second level"
-                                                                    Just lv -> lv.proc `A.shouldEqual` TDoing
-                                                            _ -> A.fail "Expected LevelsP in state-history tabular"
+                                                                    Just lv -> lv.task `A.shouldEqual` TDoing
+                                                            _ -> A.fail "Expected Logbook in state-history tabular"
 
         describe "export" do
 

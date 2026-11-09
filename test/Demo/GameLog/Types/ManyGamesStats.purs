@@ -21,6 +21,7 @@ import Report.Impl.Item (Item(..))
 import Report.Impl.Subject (Subject(..), SubjectId)
 import Report.Tabular as Tabular
 import Report.Decorator as Dec
+import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Progress (Progress(..)) as Progress
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Decorators.Tags (RawTag)
@@ -86,11 +87,11 @@ convertSubject (Subject subjectRec) =
     , mbPlatform  : subjectRec.tags # Array.findMap loadPlatformFromTag
     , mbSource    : subjectRec.tags # Array.findMap loadSourceFromTag
     , mbTrackedAt : subjectRec.tabular # Tabular.findMapV "trackedAt" (case _ of
-        TV.TVAtomic (TV.TVDate date) -> Just date
+        TV.TVAtomic (AV.OnDate date) -> Just date
         _ -> Nothing)
     , mbPlaytime  : subjectRec.tabular # Tabular.findMapV "playtime" (case _ of
-        TV.TVAtomic (TV.TVTime time) -> Just $ CT.REqual /\ time
-        TV.TVAtomic (TV.TVDecorator (Dec.SProgress (Progress.RelTime rel time))) -> Just $ rel /\ time
+        TV.TVAtomic (AV.OnTime time) -> Just $ CT.REqual /\ time
+        TV.TVAtomic ((AV.RelTime rel time)) -> Just $ rel /\ time
         _ -> Nothing)
     , stats       : subjectRec.stats
     }
@@ -114,7 +115,7 @@ convertItem  (Item itemRec) =
         , mbReference   : itemRec.decorators # Dec.getReference
         , mbTitle       : Nothing -- Just itemRec.title
         , name          : itemRec.title
-        , progress      : itemRec.decorators # Dec.firstProgress # fromMaybe Progress.Unknown
+        , progress      : itemRec.decorators # Dec.firstProgress # fromMaybe (Progress.AV AV.Unknown)
         , tags          : map unwrap <$> unwrap $ itemRec.tags
         }
 

@@ -22,6 +22,7 @@ import Test.Export.RepDodo as RepDodo
 import Test.Export.Converter as Converter
 import Test.Export.Smos as Smos
 import Test.Export.Org as Org
+import Test.AtomicValue as AtomicValue
 
 
 main :: Effect Unit
@@ -40,4 +41,5 @@ main = do
         Converter.spec
         Smos.spec
         Org.spec
+        AtomicValue.spec
         -- MusicApi.spec

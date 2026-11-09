@@ -10,7 +10,7 @@ import Data.Array (length, filter, all, unsnoc) as Array
 import Data.Tuple.Nested ((/\), type (/\))
 
 import Report.Core as CT
-import Report.Core (NProgress(..))
+import Report.Core.ProgressRefl (NProgress(..))
 import Report.Class
 import Report.Chain (Chain(..))
 import Report.Chain as Chain
@@ -19,6 +19,7 @@ import Report.GroupPath (GroupPath, PathSegment(..))
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Stats (Stats(..))
 import Report.Decorators.Tags (Tags(..))
+import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Progress (Progress(..), loadNProgress)
 import Report.Web.Decorators.Tags.Colors as TC
 import Report.Modify
@@ -102,7 +103,7 @@ ach_ = achievement
 
 
 a_got :: String -> Achievement
-a_got name = ach_ name (ToComplete { done : true })
+a_got name = ach_ name (AV $ AV.ToComplete { done : true })
 
 
 a_got' :: String -> String -> Achievement
@@ -110,7 +111,7 @@ a_got' name descr = a_got name # describe descr
 
 
 a_todo :: String -> Achievement
-a_todo name = ach_ name (ToComplete { done : false })
+a_todo name = ach_ name (AV $ AV.ToComplete { done : false })
 
 
 a_todo' :: String -> String -> Achievement
@@ -118,7 +119,7 @@ a_todo' name descr = a_todo name # describe descr
 
 
 a_prc :: String -> Int -> Achievement
-a_prc name prc = ach_ name $ PercentI prc
+a_prc name prc = ach_ name $ AV $ AV.PercentI prc
 
 
 a_prc' :: String -> String -> Int -> Achievement
@@ -126,7 +127,7 @@ a_prc' name descr = a_prc name >>> describe descr
 
 
 a_itm :: String -> Int -> Int -> Achievement
-a_itm name got total = ach_ name $ ToGetI { got, total }
+a_itm name got total = ach_ name $ AV $ AV.ToGetI { got, total }
 
 
 a_itm' :: String -> String -> Int -> Int -> Achievement

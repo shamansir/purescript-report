@@ -23,6 +23,7 @@ import Foreign (Foreign, F, fail, ForeignError(..), renderForeignError)
 -- import Input.CV.Key (w)
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Stats (Stats(..))
+import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Progress (DateRec, PValueTag(..), Progress(..), ProgressJson(..))
 import Report.Decorators.Progress (fromJson, _readProgress, rawToProgressJson) as Progress
 import Report.Tabular (Tabular)
@@ -95,8 +96,8 @@ loadTabular = Tabular.fromArray <<< map loadProgress
             key /\
                 (Progress.rawToProgressJson value
                     # Progress.fromJson
-                    # fromMaybe Unknown
-                    -- # maybe (TV.TVString "---") (TV.TVSuffix <<< S.SProgress)
+                    # fromMaybe (AV AV.Unknown)
+                    -- # maybe (AV.PText "---") (TV.TVSuffix <<< S.SProgress)
                     )
 
 
@@ -132,7 +133,7 @@ collectFromDhall { collection } = -- TODO: use `trackedAt`
 
 loadProgressTextValue :: Progress -> Maybe String
 loadProgressTextValue = case _ of
-    PText txt -> Just txt
+    AV (AV.PText txt) -> Just txt
     _ -> Nothing
 
 
@@ -155,10 +156,10 @@ processGame subject =
                 , mbPlatform : platformFromDhall $ loadProgressTextValue =<< findProgressInTabular "platform" subject.tabular
                 , mbSource : Just S_Dhall
                 , mbPlaytime : findProgressInTabular "playtime" subject.tabular >>= case _ of
-                    RelTime relation playtime -> Just (relation /\ playtime)
+                    AV (AV.RelTime relation playtime) -> Just (relation /\ playtime)
                     _ -> Nothing
                 , mbTrackedAt : gameTabluar # Tabular.findV "trackedAt" >>= case _ of
-                    OnDate sdate -> Just sdate
+                    AV (AV.OnDate sdate) -> Just sdate
                     _ -> Nothing
                 , stats : collectStats $ GameAchievements gameAchievements
                 }
@@ -213,7 +214,8 @@ adaptForeignProgress =
         (NEL.toUnfoldable
             >>> map renderForeignError
             >>> String.joinWith "; "
-            >>> Error)
+            >>> AV.Error
+            >>> AV)
         identity
         <<< ME.runExcept
 
@@ -225,7 +227,7 @@ dhallRecToAchievement rec =
         , progress : case rec.value of
             Just { t, v } -> -- FIXME: see Progress.rawToProgressJson value # Progress.fromJson, Progress._decodeProgress / DecodeKeyed.toValue, also `loadTabular` above
                 adaptForeignProgress $ Progress._readProgress (PValueTag t) v
-            Nothing -> None
+            Nothing -> AV AV.None
         , mbTitle : rec.title
         , mbDescription : rec.detailed
         , mbInternalId : Nothing

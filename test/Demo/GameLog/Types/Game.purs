@@ -19,6 +19,7 @@ import Report.Convert.Keyed (class EncodableKey, encodeKey, decodeKey)
 import Report.Tabular as Tabular
 import Report.Decorator (Decorator(..))
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Progress (Progress(..))
 
 import GameLog.Types as GLT
@@ -188,19 +189,19 @@ instance EncodableKey GameId where
 instance HasTabular Game where
     i_tabular (Game gameRec) =
         Tabular.empty
-            -- # Tabular.insert "name" (TV.TVString gameRec.name)
+            -- # Tabular.insert "name" (AV.PText gameRec.name)
             # case gameRec.mbPlatform of
                 Nothing -> identity
                 Just thePlatform ->
-                    Tabular.insert' "platform" "Platform" $ TV.TVAtomic $ TV.TVString $ GLT.encodePlatform thePlatform
+                    Tabular.insert' "platform" "Platform" $ TV.TVAtomic $ AV.PText $ GLT.encodePlatform thePlatform
             # case gameRec.mbPlaytime of
                 Nothing -> identity
                 Just (relation /\ thePlaytime) ->
-                    Tabular.insert' "playtime" "Playtime" $ TV.TVAtomic $ TV.TVDecorator $ SProgress $ RelTime relation thePlaytime
+                    Tabular.insert' "playtime" "Playtime" $ TV.TVAtomic $ AV.RelTime relation thePlaytime
             # case gameRec.mbTrackedAt of
                 Nothing -> identity
                 Just trackedAt ->
-                    Tabular.insert' "trackedAt" "Tracked At" $ TV.TVAtomic $ TV.TVDate trackedAt
+                    Tabular.insert' "trackedAt" "Tracked At" $ TV.TVAtomic $ AV.OnDate trackedAt
 
 
 instance WriteForeign GameTag where

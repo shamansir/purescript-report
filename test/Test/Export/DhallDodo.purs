@@ -67,9 +67,9 @@ in
         }
         ([ "Dhall", "Switch" ])
         (
-         [ { key = "platform" , label = "Platform" , value = "Switch" }
-         , { key = "playtime" , label = "Playtime" , value = (T.v_relt (T.v_rel_T.rel_more_than T.TIME { hrs = +40, min = +0, sec = +0 })) }
-         , { key = "trackedAt" , label = "Tracked At" , value = { day = +12, mon = +8, year = +2025 } }
+         [ { key = "platform" , label = Some "Platform" , value = T.tag (T.v_t "Switch") }
+         , { key = "playtime" , label = Some "Playtime" , value = T.tag (T.v_relt (T.rel_more_than T.TIME { hrs = +40, min = +0, sec = +0 })) }
+         , { key = "trackedAt" , label = Some "Tracked At" , value = T.tag (T.v_date { day = +12, mon = +8, year = +2025 }) }
          ]
         )
         (
