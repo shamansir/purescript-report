@@ -34,7 +34,9 @@ import Report.Chain (Chain)
 import Report.Chain (fromArray, fromNEArray) as Chain
 import Report.AtomicValue (AtomicValue(..))
 import Report.AtomicValue (valueTagOf, encodeAtomicValueTag, toReadableString) as AV
-import Report.Decorators.Progress (Progress(..), PTValueTag(..))
+import Report.Decorator (Decorator(..)) as Dec
+import Report.Decorators.Progress (Progress(..), PTValueTag(..), Levels(..))
+import Report.GroupPath (path) as GP
 import Report.Decorators.Task (TaskP(..))
 import Report.Decorators.Rating (Rating(..))
 import Report.Decorators.Priority (priorityA, priorityNum)
@@ -44,8 +46,8 @@ import Report.Convert.Rep.Import.Parser (_atomicFromRep) as Rep
 import Report.Convert.Rep.Keys (ptftm) as Rep
 import Report.Convert.Text.Decorators.Progress (encodeProgress, decodeProgress) as Text
 import Report.Convert.Dhall.Export (RenderedAs(..), _atomicToDhall) as Dhall
-import Report.Convert.Org.Export (_atomicProperties) as Org
-import Report.Convert.Org.Import.Properties (propertyToAtomic) as OrgProps
+import Report.Convert.Org.Export (_atomicProperties, _decoratorProperties) as Org
+import Report.Convert.Org.Import.Properties (propertyToAtomic, propertyToDecorator) as OrgProps
 import Utils.Data.WColor (fromHex) as WColor
 
 
@@ -212,6 +214,29 @@ viaOrg aval = case orgProperties aval of
     _ -> Nothing
 
 
+-- at least one sample of every `Decorator` option, values and levels which are written to org properties
+decoratorSamples :: Array Dec.Decorator
+decoratorSamples =
+    [ Dec.PRating $ Rating { value : 4.0, max : 5 }
+    , Dec.PPriority priorityA
+    , Dec.PTask TWait
+    , Dec.SProgress $ AV $ ToGetI { got : 3, total : 10 }
+    , Dec.SProgress $ LS $ LevelsE { reached : 3, total : 7 }
+    , Dec.SProgress $ LS $ LevelsC { levelReached : 2, reachedAtCurrent : 40, totalLevels : 5, maximumAtCurrent : 100, date : Nothing }
+    , Dec.SEarnedAt $ date 12 8 2025
+    , Dec.SDescription "Some details"
+    , Dec.SReference $ GP.path [ "games", "switch" ]
+    , Dec.SJoinReference $ GP.path [ "games", "ps5" ]
+    ]
+
+
+viaOrgDecorator :: Dec.Decorator -> Maybe Dec.Decorator
+viaOrgDecorator dec =
+    case map (D.print D.plainText D.twoSpaces) <$> Org._decoratorProperties dec of
+        [ key /\ value ] -> OrgProps.propertyToDecorator key (String.trim value)
+        _ -> Nothing
+
+
 viaEncodedValue :: AtomicValue -> Maybe AtomicValue
 viaEncodedValue aval =
     uncurry Text.decodeProgress (Text.encodeProgress $ AV aval) >>= case _ of
@@ -233,6 +258,15 @@ spec =
             roundTrips "EncodedValue" viaEncodedValue
         it "round-trip through org properties" do
             samplesCameBack "Org" orgSamples $ viaOrg <$> orgSamples
+        it "decorators round-trip through org properties" do
+            -- `Decorator` has no `Eq` instance, so the decorators are compared as JSON
+            let check dec = case viaOrgDecorator dec of
+                    Just result | JSON.writeJSON result == JSON.writeJSON dec -> Nothing
+                    Just result -> Just $ JSON.writeJSON dec <> " came back as " <> JSON.writeJSON result
+                    Nothing -> Just $ JSON.writeJSON dec <> " failed to be read back"
+            case Array.mapMaybe check decoratorSamples of
+                [] -> pure unit
+                failures -> fail $ "Org decorators:\n" <> String.joinWith "\n" failures
         it "round-trip through Dhall (requires `dhall-to-json`)" do
             viaDhall >>= case _ of
                 Just results -> samplesCameBack "Dhall" samples results

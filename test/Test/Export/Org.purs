@@ -258,9 +258,9 @@ spec =
                                     _ -> A.fail "Expected `RAV_RELTIME` to be read as `RelTime`"
                                 case Dec.get Dec.KDescription item.decorators of
                                     Just (Dec.SDescription desc) -> desc `A.shouldEqual` "Some details"
-                                    _ -> A.fail "Expected `Description` to be read as a decorator"
+                                    _ -> A.fail "Expected `RDC_DESCRIPTION` to be read as a decorator"
                                 case Dec.get Dec.KTask item.decorators of
-                                    Just (Dec.PTask task) -> task `A.shouldEqual` TTodo -- from the heading, not from the `Task` property
+                                    Just (Dec.PTask task) -> task `A.shouldEqual` TTodo -- from the heading, not from the `rdc_task` property
                                     _ -> A.fail "Expected a task from the heading"
 
         describe "export" do
@@ -317,7 +317,7 @@ orgWithProperties = """* Work
    :RAV_TOGETI: 3 10
    :rav_mesi: 12 km
    :RAV_RELTIME: more_than 40:00:00
-   :Description: Some details
-   :Task: DONE
+   :RDC_DESCRIPTION: Some details
+   :rdc_task: DONE
    :END:
 """

@@ -31,7 +31,7 @@ import Report.Convert.Types
 import Report.Convert.Generic (class ToExport, toExport, IncludeRule) as Report
 import Report.Convert.Text.Decorators.Tags as CT
 
-import Report.Decorator (Key(..), Decorator(..)) as D
+import Report.Decorator (Key(..), Decorator(..), keyOf) as D
 import Report.AtomicValue (AtomicValue(..))
 import Report.Decorators.Progress (Progress(..), PValueTag(..), Levels(..))
 import Report.Decorators.Task (TaskP(..))
@@ -44,7 +44,7 @@ import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
 import Report.AtomicValue as AV
-import Report.AtomicValue.Marker.Org (toOrgMarker) as OrgMarker
+import Report.AtomicValue.Marker.Org (toOrgMarker, toOrgDecoratorMarker) as OrgMarker
 import Report.Decorators.Tabular.TabularValue as TV
 -- import Report.Convert.Text.Export as TextExport
 
@@ -107,10 +107,6 @@ toOrg inclRule =
         makeHeading level =
             D.text (String.joinWith "" (Array.replicate level "*"))
 
-        convertPath :: GroupPath -> Doc Unit
-        convertPath path =
-            joinWith D.space $ D.text <$> (unwrap <$> unwrap path)
-
         convertGroup :: Int -> { group :: Group, items :: Array ItemRec } -> Doc Unit
         convertGroup index { group, items } =
             let
@@ -119,7 +115,7 @@ toOrg inclRule =
             in
             groupHeadingPrefix <+> D.text groupRec.title
             <> D.break <> propertiesBlock
-                [ "Path" /\ convertPath groupRec.path
+                [ "Path" /\ orgPath groupRec.path
                 , "Index" /\ D.text (show index)
                 ]
             <> D.break
@@ -168,24 +164,7 @@ toOrg inclRule =
         convertDecoratorToProperty modRec =
             DH.withImpl @D.Decorator
                 []
-                (case _ of
-                    D.PRating rating ->
-                        pure $ "Rating" /\ (D.text $ show $ Rating.toNumber rating)
-                    D.PPriority priority ->
-                        pure $ "Priority" /\ (D.text $ Priority.priorityChar priority)
-                    D.PTask task ->
-                        pure $ "Task" /\ (D.text $ Task.taskPToString task)
-                    D.SProgress p ->
-                        _progressProperties p
-                    D.SEarnedAt ea ->
-                        pure $ "EarnedAt" /\ orgDate (CT.dateToRec ea)
-                    D.SDescription desc ->
-                        pure $ "Description" /\ D.text desc
-                    D.SReference path ->
-                        pure $ "Reference" /\ convertPath path
-                    D.SJoinReference path ->
-                        pure $ "JoinReference" /\ convertPath path
-                )
+                _decoratorProperties
                 modRec.fvalue
 
         convertDecoratorToPrefix :: DecoratorRec -> Maybe (Doc Unit)
@@ -255,11 +234,42 @@ orgDate dateRec
     <> D.text ">"
 
 
+orgPath :: GroupPath -> Doc Unit
+orgPath path =
+    joinWith D.space $ D.text <$> (unwrap <$> unwrap path)
+
+
 orgTime :: CT.STimeRec -> Doc Unit
 orgTime timeRec
     =  D.text (CT.toLeadingZero timeRec.hrs)
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.min)
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
+
+
+-- | the property names are the markers from `Report.AtomicValue.Marker.Org`
+_decoratorProperties :: D.Decorator -> Array ( String /\ Doc Unit )
+_decoratorProperties dec =
+    Array.fromFoldable $ (\doc -> OrgMarker.toOrgDecoratorMarker (D.keyOf dec) /\ doc) <$> _decoratorPropertyValue dec
+
+
+_decoratorPropertyValue :: D.Decorator -> Maybe (Doc Unit)
+_decoratorPropertyValue = case _ of
+    D.PRating rating ->
+        pure $ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating))
+    D.PPriority priority ->
+        pure $ D.text $ Priority.priorityChar priority
+    D.PTask task ->
+        pure $ D.text $ Task.taskPToString task
+    D.SProgress p ->
+        _progressPropertyValue p
+    D.SEarnedAt ea ->
+        pure $ orgDate (CT.dateToRec ea)
+    D.SDescription desc ->
+        pure $ D.text desc
+    D.SReference path ->
+        pure $ orgPath path
+    D.SJoinReference path ->
+        pure $ orgPath path
 
 
 -- | the property names are the markers from `Report.AtomicValue.Marker.Org`
@@ -367,8 +377,8 @@ orgRawTag (RawTag { id, content }) =
     String.joinWith "::" (NEA.toArray id) <> " // " <> String.joinWith "::" (NEA.toArray content)
 
 
-_levelsProperties :: Levels -> Array ( String /\ Doc Unit )
-_levelsProperties = case _ of
+_levelsPropertyValue :: Levels -> Maybe (Doc Unit)
+_levelsPropertyValue = case _ of
     LevelsI { reached, levels } ->
         mempty -- TODO
     LevelsN { reached, levels } ->
@@ -376,23 +386,28 @@ _levelsProperties = case _ of
     LevelsS { reached, levels } ->
         mempty -- TODO
     LevelsE levelsE ->
-        pure $ "LEVELSE" /\ D.text (show levelsE.reached <> " " <> show levelsE.total)
+        pure $ D.text (show levelsE.reached <> " " <> show levelsE.total)
+    LevelsC levelsC ->
+        pure $ D.text
+            (  show levelsC.levelReached
+            <> " " <> show levelsC.reachedAtCurrent
+            <> " " <> show levelsC.totalLevels
+            <> " " <> show levelsC.maximumAtCurrent
+            )
     LevelsP { levels } ->
         mempty -- TODO
-    LevelsC levelsC ->
-        [ "LEVELSC_REACHED" /\ D.text (show levelsC.levelReached)
-        , "LEVELSC_CURRENT" /\ D.text (show levelsC.reachedAtCurrent)
-        , "LEVELSC_TOTAL" /\ D.text (show levelsC.totalLevels)
-        , "LEVELSC_MAXCURRENT" /\ D.text (show levelsC.maximumAtCurrent)
-        ]
     LevelsO { reached, levels } ->
         mempty -- TODO
 
 
+_progressPropertyValue :: Progress -> Maybe (Doc Unit)
+_progressPropertyValue = case _ of
+    AV aval -> _atomicPropertyValue aval
+    LS levels -> _levelsPropertyValue levels
+
+
 _progressProperties :: Progress -> Array ( String /\ Doc Unit )
-_progressProperties = case _ of
-    AV aval -> _atomicProperties aval
-    LS levels -> _levelsProperties levels
+_progressProperties = D.SProgress >>> _decoratorProperties
 
 
 

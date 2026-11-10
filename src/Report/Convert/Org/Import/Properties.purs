@@ -2,6 +2,8 @@ module Report.Convert.Org.Import.Properties
     ( propertyToAtomic
     , atomicFromProperty
     , propertyToDecorator
+    , decoratorFromProperty
+    , progressFromProperty
     , propertiesToDecorators
     ) where
 
@@ -22,10 +24,10 @@ import Foreign.Object (toUnfoldable) as Object
 import Report.Core as CT
 import Report.AtomicValue (AtomicValue(..))
 import Report.AtomicValue.Tag (AtomicValueTag(..))
-import Report.AtomicValue.Marker.Org (atomicTagByOrgMarker)
+import Report.AtomicValue.Marker.Org (atomicTagByOrgMarker, decoratorKeyByOrgMarker)
 import Data.Map (lookup) as Map
-import Report.Decorator (Decorator(..)) as D
-import Report.Decorators.Progress (Progress(..))
+import Report.Decorator (Key(..), Decorator(..)) as D
+import Report.Decorators.Progress (Progress(..), Levels(..), PTValueTag(..), _vtagFrom)
 import Report.Decorators.Priority (fromString) as Priority
 import Report.Decorators.Tags (RawTags(..))
 import Report.Decorators.Task (mbTaskPFromString)
@@ -143,17 +145,43 @@ atomicFromProperty avTag value = case avTag of
         dateTime (date /\ time) = { date, time }
 
 
--- | Reads the decorator properties written by `Report.Convert.Org.Export`, as well as value properties.
+-- | Reads the decorator properties written by `Report.Convert.Org.Export._decoratorProperties`, including value properties,
+-- | property names are the markers from `Report.AtomicValue.Marker.Org`, case-insensitive (as everywhere in org).
 propertyToDecorator :: String -> String -> Maybe D.Decorator
-propertyToDecorator key value = case String.toUpper key of
-    "RATING"        -> D.PRating <$> P.parseRating value
-    "PRIORITY"      -> D.PPriority <$> Priority.fromString value
-    "TASK"          -> D.PTask <$> mbTaskPFromString value
-    "EARNEDAT"      -> D.SEarnedAt <$> P.parseDate value
-    "DESCRIPTION"   -> Just $ D.SDescription value
-    "REFERENCE"     -> D.SReference <$> P.parseGroupPath value
-    "JOINREFERENCE" -> D.SJoinReference <$> P.parseGroupPath value
-    _               -> D.SProgress <$> AV <$> propertyToAtomic key value
+propertyToDecorator key value =
+    Map.lookup (String.toUpper key) decoratorKeyByOrgMarker >>= \dKey -> decoratorFromProperty dKey value
+
+
+decoratorFromProperty :: D.Key -> String -> Maybe D.Decorator
+decoratorFromProperty dKey value = case dKey of
+    D.KRating         -> D.PRating <$> P.parseRating value
+    D.KPriority       -> D.PPriority <$> Priority.fromString value
+    D.KTask           -> D.PTask <$> mbTaskPFromString value
+    D.KProgress vtag  -> D.SProgress <$> progressFromProperty (_vtagFrom vtag) value
+    D.KEarnedAt       -> D.SEarnedAt <$> P.parseDate value
+    D.KDescription    -> Just $ D.SDescription value
+    D.KReference      -> D.SReference <$> P.parseGroupPath value
+    D.KJoinReference  -> D.SJoinReference <$> P.parseGroupPath value
+
+
+progressFromProperty :: PTValueTag -> String -> Maybe Progress
+progressFromProperty ptTag value = case ptTag of
+    PTAV avTag -> AV <$> atomicFromProperty avTag value
+    PTLevelsE  -> ints >>= case _ of
+        [ reached, total ] -> Just $ LS $ LevelsE { reached, total }
+        _ -> Nothing
+    PTLevelsC  -> ints >>= case _ of
+        [ levelReached, reachedAtCurrent, totalLevels, maximumAtCurrent ] ->
+            Just $ LS $ LevelsC { levelReached, reachedAtCurrent, totalLevels, maximumAtCurrent, date : Nothing }
+        _ -> Nothing
+    -- not exported to org yet
+    PTLevelsI  -> Nothing
+    PTLevelsN  -> Nothing
+    PTLevelsO  -> Nothing
+    PTLevelsS  -> Nothing
+    PTLevelsP  -> Nothing
+    where
+        ints = traverse Int.fromString $ P.splitWithSpace value
 
 
 propertiesToDecorators :: Object String -> Array D.Decorator
