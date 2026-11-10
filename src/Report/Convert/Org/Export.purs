@@ -44,6 +44,7 @@ import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
 import Report.AtomicValue as AV
+import Report.AtomicValue.Marker.Org (toOrgMarker) as OrgMarker
 import Report.Decorators.Tabular.TabularValue as TV
 -- import Report.Convert.Text.Export as TextExport
 
@@ -261,91 +262,97 @@ orgTime timeRec
     <> D.text ":" <> D.text (CT.toLeadingZero timeRec.sec)
 
 
+-- | the property names are the markers from `Report.AtomicValue.Marker.Org`
 _atomicProperties :: AtomicValue -> Array ( String /\ Doc Unit )
-_atomicProperties = case _ of
+_atomicProperties aval =
+    Array.fromFoldable $ (\doc -> OrgMarker.toOrgMarker (AV.valueTagOf aval) /\ doc) <$> _atomicPropertyValue aval
+
+
+_atomicPropertyValue :: AtomicValue -> Maybe (Doc Unit)
+_atomicPropertyValue = case _ of
     None -> mempty
     Unknown -> mempty
-    PInt i -> pure $ "INTVAL" /\ D.text (show i)
-    PNumber n -> pure $ "NUMVAL" /\ D.text (show n)
-    PText text -> pure $ "TEXTVAL" /\ D.text text
-    ToComplete { done } -> pure $ "TOCOMPLETE" /\ D.text (if done then "true" else "false")
-    PercentI i -> pure $ "PERCENTI" /\ D.text (show i)
-    PercentN n -> pure $ "PERCENTN" /\ D.text (show n)
+    PInt i -> pure $ D.text (show i)
+    PNumber n -> pure $ D.text (show n)
+    PText text -> pure $ D.text text
+    ToComplete { done } -> pure $ D.text (if done then "true" else "false")
+    PercentI i -> pure $ D.text (show i)
+    PercentN n -> pure $ D.text (show n)
     PercentSign { sign, pct } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "PERCENTX" /\ D.text (sign_s <> " " <> show pct)
+        in pure $ D.text (sign_s <> " " <> show pct)
     ToGetI { got, total } -> pure $
-        "TOGETI" /\ D.text (show got <> " " <> show total)
+        D.text (show got <> " " <> show total)
     ToGetN { got, total } -> pure $
-        "TOGETN" /\ D.text (show got <> " " <> show total)
+        D.text (show got <> " " <> show total)
     OnTime timeRec ->
-        pure $ "ONTIME" /\ orgTime timeRec
+        pure $ orgTime timeRec
     OnDate sdate ->
-        pure $ "ONDATE" /\ orgDate (CT.dateToRec sdate)
+        pure $ orgDate (CT.dateToRec sdate)
     PerI { amount, per } ->
-        pure $ "PERI" /\ (D.text (show amount) <> D.text " " <> D.text per)
+        pure $ (D.text (show amount) <> D.text " " <> D.text per)
     PerN { amount, per } ->
-        pure $ "PERN" /\ (D.text (show amount) <> D.text " " <> D.text per)
+        pure $ (D.text (show amount) <> D.text " " <> D.text per)
     MeasuredI { amount, measure } ->
-        pure $ "MESI" /\ (D.text (show amount) <> D.text " " <> D.text measure)
+        pure $ (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredN { amount, measure } ->
-        pure $ "MESN" /\ (D.text (show amount) <> D.text " " <> D.text measure)
+        pure $ (D.text (show amount) <> D.text " " <> D.text measure)
     MeasuredSign { sign, amount, measure } ->
         let sign_s = if sign > 0 then "+1" else if sign < 0 then "-1" else "+0"
-        in pure $ "MESX" /\ (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text " " <> D.text measure)
+        in pure $ (D.text sign_s <> D.text " " <> D.text (show amount) <> D.text " " <> D.text measure)
     RangeI { from, to } ->
-        pure $ "RANGEI" /\ D.text (show from <> " " <> show to)
+        pure $ D.text (show from <> " " <> show to)
     RangeN { from, to } ->
-        pure $ "RANGEN" /\ D.text (show from <> " " <> show to)
+        pure $ D.text (show from <> " " <> show to)
     PTask taskP ->
-        pure $ "PROCVAL" /\ D.text (Task.taskPToString taskP) -- `TASK` would be the same as `Task`, org properties are case-insensitive
+        pure $ D.text (Task.taskPToString taskP)
     RelTime rel timeRec ->
-        pure $ "RELTIME" /\ (D.text (orgRelation rel) <> D.space <> orgTime timeRec)
+        pure $ (D.text (orgRelation rel) <> D.space <> orgTime timeRec)
     Error err ->
-        pure $ "ERRORVAL" /\ D.text err
-    PBoolean b -> pure $ "BOOLVAL" /\ D.text (if b then "true" else "false")
-    PYear year -> pure $ "YEARVAL" /\ D.text (show year)
-    PID id -> pure $ "UIDVAL" /\ D.text (show id) -- `ID` is a special property in org
+        pure $ D.text err
+    PBoolean b -> pure $ D.text (if b then "true" else "false")
+    PYear year -> pure $ D.text (show year)
+    PID id -> pure $ D.text (show id)
     ToGetIX { got, doing, total } -> pure $
-        "TOGETIX" /\ D.text (show got <> " " <> show doing <> " " <> show total)
+        D.text (show got <> " " <> show doing <> " " <> show total)
     ToGetNX { got, doing, total } -> pure $
-        "TOGETNX" /\ D.text (show got <> " " <> show doing <> " " <> show total)
+        D.text (show got <> " " <> show doing <> " " <> show total)
     ToGetMI { min, got, max } -> pure $
-        "TOGETMI" /\ D.text (show min <> " " <> show got <> " " <> show max)
+        D.text (show min <> " " <> show got <> " " <> show max)
     ToGetMN { min, got, max } -> pure $
-        "TOGETMN" /\ D.text (show min <> " " <> show got <> " " <> show max)
+        D.text (show min <> " " <> show got <> " " <> show max)
     ToGetMIX { min, got, doing, max } -> pure $
-        "TOGETMIX" /\ D.text (show min <> " " <> show got <> " " <> show doing <> " " <> show max)
+        D.text (show min <> " " <> show got <> " " <> show doing <> " " <> show max)
     ToGetMNX { min, got, doing, max } -> pure $
-        "TOGETMNX" /\ D.text (show min <> " " <> show got <> " " <> show doing <> " " <> show max)
+        D.text (show min <> " " <> show got <> " " <> show doing <> " " <> show max)
     OnDateTime sdate timeRec ->
-        pure $ "ONDATETIME" /\ (orgDate (CT.dateToRec sdate) <> D.space <> orgTime timeRec)
+        pure $ (orgDate (CT.dateToRec sdate) <> D.space <> orgTime timeRec)
     TimeRange { from, to } ->
-        pure $ "TIMERANGE" /\ (orgTime from <> D.text "--" <> orgTime to)
+        pure $ (orgTime from <> D.text "--" <> orgTime to)
     DateRange { from, to } ->
-        pure $ "DATERANGE" /\ (orgDate (CT.dateToRec from) <> D.text "--" <> orgDate (CT.dateToRec to))
+        pure $ (orgDate (CT.dateToRec from) <> D.text "--" <> orgDate (CT.dateToRec to))
     DateTimeRange { from, to } ->
-        pure $ "DATETIMERANGE" /\
+        pure $ 
             (  orgDate (CT.dateToRec from.date) <> D.space <> orgTime from.time
             <> D.text "--"
             <> orgDate (CT.dateToRec to.date) <> D.space <> orgTime to.time
             )
     RelInt rel int ->
-        pure $ "RELINT" /\ (D.text (orgRelation rel) <> D.space <> D.text (show int))
+        pure $ (D.text (orgRelation rel) <> D.space <> D.text (show int))
     RelNum rel num ->
-        pure $ "RELNUM" /\ (D.text (orgRelation rel) <> D.space <> D.text (show num))
+        pure $ (D.text (orgRelation rel) <> D.space <> D.text (show num))
     PPath path ->
-        pure $ "PATHVAL" /\ D.text (MbW.toStringSep "::" path)
+        pure $ D.text (MbW.toStringSep "::" path)
     Tags tags ->
-        pure $ "TAGSVAL" /\ D.text (String.joinWith "," $ MbW.toStringSep "::" <$> tags) -- `TAGS` is a special property in org
+        pure $ D.text (String.joinWith "," $ MbW.toStringSep "::" <$> tags)
     PRawTags rawTags ->
-        pure $ "RAWTAGSVAL" /\ D.text (String.joinWith "," $ orgRawTag <$> unwrap rawTags)
+        pure $ D.text (String.joinWith "," $ orgRawTag <$> unwrap rawTags)
     PColor color ->
-        pure $ "COLORVAL" /\ D.text (AV.toReadableString $ PColor color)
+        pure $ D.text (AV.toReadableString $ PColor color)
     PRating rating ->
-        pure $ "RATINGVAL" /\ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating)) -- `RATING` would be the same as `Rating`
+        pure $ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating))
     PPriority priority ->
-        pure $ "PRIORITYVAL" /\ D.text (Priority.priorityChar priority) -- `PRIORITY` is a special property in org
+        pure $ D.text (Priority.priorityChar priority)
 
 
 orgRelation :: CT.Relation -> String

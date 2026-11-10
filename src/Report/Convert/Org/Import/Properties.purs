@@ -1,5 +1,6 @@
 module Report.Convert.Org.Import.Properties
     ( propertyToAtomic
+    , atomicFromProperty
     , propertyToDecorator
     , propertiesToDecorators
     ) where
@@ -20,6 +21,9 @@ import Foreign.Object (toUnfoldable) as Object
 
 import Report.Core as CT
 import Report.AtomicValue (AtomicValue(..))
+import Report.AtomicValue.Tag (AtomicValueTag(..))
+import Report.AtomicValue.Marker.Org (atomicTagByOrgMarker)
+import Data.Map (lookup) as Map
 import Report.Decorator (Decorator(..)) as D
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Priority (fromString) as Priority
@@ -33,81 +37,87 @@ import Utils.Data.WColor (fromHex) as WColor
 
 
 -- | Reads the value properties written by `Report.Convert.Org.Export._atomicProperties`,
--- | org property names are case-insensitive.
+-- | property names are the markers from `Report.AtomicValue.Marker.Org`, case-insensitive (as everywhere in org).
 propertyToAtomic :: String -> String -> Maybe AtomicValue
-propertyToAtomic key value = case String.toUpper key of
-    "INTVAL"     -> PInt <$> Int.fromString value
-    "NUMVAL"     -> PNumber <$> Number.fromString value
-    "TEXTVAL"    -> Just $ PText value
-    "BOOLVAL"    -> PBoolean <$> bool value
-    "YEARVAL"    -> PYear <$> Int.fromString value
-    "UIDVAL"     -> PID <$> Int.fromString value
-    "TOCOMPLETE" -> (\done -> ToComplete { done }) <$> bool value
-    "PERCENTI"   -> PercentI <$> Int.fromString value
-    "PERCENTN"   -> PercentN <$> Number.fromString value
-    "PERCENTX"   -> case words of
+propertyToAtomic key value =
+    Map.lookup (String.toUpper key) atomicTagByOrgMarker >>= \avTag -> atomicFromProperty avTag value
+
+
+atomicFromProperty :: AtomicValueTag -> String -> Maybe AtomicValue
+atomicFromProperty avTag value = case avTag of
+    AVTNone          -> Just None
+    AVTUnknown       -> Just Unknown
+    AVTPInt          -> PInt <$> Int.fromString value
+    AVTPNumber       -> PNumber <$> Number.fromString value
+    AVTPText         -> Just $ PText value
+    AVTPBoolean      -> PBoolean <$> bool value
+    AVTPYear         -> PYear <$> Int.fromString value
+    AVTPID           -> PID <$> Int.fromString value
+    AVTToComplete    -> (\done -> ToComplete { done }) <$> bool value
+    AVTPercentI      -> PercentI <$> Int.fromString value
+    AVTPercentN      -> PercentN <$> Number.fromString value
+    AVTPercentSign   -> case words of
         [ signS, pctS ] -> (\sign pct -> PercentSign { sign, pct }) <$> Int.fromString signS <*> Number.fromString pctS
         _ -> Nothing
-    "TOGETI"     -> ints >>= case _ of
+    AVTToGetI        -> ints >>= case _ of
         [ got, total ] -> Just $ ToGetI { got, total }
         _ -> Nothing
-    "TOGETN"     -> nums >>= case _ of
+    AVTToGetN        -> nums >>= case _ of
         [ got, total ] -> Just $ ToGetN { got, total }
         _ -> Nothing
-    "TOGETIX"    -> ints >>= case _ of
+    AVTToGetIX       -> ints >>= case _ of
         [ got, doing, total ] -> Just $ ToGetIX { got, doing, total }
         _ -> Nothing
-    "TOGETNX"    -> nums >>= case _ of
+    AVTToGetNX       -> nums >>= case _ of
         [ got, doing, total ] -> Just $ ToGetNX { got, doing, total }
         _ -> Nothing
-    "TOGETMI"    -> ints >>= case _ of
+    AVTToGetMI       -> ints >>= case _ of
         [ min, got, max ] -> Just $ ToGetMI { min, got, max }
         _ -> Nothing
-    "TOGETMN"    -> nums >>= case _ of
+    AVTToGetMN       -> nums >>= case _ of
         [ min, got, max ] -> Just $ ToGetMN { min, got, max }
         _ -> Nothing
-    "TOGETMIX"   -> ints >>= case _ of
+    AVTToGetMIX      -> ints >>= case _ of
         [ min, got, doing, max ] -> Just $ ToGetMIX { min, got, doing, max }
         _ -> Nothing
-    "TOGETMNX"   -> nums >>= case _ of
+    AVTToGetMNX      -> nums >>= case _ of
         [ min, got, doing, max ] -> Just $ ToGetMNX { min, got, doing, max }
         _ -> Nothing
-    "ONTIME"     -> OnTime <$> P.parseTime value
-    "ONDATE"     -> OnDate <$> P.parseDate value
-    "ONDATETIME" -> uncurry OnDateTime <$> P.parseDateTime value
-    "TIMERANGE"  -> TimeRange <$> fromTo <$> P.parseRange P.parseTime P.parseTime value
-    "DATERANGE"  -> DateRange <$> fromTo <$> P.parseRange P.parseDate P.parseDate value
-    "DATETIMERANGE" ->
+    AVTOnTime        -> OnTime <$> P.parseTime value
+    AVTOnDate        -> OnDate <$> P.parseDate value
+    AVTOnDateTime    -> uncurry OnDateTime <$> P.parseDateTime value
+    AVTTimeRange     -> TimeRange <$> fromTo <$> P.parseRange P.parseTime P.parseTime value
+    AVTDateRange     -> DateRange <$> fromTo <$> P.parseRange P.parseDate P.parseDate value
+    AVTDateTimeRange ->
         DateTimeRange <$> fromTo <$> bimap dateTime dateTime <$> P.parseRange P.parseDateTime P.parseDateTime value
-    "PERI"       -> amountAnd Int.fromString    <#> \{ amount, rest } -> PerI { amount, per : rest }
-    "PERN"       -> amountAnd Number.fromString <#> \{ amount, rest } -> PerN { amount, per : rest }
-    "MESI"       -> amountAnd Int.fromString    <#> \{ amount, rest } -> MeasuredI { amount, measure : rest }
-    "MESN"       -> amountAnd Number.fromString <#> \{ amount, rest } -> MeasuredN { amount, measure : rest }
-    "MESX"       -> case split1 value of
+    AVTPerI          -> amountAnd Int.fromString    <#> \{ amount, rest } -> PerI { amount, per : rest }
+    AVTPerN          -> amountAnd Number.fromString <#> \{ amount, rest } -> PerN { amount, per : rest }
+    AVTMeasuredI     -> amountAnd Int.fromString    <#> \{ amount, rest } -> MeasuredI { amount, measure : rest }
+    AVTMeasuredN     -> amountAnd Number.fromString <#> \{ amount, rest } -> MeasuredN { amount, measure : rest }
+    AVTMeasuredSign  -> case split1 value of
         Just (signS /\ rest) -> do
             sign <- Int.fromString signS
             (amountS /\ measure) <- split1 rest
             amount <- Number.fromString amountS
             pure $ MeasuredSign { sign, amount, measure }
         Nothing -> Nothing
-    "RANGEI"     -> ints >>= case _ of
+    AVTRangeI        -> ints >>= case _ of
         [ from, to ] -> Just $ RangeI { from, to }
         _ -> Nothing
-    "RANGEN"     -> nums >>= case _ of
+    AVTRangeN        -> nums >>= case _ of
         [ from, to ] -> Just $ RangeN { from, to }
         _ -> Nothing
-    "PROCVAL"    -> PTask <$> mbTaskPFromString value
-    "RELTIME"    -> relation P.parseTime <#> uncurry RelTime
-    "RELINT"     -> relation Int.fromString <#> uncurry RelInt
-    "RELNUM"     -> relation Number.fromString <#> uncurry RelNum
-    "PATHVAL"    -> PPath <$> P.parseChain value
-    "TAGSVAL"    -> Tags <$> traverse P.parseChain (String.split (String.Pattern ",") value)
-    "RAWTAGSVAL" -> Just $ PRawTags $ RawTags $ P.parseTags value
-    "COLORVAL"   -> PColor <$> WColor.fromHex value
-    "RATINGVAL"  -> PRating <$> P.parseRating value
-    "PRIORITYVAL" -> PPriority <$> Priority.fromString value
-    "ERRORVAL"   -> Just $ Error value
-    _            -> Nothing
+    AVTPTask         -> PTask <$> mbTaskPFromString value
+    AVTRelTime       -> relation P.parseTime <#> uncurry RelTime
+    AVTRelInt        -> relation Int.fromString <#> uncurry RelInt
+    AVTRelNum        -> relation Number.fromString <#> uncurry RelNum
+    AVTPPath         -> PPath <$> P.parseChain value
+    AVTTags          -> Tags <$> traverse P.parseChain (String.split (String.Pattern ",") value)
+    AVTPRawTags      -> Just $ PRawTags $ RawTags $ P.parseTags value
+    AVTColor         -> PColor <$> WColor.fromHex value
+    AVTPRating       -> PRating <$> P.parseRating value
+    AVTPPriority     -> PPriority <$> Priority.fromString value
+    AVTError         -> Just $ Error value
     where
         words = P.splitWithSpace value
         ints = traverse Int.fromString words

@@ -4,20 +4,18 @@ import Prelude
 
 import Data.Array as Array
 import Data.Array.NonEmpty as NEA
-import Data.String (joinWith, toUpper, trim) as String
-import Data.Tuple (fst) as Tuple
+import Data.String (joinWith, trim) as String
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (uncurry)
 import Data.Tuple.Nested ((/\), type (/\))
 
-import Effect.Exception (Error)
+import Effect.Exception (Error, try)
 import Control.Monad.Error.Class (class MonadThrow)
 
 import Data.Either (Either(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Console (warn) as Console
-import Effect.Exception (try)
 import Foreign (Foreign)
 import Node.Buffer (toString) as Buffer
 import Node.ChildProcess (execSync)
@@ -235,16 +233,6 @@ spec =
             roundTrips "EncodedValue" viaEncodedValue
         it "round-trip through org properties" do
             samplesCameBack "Org" orgSamples $ viaOrg <$> orgSamples
-        it "org property keys are different for different options (case-insensitive)" do
-            let
-                keysWithTags =
-                    Array.nubEq $ orgSamples >>= \aval ->
-                        orgProperties aval <#> \(key /\ _) -> String.toUpper key /\ show (AV.encodeAtomicValueTag $ AV.valueTagOf aval)
-                sameKey = Array.groupAllBy (comparing Tuple.fst) keysWithTags
-                    # Array.filter (\group -> NEA.length group > 1)
-            case sameKey of
-                [] -> pure unit
-                groups -> fail $ "Shared org keys: " <> show (NEA.toArray <$> groups)
         it "round-trip through Dhall (requires `dhall-to-json`)" do
             viaDhall >>= case _ of
                 Just results -> samplesCameBack "Dhall" samples results

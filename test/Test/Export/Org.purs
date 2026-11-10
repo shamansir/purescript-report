@@ -249,13 +249,13 @@ spec =
                             Just (Impl.Item item) -> do
                                 case Dec.get (Dec.KProgress $ PValueTag "PI") item.decorators of
                                     Just (Dec.SProgress (AV (AV.ToGetI { got, total }))) -> (got /\ total) `A.shouldEqual` (3 /\ 10)
-                                    _ -> A.fail "Expected `TOGETI` to be read as `ToGetI`"
+                                    _ -> A.fail "Expected `RAV_TOGETI` to be read as `ToGetI`"
                                 case Dec.get (Dec.KProgress $ PValueTag "MESI") item.decorators of
                                     Just (Dec.SProgress (AV (AV.MeasuredI { amount, measure }))) -> (amount /\ measure) `A.shouldEqual` (12 /\ "km")
-                                    _ -> A.fail "Expected lower-case `mesi` to be read as `MeasuredI`"
+                                    _ -> A.fail "Expected lower-case `rav_mesi` to be read as `MeasuredI`"
                                 case Dec.get (Dec.KProgress $ PValueTag "RELT") item.decorators of
                                     Just (Dec.SProgress (AV (AV.RelTime CT.RMoreThan { hrs }))) -> hrs `A.shouldEqual` 40
-                                    _ -> A.fail "Expected `RELTIME` to be read as `RelTime`"
+                                    _ -> A.fail "Expected `RAV_RELTIME` to be read as `RelTime`"
                                 case Dec.get Dec.KDescription item.decorators of
                                     Just (Dec.SDescription desc) -> desc `A.shouldEqual` "Some details"
                                     _ -> A.fail "Expected `Description` to be read as a decorator"
@@ -314,9 +314,9 @@ orgWithProperties = """* Work
 ** TODO Measure things
    :PROPERTIES:
    :Title: Measure things
-   :TOGETI: 3 10
-   :mesi: 12 km
-   :RELTIME: more_than 40:00:00
+   :RAV_TOGETI: 3 10
+   :rav_mesi: 12 km
+   :RAV_RELTIME: more_than 40:00:00
    :Description: Some details
    :Task: DONE
    :END:
