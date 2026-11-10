@@ -2,6 +2,8 @@ module Report.Decorator where
 
 import Prelude
 
+import Data.Generic.Rep (class Generic)
+
 import Foreign (Foreign, F)
 
 import Data.Map (Map)
@@ -46,6 +48,7 @@ data Decorator
 --     compare a b = CK.keyOf @Key a `compare` CK.keyOf @Key b
 
 derive instance Eq Key
+derive instance Generic Key _
 
 instance Ord Key where
     compare a b = orderOf a `compare` orderOf b

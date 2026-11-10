@@ -464,6 +464,9 @@ data PTValueTag -- FIXME: use it everywhere above for consistency
     | PTLevelsC
 
 
+derive instance Generic PTValueTag _
+
+
 _vtagFrom :: PValueTag -> PTValueTag
 _vtagFrom (PValueTag str) = case str of
     -- "E" -> PTNone

@@ -2,6 +2,8 @@ module Report.Decorators.Tabular.TabularValue where
 
 import Prelude
 
+import Data.Generic.Rep (class Generic)
+
 import Foreign (Foreign, F)
 import Foreign (fail, ForeignError(..)) as F
 
@@ -330,6 +332,9 @@ data TabValTypeKey
     | TVTDateTimeRange
     | TVTDecorator D.Key
     | TVTTags
+
+
+derive instance Generic TabValTypeKey _
 
 
 typeKeyOf :: AtomicValue -> TabValTypeKey
