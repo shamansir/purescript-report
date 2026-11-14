@@ -522,7 +522,7 @@ _tabularDocLines = case _ of
     AV.PID id        -> pure $ D.text $ show id
     AV.PYear year    -> pure $ D.text $ show year
     AV.OnTime timeRec -> pure $ orgTime timeRec
-    AV.PBoolean bool -> pure $ D.text $ if bool then "true" else "one"
+    AV.PBoolean bool -> pure $ D.text $ if bool then "true" else "false"
     AV.OnDate sdate   -> pure $ orgDate $ CT.dateToRec sdate
     AV.OnDateTime sdate timeRec -> pure $ (orgDate $ CT.dateToRec sdate) <> D.text "@" <> (orgTime timeRec)
     AV.TimeRange { from, to } -> pure $ (orgTime from) <> D.text "--" <> (orgTime to)

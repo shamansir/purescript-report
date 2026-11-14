@@ -33,7 +33,8 @@ import Report.Impl.Subject (SubjectId)
 import Report.Convert.Types (ImportError, printImportError, Input(..), Output(..))
 import Report.Convert.Generic (RR, RawReport, IncludeRule(..))
 import Report.Convert.Smos (fromSmos, toSmos) as Smos
-import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
+import Report.Convert.Converter (Command(..), runCommand, defaultOptions, readReport, convertReport)
+import Test.Export.RepDodo (repWithGroupTabular) as RepTest
 import Report.Core (ReportFormat(..), SDate(..), monthToInt) as CT
 
 import Report.Impl.Item (Item(..)) as Impl
@@ -301,6 +302,16 @@ spec =
                                                             _ -> A.fail "Expected Logbook in state-history tabular"
 
         describe "export" do
+
+            it "writes the atomic tabular values of the groups" do
+                case convertReport CT.Smos <$> readReport CT.Rep RepTest.repWithGroupTabular of
+                    Left err -> A.fail $ printImportError err
+                    Right exported -> do
+                        let shouldContain str =
+                                if String.contains (String.Pattern str) exported then pure unit
+                                else A.fail $ "Expected `" <> str <> "` in:\n" <> exported
+                        shouldContain "RTB_year: '2017'"
+                        shouldContain "RTB_owned: 'true'"
 
             {-}
             let

@@ -28,7 +28,8 @@ import Report.Decorators.Tags (RawTag)
 import Report.Convert.Types (ImportError, printImportError)
 import Report.Convert.Generic (RR, includeAll)
 import Report.Convert.Org (fromOrg) as Org
-import Report.Convert.Converter (Command(..), runCommand, defaultOptions)
+import Report.Convert.Converter (Command(..), runCommand, defaultOptions, readReport, convertReport)
+import Test.Export.RepDodo (repWithGroupTabular) as RepTest
 import Report.Convert.Types (ImportError, printImportError, Input(..), Output(..))
 import Report.Impl.Subject (SubjectId)
 import Report.Core (ReportFormat(..), SDate(..), Relation(..), monthToInt) as CT
@@ -264,6 +265,16 @@ spec =
                                     _ -> A.fail "Expected a task from the heading"
 
         describe "export" do
+
+            it "writes the atomic tabular values of the groups" do
+                case convertReport CT.Org <$> readReport CT.Rep RepTest.repWithGroupTabular of
+                    Left err -> A.fail $ printImportError err
+                    Right exported -> do
+                        let shouldContain str =
+                                if String.contains (String.Pattern str) exported then pure unit
+                                else A.fail $ "Expected `" <> str <> "` in:\n" <> exported
+                        shouldContain ":RTB_year: 2017"
+                        shouldContain ":RTB_owned: true"
 
             let options = defaultOptions
 

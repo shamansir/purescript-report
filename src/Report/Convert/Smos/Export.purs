@@ -5,11 +5,12 @@ import Prelude
 import Foreign (Foreign, F)
 import Control.Monad.Except (runExcept)
 
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe, isNothing)
 import Data.Either (either)
 import Data.Tuple (Tuple(..))
 import Data.String (joinWith) as String
 import Data.Array as Array
+import Data.Array ((:))
 import Data.Newtype (unwrap)
 import Data.Map (Map)
 import Data.Map as Map
@@ -35,6 +36,10 @@ import Report.Decorators.Progress (Progress(..), PTValueTag(..), Levels(..), _vt
 import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Decorators.Tabular.Logbook (LogbookEntry, entries) as Logbook
+import Report.Tabular (items, Item(..)) as Tabular
+import Report.Convert.Org.Export (_atomicPropertyValue, tabularPropertyName) as Org
+
+import Dodo as D
 
 import Data.YAML.Foreign.Encode (YValue, class ToYAML, toYAML, printYAML, object)
 
@@ -99,10 +104,35 @@ toSmos inclRule =
 
         groupEntryYV :: Group -> YValue
         groupEntryYV (Group grpRec) =
-            object
-                [ Tuple "header"     (toYAML grpRec.title)
-                , Tuple "properties" $ object [ Tuple "path" (toYAML $ GroupPath.encode grpRec.path) ]
-                ]
+            let tabulars     = tabularRec <$> Tabular.items grpRec.tabular
+                stateHistory = tabularStateHistory tabulars
+                timestamps   = tabularTimestamps   tabulars
+                logbookArr   = tabularLogbook      tabulars
+                -- the values which were not written as timestamps
+                properties   = Array.mapMaybe tabularToProperty $ Array.filter (tabularToTimestamp >>> isNothing) tabulars
+                pairs = Array.catMaybes
+                    [ Just $ Tuple "header"     (toYAML grpRec.title)
+                    , Just $ Tuple "properties" $ object $ Tuple "path" (toYAML $ GroupPath.encode grpRec.path) : properties
+                    , if Array.null logbookArr then Nothing
+                      else Just $ Tuple "logbook" (toYAML $ AsYaml <$> logbookArr)
+                    , if Array.null stateHistory then Nothing
+                      else Just $ Tuple "state-history" (toYAML $ AsYaml <$> stateHistory)
+                    , if Object.isEmpty timestamps then Nothing
+                      else Just $ Tuple "timestamps" (toYAML $ (Map.fromFoldable :: Array _ -> Map String String) $ Object.toUnfoldable timestamps)
+                    ]
+            in object pairs
+
+        tabularRec :: Tabular.Item TV.TabularValue -> TabularRec
+        tabularRec (Tabular.Item { key, label, value }) = { tkey : key, tlabel : label, value }
+
+        -- | only the atomic values are written to properties, with the same names and values as in `.org`
+        tabularToProperty :: TabularRec -> Maybe (Tuple String YValue)
+        tabularToProperty { tkey, value } = case value of
+            TV.TVAtomic aval ->
+                Org._atomicPropertyValue aval
+                    <#> D.print D.plainText D.twoSpaces
+                    <#> \valStr -> Tuple (Org.tabularPropertyName tkey) (toYAML valStr)
+            _ -> Nothing
 
         itemTreeYV :: ItemRec -> YValue
         itemTreeYV itemRec =
@@ -111,8 +141,8 @@ toSmos inclRule =
         itemEntryYV :: ItemRec -> YValue
         itemEntryYV itemRec =
             let stateHistory  = itemStateHistory itemRec
-                timestamps    = itemTimestamps   itemRec
-                logbookArr    = itemLogbook      itemRec
+                timestamps    = tabularTimestamps itemRec.tabulars
+                logbookArr    = tabularLogbook    itemRec.tabulars
                 rawTags       = unwrap itemRec.tags
                 tagStrs       = (Chain.toString <<< CT.loadRawId) <$> rawTags
                 mbDescription = findDecorator @D.Decorator itemRec.decorators "DESC"
@@ -132,9 +162,9 @@ toSmos inclRule =
                     ]
             in object pairs
 
-        itemLogbook :: ItemRec -> Array YValue
-        itemLogbook itemRec =
-            case Array.find (\{ tkey } -> tkey == "logbook") itemRec.tabulars of
+        tabularLogbook :: Array TabularRec -> Array YValue
+        tabularLogbook tabulars =
+            case Array.find (\{ tkey } -> tkey == "logbook") tabulars of
                 Just { value: TV.TVLogbook logbook } ->
                     logbookEntryYV <$> Logbook.entries logbook
                 _ -> []
@@ -151,12 +181,15 @@ toSmos inclRule =
                 Nothing ->
                     object [ Tuple "start" (toYAML startStr) ]
 
+        tabularStateHistory :: Array TabularRec -> Array YValue
+        tabularStateHistory tabulars =
+            case Array.find (\{ tkey } -> tkey == "state-history") tabulars of
+                Just { value: TV.TVLogbook logbook } -> stateEntryYV <$> Logbook.entries logbook
+                _ -> []
+
         itemStateHistory :: ItemRec -> Array YValue
         itemStateHistory itemRec =
-            let fromTabular = case Array.find (\{ tkey } -> tkey == "state-history") itemRec.tabulars of
-                    Just { value: TV.TVLogbook logbook }
-                        | not (Array.null $ Logbook.entries logbook) -> stateEntryYV <$> Logbook.entries logbook
-                    _ -> []
+            let fromTabular = tabularStateHistory itemRec.tabulars
             in if not (Array.null fromTabular) then fromTabular
                else
                    let mbTask     = findDecorator @D.Decorator itemRec.decorators $ D.encodeKey D.KTask
@@ -196,9 +229,9 @@ toSmos inclRule =
                 , Tuple "time"  (toYAML timeStr)
                 ]
 
-        itemTimestamps :: ItemRec -> Object.Object String
-        itemTimestamps itemRec =
-            itemRec.tabulars
+        tabularTimestamps :: Array TabularRec -> Object.Object String
+        tabularTimestamps tabulars =
+            tabulars
                 # Array.mapMaybe tabularToTimestamp
                 # Object.fromFoldable
 

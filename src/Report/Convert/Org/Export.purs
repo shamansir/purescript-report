@@ -39,7 +39,7 @@ import Report.Decorators.Tags (Tags, RawTag(..))
 import Data.Array.NonEmpty (toArray) as NEA
 import Report.Decorators.Progress (Progress(..)) as P
 import Report.Tabular (Tabular)
-import Report.Tabular (findV) as Tabular
+import Report.Tabular (findV, items, Item(..)) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
@@ -115,9 +115,11 @@ toOrg inclRule =
             in
             groupHeadingPrefix <+> D.text groupRec.title
             <> D.break <> propertiesBlock
-                [ "Path" /\ orgPath groupRec.path
-                , "Index" /\ D.text (show index)
-                ]
+                (  [ "Path" /\ orgPath groupRec.path
+                   , "Index" /\ D.text (show index)
+                   ]
+                <> _tabularProperties groupRec.tabular
+                )
             <> D.break
             <> (joinWith D.break $ convertItem groupRec.path <$> items)
 
@@ -363,6 +365,20 @@ _atomicPropertyValue = case _ of
         pure $ D.text (show (Rating.toNumber rating) <> " " <> show (Rating.maxValue rating))
     PPriority priority ->
         pure $ D.text (Priority.priorityChar priority)
+
+
+-- | Only the atomic tabular values are written, since the properties are one-liners;
+-- | the property name is the key of the tabular value with the `RTB_` prefix, so that it never mixes with the core org properties
+-- | and the other properties written by the export.
+_tabularProperties :: Tabular TV.TabularValue -> Array ( String /\ Doc Unit )
+_tabularProperties =
+    Tabular.items >>> Array.mapMaybe \(Tabular.Item { key, value }) -> case value of
+        TV.TVAtomic aval -> (\doc -> tabularPropertyName key /\ doc) <$> _atomicPropertyValue aval
+        _ -> Nothing
+
+
+tabularPropertyName :: String -> String
+tabularPropertyName key = "RTB_" <> key
 
 
 orgRelation :: CT.Relation -> String
