@@ -159,6 +159,7 @@ fromDhall jsonStr =
                     { path : pathFromRef groupRec.ref
                     , stats : Stats.SYetUnknown
                     , title : groupRec.title
+                    , tabular : Tabular.empty
                     }
                 )
         dhallConvertItem :: DhallItemRec -> Maybe item

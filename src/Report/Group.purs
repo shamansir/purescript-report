@@ -2,7 +2,7 @@ module Report.Group where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Tuple (fst, snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
@@ -22,8 +22,11 @@ import Report.GroupPath as GP
 import Report.Modify (class GroupModify, class StatsModify)
 import Report.Chain (Chain(..))
 import Report.Chain (toArray, toNEArray, fromNEArray) as Chain
+import Report.Tabular (Tabular)
+import Report.Tabular (empty) as Tabular
+import Report.Decorators.Tabular.TabularValue (TabularValue)
 
-import Yoga.JSON (class WriteForeign, class ReadForeign)
+import Yoga.JSON (class WriteForeign, class ReadForeign, readImpl)
 
 {- Group -}
 
@@ -33,6 +36,7 @@ newtype Group =
         { title :: String
         , path :: GroupPath
         , stats :: Stats
+        , tabular :: Tabular TabularValue
         }
 
 
@@ -44,7 +48,16 @@ instance Ord Group where
     compare (Group groupA) (Group groupB) = compare groupA.path groupB.path
 
 derive newtype instance WriteForeign Group
-derive newtype instance ReadForeign Group
+-- `tabular` is optional, so that the groups exported before it was introduced can still be read
+instance ReadForeign Group where
+    readImpl frgn = do
+        grp <- (readImpl frgn :: _ { title :: String, path :: GroupPath, stats :: Stats, tabular :: Maybe (Tabular TabularValue) })
+        pure $ Group
+            { title : grp.title
+            , path : grp.path
+            , stats : grp.stats
+            , tabular : fromMaybe Tabular.empty grp.tabular
+            }
 
 
 instance Show Group where
@@ -64,6 +77,7 @@ mkGroupWith path title stats =
         { title
         , stats
         , path : GroupPath path
+        , tabular : Tabular.empty
         }
 
 
@@ -97,6 +111,10 @@ pathOf (Group group) = group.path
 
 setStats :: Stats -> Group -> Group
 setStats stats (Group group) = Group $ group { stats = stats }
+
+
+setTabular :: Tabular TabularValue -> Group -> Group
+setTabular tabular (Group group) = Group $ group { tabular = tabular }
 
 
 type FoldStep = { prevPath :: Array String, prevNames :: Array String, groupChain :: NonEmptyArray Group }
@@ -223,6 +241,10 @@ instance HasStats Group where
     i_stats = unwrap >>> _.stats
 
 
+instance HasTabular Group where
+    i_tabular = unwrap >>> _.tabular
+
+
 instance GroupModify Group where
     setGroupName name   = unwrap >>> _ { title = name  } >>> wrap
 
@@ -240,6 +262,7 @@ instance IsGroupable Group RawTag where
                     { stats : Stats.SYetUnknown
                     , title
                     , path : GP.pathFromArray $ NEA.take (idx + 1) idChain
+                    , tabular : Tabular.empty
                     }
         in
             Just $ Chain.fromNEArray $ mapWithIndex mkGroupLink $ NEA.zip idChain contentChain
@@ -249,6 +272,7 @@ from ::
    forall group
    . IsGroup group
    => HasStats group
+   => HasTabular group
    => group
    -> Group
 from grp =
@@ -256,15 +280,16 @@ from grp =
         { title : g_title grp
         , path : g_path grp
         , stats : i_stats grp
+        , tabular : i_tabular grp
         }
 
-{-| Concatenate paths of two groups in given order, take stats and title from the second group. |-}
+{-| Concatenate paths of two groups in given order, take stats, title and tabular from the second group. |-}
 _cons :: Group -> Group -> Group
-_cons (Group { path : pathA }) (Group { path : pathB, stats, title }) =
-    Group { path : pathA <> pathB, stats, title }
+_cons (Group { path : pathA }) (Group { path : pathB, stats, title, tabular }) =
+    Group { path : pathA <> pathB, stats, title, tabular }
 
 
-{-| Concatenate paths of two groups in reverse to given order, take stats and title from the first group. |-}
+{-| Concatenate paths of two groups in reverse to given order, take stats, title and tabular from the first group. |-}
 _snoc :: Group -> Group -> Group
-_snoc (Group { path : pathA, stats, title }) (Group { path : pathB }) =
-    Group { path : pathB <> pathA, stats, title }
+_snoc (Group { path : pathA, stats, title, tabular }) (Group { path : pathB }) =
+    Group { path : pathB <> pathA, stats, title, tabular }

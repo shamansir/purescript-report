@@ -7,7 +7,7 @@ import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Bifunctor (lmap, rmap)
 import Data.Tuple.Nested ((/\), type (/\))
-import Data.Array (mapMaybe, catMaybes) as Array
+import Data.Array (mapMaybe, catMaybes, filter) as Array
 
 import Report (Report)
 import Report (build, mapSubjects, mapGroups, mapItems, toBuilder, fromBuilder) as Report
@@ -30,6 +30,7 @@ import Report.Convert.Generic (convertItem, convertGroup, convertSubject, conver
 import Report.Convert.Types (ImportError(..))
 import Report.Impl.Subject (SubjectId)
 import Report.Convert.Rep.Import.Parser as Parser
+import Report.Convert.Rep.Export (groupPathTabularId, groupIndexTabularId) as Export
 import Report.Tabular (Tabular(..))
 import Report.Tabular (empty) as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
@@ -68,6 +69,7 @@ fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> 
         { path : GP.path groupRec.path
         , stats : Stats.defaultStats
         , title : groupRec.title
+        , tabular : Tabular $ Array.catMaybes $ map (map TV.TVAtomic) <$> _.parsed <$> Array.filter (not <<< isGeneratedGroupTabular) groupRec.tabulars
         }
         /\
         (convertItem groupRec <$> groupRec.items)
@@ -79,3 +81,7 @@ fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> 
         , tabular : Tabular $ Array.catMaybes $ map (map TV.TVAtomic) <$> _.parsed <$> itemRec.tabulars
         }
     convertDecorator dec = Decorator.keyOf dec /\ dec
+    -- `path` and `index` are written by `Report.Convert.Rep.Export` for every group, they are not the part of the group's own tabular
+    isGeneratedGroupTabular tabRec = case tabRec.id of
+        Just tabId -> tabId == Export.groupPathTabularId || tabId == Export.groupIndexTabularId
+        Nothing -> false

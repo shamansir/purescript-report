@@ -89,7 +89,7 @@ fromSmos yamlStr =
                                 Group
                                     { path: GP.pathFromArray ["_root"]
                                     , title: "_root"
-                                    , stats: Stats.SYetUnknown
+                                    , stats: Stats.SYetUnknown, tabular: Tabular.empty
                                     }
                         in
                         maybe [] pure
@@ -105,7 +105,7 @@ fromSmos yamlStr =
                 branches = Array.filter (not <<< isLeafTree) children
             in Array.catMaybes
                 [ convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
-                      (Group { path: GP.pathFromArray myPath, title: e.header, stats: Stats.SYetUnknown })
+                      (Group { path: GP.pathFromArray myPath, title: e.header, stats: Stats.SYetUnknown, tabular: Tabular.empty })
                       <#> \g -> g /\ Array.catMaybes (collectItem <$> leaves)
                 ]
               <> Array.concatMap (collectBranch myPath) branches

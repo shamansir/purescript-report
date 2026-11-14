@@ -9,6 +9,8 @@ import Data.Newtype (class Newtype, unwrap, wrap)
 
 import Report.Decorators.Stats (Stats)
 import Report.GroupPath (GroupPath, PathSegment)
+import Report.Tabular (Tabular)
+import Report.Decorators.Tabular.TabularValue (TabularValue)
 
 
 type Group = Core.Group
@@ -40,3 +42,7 @@ pathOf = Core.pathOf
 
 setStats ∷ Stats → Group → Group
 setStats = Core.setStats
+
+
+setTabular ∷ Tabular TabularValue → Group → Group
+setTabular = Core.setTabular

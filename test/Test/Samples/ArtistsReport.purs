@@ -60,6 +60,7 @@ instance IsGroup MyGroup where
 
 
 instance HasStats MyGroup where i_stats = const ST.SNotRelevant
+instance HasTabular MyGroup where i_tabular = const Tabular.empty
 
 
 instance HasTags ArtistTag Artist where

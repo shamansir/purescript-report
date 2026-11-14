@@ -4,7 +4,7 @@ import Prelude
 
 import Effect.Class (liftEffect)
 
-import Yoga.JSON (readJSON) as JSON
+import Yoga.JSON (readJSON, writeJSON) as JSON
 import Foreign (ForeignError, renderForeignError) as F
 
 import Data.Array as Array
@@ -28,7 +28,17 @@ import GameLog.Types.Game (GameId, GameTag) as GL
 import GameLog.Types.ManyGamesStats (GamesReport, fromArray, RawAchievements) as GL
 import GameLog.Types.Achievement (Tag) as GL
 
-import Report (toReport)
+import Report (toReport, unfold)
+import Report.Group (Group(..))
+import Report.Tabular (Item(..), items) as Tabular
+import Report.AtomicValue (AtomicValue(..)) as AV
+import Report.Decorators.Tabular.TabularValue (TabularValue(..)) as TV
+import Report.Convert.Generic (RR, RawReport) as R
+import Report.Convert.Rep (fromRep) as I
+import Report.Impl.Subject (SubjectId)
+import Report.Decorators.Tags (RawTag)
+import Data.Tuple (fst, snd) as Tuple
+import Data.Tuple.Nested ((/\))
 import Report.Convert.Types (ImportError, printImportError)
 import Report.Convert.Generic (includeAll) as R
 import Report.Convert.Rep (toRep) as D
@@ -57,6 +67,39 @@ spec =
                 reportRep `U.shouldEqual` expectedRepAstralChain
             )
             eDhallGameCollection
+
+      it "group tabular values round-trip through `rep`" do
+        let
+          readRaw :: String -> Either ImportError R.RawReport
+          readRaw = I.fromRep @R.RR @SubjectId @RawTag @RawTag
+          groupTabular src =
+            readRaw src
+              <#> unfold
+              <#> map Tuple.snd
+              <#> Array.concat
+              <#> map (Tuple.fst >>> \(Group group) -> group.title /\ (tabularItem <$> Tabular.items group.tabular))
+          -- `AtomicValue` has no `Show` instance, so the values are compared as JSON
+          tabularItem (Tabular.Item { key, label, value }) = key /\ label /\ case value of
+            TV.TVAtomic aval -> Just $ JSON.writeJSON aval
+            _ -> Nothing
+          expected =
+            [ "Switch" /\
+                [ "year"  /\ "Release Year" /\ Just (JSON.writeJSON $ AV.PYear 2017)
+                , "owned" /\ "Owned"        /\ Just (JSON.writeJSON $ AV.PBoolean true)
+                ]
+            , "Empty" /\ []
+            ]
+        case groupTabular repWithGroupTabular of
+          Left err -> A.fail $ "Parse failed: " <> printImportError err
+          Right groups -> do
+            -- `path` and `index` are generated, so they are not the part of the group's tabular
+            groups `A.shouldEqual` expected
+            case readRaw repWithGroupTabular of
+              Left err -> A.fail $ "Parse failed: " <> printImportError err
+              Right report ->
+                case groupTabular $ D.toRep @R.RR @SubjectId @RawTag @RawTag R.includeAll report of
+                  Left err -> A.fail $ "Parse of the exported `rep` failed: " <> printImportError err
+                  Right exportedGroups -> exportedGroups `A.shouldEqual` expected
 
       it "from `rep` (plain)" do
         let
@@ -168,6 +211,27 @@ spec =
                     g15.title `A.shouldEqual` "Photo"
                     g15.depth `A.shouldEqual` 3
                     g15.path  `A.shouldEqual` ["01-stats", "05-unique", "06-photo"]
+
+
+repWithGroupTabular :: String
+repWithGroupTabular = """SBJ. Games // games
+    GRP. Switch // switch
+    - Path // path
+    ; TXT. switch
+    - Index // index
+    ; INT. 0
+    - Release Year // year
+    ; YER. 2017
+    - Owned // owned
+    ; BOL. true
+        Zelda
+    GRP. Empty // empty
+    - Path // path
+    ; TXT. empty
+    - Index // index
+    ; INT. 1
+        Tetris
+"""
 
 
 expectedRepAstralChain = """SBJ. Astral Chain // DHL:astral-chain

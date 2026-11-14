@@ -140,9 +140,11 @@ toRep inclRule =
                     Just pathId -> D.space <> markSym pathKW <> (D.text $ unwrap pathId)
                     Nothing -> mempty
                 <> D.break <> tabularBlock
-                    [ { id : "path",  label : "Path",  marker : tmfp (P.PTAV AVTPText), valueLines : pure $ convertPath groupRec.path }
-                    , { id : "index", label : "Index", marker : tmfp (P.PTAV AVTPInt), valueLines : pure $ D.text $ show index        }
-                    ]
+                    (  [ { id : groupPathTabularId,  label : "Path",  marker : tmfp (P.PTAV AVTPText), valueLines : pure $ convertPath groupRec.path }
+                       , { id : groupIndexTabularId, label : "Index", marker : tmfp (P.PTAV AVTPInt), valueLines : pure $ D.text $ show index        }
+                       ]
+                    <> (Array.catMaybes $ convertTabularToDocLine <$> convertTabularItem <$> Tabular.items groupRec.tabular)
+                    )
                 <> case items of
                     [] -> mempty
                     _ -> D.break <> (joinWith D.break $ D.indent <$> convertItem groupRec.path <$> items)
@@ -159,6 +161,9 @@ toRep inclRule =
             <> case itemRec.tabulars of
                   [] -> mempty
                   _ -> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> itemRec.tabulars)
+
+        convertTabularItem :: Tabular.Item TV.TabularValue -> TabularRec
+        convertTabularItem (Tabular.Item { key, label, value }) = { tkey : key, tlabel : label, value }
 
         convertTabularToDocLine :: TabularRec -> Maybe TabularRenderRec
         convertTabularToDocLine tabRec =
@@ -261,6 +266,15 @@ type TabularRenderRec =
     , marker :: TriMarker
     , valueLines :: NonEmptyArray (Doc Unit)
     }
+
+
+-- | the ids of the tabular values which are written for every group, but are not the part of the group's own tabular
+groupPathTabularId :: String
+groupPathTabularId = "path"
+
+
+groupIndexTabularId :: String
+groupIndexTabularId = "index"
 
 
 tabularBlock :: Array TabularRenderRec -> Doc Unit

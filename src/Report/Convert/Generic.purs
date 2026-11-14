@@ -57,6 +57,7 @@ class
     , HasTabular subj
     , HasStats subj
     , HasStats group
+    , HasTabular group
     , HasTabular item
     , EncodableKey subj_id
     -- => WriteForeign subj_tag
@@ -80,6 +81,7 @@ class
     , HasTabular subj
     , HasStats subj
     , HasStats group
+    , HasTabular group
     , HasTabular item
     , EncodableKey subj_id
     -- => WriteForeign subj_tag
@@ -104,6 +106,7 @@ instance
     , HasTabular subj
     , HasStats subj
     , HasStats group
+    , HasTabular group
     , EncodableKey subj_id
     , HasTabular item
     -- => WriteForeign subj_tag
@@ -158,6 +161,7 @@ toExport inclRule =
                 { title : g_title group
                 , path  : g_path group
                 , stats : i_stats group
+                , tabular : i_tabular group
                 }
         collectItem :: item -> ItemRec
         collectItem item =

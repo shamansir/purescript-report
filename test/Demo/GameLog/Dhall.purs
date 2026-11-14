@@ -27,7 +27,7 @@ import Report.AtomicValue (AtomicValue(..)) as AV
 import Report.Decorators.Progress (DateRec, PValueTag(..), Progress(..), ProgressJson(..))
 import Report.Decorators.Progress (fromJson, _readProgress, rawToProgressJson) as Progress
 import Report.Tabular (Tabular)
-import Report.Tabular (findV, fromArray) as Tabular
+import Report.Tabular (findV, fromArray, empty) as Tabular
 import Report.Decorators.Tabular.TabularValue as TV
 import Report.Group (Group(..), isGroupAt, setStats)
 import Report.GroupPath (GroupPath(..), PathSegment(..))
@@ -278,6 +278,7 @@ readDhallRec ach =
           { title : title
           , stats : SYetUnknown
           , path : pathFromRef ach.ref
+          , tabular : Tabular.empty
           }
       )
       ach.title

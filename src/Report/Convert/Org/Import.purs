@@ -90,7 +90,7 @@ fromOrg orgStr =
                 if Array.null topLeaves then []
                 else Array.catMaybes
                     [ convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
-                          (Group { path: GP.pathFromArray ["_root"], title: "_root", stats: Stats.SYetUnknown })
+                          (Group { path: GP.pathFromArray ["_root"], title: "_root", stats: Stats.SYetUnknown, tabular: Tabular.empty })
                           <#> \g -> g /\ Array.catMaybes (collectItem <$> topLeaves)
                     ]
         in rootResult <> Array.concatMap (collectBranch parentPath) branches
@@ -102,7 +102,7 @@ fromOrg orgStr =
             branches = Array.filter (not <<< isLeafNode) n.children
         in Array.catMaybes
             [ convertGroup @subj_id @subj_tag @item_tag @subj @group @item @x
-                  (Group { path: GP.pathFromArray myPath, title: n.title, stats: Stats.SYetUnknown })
+                  (Group { path: GP.pathFromArray myPath, title: n.title, stats: Stats.SYetUnknown, tabular: Tabular.empty })
                   <#> \g -> g /\ Array.catMaybes (collectItem <$> leaves)
             ]
           <> Array.concatMap (collectBranch myPath) branches
