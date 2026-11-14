@@ -38,6 +38,9 @@ data TabularValue
     | TVLogbook Logbook
     -- | TVNest (Array TabularValue)
 
+
+derive instance Eq TabularValue
+
 -- data LIField v
 --     = LIField v
 --     | LISectionTitle v -- an internal hack
@@ -335,6 +338,7 @@ data TabValTypeKey
 
 
 derive instance Generic TabValTypeKey _
+derive instance Eq TabValTypeKey
 
 
 typeKeyOf :: AtomicValue -> TabValTypeKey
@@ -353,3 +357,31 @@ typeKeyOf = case _ of
     DateTimeRange _ -> TVTDateTimeRange
     PRawTags _ -> TVTTags
     aval -> TVTDecorator $ D.keyOf $ toDecorator aval
+
+
+-- | The kind of the tabular value, as well as of the parts of the composite values, used for the markers
+data TabularValueTag
+    = TVTAtomic TabValTypeKey
+    | TVTValues
+    | TVTValuesNest
+    | TVTTabulars
+    | TVTPair
+    | TVTTabularsNest
+    | TVTLogbook
+    | TVTTabular -- one tabular inside `TVTabulars` or `TVTabularsNest`
+    | TVTLogbookEntry -- one entry of `TVLogbook`
+
+
+derive instance Generic TabularValueTag _
+derive instance Eq TabularValueTag
+
+
+tabularTagOf :: TabularValue -> TabularValueTag
+tabularTagOf = case _ of
+    TVAtomic aval -> TVTAtomic $ typeKeyOf aval
+    TVValues _ -> TVTValues
+    TVValuesNest _ -> TVTValuesNest
+    TVTabulars _ -> TVTTabulars
+    TVPair _ _ -> TVTPair
+    TVTabularsNest _ -> TVTTabularsNest
+    TVLogbook _ -> TVTLogbook

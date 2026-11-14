@@ -35,6 +35,7 @@ class ToTabularValue a v where
 newtype Item v = Item { key :: String, label :: String, value :: v }
 derive instance Newtype (Item v) _
 derive instance Functor Item
+derive newtype instance Eq v => Eq (Item v)
 derive newtype instance ReadForeign v => ReadForeign (Item v)
 derive newtype instance WriteForeign v => WriteForeign (Item v)
 
@@ -45,6 +46,7 @@ instance Keyed String (Item v) where
 
 newtype Tabular v = Tabular (Array (Item v))
 derive instance Functor Tabular
+derive newtype instance Eq v => Eq (Tabular v)
 derive newtype instance ReadForeign v => ReadForeign (Tabular v)
 derive newtype instance WriteForeign v => WriteForeign (Tabular v)
 

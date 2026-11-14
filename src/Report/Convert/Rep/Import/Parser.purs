@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Alt ((<|>))
 import Data.Array as Array
+import Data.Array ((:))
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Either (Either)
@@ -29,13 +30,15 @@ import Report.Chain (Chain)
 import Report.Chain (fromArray) as Chain
 import Utils.Data.WColor (fromHex) as WColor
 import Report.Decorator (Decorator(..), Key(..))
-import Report.Tabular (Item(..)) as Tab
+import Report.Tabular (Item(..), Tabular(..)) as Tab
 import Report.AtomicValue (AtomicValue)
 import Report.AtomicValue (AtomicValue(..), AtomicValueTag(..)) as AV
-import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..), fromDecorator) as TV
+import Report.Decorators.Tabular.TabularValue (TabularValue)
+import Report.Decorators.Tabular.TabularValue (TabValTypeKey(..), TabularValueTag(..), TabularValue(..), fromDecorator) as TV
+import Report.Decorators.Tabular.Logbook (Logbook(..), LogbookEntry)
 import Report.Decorators.Progress (Progress(..))
 import Report.Decorators.Progress (PTValueTag(..), _vtagFrom, Levels(..)) as P
-import Report.Decorators.Task (taskPFromString)
+import Report.Decorators.Task (taskPFromString, mbTaskPFromString)
 import Report.Decorators.Rating (Rating(..))
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Tags (RawTag(..), RawTags(..))
@@ -57,8 +60,21 @@ type RepTabular =
   , id       :: Maybe String
   , marker   :: RE.TriMarker
   , rawValue :: NonEmptyArray String
-  , parsed   :: Maybe (Tab.Item AtomicValue) -- TODO support all kinds of TabularValues
+  , parts    :: Array RepTabularPart -- the parts of the composite value, empty for atomic ones
+  , parsed   :: Maybe (Tab.Item TabularValue)
   }
+
+-- | A value inside the composite tabular value
+type RepTabularValue =
+  { marker   :: RE.TriMarker
+  , rawValue :: NonEmptyArray String
+  , parts    :: Array RepTabularPart
+  }
+
+-- | A part of the composite tabular value: either a value or (inside `TAB`) a tabular entry
+data RepTabularPart
+  = RTPValue RepTabularValue
+  | RTPEntry RepTabular
 
 type RepDecorator =
   { marker   :: RE.TriMarker
@@ -218,16 +234,42 @@ tabularAtSpaces spaces = do
                 [ name, id ] -> String.trim name /\ Just (String.trim id)
                 _        -> "" /\ Nothing
   eol
+  { marker, rawValue, parts } <- tabularValueAtSpaces spaces
+  let parsedTabular = tabularFromRep marker rawValue parts
+        <#> \v -> Tab.Item { key: fromMaybe (CG.nameToId name) mbId, label: name, value: v }
+  pure { name, id : mbId, marker, rawValue, parts, parsed: parsedTabular }
+
+
+-- | Tabular value at exactly `spaces` leading spaces:
+-- |   <spaces>; <MARKER>. <value>
+-- |   <spaces>>>> <next line of the value>
+-- | the composite values are followed by their parts at any deeper indent (the same for all the parts).
+
+tabularValueAtSpaces :: Int -> Parser RepTabularValue
+tabularValueAtSpaces spaces = do
   matchingIndent spaces
   _               <- SP.string "; "
   (marker /\ raw) <- markerAndValue
   continuations   <- continuationLines spaces
   eol
   let triMarker = RE.TM marker
-      rawNCont  = NEA.cons' raw continuations
-      parsedTabular = tabularFromRep triMarker rawNCont
-        <#> \v -> Tab.Item { key: fromMaybe (CG.nameToId name) mbId, label: name, value: v }
-  pure { name, id : mbId, marker: triMarker, rawValue: rawNCont, parsed: parsedTabular }
+  parts <- case RE.tvtftm triMarker of
+    TV.TVTAtomic _ -> pure []
+    _              -> tabularPartsDeeperThan spaces
+  pure { marker: triMarker, rawValue: NEA.cons' raw continuations, parts }
+
+
+tabularPartsDeeperThan :: Int -> Parser (Array RepTabularPart)
+tabularPartsDeeperThan parentSpaces = do
+  mbSpaces <- SP.optionMaybe $ SP.tryAhead do
+    spaces <- spacesCount
+    when (spaces <= parentSpaces) $ fail "not a part of the composite value"
+    _ <- SP.string "- " <|> SP.string "; "
+    pure spaces
+  case mbSpaces of
+    Nothing -> pure []
+    Just spaces ->
+      toArr <$> SP.many (SP.try $ (RTPEntry <$> SP.try (tabularAtSpaces spaces)) <|> (RTPValue <$> tabularValueAtSpaces spaces))
 
 
 -- | Item: leading spaces are read from the input and must exceed parentSpaces.
@@ -281,9 +323,96 @@ tagAtSpaces spaces = do
   pure $ parseTag tagId
 
 
-tabularFromRep :: RE.TriMarker -> NonEmptyArray String -> Maybe AtomicValue
-tabularFromRep triMarker raw = RE.tftm triMarker # case _ of
-  TV.TVTString        -> Just       $  AV.PText          fraw
+-- | See `Report.Convert.Rep.Export._tabularValueDoc` for the format of the composite values,
+-- | the counts of the parts are checked.
+tabularFromRep :: RE.TriMarker -> NonEmptyArray String -> Array RepTabularPart -> Maybe TabularValue
+tabularFromRep triMarker raw parts = case RE.tvtftm triMarker of
+  TV.TVTAtomic tvKey    -> TV.TVAtomic <$> atomicTabularFromRep tvKey raw
+  TV.TVTValues          -> countedAs [ partsCount ] $ TV.TVValues <$> traverse atomicPart parts
+  TV.TVTValuesNest      -> countedAs [ partsCount ] $ TV.TVValuesNest <$> traverse valuesPart parts
+  TV.TVTTabulars        -> countedAs [ partsCount ] $ TV.TVTabulars <$> traverse tabularPart parts
+  TV.TVTPair            -> countedAs [ 2 ] $ case parts of
+                             [ partA, partB ] -> TV.TVPair <$> valuePart partA <*> valuePart partB
+                             _ -> Nothing
+  TV.TVTTabularsNest    -> case counts of
+                             [ directCount, partsCount' ] | Array.length parts == directCount + 2 * partsCount' -> do
+                               direct <- traverse tabularPart $ Array.take directCount parts
+                               nestParts <- traverse nestPart $ pairs $ Array.drop directCount parts
+                               pure $ TV.TVTabularsNest { direct, parts : nestParts }
+                             _ -> Nothing
+  TV.TVTLogbook         -> countedAs [ partsCount ] $ TV.TVLogbook <$> Logbook <$> traverse logbookEntryPart parts
+  -- these are only the parts of the composite values
+  TV.TVTTabular         -> Nothing
+  TV.TVTLogbookEntry    -> Nothing
+  where
+    partsCount = Array.length parts
+    -- `+++ 2` or `+++ 1 -> 2`
+    counts = case String.stripPrefix (String.Pattern "+++ ") $ NEA.head raw of
+      Just countsStr -> fromMaybe [] $ traverse Int.fromString $ String.split (String.Pattern " -> ") countsStr
+      Nothing -> []
+    countedAs :: forall a. Array Int -> Maybe a -> Maybe a
+    countedAs expected mbValue = if counts == expected then mbValue else Nothing
+    valuePart = case _ of
+      RTPValue v -> tabularFromRep v.marker v.rawValue v.parts
+      RTPEntry _ -> Nothing
+    atomicPart = valuePart >=> case _ of
+      TV.TVAtomic atomicV -> Just atomicV
+      _ -> Nothing
+    valuesPart = valuePart >=> case _ of
+      TV.TVValues atomicVs -> Just atomicVs
+      _ -> Nothing
+    tabularsPart = valuePart >=> case _ of
+      TV.TVTabulars tabulars -> Just tabulars
+      _ -> Nothing
+    tabularPart = case _ of
+      RTPValue v | RE.tvtftm v.marker == TV.TVTTabular ->
+        if String.stripPrefix (String.Pattern "+++ ") (NEA.head v.rawValue) == Just (show $ Array.length v.parts)
+          then Tab.Tabular <$> traverse entryPart v.parts
+          else Nothing
+      _ -> Nothing
+    entryPart = case _ of
+      RTPEntry entry -> entry.parsed >>= \(Tab.Item item) -> case item.value of
+        TV.TVAtomic atomicV -> Just $ Tab.Item item { value = atomicV }
+        _ -> Nothing
+      RTPValue _ -> Nothing
+    nestPart (atomicPartV /\ tabularsPartV) = (/\) <$> atomicPart atomicPartV <*> tabularsPart tabularsPartV
+    pairs arr = case Array.uncons arr of
+      Just { head : first, tail } -> case Array.uncons tail of
+        Just { head : second, tail : rest } -> (first /\ second) : pairs rest
+        Nothing -> []
+      Nothing -> []
+    logbookEntryPart = case _ of
+      RTPValue v | RE.tvtftm v.marker == TV.TVTLogbookEntry -> parseLogbookEntry $ NEA.head v.rawValue
+      _ -> Nothing
+
+
+-- | `[<start>] [-- <end>] <task> [<name>]`
+parseLogbookEntry :: String -> Maybe LogbookEntry
+parseLogbookEntry str =
+  let
+    words = splitWithSpace str
+    isDate word = String.take 1 word == "<"
+    start /\ afterStart = case Array.uncons words of
+      Just { head, tail } | isDate head -> Just head /\ tail
+      _ -> Nothing /\ words
+    end /\ afterEnd = case afterStart of
+      [ "--" ] -> Nothing /\ afterStart
+      _ -> case Array.uncons afterStart of
+        Just { head : "--", tail } -> case Array.uncons tail of
+          Just { head, tail : rest } -> Just head /\ rest
+          Nothing -> Nothing /\ afterStart
+        _ -> Nothing /\ afterStart
+  in do
+    { head : taskStr, tail : nameWords } <- Array.uncons afterEnd
+    task <- mbTaskPFromString taskStr
+    startDate <- traverse (parseDate >>> map CT.dateToRec) start
+    endDate <- traverse (parseDate >>> map CT.dateToRec) end
+    pure { name : String.joinWith " " nameWords, task, start : startDate, end : endDate }
+
+
+atomicTabularFromRep :: TV.TabValTypeKey -> NonEmptyArray String -> Maybe AtomicValue
+atomicTabularFromRep tvKey raw = tvKey # case _ of
+  TV.TVTString        -> Just       $  AV.PText          $ String.joinWith "\n" $ NEA.toArray raw
   TV.TVTInt           -> AV.PInt    <$> Int.fromString    fraw
   TV.TVTID            -> AV.PID     <$> Int.fromString    fraw
   TV.TVTYear          -> AV.PYear   <$> Int.fromString    fraw

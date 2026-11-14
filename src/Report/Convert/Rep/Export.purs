@@ -2,7 +2,7 @@ module Report.Convert.Rep.Export where
 
 import Prelude
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (snd) as Tuple
 import Data.Tuple.Nested ((/\), type (/\))
 import Data.Newtype (unwrap)
@@ -33,13 +33,14 @@ import Report.Decorators.Progress (Progress(..), Levels(..))
 import Report.Decorators.Tags (RawTag(..), RawTags(..))
 import Utils.Data.WColor (toHex) as WColor
 import Report.Decorators.Progress (Progress(..), PTValueTag(..)) as P
---import Report.Tabular (Tabular)
+import Report.Tabular (Tabular)
 import Report.Tabular (findV, items, Item(..)) as Tabular
 import Report.Decorators.Rating as Rating
 import Report.Decorators.Priority as Priority
 import Report.Decorators.Task as Task
 import Report.AtomicValue as AV
 import Report.Decorators.Tabular.TabularValue as TV
+import Report.Decorators.Tabular.Logbook (LogbookEntry)
 import Report.Decorators.Tabular.Logbook (entries) as Logbook
 -- import Report.Convert.Text.Export as TextExport
 import Report.Convert.Rep.Keys
@@ -91,7 +92,6 @@ toRep inclRule =
                 [] -> mempty
                 _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> subjectRec.tags)
             <> D.break <> (tabularBlock
-                $ Array.catMaybes
                 $ convertTabularToDocLine <$>
                     subjectRec.tabulars
                     -- (Array.catMaybes (subjTabularsToPrepend subjectRec) <> subjectRec.tabulars)
@@ -140,10 +140,10 @@ toRep inclRule =
                     Just pathId -> D.space <> markSym pathKW <> (D.text $ unwrap pathId)
                     Nothing -> mempty
                 <> D.break <> tabularBlock
-                    (  [ { id : groupPathTabularId,  label : "Path",  marker : tmfp (P.PTAV AVTPText), valueLines : pure $ convertPath groupRec.path }
-                       , { id : groupIndexTabularId, label : "Index", marker : tmfp (P.PTAV AVTPInt), valueLines : pure $ D.text $ show index        }
+                    (  [ { id : groupPathTabularId,  label : "Path",  value : _tabularValueLine (tmfp (P.PTAV AVTPText)) $ pure $ convertPath groupRec.path }
+                       , { id : groupIndexTabularId, label : "Index", value : _tabularValueLine (tmfp (P.PTAV AVTPInt)) $ pure $ D.text $ show index }
                        ]
-                    <> (Array.catMaybes $ convertTabularToDocLine <$> convertTabularItem <$> Tabular.items groupRec.tabular)
+                    <> (convertTabularToDocLine <$> convertTabularItem <$> Tabular.items groupRec.tabular)
                     )
                 <> case items of
                     [] -> mempty
@@ -160,24 +160,14 @@ toRep inclRule =
                   _ -> D.break <> (tagsBlock $ convertTagToDocLine <$> unwrap itemRec.tags)
             <> case itemRec.tabulars of
                   [] -> mempty
-                  _ -> D.break <> (tabularBlock $ Array.catMaybes $ convertTabularToDocLine <$> itemRec.tabulars)
+                  _ -> D.break <> (tabularBlock $ convertTabularToDocLine <$> itemRec.tabulars)
 
         convertTabularItem :: Tabular.Item TV.TabularValue -> TabularRec
         convertTabularItem (Tabular.Item { key, label, value }) = { tkey : key, tlabel : label, value }
 
-        convertTabularToDocLine :: TabularRec -> Maybe TabularRenderRec
+        convertTabularToDocLine :: TabularRec -> TabularRenderRec
         convertTabularToDocLine tabRec =
-            _tabularValueDocLines tabRec.value <#>
-                \docLines -> { id : tabRec.tkey, label : tabRec.tlabel, marker : tvMarker, valueLines : docLines }
-            where
-                tvMarker = case tabRec.value of
-                    TV.TVAtomic atomicV -> tmft $ _tabValKeyOf atomicV
-                    TV.TVValues _ -> TM "TVS"
-                    TV.TVPair _ _ -> TM "TVP"
-                    TV.TVValuesNest _ -> TM "TVN"
-                    TV.TVTabulars _ -> TM "TVT"
-                    TV.TVTabularsNest _ -> TM "TVX"
-                    TV.TVLogbook _ -> TM "TVL"
+            { id : tabRec.tkey, label : tabRec.tlabel, value : _tabularValueDoc tabRec.value }
 
         convertDecoratorToDocLine :: DecoratorRec -> TriMarker /\ NonEmptyArray (Doc Unit)
         convertDecoratorToDocLine modRec =
@@ -187,84 +177,81 @@ toRep inclRule =
                 modRec.fvalue
 
 
-_tabularValueDocLines :: TV.TabularValue -> Maybe (NonEmptyArray (Doc Unit))
-_tabularValueDocLines = case _ of
-    TV.TVAtomic atomicV -> Just $ _tabularDocLines atomicV
+{- Tabular values: `; MRK. <value>`, the lines after the first one of the multi-line values are `>>> <line>`.
+   The composite values are `; MRK. +++ <count>` followed by their parts, indented deeper, and every part has its own marker:
+
+   - `TVValues`: `; TVS. +++ <count>` and the atomic values;
+   - `TVValuesNest`: `; TVN. +++ <count>` and the `TVS` values;
+   - `TVTabulars`: `; TVT. +++ <count>` and the tabulars, every one is `; TAB. +++ <count>` and the tabular entries (`- <label> // <id>` and the value);
+   - `TVPair`: `; TVP. +++ 2` and two tabular values of any kind;
+   - `TVTabularsNest`: `; TVX. +++ <direct> -> <parts>`, the direct `TAB` tabulars, then for every part the atomic value and the `TVT` tabulars;
+   - `TVLogbook`: `; TVL. +++ <count>` and the entries, every one is `; LOG. [<start>] [-- <end>] <task> [<name>]`. -}
+
+
+_tabularValueDoc :: TV.TabularValue -> Doc Unit
+_tabularValueDoc tabValue = case tabValue of
+    TV.TVAtomic atomicV ->
+        _atomicTabularDoc atomicV
     TV.TVValues atomicVs ->
-        Array.uncons atomicVs
-        <#> \{ head, tail } ->
-            NEA.cons
-                (prepend (SM "+++") $ D.text $ show $ Array.length atomicVs)
-                (join $ _tabularDocLines <$> NEA.cons' head tail)
-    TV.TVPair tabularA tabularB  ->
-        (\neaA neaB ->
-            NEA.cons
-                (prepend (SM "+++") $ D.text $ show 2)
-                $ neaA <> neaB
-        )
-            <$> _tabularValueDocLines tabularA
-            <*> _tabularValueDocLines tabularB
+        composite (show $ Array.length atomicVs) $ _atomicTabularDoc <$> atomicVs
     TV.TVValuesNest nestedValues ->
-        case nestedValues of
-            [] -> Nothing
-            _ ->
-                let
-                    sizesString = (show $ Array.length nestedValues) <> " -> " <> String.joinWith " " (show <$> Array.length <$> nestedValues)
-                    convertNestedValue (idx /\ atomicValue) = { id : show idx, label : show idx, marker : tmft $ _tabValKeyOf atomicValue, valueLines : _tabularDocLines atomicValue }
-                in
-                    Just $ NEA.cons'
-                        (prepend (SM "+++") $ D.text sizesString)
-                        (tabularLines <$> convertNestedValue <$> Array.concat (mapWithIndex (/\) <$> nestedValues))
+        composite (show $ Array.length nestedValues) $ _tabularValueDoc <$> TV.TVValues <$> nestedValues
     TV.TVTabulars tabulars ->
-        case tabulars of
-            [] -> Nothing
-            _  ->
-                let
-                    convertTabItem (Tabular.Item { key, label, value }) = { id : key, label , marker : tmft $ _tabValKeyOf value, valueLines : _tabularDocLines value }
-                    convertTabular tabs = tabularBlock $ convertTabItem <$> Tabular.items tabs
-                in
-                    Just $ NEA.cons'
-                        (prepend (SM "+++") $ D.text $ show $ Array.length tabulars)
-                        (convertTabular <$> tabulars)
-                        -- (pure $ tabularBlock $ ?wh $ map convertTabular <$> tabulars)
+        composite (show $ Array.length tabulars) $ _tabularPartDoc <$> tabulars
+    TV.TVPair tabularA tabularB ->
+        composite (show 2) [ _tabularValueDoc tabularA, _tabularValueDoc tabularB ]
     TV.TVTabularsNest { direct, parts } ->
-        let
-            sizesString =
-                (show $ Array.length direct) <> " -> " <> (show $ Array.length parts) <> " -> " <> (String.joinWith " " $ show <$> Array.length <$> Tuple.snd <$> parts)
-            convertTabItem (Tabular.Item { key, label, value }) = { id : key, label , marker : tmft $ _tabValKeyOf value, valueLines : _tabularDocLines value }
-            convertTabular tabs = tabularBlock $ convertTabItem <$> Tabular.items tabs
-            convertNestedValue (idx /\ atomicValue) = { id : show idx, label : show idx, marker : tmft $ _tabValKeyOf atomicValue, valueLines : _tabularDocLines atomicValue }
-            convertPart (idx /\ aValue /\ partTabs) =
-                tabularLines (convertNestedValue $ idx /\ aValue)
-                <> D.break
-                <> (prepend (SM "+++") $ D.text $ show $ Array.length partTabs)
-                <> D.break
-                <> joinWith D.break (convertTabular <$> partTabs)
-        in
-            Just $ NEA.cons'
-                (prepend (SM "+++") $ D.text sizesString)
-                $ (convertTabular <$> direct) <> (convertPart <$> mapWithIndex (/\) parts)
+        composite (show (Array.length direct) <> " -> " <> show (Array.length parts))
+            $  (_tabularPartDoc <$> direct)
+            <> (Array.concat $ (\(atomicV /\ partTabulars) -> [ _atomicTabularDoc atomicV, _tabularValueDoc $ TV.TVTabulars partTabulars ]) <$> parts)
     TV.TVLogbook logbook ->
-        let
-            entryLine { name, task, start, end } =
-                D.text ">>>" <> D.space
-                    <> maybe mempty (\date -> orgDate date <> D.space) start
-                    <> maybe mempty (\date -> D.text "--" <> D.space <> orgDate date <> D.space) end
-                    <> D.text (Task.taskPToString task) <> D.space <> D.text name
-        in
-            Array.uncons (Logbook.entries logbook)
-            <#> \{ head, tail } ->
-                NEA.cons
-                    (prepend (SM "+++") $ D.text $ show $ Array.length tail + 1)
-                    (entryLine <$> NEA.cons' head tail)
-        -- prepend (SM "+++") <$> (_tabularValueDocLines tabularA <> _tabularValueDocLines tabularB)
+        composite (show $ Array.length $ Logbook.entries logbook) $ _logbookEntryDoc <$> Logbook.entries logbook
+    where
+        composite = _compositeTabularDoc $ TV.tabularTagOf tabValue
+
+
+_compositeTabularDoc :: TV.TabularValueTag -> String -> Array (Doc Unit) -> Doc Unit
+_compositeTabularDoc tvTag counts parts =
+    _tabularValueLine (tmftv tvTag) (pure $ markSym compositeKW <> D.text counts)
+    <> case parts of
+        [] -> mempty
+        _ -> D.break <> (joinWith D.break $ D.indent <$> parts)
+
+
+_atomicTabularDoc :: AtomicValue -> Doc Unit
+_atomicTabularDoc atomicV =
+    _tabularValueLine (tmft $ _tabValKeyOf atomicV) $ _tabularDocLines atomicV
+
+
+-- | one tabular inside `TVTabulars` or `TVTabularsNest`
+_tabularPartDoc :: Tabular AtomicValue -> Doc Unit
+_tabularPartDoc tabular =
+    _compositeTabularDoc TV.TVTTabular (show $ Array.length $ Tabular.items tabular)
+        $ convertItem <$> Tabular.items tabular
+    where
+        convertItem (Tabular.Item { key, label, value }) =
+            tabularLines { id : key, label, value : _atomicTabularDoc value }
+
+
+_logbookEntryDoc :: LogbookEntry -> Doc Unit
+_logbookEntryDoc { name, task, start, end } =
+    _tabularValueLine (tmftv TV.TVTLogbookEntry) $ pure
+        $  maybe mempty (\date -> orgDate date <> D.space) start
+        <> maybe mempty (\date -> D.text "--" <> D.space <> orgDate date <> D.space) end
+        <> D.text (Task.taskPToString task)
+        <> if String.null name then mempty else D.space <> D.text name
+
+
+_tabularValueLine :: TriMarker -> NonEmptyArray (Doc Unit) -> Doc Unit
+_tabularValueLine marker valueLines =
+    markSym tavKW <> markTri marker <> NEA.head valueLines
+    <> fold ((\line -> D.break <> markSym contKW <> line) <$> NEA.tail valueLines)
 
 
 type TabularRenderRec =
     { id :: String
     , label :: String
-    , marker :: TriMarker
-    , valueLines :: NonEmptyArray (Doc Unit)
+    , value :: Doc Unit
     }
 
 
@@ -284,9 +271,9 @@ tabularBlock fields =
 
 
 tabularLines :: TabularRenderRec -> Doc Unit
-tabularLines { id, label, marker, valueLines } =
+tabularLines { id, label, value } =
     markSym tabKW <> D.text label <> D.space <> markSym subjIDKW <> D.text id
-    <> D.break <> markSym tavKW <> markTri marker <> (joinWith (D.break <> markSym tavKW <> markTri marker) $ NEA.toArray valueLines)
+    <> D.break <> value
 
 
 prepend :: SymMarker -> Doc Unit -> Doc Unit
@@ -516,7 +503,7 @@ _tabValKeyOf = TV.typeKeyOf
 
 _tabularDocLines :: AtomicValue -> NonEmptyArray (Doc Unit)
 _tabularDocLines = case _ of
-    AV.PText text  -> pure $ D.text text
+    AV.PText text  -> map D.text $ fromMaybe (pure "") $ NEA.fromArray $ String.split (String.Pattern "\n") text
     AV.PInt i        -> pure $ D.text $ show i
     AV.PNumber n     -> pure $ D.text $ show n
     AV.PID id        -> pure $ D.text $ show id

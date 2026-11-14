@@ -23,6 +23,7 @@ import Test.Export.Converter as Converter
 import Test.Export.Smos as Smos
 import Test.Export.Org as Org
 import Test.AtomicValue as AtomicValue
+import Test.TabularValue as TabularValue
 
 
 main :: Effect Unit
@@ -42,4 +43,5 @@ main = do
         Smos.spec
         Org.spec
         AtomicValue.spec
+        TabularValue.spec
         -- MusicApi.spec

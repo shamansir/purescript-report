@@ -59,7 +59,7 @@ fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> 
         { id : subjId
         , name : subjRec.name
         , stats : Stats.defaultStats
-        , tabular : Tabular $ Array.catMaybes $ map (map TV.TVAtomic) <$> _.parsed <$> subjRec.tabulars
+        , tabular : Tabular $ Array.catMaybes $ _.parsed <$> subjRec.tabulars
         , tags : subjRec.tags
         }
         /\
@@ -69,7 +69,7 @@ fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> 
         { path : GP.path groupRec.path
         , stats : Stats.defaultStats
         , title : groupRec.title
-        , tabular : Tabular $ Array.catMaybes $ map (map TV.TVAtomic) <$> _.parsed <$> Array.filter (not <<< isGeneratedGroupTabular) groupRec.tabulars
+        , tabular : Tabular $ Array.catMaybes $ _.parsed <$> Array.filter (not <<< isGeneratedGroupTabular) groupRec.tabulars
         }
         /\
         (convertItem groupRec <$> groupRec.items)
@@ -78,7 +78,7 @@ fromRepToImpl nameToSubjIdF = fromRepP >>> map (mapWithIndex tryConvertSubj >>> 
         { title : itemRec.title
         , decorators : Decorators.fromArray $ Array.catMaybes $ map convertDecorator <$> _.parsed <$> itemRec.decorators
         , tags : Tags itemRec.tags
-        , tabular : Tabular $ Array.catMaybes $ map (map TV.TVAtomic) <$> _.parsed <$> itemRec.tabulars
+        , tabular : Tabular $ Array.catMaybes $ _.parsed <$> itemRec.tabulars
         }
     convertDecorator dec = Decorator.keyOf dec /\ dec
     -- `path` and `index` are written by `Report.Convert.Rep.Export` for every group, they are not the part of the group's own tabular
