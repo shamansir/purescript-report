@@ -33,6 +33,10 @@ data TaskP
 -- Fixed
 
 
+all :: Array TaskP
+all = [ TTodo, TDoing, TWait, TCanceled, TNow, TLater, TDone ]
+
+
 instance Show TaskP where
     show = case _ of
         TTodo -> "TODO"

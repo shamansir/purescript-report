@@ -577,11 +577,15 @@ _levelsToAtomic = case _ of
         levelsOVal { levels, reached } = let mbMaxs = _.mbMaximum <$> levels in
                                          AV.ToGetIX { got : foldl (levelOGotFoldF reached) 0 mbMaxs, doing : foldl (levelODoingFoldF reached) 0 mbMaxs, total : Array.length levels }
 
-        mapLevelI reached idx levelI = { name : levelI.name,  reached : if reached >= levelI.maximum then levelI.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ AV.PInt levelI.maximum }
-        mapLevelN reached idx levelN = { name : levelN.name,  reached : if reached >= levelN.maximum then levelN.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ AV.PNumber levelN.maximum }
-        mapLevelO reached idx levelO = { name : levelO.name,  reached : levelOHelper reached levelO.mbMaximum levelO.date, v : AV.PInt <$> levelO.mbMaximum }
-        mapLevelS reached idx levelS = { name : levelS.gives, reached : if idx < reached then levelS.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Nothing }
+        mapLevelI reached idx levelI = { name : levelI.name,  reached : if reached >= levelI.maximum then levelI.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ levelIValue reached levelI.maximum }
+        mapLevelN reached idx levelN = { name : levelN.name,  reached : if reached >= levelN.maximum then levelN.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ AV.ToGetN { got : min reached levelN.maximum, total : levelN.maximum } }
+        mapLevelO reached idx levelO = { name : levelO.name,  reached : levelOHelper reached levelO.mbMaximum levelO.date, v : levelO.mbMaximum <#> levelIValue reached }
+        mapLevelS reached idx levelS = { name : levelS.gives, reached : if idx < reached then levelS.date # maybe CT.Reached CT.ReachedAt else CT.NotReached, v : Just $ AV.ToComplete { done : idx < reached } }
         mapLevelP idx levelP         = { name : levelP.name,  reached : levelPHelper levelP.proc levelP.date, v : Just $ AV.PTask levelP.proc }
+
+        levelIValue reached max =
+            if max <= 0 then AV.ToComplete { done : reached >= max } -- a level from 0 (Nonograms' `Lvl. 1`) would be 0/0
+            else AV.ToGetI { got : min reached max, total : max }
 
         levelOGotFoldF   reached g lmbmax = if maybe false (reached >= _) lmbmax then g + 1 else g
         levelODoingFoldF reached d lmbmax = maybe (d + 1) (\max -> d) lmbmax -- FIXME: we count only Nothing as "doing"
